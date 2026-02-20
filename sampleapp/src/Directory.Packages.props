@@ -1,0 +1,131 @@
+<!-- Pattern: Central Package Management (CPM) — single source of truth for all NuGet versions.
+     All .csproj files use <PackageReference Include="..." /> without Version attributes.
+     Versions are managed here exclusively.
+     Central source of truth for all NuGet package versions. -->
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>false</CentralPackageTransitivePinningEnabled>
+    <NoWarn>$(NoWarn);NU1507</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- ═══════════════════════════════════════════════════════════════
+         PRIVATE INFRASTRUCTURE PACKAGES
+         Shared libraries providing base classes (EntityBase, RepositoryBase, etc.)
+         ═══════════════════════════════════════════════════════════════ -->
+    <PackageVersion Include="Package.Infrastructure.Domain" Version="1.0.142" />
+    <PackageVersion Include="Package.Infrastructure.Domain.Contracts" Version="1.0.142" />
+    <PackageVersion Include="Package.Infrastructure.Data" Version="1.0.142" />
+    <PackageVersion Include="Package.Infrastructure.Data.Contracts" Version="1.0.142" />
+    <PackageVersion Include="Package.Infrastructure.Common" Version="1.0.142" />
+    <PackageVersion Include="Package.Infrastructure.Common.Contracts" Version="1.0.142" />
+    <PackageVersion Include="Package.Infrastructure.Host" Version="1.0.142" />
+    <PackageVersion Include="Package.Infrastructure.AspNetCore" Version="1.0.142" />
+    <PackageVersion Include="Package.Infrastructure.Auth" Version="1.0.142" />
+    <PackageVersion Include="Package.Infrastructure.Cache" Version="1.0.142" />
+    <PackageVersion Include="Package.Infrastructure.BackgroundServices" Version="1.0.142" />
+    <PackageVersion Include="Package.Infrastructure.Messaging" Version="1.0.141" />
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         ENTITY FRAMEWORK CORE
+         ═══════════════════════════════════════════════════════════════ -->
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.2" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.2" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Abstractions" Version="10.0.2" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.2" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.2" />
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         ASPIRE & HOSTING
+         ═══════════════════════════════════════════════════════════════ -->
+    <PackageVersion Include="Aspire.Hosting.AppHost" Version="13.1.0" />
+    <PackageVersion Include="Aspire.Hosting.SqlServer" Version="13.1.0" />
+    <PackageVersion Include="Aspire.Hosting.Redis" Version="13.1.0" />
+    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.2.0" />
+    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery.Yarp" Version="10.2.0" />
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         AUTHENTICATION & IDENTITY
+         ═══════════════════════════════════════════════════════════════ -->
+    <PackageVersion Include="Microsoft.Identity.Web" Version="4.3.0" />
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.2" />
+    <PackageVersion Include="Azure.Identity" Version="1.13.2" />
+    <PackageVersion Include="Microsoft.Extensions.Azure" Version="1.10.0" />
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         CACHING
+         ═══════════════════════════════════════════════════════════════ -->
+    <PackageVersion Include="ZiggyCreatures.FusionCache" Version="2.5.0" />
+    <PackageVersion Include="ZiggyCreatures.FusionCache.Serialization.SystemTextJson" Version="2.5.0" />
+    <PackageVersion Include="ZiggyCreatures.FusionCache.Backplane.StackExchangeRedis" Version="2.5.0" />
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         GATEWAY / REVERSE PROXY
+         ═══════════════════════════════════════════════════════════════ -->
+    <PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         AZURE FUNCTIONS
+         ═══════════════════════════════════════════════════════════════ -->
+    <PackageVersion Include="Microsoft.Azure.Functions.Worker" Version="2.51.0" />
+    <PackageVersion Include="Microsoft.Azure.Functions.Worker.Sdk" Version="2.0.7" />
+    <PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" Version="2.1.0" />
+    <PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.Timer" Version="4.3.1" />
+    <PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.Storage.Queues" Version="5.0.0" />
+    <PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.Storage.Blobs" Version="6.0.0" />
+    <PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.ServiceBus" Version="5.0.0" />
+    <PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.EventGrid" Version="3.0.0" />
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         BACKGROUND SERVICES / SCHEDULER
+         ═══════════════════════════════════════════════════════════════ -->
+    <PackageVersion Include="TickerQ" Version="10.0.2" />
+    <PackageVersion Include="TickerQ.EntityFrameworkCore" Version="10.0.2" />
+    <PackageVersion Include="TickerQ.Dashboard" Version="10.0.2" />
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         NOTIFICATIONS
+         ═══════════════════════════════════════════════════════════════ -->
+    <PackageVersion Include="Azure.Communication.Email" Version="1.0.0" />
+    <PackageVersion Include="Twilio" Version="7.14.3" />
+    <PackageVersion Include="Lib.Net.Http.WebPush" Version="3.3.1" />
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         OPEN API / DOCUMENTATION
+         ═══════════════════════════════════════════════════════════════ -->
+    <PackageVersion Include="Scalar.AspNetCore" Version="2.12.35" />
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.2" />
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         TESTING
+         ═══════════════════════════════════════════════════════════════ -->
+    <PackageVersion Include="MSTest" Version="4.1.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.2" />
+    <PackageVersion Include="CleanMoq" Version="4.20.72" />
+    <PackageVersion Include="Testcontainers.MsSql" Version="4.0.0" />
+    <PackageVersion Include="Respawn" Version="6.0.0" />
+    <PackageVersion Include="NetArchTest.Rules" Version="1.4.0" />
+    <PackageVersion Include="coverlet.collector" Version="6.0.4" />
+    <PackageVersion Include="Microsoft.Playwright.MSTest" Version="1.49.0" />
+    <PackageVersion Include="BenchmarkDotNet" Version="0.14.0" />
+    <PackageVersion Include="NBomber" Version="6.3.0" />
+    <PackageVersion Include="NBomber.Http" Version="6.3.0" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.2" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="10.0.2" />
+    <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         MISCELLANEOUS
+         ═══════════════════════════════════════════════════════════════ -->
+    <PackageVersion Include="Polly" Version="8.6.5" />
+    <PackageVersion Include="Polly.Extensions" Version="8.6.5" />
+    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.2.0" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.2" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.2" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.2" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.2" />
+    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.2" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Aspire.AppHost</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsAspireHost>true</IsAspireHost>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\TaskFlow\TaskFlow.Api\TaskFlow.Api.csproj" />
+    <ProjectReference Include="..\..\TaskFlow\TaskFlow.Scheduler\TaskFlow.Scheduler.csproj" />
+    <ProjectReference Include="..\..\TaskFlow\TaskFlow.Gateway\TaskFlow.Gateway.csproj" />
+    <ProjectReference Include="..\..\Functions\TaskFlow.FunctionApp\TaskFlow.FunctionApp.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.AppHost" />
+    <PackageReference Include="Aspire.Hosting.SqlServer" />
+    <PackageReference Include="Aspire.Hosting.Redis" />
+  </ItemGroup>
+</Project>

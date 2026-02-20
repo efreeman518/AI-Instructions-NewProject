@@ -1,0 +1,59 @@
+<!-- Pattern: .slnx is the modern XML-based solution file format.
+     Projects grouped by architectural layer using solution folders. -->
+<Solution>
+  <!-- ═══ Domain Layer ═══ -->
+  <Folder Name="/Domain/">
+    <Project Path="Domain/TaskFlow.Domain.Model/TaskFlow.Domain.Model.csproj" />
+    <Project Path="Domain/TaskFlow.Domain.Shared/TaskFlow.Domain.Shared.csproj" />
+  </Folder>
+
+  <!-- ═══ Application Layer ═══ -->
+  <Folder Name="/Application/">
+    <Project Path="Application/TaskFlow.Application.Contracts/TaskFlow.Application.Contracts.csproj" />
+    <Project Path="Application/TaskFlow.Application.Models/TaskFlow.Application.Models.csproj" />
+    <Project Path="Application/TaskFlow.Application.Services/TaskFlow.Application.Services.csproj" />
+    <Project Path="Application/TaskFlow.Application.MessageHandlers/TaskFlow.Application.MessageHandlers.csproj" />
+  </Folder>
+
+  <!-- ═══ Infrastructure Layer ═══ -->
+  <Folder Name="/Infrastructure/">
+    <Project Path="Infrastructure/TaskFlow.Infrastructure.Data/TaskFlow.Infrastructure.Data.csproj" />
+    <Project Path="Infrastructure/TaskFlow.Infrastructure.Repositories/TaskFlow.Infrastructure.Repositories.csproj" />
+    <Project Path="Infrastructure/TaskFlow.Infrastructure.Notification/TaskFlow.Infrastructure.Notification.csproj" />
+  </Folder>
+
+  <!-- ═══ TaskFlow (Host) Layer ═══ -->
+  <Folder Name="/TaskFlow/">
+    <Project Path="TaskFlow/TaskFlow.Api/TaskFlow.Api.csproj" />
+    <Project Path="TaskFlow/TaskFlow.Bootstrapper/TaskFlow.Bootstrapper.csproj" />
+    <Project Path="TaskFlow/TaskFlow.Scheduler/TaskFlow.Scheduler.csproj" />
+    <Project Path="TaskFlow/TaskFlow.BackgroundServices/TaskFlow.BackgroundServices.csproj" />
+    <Project Path="TaskFlow/TaskFlow.Gateway/TaskFlow.Gateway.csproj" />
+    <Project Path="TaskFlow/TaskFlow.UI/TaskFlow.UI.csproj" />
+    <!-- Pattern: TaskFlow.Notification (standalone notification host) is optional.
+         Uncomment when deploying notifications as a separate microservice. -->
+    <!-- <Project Path="TaskFlow/TaskFlow.Notification/TaskFlow.Notification.csproj" /> -->
+  </Folder>
+
+  <!-- ═══ Functions ═══ -->
+  <Folder Name="/Functions/">
+    <Project Path="Functions/TaskFlow.FunctionApp/TaskFlow.FunctionApp.csproj" />
+  </Folder>
+
+  <!-- ═══ Aspire ═══ -->
+  <Folder Name="/Aspire/">
+    <Project Path="Aspire/AppHost/AppHost.csproj" />
+    <Project Path="Aspire/ServiceDefaults/ServiceDefaults.csproj" />
+  </Folder>
+
+  <!-- ═══ Tests ═══ -->
+  <Folder Name="/Test/">
+    <Project Path="Test/Test.Unit/Test.Unit.csproj" />
+    <Project Path="Test/Test.Integration/Test.Integration.csproj" />
+    <Project Path="Test/Test.Support/Test.Support.csproj" />
+    <Project Path="Test/Test.Architecture/Test.Architecture.csproj" />
+    <Project Path="Test/Test.PlaywrightUI/Test.PlaywrightUI.csproj" />
+    <Project Path="Test/Test.Load/Test.Load.csproj" />
+    <Project Path="Test/Test.Benchmarks/Test.Benchmarks.csproj" />
+  </Folder>
+</Solution>

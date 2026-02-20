@@ -1,0 +1,34 @@
+<!-- Pattern: Test.Benchmarks — BenchmarkDotNet performance benchmarks.
+     NOT a test project — runs as a console app via BenchmarkRunner.
+     References Application.Services and Infrastructure.Repositories for
+     benchmarking service/repository methods with in-memory DB.
+     
+     Run: dotnet run -c Release
+     Results: ./BenchmarkDotNet.Artifacts/ directory -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Test.Benchmarks</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Application\TaskFlow.Application.Services\TaskFlow.Application.Services.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\TaskFlow.Infrastructure.Repositories\TaskFlow.Infrastructure.Repositories.csproj" />
+    <ProjectReference Include="..\Test.Support\Test.Support.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,71 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     Pattern: SettingsPage — app configuration and theme management.
+     
+     Demonstrates:
+     1. ToggleSwitch bound to IState<bool> for theme switching
+     2. ToggleSwitch for mock/live API mode
+     3. ThemeService integration for runtime theme changes
+     ═══════════════════════════════════════════════════════════════ -->
+<Page x:Class="TaskFlow.UI.Views.SettingsPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:utu="using:Uno.Toolkit.UI">
+
+    <ScrollViewer>
+        <StackPanel Padding="16"
+                    Spacing="24"
+                    MaxWidth="600">
+
+            <TextBlock Text="Settings"
+                       Style="{StaticResource TitleLargeTextBlockStyle}" />
+
+            <!-- Pattern: Theme toggle — bound to IState<bool> IsDarkTheme. -->
+            <utu:Card>
+                <StackPanel Padding="16" Spacing="12">
+                    <TextBlock Text="Appearance"
+                               Style="{StaticResource TitleSmallTextBlockStyle}" />
+
+                    <ToggleSwitch Header="Dark Theme"
+                                  IsOn="{Binding IsDarkTheme, Mode=TwoWay}"
+                                  OnContent="Dark"
+                                  OffContent="Light" />
+                </StackPanel>
+            </utu:Card>
+
+            <!-- Pattern: Mock mode toggle — switches between mock data and live Gateway API. -->
+            <utu:Card>
+                <StackPanel Padding="16" Spacing="12">
+                    <TextBlock Text="Developer"
+                               Style="{StaticResource TitleSmallTextBlockStyle}" />
+
+                    <ToggleSwitch Header="Use Mock Data"
+                                  IsOn="{Binding UseMockData, Mode=TwoWay}"
+                                  OnContent="Mock"
+                                  OffContent="Live" />
+
+                    <TextBlock Text="When enabled, the app uses contrived in-memory data instead of calling the Gateway API."
+                               Style="{StaticResource CaptionTextBlockStyle}"
+                               TextWrapping="Wrap"
+                               Opacity="0.6" />
+                </StackPanel>
+            </utu:Card>
+
+            <!-- Pattern: App info section. -->
+            <utu:Card>
+                <StackPanel Padding="16" Spacing="8">
+                    <TextBlock Text="About"
+                               Style="{StaticResource TitleSmallTextBlockStyle}" />
+
+                    <TextBlock Text="TaskFlow Sample Application"
+                               Style="{StaticResource BodyMediumTextBlockStyle}" />
+                    <TextBlock Text="Built with Uno Platform (MVUX)"
+                               Style="{StaticResource CaptionTextBlockStyle}"
+                               Opacity="0.6" />
+                    <TextBlock Text="Version 1.0.0"
+                               Style="{StaticResource CaptionTextBlockStyle}"
+                               Opacity="0.6" />
+                </StackPanel>
+            </utu:Card>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

@@ -1,0 +1,18 @@
+<!-- Pattern: Infrastructure.Repositories holds repository implementations and updaters.
+     Separated from Infrastructure to keep DbContext configs isolated from query logic. -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Infrastructure.Repositories</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TaskFlow.Infrastructure.Data\TaskFlow.Infrastructure.Data.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Package.Infrastructure.Data" />
+  </ItemGroup>
+</Project>

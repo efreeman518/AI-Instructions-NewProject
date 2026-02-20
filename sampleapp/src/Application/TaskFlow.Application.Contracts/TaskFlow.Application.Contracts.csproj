@@ -1,0 +1,22 @@
+<!-- Pattern: Application.Contracts holds interfaces, mappers, events, and constants.
+     Referenced by Services AND Infrastructure — acts as the application-layer contract boundary. -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Application.Contracts</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Domain\TaskFlow.Domain.Model\TaskFlow.Domain.Model.csproj" />
+    <ProjectReference Include="..\TaskFlow.Application.Models\TaskFlow.Application.Models.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Provides: IEntityBaseDto, ITenantEntityDto, IRequestContext -->
+    <PackageReference Include="Package.Infrastructure.Domain.Contracts" />
+    <!-- Provides: IInternalMessageBus, IMessageHandler<T>, Result -->
+    <PackageReference Include="Package.Infrastructure.Common" />
+  </ItemGroup>
+</Project>

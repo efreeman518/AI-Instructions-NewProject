@@ -1,0 +1,28 @@
+<!-- Pattern: Test.Architecture — standalone project for NetArchTest dependency enforcement.
+     Separated from Test.Unit for independent parallelism and CI category filtering.
+     These tests are stateless — no DB, no mocks, pure assembly metadata inspection. -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Test.Architecture</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Pattern: Reference each layer's project to load assemblies for inspection.
+         Architecture tests need access to all layers to verify dependency rules. -->
+    <ProjectReference Include="..\..\Domain\TaskFlow.Domain.Model\TaskFlow.Domain.Model.csproj" />
+    <ProjectReference Include="..\..\Domain\TaskFlow.Domain.Shared\TaskFlow.Domain.Shared.csproj" />
+    <ProjectReference Include="..\..\Application\TaskFlow.Application.Services\TaskFlow.Application.Services.csproj" />
+    <ProjectReference Include="..\..\TaskFlow\TaskFlow.Api\TaskFlow.Api.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MSTest" />
+    <PackageReference Include="NetArchTest.Rules" />
+    <PackageReference Include="coverlet.collector" />
+  </ItemGroup>
+</Project>

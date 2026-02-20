@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Pattern: Resources.resw — localized string resources for the Uno UI.
+  Located at Strings/{culture}/Resources.resw per Uno localization convention.
+  
+  Accessed in XAML via x:Uid:
+    <TextBlock x:Uid="AppTitle" />              → maps to AppTitle.Text
+    <Button x:Uid="CreateButton" />             → maps to CreateButton.Content
+  
+  Accessed in code via IStringLocalizer:
+    var title = localizer["AppTitle.Text"];
+  
+  Additional languages: create Strings/fr/Resources.resw, Strings/es/Resources.resw, etc.
+  The Uno Localization extension resolves the correct culture at runtime.
+-->
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>1.3</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <!-- ═══ Application ═══ -->
+  <data name="AppTitle.Text" xml:space="preserve">
+    <value>TaskFlow</value>
+    <comment>Application name displayed in the title bar and navigation.</comment>
+  </data>
+  <data name="AppDescription.Text" xml:space="preserve">
+    <value>Task management built with Uno Platform (MVUX)</value>
+  </data>
+
+  <!-- ═══ Navigation ═══ -->
+  <data name="NavTasks.Content" xml:space="preserve">
+    <value>Tasks</value>
+    <comment>Tab bar label for the Todo Items list.</comment>
+  </data>
+  <data name="NavCategories.Content" xml:space="preserve">
+    <value>Categories</value>
+    <comment>Tab bar label for the Categories list.</comment>
+  </data>
+  <data name="NavSettings.Content" xml:space="preserve">
+    <value>Settings</value>
+    <comment>Tab bar label for application settings.</comment>
+  </data>
+
+  <!-- ═══ Todo Items ═══ -->
+  <data name="TodoItemListTitle.Text" xml:space="preserve">
+    <value>Todo Items</value>
+  </data>
+  <data name="SearchPlaceholder.PlaceholderText" xml:space="preserve">
+    <value>Search tasks...</value>
+  </data>
+  <data name="CreateButton.Content" xml:space="preserve">
+    <value>+ New</value>
+  </data>
+  <data name="TodoItemDetailTitle.Text" xml:space="preserve">
+    <value>Task Details</value>
+  </data>
+  <data name="ToggleCompleteButton.Content" xml:space="preserve">
+    <value>Toggle Complete</value>
+  </data>
+  <data name="DeleteButton.Content" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="GoBackButton.Content" xml:space="preserve">
+    <value>Back</value>
+  </data>
+
+  <!-- ═══ Create Todo Item ═══ -->
+  <data name="CreateTodoTitle.Text" xml:space="preserve">
+    <value>New Task</value>
+  </data>
+  <data name="TitleField.PlaceholderText" xml:space="preserve">
+    <value>Task title</value>
+  </data>
+  <data name="DescriptionField.PlaceholderText" xml:space="preserve">
+    <value>Description (optional)</value>
+  </data>
+  <data name="PriorityField.Header" xml:space="preserve">
+    <value>Priority</value>
+  </data>
+  <data name="CategoryField.Header" xml:space="preserve">
+    <value>Category</value>
+  </data>
+  <data name="SaveButton.Content" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="CancelButton.Content" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+
+  <!-- ═══ Categories ═══ -->
+  <data name="CategoryListTitle.Text" xml:space="preserve">
+    <value>Categories</value>
+  </data>
+  <data name="ActiveBadge.Text" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="InactiveBadge.Text" xml:space="preserve">
+    <value>Inactive</value>
+  </data>
+
+  <!-- ═══ Settings ═══ -->
+  <data name="SettingsTitle.Text" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="AppearanceSection.Text" xml:space="preserve">
+    <value>Appearance</value>
+  </data>
+  <data name="DarkThemeToggle.Header" xml:space="preserve">
+    <value>Dark Theme</value>
+  </data>
+  <data name="DeveloperSection.Text" xml:space="preserve">
+    <value>Developer</value>
+  </data>
+  <data name="MockDataToggle.Header" xml:space="preserve">
+    <value>Use Mock Data</value>
+  </data>
+  <data name="MockDataDescription.Text" xml:space="preserve">
+    <value>When enabled, the app uses contrived in-memory data instead of calling the Gateway API.</value>
+  </data>
+  <data name="AboutSection.Text" xml:space="preserve">
+    <value>About</value>
+  </data>
+  <data name="VersionLabel.Text" xml:space="preserve">
+    <value>Version 1.0.0</value>
+  </data>
+
+  <!-- ═══ Common / Shared ═══ -->
+  <data name="LoadingText.Text" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
+  <data name="ErrorText.Text" xml:space="preserve">
+    <value>Something went wrong</value>
+  </data>
+  <data name="RetryButton.Content" xml:space="preserve">
+    <value>Retry</value>
+  </data>
+  <data name="NoItemsText.Text" xml:space="preserve">
+    <value>No items found</value>
+  </data>
+</root>

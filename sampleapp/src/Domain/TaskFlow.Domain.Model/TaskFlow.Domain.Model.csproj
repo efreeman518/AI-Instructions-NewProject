@@ -1,0 +1,15 @@
+<!-- Pattern: Domain.Model has NO infrastructure dependencies.
+     Only references the shared infrastructure domain package for base classes. -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Domain.Model</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Provides: EntityBase, TenantEntityBase, DomainResult<T>, ITenantEntity<T> -->
+    <PackageReference Include="Package.Infrastructure.Domain" />
+  </ItemGroup>
+</Project>
