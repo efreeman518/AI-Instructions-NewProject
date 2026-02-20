@@ -71,10 +71,95 @@ The `sampleapp/` directory contains a complete 25-project reference solution (**
 
 ## How to Use
 
-1. **Start with [domain-inputs.schema.md](domain-inputs.schema.md)** — Gather the required domain-specific inputs from the user (project name, entities, relationships, tenant model, etc.)
-2. **Choose a scaffolding mode** — Full (default) or Lite (see above)
-3. **Choose scaffolding profiles** — set `testingProfile`, (if functions are enabled) `functionProfile`, and (if Uno UI is enabled) `unoProfile` in [domain-inputs.schema.md](domain-inputs.schema.md)
-4. **Follow the skills in order** — Each skill file in `skills/` covers a specific architectural layer or concern. Use them as needed:
+1. **Domain Discovery Conversation (start here)** — Before collecting structured inputs or generating any code, have a collaborative conversation with the engineer to explore and refine the domain. The goal is to surface hidden complexity, clarify business rules, and arrive at a well-thought-out entity model before scaffolding begins. See the **Domain Discovery Protocol** below.
+2. **Capture inputs in [domain-inputs.schema.md](domain-inputs.schema.md)** — After the domain conversation, translate the agreed-upon design into structured domain inputs (project name, entities, relationships, tenant model, etc.)
+3. **Choose a scaffolding mode** — Full (default) or Lite (see above)
+4. **Choose scaffolding profiles** — set `testingProfile`, (if functions are enabled) `functionProfile`, and (if Uno UI is enabled) `unoProfile` in [domain-inputs.schema.md](domain-inputs.schema.md)
+5. **Follow the skills in order** — Each skill file in `skills/` covers a specific architectural layer or concern. Use them as needed:
+
+---
+
+## Domain Discovery Protocol
+
+**Before writing any code or collecting YAML inputs, the AI must lead an exploratory conversation with the engineer to deeply understand the business domain.** This is the most valuable phase of the project — a well-modeled domain prevents expensive rework later.
+
+### Why This Matters
+
+Engineers often start with a rough idea of their entities but haven't fully considered edge cases, relationships, lifecycle states, or future growth. The AI should act as a **domain modeling partner** — asking probing questions, suggesting patterns, challenging assumptions, and proposing alternatives the engineer may not have considered.
+
+### Conversation Flow
+
+The AI should guide the discussion through these areas (adapt to the project):
+
+#### 1. Business Context & Goals
+- What problem does this application solve? Who are the users?
+- What are the core workflows or business processes?
+- Is this replacing an existing system, or greenfield?
+- What scale and growth trajectory is expected?
+
+#### 2. Entity Discovery & Refinement
+- What are the main "things" (nouns) in the domain? Start with what the engineer knows, then probe deeper:
+  - *"You mentioned `Order` — does an order go through lifecycle states? What are they?"*
+  - *"Is a `Customer` always a single person, or can it be an organization?"*
+  - *"You have `Product` — do products have variants (sizes, colors)? Are they configurable?"*
+- For each entity, explore:
+  - **Identity** — What uniquely identifies it? Is there a natural key beyond the database ID?
+  - **Lifecycle** — Does it have states/statuses? What transitions are valid?
+  - **Ownership** — Is it tenant-scoped? User-scoped? Global?
+  - **Cardinality** — How many of these will exist? Dozens, thousands, millions?
+
+#### 3. Relationships & Boundaries
+- How do entities relate? Challenge simple assumptions:
+  - *"Is this truly one-to-many, or could it become many-to-many later?"*
+  - *"Should `Address` be its own entity or embedded within `Customer`?"*
+  - *"When you delete a `Category`, what happens to its `Products`?"*
+- Where are the aggregate boundaries? Which entities are always loaded/saved together?
+- Are there cross-aggregate references that might indicate a bounded context boundary?
+
+#### 4. Business Rules & Validation
+- What are the invariants? (e.g., "An order must have at least one line item", "Price cannot be negative")
+- Are there rules that span multiple entities? (e.g., "A customer can't have more than 5 active orders")
+- What calculations or derived data exist? (e.g., order totals, inventory counts)
+
+#### 5. Data Store Considerations
+- Does any entity have a variable/evolving schema? → Consider Cosmos DB
+- Are there large binary payloads (files, images)? → Consider Blob Storage
+- Is there high-volume append-only data (logs, telemetry)? → Consider Table Storage or event streaming
+- Reference the **Data Store Selection Guide** in [domain-inputs.schema.md](domain-inputs.schema.md)
+
+#### 6. Multi-Tenancy & Access
+- Is the app multi-tenant? How is tenant isolation enforced?
+- What roles exist? What can each role do?
+- Are there entities that are shared across tenants (reference data)?
+
+#### 7. Integration & Events
+- What external systems does this integrate with?
+- What domain events matter? (e.g., "OrderPlaced", "InventoryLow")
+- Are there workflows triggered by state changes?
+
+### AI Behavior During Discovery
+
+- **Ask open-ended questions first**, then narrow down with specific options.
+- **Propose entity models visually** — summarize the emerging model in a compact table or list after exploring each area so the engineer can react to it.
+- **Challenge and suggest** — Don't just record what the engineer says. Offer alternatives:
+  - *"Instead of a boolean `IsActive`, consider a `Status` flags enum so you can represent multiple states."*
+  - *"This looks like it might benefit from a many-to-many with a join entity that carries its own data."*
+  - *"Have you considered making `Address` a value object instead of a separate entity?"*
+- **Summarize iteratively** — After each topic area, recap the current model and confirm before moving on.
+- **Know when to stop** — Domain discovery doesn't need to be exhaustive. Once the core entities (3-8) are well-defined with clear relationships and business rules, propose moving to structured inputs. Edge entities can be added later as vertical slices.
+
+### Transition to Scaffolding
+
+When the conversation has produced a clear domain model, the AI should:
+
+1. **Present a final domain summary** — entities, key properties, relationships, data stores, business rules
+2. **Ask for confirmation** — *"Does this capture your domain accurately? Anything to add or change?"*
+3. **Generate the YAML domain inputs** — Translate the agreed model into the [domain-inputs.schema.md](domain-inputs.schema.md) format
+4. **Proceed to scaffolding** — Follow the skill order below
+
+> **Prompt to trigger domain discovery:**  *"I want to build a new application for [brief description]. Let's think through the domain together before we start coding."*
+
+---
 
 ### Skill Files (in recommended order)
 
@@ -194,3 +279,52 @@ Use these canonical references:
 - CommunityToolkit.Mvvm for messaging
 - Azure Bicep (latest) for Infrastructure as Code
 - Azure CLI / Azure Developer CLI (azd) for deployment
+
+## Recommended MCP Servers
+
+MCP (Model Context Protocol) servers give the AI assistant access to current documentation and operational tools. Configure these in the engineer's AI client before starting scaffolding. The servers below are organized by value tier and mapped to project phases.
+
+### Essential (configure before scaffolding)
+
+| Server | Purpose | Covers |
+|--------|---------|--------|
+| **Microsoft Docs** (`mcp-microsoftdocs`) | Official Microsoft/Azure documentation search, code samples, full-page fetch | .NET, ASP.NET Core, EF Core, Aspire, Azure Functions, Bicep, Entra ID, Container Apps, all Azure services |
+| **Context7** (`@upstash/context7-mcp`) | Third-party and community library documentation | Uno Platform, YARP, FusionCache, Kiota, NBomber, BenchmarkDotNet, TickerQ, CommunityToolkit, Refit, NetArchTest |
+
+### Recommended (high-value for this stack)
+
+| Server | Purpose | When to add |
+|--------|---------|-------------|
+| **GitHub** (`@modelcontextprotocol/server-github`) | Repo management, PRs, issue tracking, Actions workflow status | CI/CD phases, team collaboration |
+| **Azure** (`@azure/mcp`) | Azure resource management, deployment validation, subscription queries | IaC authoring and deployment phases |
+| **Playwright** (`@executeautomation/playwright-mcp-server`) | Browser automation for E2E test authoring and debugging | When scaffolding `Test.PlaywrightUI` |
+| **Fetch** (`@modelcontextprotocol/server-fetch`) | Fetch any URL as markdown — web pages, OpenAPI specs, NuGet READMEs | Kiota client generation (fetching OpenAPI specs), reading package docs, checking release notes |
+| **Sequential Thinking** (`@modelcontextprotocol/server-sequential-thinking`) | Structured multi-step reasoning with revision and branching | Domain discovery conversations, complex architecture decisions, debugging multi-layer issues |
+
+### Optional (add based on workflow needs)
+
+| Server | Purpose | When to consider |
+|--------|---------|------------------|
+| **Git** (`@modelcontextprotocol/server-git`) | Direct git operations — commits, diffs, log, branches | When AI needs to create commits or inspect history directly |
+| **Docker** (`@modelcontextprotocol/server-docker`) | Container management — list, start, stop, inspect, logs | Aspire local dev with SQL/Redis containers, debugging container issues |
+| **Memory** (`@modelcontextprotocol/server-memory`) | Persistent knowledge graph across sessions | Long-running projects where domain context must survive session boundaries (supplements `HANDOFF.md`) |
+| **Brave Search** (`@anthropic/mcp-brave-search`) or **Tavily** (`@tavily/mcp-server`) | Web search for current information | Troubleshooting obscure errors, finding latest package versions, checking breaking changes |
+| **Azure DevOps** (community) | ADO work items, repos, pipelines | If using Azure DevOps instead of GitHub |
+| **Filesystem** (`@modelcontextprotocol/server-filesystem`) | Broader file operations (move, search, trees) | Pure MCP clients without built-in file tools (VS Code already covers this) |
+
+### Phase-to-MCP Mapping
+
+| Project Phase | Servers active |
+|--------------|----------------|
+| Domain Discovery | Microsoft Docs, Context7, Sequential Thinking |
+| Foundation & App Core | Microsoft Docs, Context7, Fetch (for package docs) |
+| Edge & Runtime (Gateway, Aspire) | Microsoft Docs, Context7, Docker (if containers) |
+| Optional Workloads (Functions, Uno UI) | Microsoft Docs, Context7, Fetch (OpenAPI specs for Kiota) |
+| Testing & E2E | Playwright, Context7 (NBomber, BenchmarkDotNet) |
+| CI/CD & Deployment | GitHub, Azure, Brave Search/Tavily (troubleshooting) |
+| IaC (Bicep) | Microsoft Docs, Azure |
+| Cross-session continuity | Memory, Git |
+
+> **No dedicated Aspire or Uno Platform MCP servers are needed.** Microsoft Docs covers all Aspire documentation on Microsoft Learn. Context7 indexes Uno Platform library docs. Between these two essential servers, both frameworks are fully covered.
+
+> **AI assistants:** When you need current API signatures, patterns, or configuration details for any library in the target stack — **use MCP documentation lookups instead of relying on training data**. Use Microsoft Docs for .NET/Azure APIs and Context7 for third-party libraries. Use Sequential Thinking for complex domain modeling and architecture decisions. Use Fetch to retrieve OpenAPI specs and package documentation directly.

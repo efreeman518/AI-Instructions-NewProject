@@ -1,5 +1,7 @@
 # Domain Inputs Schema
 
+> **Start with a conversation, not a form.** Before filling out these inputs, use the **Domain Discovery Protocol** (see [SKILL.md](SKILL.md)) to have a collaborative conversation with the AI about your business domain. The AI will help you think through entities, relationships, business rules, and data store choices — then generate these inputs for you based on the agreed model.
+
 Before scaffolding a new project, gather these inputs from the user. Items marked **required** must be provided; others have sensible defaults.
 
 ## Project Identity

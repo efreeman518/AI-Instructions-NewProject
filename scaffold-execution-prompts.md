@@ -6,6 +6,39 @@ Use [engineer-checklist.md](engineer-checklist.md) as the single compile/run exe
 
 ---
 
+## Domain Discovery Prompt
+
+Run this prompt **before** any scaffolding work. The goal is to explore the business domain collaboratively and arrive at a well-thought-out entity model.
+
+### Prompt
+
+> I want to build a new application for **[brief description of the business domain]**.
+>
+> Before we scaffold anything, let's think through the domain together. Here's what I know so far:
+> - [List your initial entities, concepts, or business processes]
+> - [Any known constraints: multi-tenant, specific data stores, scale expectations]
+>
+> Please help me explore:
+> 1. **Entity discovery** — What are the core entities? What properties, states, and lifecycle do they have?
+> 2. **Relationships** — How do entities relate? Where are the aggregate boundaries?
+> 3. **Business rules** — What invariants and validation rules apply?
+> 4. **Data store choices** — Which entities fit SQL, Cosmos DB, Table Storage, or Blob Storage?
+> 5. **Anything I'm missing** — Edge cases, future growth, common patterns for this type of domain
+>
+> Summarize the emerging model as we go so I can react and refine it. When we're both happy with the design, generate the YAML domain inputs.
+
+### Expected Agent Behavior
+
+- Lead with open-ended questions to understand the business context and goals.
+- For each entity, probe: identity, lifecycle states, ownership (tenant-scoped?), cardinality, and natural keys.
+- Challenge oversimplifications (e.g., "Is this really one-to-many, or could it be many-to-many?").
+- Suggest patterns the engineer may not have considered (flags enums instead of booleans, value objects, embedded documents).
+- Summarize the model iteratively after each topic area — present a compact table of entities, properties, and relationships.
+- Know when to stop — once 3-8 core entities are well-defined, propose transitioning to structured inputs.
+- Generate the YAML domain inputs based on the agreed model and confirm before proceeding to scaffolding.
+
+---
+
 ## Environment Preflight
 
 Run this prompt before starting any major scaffolding phase. It validates the environment is ready and reports blockers.

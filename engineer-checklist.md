@@ -23,6 +23,7 @@ Use this file as the **single execution path** for compile/run verification whil
 
 ## Preflight (Run Once)
 
+### Development Tools
 - [ ] Git repo initialized with `.gitignore` for .NET
 - [ ] `.NET SDK` installed (`dotnet --version`)
 - [ ] Docker Desktop running (if Aspire uses SQL/Redis containers)
@@ -32,6 +33,29 @@ Use this file as the **single execution path** for compile/run verification whil
 - [ ] Uno templates installed (`dotnet new install Uno.Templates`) *(if using Uno UI)*
 - [ ] Uno.Check installed (`dotnet tool install -g uno.check`) *(if using Uno UI)*
 - [ ] Kiota CLI installed (`dotnet tool install -g Microsoft.OpenApi.Kiota`) *(if using Uno UI)*
+
+### AI Assistant — MCP Servers
+
+Configure these in your AI client (VS Code `settings.json` or Claude Desktop config) so the AI can look up current docs and interact with tools during scaffolding.
+
+**Essential (configure now):**
+- [ ] **Microsoft Docs** MCP (`mcp-microsoftdocs`) — .NET, Aspire, EF Core, Azure, Bicep, Entra ID
+- [ ] **Context7** MCP (`@upstash/context7-mcp`) — Uno Platform, YARP, FusionCache, Kiota, TickerQ, CommunityToolkit
+
+**Recommended (high-value):**
+- [ ] **GitHub** MCP (`@modelcontextprotocol/server-github`) *(if using GitHub)* — repo management, Actions status
+- [ ] **Azure** MCP (`@azure/mcp`) *(if deploying to Azure)* — resource management, deployment validation
+- [ ] **Playwright** MCP (`@executeautomation/playwright-mcp-server`) *(if scaffolding E2E tests)* — browser automation
+- [ ] **Fetch** MCP (`@modelcontextprotocol/server-fetch`) — retrieve OpenAPI specs, package docs, release notes
+- [ ] **Sequential Thinking** MCP (`@modelcontextprotocol/server-sequential-thinking`) — structured reasoning for domain modeling
+
+**Optional (add as needed):**
+- [ ] **Git** MCP (`@modelcontextprotocol/server-git`) — direct git operations (commits, diffs, branches)
+- [ ] **Docker** MCP (`@modelcontextprotocol/server-docker`) — container management for Aspire local dev
+- [ ] **Memory** MCP (`@modelcontextprotocol/server-memory`) — persistent knowledge graph across sessions
+- [ ] **Brave Search** (`@anthropic/mcp-brave-search`) or **Tavily** (`@tavily/mcp-server`) — web search for troubleshooting
+
+> See [GET-STARTED-human.md](GET-STARTED-human.md) prerequisites for full descriptions and phase mapping.
 
 ---
 

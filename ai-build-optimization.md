@@ -11,6 +11,12 @@ Use this guide to scaffold faster with fewer retries when building C#/.NET apps 
 
 ## High-Confidence Workflow
 
+0. **Start with domain discovery**
+   - Before collecting YAML inputs or generating any code, lead a collaborative conversation to explore the business domain
+   - Probe entities, relationships, lifecycle states, business rules, and data store fit
+   - Summarize the emerging model iteratively and get engineer confirmation
+   - Generate structured domain inputs from the agreed model
+   - See the **Domain Discovery Protocol** in [SKILL.md](SKILL.md) and the **Domain Discovery Prompt** in [scaffold-execution-prompts.md](scaffold-execution-prompts.md)
 1. **Pin scope per turn**
    - Ask for one phase at a time (foundation, app core, runtime, delivery)
    - Explicitly state what to skip for now (e.g., no UI, no Functions yet)
@@ -125,6 +131,7 @@ If failures persist after one fix pass, flag them in HANDOFF.md for the engineer
 - **Use the Phase Loading Manifest below** — only load the files listed for the current phase
 - **For composite patterns, read `sampleapp-patterns.md`** — this distills all 16 cross-cutting patterns from sampleapp into one file (~500 lines)
 - **Never read sampleapp `.cs` files speculatively** — only open a specific sampleapp source file as a last resort when `sampleapp-patterns.md` is insufficient and you know the exact file path
+- **Use MCP servers for current docs** — When you need up-to-date API signatures, configuration patterns, or package details, use MCP lookups instead of relying on training data. Use **Microsoft Docs MCP** for .NET/Azure APIs (Aspire, EF Core, Bicep, Functions, Entra ID) and **Context7 MCP** for third-party libraries (Uno Platform, YARP, FusionCache, Kiota, TickerQ, NBomber). This is especially important for Aspire hosting packages, Uno.Extensions APIs, and Azure SDK patterns that evolve between releases.
 
 ---
 
