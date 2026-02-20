@@ -2,7 +2,7 @@
      NOT a test project — runs as a console app that executes NBomber scenarios.
      No project references — tests via HTTP against a running API/Gateway.
      
-     Run: dotnet run -- (args passed to NBomber CLI)
+     Run: dotnet run - (args passed to NBomber CLI)
      Reports are generated in ./reports/ after each run. -->
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
