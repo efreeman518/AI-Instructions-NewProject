@@ -147,6 +147,10 @@ Is it simple key-value lookup (partition + row key)?
 Is the schema variable, or does it form self-contained aggregates?
   → Yes → cosmosdb
   → Otherwise → sql (safe default)
+
+Does the data need semantic search / similarity matching?
+  → If entity is already in sql or cosmosdb and search is secondary → use in-database vector indexing
+  → If search is a primary feature or spans multiple data sources → azureAiSearch
 ```
 
 ## Relationship Types
@@ -610,6 +614,88 @@ updateToLatestNugets: true
 | `includeGitHubActions` | No | `false` | Generate GitHub Actions workflow for CI/CD deployment |
 | `includeAzd` | No | `false` | Generate `azure.yaml` for Azure Developer CLI (`azd up`) |
 | `usePrivateEndpoints` | No | `false` | Enable private endpoints for SQL, Redis, Key Vault in prod |
+
+## AI Services
+
+Use when the domain conversation identifies opportunities for semantic search, AI-powered decision-making, or agent-based workflows.
+
+| Input | Required | Default | Description |
+|-------|----------|---------|-------------|
+| `includeAiServices` | No | `false` | Enable AI service infrastructure (model clients, vector indexing support) |
+| `aiSearchProvider` | No | `none` | Vector search backend: `none`, `azureSql`, `cosmosdb`, `azureAiSearch`. Use `azureSql` or `cosmosdb` for in-database vector indexing; use `azureAiSearch` for a dedicated search index with advanced ranking, hybrid search, and large-scale vector workloads. |
+| `aiAgentFramework` | No | `none` | Agent framework: `none`, `agentFramework`, `microsoftFoundry`. Use `agentFramework` for in-code agent orchestration via **Microsoft Agent Framework** (successor to Semantic Kernel + AutoGen) with tools, plugins, and multi-agent handoff; use `microsoftFoundry` for managed model endpoints, prompt management, and Foundry Agent Service. Both can be combined. |
+| `includeMultiAgent` | No | `false` | Enable multi-agent orchestration patterns (requires `aiAgentFramework` to be set). Scaffolds an agent orchestrator with handoff, planning, and tool-use patterns. |
+
+### Vector Search Configuration
+
+When `aiSearchProvider` is set, define which entities participate in vector indexing:
+
+```yaml
+aiServices:
+  aiSearchProvider: azureAiSearch
+  vectorEntities:
+    - entity: Product
+      searchableFields: [Name, Description]          # text fields to embed
+      embeddingModel: text-embedding-3-small          # OpenAI / Azure OpenAI embedding model
+      dimensions: 1536                                 # embedding vector dimensions
+      indexName: products-index                        # Azure AI Search index name (azureAiSearch only)
+      hybridSearch: true                               # combine vector + keyword search (azureAiSearch only)
+    - entity: KnowledgeArticle
+      searchableFields: [Title, Content]
+      embeddingModel: text-embedding-3-small
+      dimensions: 1536
+      indexName: knowledge-index
+```
+
+#### When to Choose Each Vector Search Backend
+
+| Signal | → `azureSql` | → `cosmosdb` | → `azureAiSearch` |
+|--------|-------------|-------------|-------------------|
+| **Entity already in SQL** | Entity is `dataStore: sql` and search is a secondary need | — | Complex ranking, facets, or large corpus |
+| **Entity already in Cosmos DB** | — | Entity is `dataStore: cosmosdb`, search queries align with partition key patterns | Cross-partition semantic search, hybrid ranking |
+| **Dedicated search experience** | — | — | Search is a primary feature; need advanced relevance, filters, hybrid (vector + BM25), semantic ranker |
+| **Scale** | < 1M vectors per table | < 1M vectors per container | Millions of vectors with low latency |
+| **Operational simplicity** | Built-in; no extra resource | Built-in; no extra resource | Separate Azure resource; more knobs, more power |
+
+> **Decision shortcut:** If the entity already lives in Azure SQL or Cosmos DB and search is secondary, use in-database vector indexing to avoid provisioning another resource. If search is a core feature or spans multiple entities/data sources, use Azure AI Search.
+
+### Agent Workflow Configuration
+
+When `aiAgentFramework` is set, define agent capabilities:
+
+```yaml
+aiServices:
+  aiAgentFramework: agentFramework
+  includeMultiAgent: true
+  agents:
+    - name: TriageAgent
+      description: "Classifies incoming support requests and routes to the appropriate handler"
+      modelEndpoint: gpt-4o                           # Azure OpenAI deployment name
+      tools: [TicketClassifier, PriorityScorer, SearchKnowledgeBase, GetCustomerHistory]
+    - name: RecommendationAgent
+      description: "Provides product recommendations based on customer profile and order history"
+      modelEndpoint: gpt-4o
+      tools: [ProductMatcher, HistoryAnalyzer]
+    - name: OrchestratorAgent
+      description: "Coordinates multi-agent handoff for complex customer requests"
+      modelEndpoint: gpt-4o
+      delegates: [TriageAgent, RecommendationAgent]   # agents this orchestrator can delegate to
+```
+
+### AI Services Generation Rules
+
+- When `aiSearchProvider` is set:
+  - Generates an `Infrastructure.AiSearch` project (or adds vector support to existing data access projects for in-database providers).
+  - For `azureAiSearch`: scaffolds `I{Entity}SearchService`, index schema, indexer pipeline, and Aspire/IaC wiring for the Azure AI Search resource.
+  - For `azureSql` / `cosmosdb`: adds vector columns/properties to existing entity configurations and generates embedding-aware repository extensions.
+  - Generates an `IEmbeddingService` abstraction with an Azure OpenAI implementation for computing embeddings.
+- When `aiAgentFramework` is set:
+  - Generates an `Infrastructure.AiAgents` project with agent definitions, tool stubs, and DI registration.
+  - For `agentFramework`: scaffolds `AgentBuilder` configuration, tool classes, and multi-agent handoff patterns using Microsoft Agent Framework (`Microsoft.Extensions.Agents` packages).
+  - For `microsoftFoundry`: scaffolds Foundry Agent Service client, managed endpoint configuration, and prompt template management.
+  - For `includeMultiAgent: true`: generates an orchestrator pattern with agent handoff, shared context, and conversation management.
+- AI service configuration (model endpoints, API keys) follows the same pattern as other infrastructure: `appsettings.json` for non-secret config, Key Vault for secrets, Aspire resource wiring.
+- All AI service dependencies are stubbed for local development (mock embedding service, in-memory vector store) so the project compiles and runs without live Azure AI resources.
 
 ## Deployable Projects
 

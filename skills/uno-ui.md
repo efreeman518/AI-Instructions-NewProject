@@ -4,6 +4,15 @@
 
 The UI project uses **Uno Platform** to build a cross-platform C#/XAML application that targets Web (WASM), Android, iOS, macOS, Windows, and Linux — all from a single codebase. The app authenticates to and consumes the **YARP gateway** defined in the backend solution. It follows the **MVUX** (Model-View-Update-eXtended) pattern for state management with reactive feeds and states.
 
+> **MCP Servers:** Uno Platform provides two official MCPs:
+> - **Remote MCP** (`https://mcp.platform.uno/v1`) — `uno_platform_docs_search`, `uno_platform_docs_fetch`, `uno_platform_agent_rules_init`, `uno_platform_usage_rules_init`, plus `/new` and `/init` prompts. Use `/init` at the start of the Uno UI phase to prime the session with best practices. Available automatically via the Uno Platform VS Code extension, or manually add to `.vs/mcp.json`:
+>   ```json
+>   { "uno": { "url": "https://mcp.platform.uno/v1" } }
+>   ```
+> - **App MCP** (local) — `uno_app_get_screenshot`, `uno_app_visualtree_snapshot`, `uno_app_pointer_click`, `uno_app_key_press`, `uno_app_type_text`, and more. Gives the AI "eyes and hands" to validate generated UI against a running app. Uses the `dnx` command (.NET 10+) or `dotnet tool install -g uno.devserver` for .NET 9.
+>
+> Both require an Uno Platform account sign-in. See [Uno Platform MCP docs](https://platform.uno/docs/articles/features/using-the-uno-mcps.html) and [troubleshooting](https://platform.uno/docs/articles/common-issues-ai-agents.html) for setup. See also the Recommended MCP Servers section in [SKILL.md](../SKILL.md).
+
 ## Uno Scaffolding Profiles
 
 Use `unoProfile` from [domain-inputs.schema.md](../domain-inputs.schema.md) to right-size initial UI generation.

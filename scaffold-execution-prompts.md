@@ -23,7 +23,8 @@ Run this prompt **before** any scaffolding work. The goal is to explore the busi
 > 2. **Relationships** — How do entities relate? Where are the aggregate boundaries?
 > 3. **Business rules** — What invariants and validation rules apply?
 > 4. **Data store choices** — Which entities fit SQL, Cosmos DB, Table Storage, or Blob Storage?
-> 5. **Anything I'm missing** — Edge cases, future growth, common patterns for this type of domain
+> 5. **AI services** — Could any entity benefit from semantic search via vector indexing (Azure SQL, Cosmos DB, Azure AI Search)? Are there opportunities for AI agent or multi-agent workflows (Microsoft Foundry, Microsoft Agent Framework)?
+> 6. **Anything I'm missing** — Edge cases, future growth, common patterns for this type of domain
 >
 > Summarize the emerging model as we go so I can react and refine it. When we're both happy with the design, generate the YAML domain inputs.
 
@@ -33,6 +34,7 @@ Run this prompt **before** any scaffolding work. The goal is to explore the busi
 - For each entity, probe: identity, lifecycle states, ownership (tenant-scoped?), cardinality, and natural keys.
 - Challenge oversimplifications (e.g., "Is this really one-to-many, or could it be many-to-many?").
 - Suggest patterns the engineer may not have considered (flags enums instead of booleans, value objects, embedded documents).
+- Proactively explore AI service opportunities: vector indexing for semantic search, AI agent workflows for complex decision-making or classification, and multi-agent orchestration for cross-cutting processes.
 - Summarize the model iteratively after each topic area — present a compact table of entities, properties, and relationships.
 - Know when to stop — once 3-8 core entities are well-defined, propose transitioning to structured inputs.
 - Generate the YAML domain inputs based on the agreed model and confirm before proceeding to scaffolding.
@@ -102,7 +104,8 @@ Run after completing a scaffolding phase to confirm stability before moving on.
 > - After adding packages, update Directory.Packages.props to latest stable versions
 > - Stub any external services that require credentials so the project compiles locally
 > - After generation, run `dotnet build` — if code-level errors, fix in one pass; if infrastructure errors, flag for engineer
-> - If you discover instruction gaps, append to UPDATE_INSTRUCTIONS.md
+> - **Before starting, search for the latest MCP servers** relevant to this phase's libraries/services. Suggest any useful new MCPs to the engineer and log findings in UPDATE-INSTRUCTIONS.md.
+> - If you discover instruction gaps, append to UPDATE-INSTRUCTIONS.md
 > - When context exceeds 50% and at a good stopping point, create/update HANDOFF.md
 
 ---

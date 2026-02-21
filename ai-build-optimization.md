@@ -20,6 +20,7 @@ Use this guide to scaffold faster with fewer retries when building C#/.NET apps 
 1. **Pin scope per turn**
    - Ask for one phase at a time (foundation, app core, runtime, delivery)
    - Explicitly state what to skip for now (e.g., no UI, no Functions yet)
+   - **Before starting the phase, search for the latest MCP servers** relevant to the upcoming work (see Dynamic MCP Discovery Protocol in [SKILL.md](SKILL.md)). Suggest any new MCPs to the engineer and log findings in [UPDATE-INSTRUCTIONS.md](UPDATE-INSTRUCTIONS.md).
 2. **Provide structured inputs**
    - Include `ProjectName`, `scaffoldMode`, `testingProfile`, entity list, and enabled hosts
    - Prefer YAML from [domain-inputs.schema.md](domain-inputs.schema.md)
@@ -86,7 +87,8 @@ Constraints:
 - After adding packages, update Directory.Packages.props to latest stable versions
 - Stub any external services that require credentials so the project compiles locally
 - After generation, run `dotnet build` — fix code errors in one pass; flag infrastructure errors for engineer
-- If you discover instruction gaps or improvements, append to UPDATE_INSTRUCTIONS.md
+- Before starting, do a quick search for any new MCP servers relevant to the skills being executed (data access, domain model, etc.) and suggest them to the engineer. Log any findings in UPDATE-INSTRUCTIONS.md.
+- If you discover instruction gaps or improvements, append to UPDATE-INSTRUCTIONS.md
 - When context exceeds 50% and at a good stopping point, create/update HANDOFF.md
 ```
 
@@ -303,9 +305,9 @@ Some files are too large to load whole. Use these strategies:
 
 ---
 
-## Instruction Maintenance — `UPDATE_INSTRUCTIONS.md`
+## Instruction Maintenance — `UPDATE-INSTRUCTIONS.md`
 
-During implementation, the AI will often discover gaps, ambiguities, or better approaches that aren't captured in the current instruction/skill/template files. **Create or append to `UPDATE_INSTRUCTIONS.md`** in the project root to capture these findings for the instruction maintenance agent.
+During implementation, the AI will often discover gaps, ambiguities, or better approaches that aren't captured in the current instruction/skill/template files. **Create or append to `UPDATE-INSTRUCTIONS.md`** in the project root to capture these findings for the instruction maintenance agent.
 
 ### When to Write
 
@@ -319,7 +321,7 @@ During implementation, the AI will often discover gaps, ambiguities, or better a
 ### Format
 
 ```markdown
-# UPDATE_INSTRUCTIONS.md
+# UPDATE-INSTRUCTIONS.md
 Generated/updated: {timestamp}
 
 ## Findings

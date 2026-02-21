@@ -125,6 +125,7 @@ The AI should guide the discussion through these areas (adapt to the project):
 - Does any entity have a variable/evolving schema? → Consider Cosmos DB
 - Are there large binary payloads (files, images)? → Consider Blob Storage
 - Is there high-volume append-only data (logs, telemetry)? → Consider Table Storage or event streaming
+- Does any entity need semantic search or similarity matching? → Consider vector indexing (Azure SQL, Cosmos DB, or Azure AI Search)
 - Reference the **Data Store Selection Guide** in [domain-inputs.schema.md](domain-inputs.schema.md)
 
 #### 6. Multi-Tenancy & Access
@@ -136,6 +137,17 @@ The AI should guide the discussion through these areas (adapt to the project):
 - What external systems does this integrate with?
 - What domain events matter? (e.g., "OrderPlaced", "InventoryLow")
 - Are there workflows triggered by state changes?
+
+#### 8. AI Services & Intelligent Capabilities
+- **Semantic search / vector indexing** — Does any entity need full-text semantic search beyond simple WHERE filters? Azure SQL, Cosmos DB, and Azure AI Search all support vector indexing for semantic search. If users will search with natural language queries (e.g., "find products similar to…", "search knowledge base"), consider adding vector embeddings to the relevant entities or provisioning an Azure AI Search index.
+  - *"Will users search this data with natural language or need similarity matching?"*
+  - *"Could a vector index improve the search experience for this entity?"*
+  - *"Is the search volume high enough to justify a dedicated Azure AI Search resource, or can in-database vector search (Azure SQL / Cosmos DB) suffice?"*
+- **AI agent / multi-agent workflows** — Are there scenarios where an AI agent (or orchestrated team of agents) could add value? Consider **Microsoft Foundry** for managed model endpoints and the **Microsoft Agent Framework** (successor to Semantic Kernel + AutoGen) for in-code agent orchestration.
+  - *"Are there decision-making or classification tasks that could be delegated to an AI model?"*
+  - *"Would a multi-agent workflow improve complex processes (e.g., intake triage, document analysis, recommendation engine)?"*
+  - *"Do you need a conversational agent or copilot experience embedded in the app?"*
+- Reference the **AI Services** section in [domain-inputs.schema.md](domain-inputs.schema.md) for structured inputs.
 
 ### AI Behavior During Discovery
 
@@ -242,7 +254,7 @@ Use these canonical references:
 - **UI ↔ Gateway** — The Uno app authenticates to and consumes the YARP Gateway; it never calls the API directly
 - **Aspire ↔ IaC consistency** — Bicep templates must mirror Aspire AppHost resources; connection string names, replica counts, and ingress config must match exactly
 - **Maturity-first scaffolding** — start from cohesive minimums (`testingProfile: balanced`, `functionProfile: starter`, `unoProfile: starter`) and promote after core vertical slices stabilize
-- **Instruction maintenance** — During implementation, capture gaps/improvements in `UPDATE_INSTRUCTIONS.md` for the instruction maintenance agent. Do not modify instruction files directly during scaffolding.
+- **Instruction maintenance** — During implementation, capture gaps/improvements in [UPDATE-INSTRUCTIONS.md](UPDATE-INSTRUCTIONS.md) for the instruction maintenance agent. Do not modify instruction files directly during scaffolding.
 - **Session handoff** — When context is over 50% and at a good stopping point, proactively create/update `HANDOFF.md` so the next session can continue seamlessly.
 
 ## Reference Files
@@ -253,7 +265,7 @@ Use these canonical references:
 | [vertical-slice-checklist.md](vertical-slice-checklist.md) | Complete file checklist when adding a new entity vertical slice |
 | [troubleshooting.md](troubleshooting.md) | AI triage policy — classify quickly, one code-fix pass max, then flag |
 | [engineer-checklist.md](engineer-checklist.md) | Engineer execution checklist — compile/run verification, host startup, and environment tasks |
-| [ai-build-optimization.md](ai-build-optimization.md) | Prompting, iteration, validation patterns, **Fail Fast Protocol**, **Phase Loading Manifest**, **Session Handoff Protocol**, and **Instruction Maintenance (UPDATE_INSTRUCTIONS.md)** |
+| [ai-build-optimization.md](ai-build-optimization.md) | Prompting, iteration, validation patterns, **Fail Fast Protocol**, **Phase Loading Manifest**, **Session Handoff Protocol**, and **Instruction Maintenance ([UPDATE-INSTRUCTIONS.md](UPDATE-INSTRUCTIONS.md))** |
 | [domain-inputs.schema.md](domain-inputs.schema.md) | Schema for user-provided domain inputs (including `customNugetFeeds`) |
 | [sampleapp-patterns.md](sampleapp-patterns.md) | **Distilled composite patterns** from sampleapp — use this instead of reading sampleapp source |
 | `sampleapp/` | Complete 25-project reference implementation (TaskFlow) — **human reference only, do not bulk-load** |
@@ -269,6 +281,9 @@ Use these canonical references:
 - Entity Framework Core (latest, matching .NET SDK) — SQL Server / Azure SQL
 - .NET Aspire (latest) for orchestration
 - Azure (App Service, Container Apps, Functions, Azure SQL, Redis, Key Vault, Entra ID)
+- Microsoft Foundry for managed AI model endpoints, Foundry Agent Service, and prompt management
+- Microsoft Agent Framework (latest) for in-code agent orchestration, multi-agent handoff, and tool-calling patterns
+- Azure AI Search for vector indexing and hybrid semantic search
 - MSTest + CleanMoq for unit testing, Playwright for E2E, NetArchTest for architecture, NBomber for load, BenchmarkDotNet for benchmarks
 - FusionCache + Redis for caching
 - YARP (latest) for gateway/reverse proxy
@@ -296,7 +311,9 @@ MCP (Model Context Protocol) servers give the AI assistant access to current doc
 | Server | Purpose | When to add |
 |--------|---------|-------------|
 | **GitHub** (`@modelcontextprotocol/server-github`) | Repo management, PRs, issue tracking, Actions workflow status | CI/CD phases, team collaboration |
-| **Azure** (`@azure/mcp`) | Azure resource management, deployment validation, subscription queries | IaC authoring and deployment phases |
+| **Azure** (`@azure/mcp`) | Azure resource management, deployment validation, subscription queries — also covers **Microsoft Foundry** (models, agents, threads, evaluations) and **Azure AI Search** (index management, search queries) | IaC authoring, deployment phases, AI service scaffolding |
+| **Uno Platform Remote MCP** (`https://mcp.platform.uno/v1`) | Uno Platform documentation search/fetch (`uno_platform_docs_search`, `uno_platform_docs_fetch`), agent priming prompts (`/new`, `/init`), usage rules (`uno_platform_agent_rules_init`, `uno_platform_usage_rules_init`) | Uno UI scaffolding phase — provides up-to-date docs, MVUX patterns, and best-practice priming directly from the Uno Platform team. Available via the **Uno Platform VS Code extension** (`unoplatform.vscode`) or manually via `mcp.json`. Requires an Uno Platform account sign-in. |
+| **Uno Platform App MCP** (local, via Uno Platform extension) | Live app interaction — screenshots (`uno_app_get_screenshot`), visual tree inspection (`uno_app_visualtree_snapshot`), pointer clicks, key presses, text input, DataContext inspection | UI development and testing — gives the AI "eyes and hands" to validate generated UI against a running app. Requires a running Uno app and the `dnx` command (.NET 10+) or `uno-devserver` tool (.NET 9). Community license includes core tools; Pro license adds automation peer actions and DataContext inspection. |
 | **Playwright** (`@executeautomation/playwright-mcp-server`) | Browser automation for E2E test authoring and debugging | When scaffolding `Test.PlaywrightUI` |
 | **Fetch** (`@modelcontextprotocol/server-fetch`) | Fetch any URL as markdown — web pages, OpenAPI specs, NuGet READMEs | Kiota client generation (fetching OpenAPI specs), reading package docs, checking release notes |
 | **Sequential Thinking** (`@modelcontextprotocol/server-sequential-thinking`) | Structured multi-step reasoning with revision and branching | Domain discovery conversations, complex architecture decisions, debugging multi-layer issues |
@@ -316,15 +333,41 @@ MCP (Model Context Protocol) servers give the AI assistant access to current doc
 
 | Project Phase | Servers active |
 |--------------|----------------|
-| Domain Discovery | Microsoft Docs, Context7, Sequential Thinking |
-| Foundation & App Core | Microsoft Docs, Context7, Fetch (for package docs) |
+| Domain Discovery | Microsoft Docs, Context7, Sequential Thinking, **Azure MCP** (for Foundry model/agent exploration) |
+| Foundation & App Core | Microsoft Docs, Context7, Fetch (for package docs), **Azure MCP** (if AI services enabled) |
 | Edge & Runtime (Gateway, Aspire) | Microsoft Docs, Context7, Docker (if containers) |
-| Optional Workloads (Functions, Uno UI) | Microsoft Docs, Context7, Fetch (OpenAPI specs for Kiota) |
+| Optional Workloads (Functions, Uno UI) | Microsoft Docs, Context7, Fetch (OpenAPI specs for Kiota), **Uno Platform Remote MCP** + **Uno Platform App MCP** (for Uno UI) |
 | Testing & E2E | Playwright, Context7 (NBomber, BenchmarkDotNet) |
 | CI/CD & Deployment | GitHub, Azure, Brave Search/Tavily (troubleshooting) |
 | IaC (Bicep) | Microsoft Docs, Azure |
 | Cross-session continuity | Memory, Git |
 
-> **No dedicated Aspire or Uno Platform MCP servers are needed.** Microsoft Docs covers all Aspire documentation on Microsoft Learn. Context7 indexes Uno Platform library docs. Between these two essential servers, both frameworks are fully covered.
+> **No dedicated Aspire MCP server is needed.** Microsoft Docs covers all Aspire documentation on Microsoft Learn. For **Uno Platform**, use the two official MCPs provided by the Uno Platform VS Code extension: the **Remote MCP** for documentation search/fetch and best-practice priming, and the **App MCP** for live app interaction (screenshots, visual tree, clicks). Both require the Uno Platform extension (`unoplatform.vscode`) and an Uno Platform account sign-in. See [Uno Platform MCP docs](https://platform.uno/docs/articles/features/using-the-uno-mcps.html) for setup details.
+
+> **AI assistants:** When scaffolding Uno UI, use the `/init` prompt from the Uno Platform MCP to prime the session with Uno best practices before generating code. Use `uno_platform_docs_search` and `uno_platform_docs_fetch` for current API patterns. During UI validation, use `uno_app_get_screenshot` and `uno_app_visualtree_snapshot` from the App MCP to verify generated UI against a running app.
 
 > **AI assistants:** When you need current API signatures, patterns, or configuration details for any library in the target stack — **use MCP documentation lookups instead of relying on training data**. Use Microsoft Docs for .NET/Azure APIs and Context7 for third-party libraries. Use Sequential Thinking for complex domain modeling and architecture decisions. Use Fetch to retrieve OpenAPI specs and package documentation directly.
+
+### Dynamic MCP Discovery Protocol
+
+The MCP ecosystem evolves rapidly. **Before starting each scaffolding phase**, the AI agent should perform a real-time search for new or updated MCP servers that may be relevant to the upcoming work. This ensures the engineer benefits from the latest tooling without relying solely on the static list above.
+
+#### When to Search
+
+- **Before each phase transition** (Foundation → App Core → Edge → Optional Workloads → Testing → IaC/CI)
+- **When encountering a new library or service** not listed in the phase mapping above
+- **When a known MCP is failing or returning stale results** — check for updates or alternatives
+
+#### How to Search
+
+1. **Use web search or Fetch** to query for `"{library or service name} MCP server"` (e.g., `"Aspire MCP server"`, `"FusionCache MCP"`, `"TickerQ MCP"`)
+2. Check [modelcontextprotocol.io](https://modelcontextprotocol.io) for the official MCP server registry
+3. Check npm (`npmjs.com/search?q=mcp+{name}`) and GitHub (`github.com/search?q={name}+mcp+server`) for community servers
+4. Validate that any discovered MCP is actively maintained (recent commits, non-archived repo)
+
+#### What to Do with Findings
+
+- **If a useful new MCP is found:** Suggest it to the engineer for installation, and append a finding to [UPDATE-INSTRUCTIONS.md](UPDATE-INSTRUCTIONS.md) so the maintenance agent can add it to the static list above.
+- **If an existing MCP has been deprecated or replaced:** Append a finding to UPDATE-INSTRUCTIONS.md with the replacement details.
+- **Keep suggestions brief** — one-line recommendation with package name, purpose, and install command.
+- **Never block on MCP discovery** — if search takes too long or yields nothing, proceed with the known servers and note the gap.
