@@ -4,6 +4,8 @@ Reusable prompt snippets for AI agents performing scaffolding work. Copy-paste o
 
 Use [engineer-checklist.md](engineer-checklist.md) as the single compile/run execution checklist for engineer-owned actions.
 
+> **⛔ CRITICAL REMINDER:** Do not modify, build, or fix any files under `sampleapp/`. The sampleapp is **read-only reference code**. You are building a **new application** based on the instructions, skills, templates, and sampleapp patterns — plus the domain inputs for the new app. All generated code goes in the **new project directory**, never in sampleapp.
+
 ---
 
 ## Domain Discovery Prompt
@@ -98,12 +100,13 @@ Run after completing a scaffolding phase to confirm stability before moving on.
 > 3) data-access
 >
 > Constraints:
+> - **All generated code goes in the new project directory — NEVER modify `sampleapp/`**
 > - Follow placeholder token rules from `placeholder-tokens.md`
 > - Do not scaffold optional hosts beyond the requested list
 > - Configure nuget.config with nuget.org + all custom feeds
 > - After adding packages, update Directory.Packages.props to latest stable versions
 > - Stub any external services that require credentials so the project compiles locally
-> - After generation, run `dotnet build` — if code-level errors, fix in one pass; if infrastructure errors, flag for engineer
+> - After generation, run `dotnet build` on the **new project** — if code-level errors, fix in one pass; if infrastructure errors, flag for engineer
 > - **Before starting, search for the latest MCP servers** relevant to this phase's libraries/services. Suggest any useful new MCPs to the engineer and log findings in UPDATE-INSTRUCTIONS.md.
 > - If you discover instruction gaps, append to UPDATE-INSTRUCTIONS.md
 > - When context exceeds 50% and at a good stopping point, create/update HANDOFF.md

@@ -81,12 +81,13 @@ Execute only these skills now:
 3) data-access
 
 Constraints:
+- **All generated code goes in the new project directory — NEVER modify `sampleapp/`**
 - Follow placeholder token rules from `placeholder-tokens.md`
 - Do not scaffold optional hosts beyond the requested list
 - Configure nuget.config with nuget.org + all custom feeds
 - After adding packages, update Directory.Packages.props to latest stable versions
 - Stub any external services that require credentials so the project compiles locally
-- After generation, run `dotnet build` — fix code errors in one pass; flag infrastructure errors for engineer
+- After generation, run `dotnet build` on the **new project** — fix code errors in one pass; flag infrastructure errors for engineer
 - Before starting, do a quick search for any new MCP servers relevant to the skills being executed (data access, domain model, etc.) and suggest them to the engineer. Log any findings in UPDATE-INSTRUCTIONS.md.
 - If you discover instruction gaps or improvements, append to UPDATE-INSTRUCTIONS.md
 - When context exceeds 50% and at a good stopping point, create/update HANDOFF.md
@@ -133,6 +134,7 @@ If failures persist after one fix pass, flag them in HANDOFF.md for the engineer
 - **Use the Phase Loading Manifest below** — only load the files listed for the current phase
 - **For composite patterns, read `sampleapp-patterns.md`** — this distills all 16 cross-cutting patterns from sampleapp into one file (~500 lines)
 - **Never read sampleapp `.cs` files speculatively** — only open a specific sampleapp source file as a last resort when `sampleapp-patterns.md` is insufficient and you know the exact file path
+- **⛔ Never modify or build sampleapp** — The `sampleapp/` directory is **read-only reference code**. Do not create, edit, delete, or run `dotnet build/restore/test` on any file under `sampleapp/`. You are building a **new app** in the user's project directory. If you find yourself editing sampleapp files, STOP — you are on the wrong path.
 - **Use MCP servers for current docs** — When you need up-to-date API signatures, configuration patterns, or package details, use MCP lookups instead of relying on training data. Use **Microsoft Docs MCP** for .NET/Azure APIs (Aspire, EF Core, Bicep, Functions, Entra ID) and **Context7 MCP** for third-party libraries (Uno Platform, YARP, FusionCache, Kiota, TickerQ, NBomber). This is especially important for Aspire hosting packages, Uno.Extensions APIs, and Azure SDK patterns that evolve between releases.
 
 ---
@@ -289,7 +291,7 @@ Some files are too large to load whole. Use these strategies:
 | `skills/uno-ui.md` | 635 | Dedicate a separate session. Load after backend phases are complete and `handoff.md` exists. |
 | `skills/iac.md` | 452 | Load only in Phase 5. Skip if not deploying yet. |
 | `skills/testing.md` | 445 | Load only the profile section matching `testingProfile` (minimal/balanced/comprehensive). |
-| `sampleapp/` source | ~5,000+ | **Never bulk-read.** Only open a specific file when a skill says "see sampleapp/src/.../File.cs". |
+| `sampleapp/` source | ~5,000+ | **READ-ONLY. Never bulk-read. Never modify or build.** Only open a specific file when a skill says "see sampleapp/src/.../File.cs" — for reading only. |
 
 ---
 

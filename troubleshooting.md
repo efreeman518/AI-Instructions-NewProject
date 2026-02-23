@@ -10,9 +10,11 @@ This file is intentionally lightweight. Use it to decide **what the AI should do
 
 AI agents generate code. Engineers own environment and runtime setup.
 
+> **⛔ NEVER fix, modify, or build sampleapp code.** The `sampleapp/` directory is read-only reference. All code generation and fixes apply to the **new project** only. If an error points to a sampleapp file, ignore it — it is not your code to fix.
+
 When an error appears:
 1. Classify it (code-generation vs infrastructure/tooling)
-2. Attempt **one** code-fix pass only when it is code-generation
+2. Attempt **one** code-fix pass only when it is code-generation **in the new project**
 3. If still failing (or infrastructure-related), log to `HANDOFF.md` and continue with non-blocked work
 
 ---

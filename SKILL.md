@@ -60,12 +60,24 @@ Set `scaffoldMode: lite` in your domain inputs, or tell the AI: *"Use lite mode.
 
 The `sampleapp/` directory contains a complete 25-project reference solution (**TaskFlow**) that demonstrates every pattern described in the skill files. It is kept for **human reference only** — as a proof that the patterns compile and compose correctly.
 
+> **⛔ CRITICAL — SAMPLEAPP IS READ-ONLY REFERENCE CODE**
+>
+> **Do NOT create, modify, delete, or build any file under `sampleapp/`.** The sampleapp exists solely as a reference implementation. You are building a **new application** in the user's project directory based on the instructions, skills, templates, and sampleapp patterns provided — together with the domain inputs for the new app.
+>
+> Violations include:
+> - Editing any `.cs`, `.csproj`, `.json`, or other file under `sampleapp/`
+> - Running `dotnet build`, `dotnet restore`, or `dotnet test` targeting `sampleapp/`
+> - Adding new files or projects under `sampleapp/`
+> - Attempting to "fix" compile errors in sampleapp code
+>
+> If you catch yourself about to modify a sampleapp file, **STOP** — you are on the wrong path. Re-read the domain inputs and create the corresponding file in the **new project's** directory instead.
+
 > **AI assistants: Do NOT bulk-read sampleapp source files.** The composite patterns from sampleapp have been distilled into [sampleapp-patterns.md](sampleapp-patterns.md). Use that file instead. Only open a specific `sampleapp/src/` file if `sampleapp-patterns.md` is insufficient for a particular situation and you know the exact file path.
 
 **Resolution order for patterns:**
 1. `templates/` — tokenized per-entity starters (load first)
 2. `sampleapp-patterns.md` — composite/cross-cutting patterns distilled from sampleapp (load when needed)
-3. `sampleapp/src/*.cs` — raw source (last resort, specific file only)
+3. `sampleapp/src/*.cs` — raw source (last resort, specific file only, **read-only**)
 
 ---
 
@@ -255,6 +267,7 @@ Use these canonical references:
 - **Aspire ↔ IaC consistency** — Bicep templates must mirror Aspire AppHost resources; connection string names, replica counts, and ingress config must match exactly
 - **Maturity-first scaffolding** — start from cohesive minimums (`testingProfile: balanced`, `functionProfile: starter`, `unoProfile: starter`) and promote after core vertical slices stabilize
 - **Instruction maintenance** — During implementation, capture gaps/improvements in [UPDATE-INSTRUCTIONS.md](UPDATE-INSTRUCTIONS.md) for the instruction maintenance agent. Do not modify instruction files directly during scaffolding.
+- **Sampleapp is read-only** — Never create, modify, delete, or build any file under `sampleapp/`. It is reference code only. Always generate new code in the **user's project directory**, not in sampleapp.
 - **Session handoff** — When context is over 50% and at a good stopping point, proactively create/update `HANDOFF.md` so the next session can continue seamlessly.
 
 ## Reference Files
@@ -268,7 +281,7 @@ Use these canonical references:
 | [ai-build-optimization.md](ai-build-optimization.md) | Prompting, iteration, validation patterns, **Fail Fast Protocol**, **Phase Loading Manifest**, **Session Handoff Protocol**, and **Instruction Maintenance ([UPDATE-INSTRUCTIONS.md](UPDATE-INSTRUCTIONS.md))** |
 | [domain-inputs.schema.md](domain-inputs.schema.md) | Schema for user-provided domain inputs (including `customNugetFeeds`) |
 | [sampleapp-patterns.md](sampleapp-patterns.md) | **Distilled composite patterns** from sampleapp — use this instead of reading sampleapp source |
-| `sampleapp/` | Complete 25-project reference implementation (TaskFlow) — **human reference only, do not bulk-load** |
+| `sampleapp/` | Complete 25-project reference implementation (TaskFlow) — **READ-ONLY reference, never modify or build; do not bulk-load** |
 
 > **Context window management:** Before starting, read the Phase Loading Manifest and Session Boundary Protocol in [ai-build-optimization.md](ai-build-optimization.md). Only load the files needed for the current phase. Create a `handoff.md` checkpoint after each phase to enable clean session restarts.
 
