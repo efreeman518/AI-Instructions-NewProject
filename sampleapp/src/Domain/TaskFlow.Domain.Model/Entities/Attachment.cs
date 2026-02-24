@@ -3,7 +3,7 @@
 // This entity inherits tenant context from its parent (TodoItem or Comment).
 
 using Domain.Model.Enums;
-using Package.Infrastructure.Domain;
+using EF.Domain;
 
 namespace Domain.Model.Entities;
 

@@ -9,7 +9,7 @@
 ## File: Application/Models/{Entity}/{Entity}Dto.cs
 
 ```csharp
-using Package.Infrastructure.Domain.Contracts;
+using EF.Domain.Contracts;
 
 namespace Application.Models.{Entity};
 
@@ -34,7 +34,7 @@ public record {Entity}Dto : EntityBaseDto, ITenantEntityDto
 ## File: Application/Models/{Entity}/{ChildEntity}Dto.cs
 
 ```csharp
-using Package.Infrastructure.Domain.Contracts;
+using EF.Domain.Contracts;
 
 namespace Application.Models.{Entity};
 

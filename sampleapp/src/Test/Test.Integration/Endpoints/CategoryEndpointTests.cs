@@ -10,7 +10,7 @@ using System.Net;
 using System.Net.Http.Json;
 using Application.Models.Category;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Package.Infrastructure.Common;
+using EF.Common;
 
 namespace Test.Integration.Endpoints;
 

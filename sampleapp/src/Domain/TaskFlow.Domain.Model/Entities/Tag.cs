@@ -2,7 +2,7 @@
 // Demonstrates: entity WITHOUT ITenantEntity, many:many via junction (TodoItemTag).
 // Global admin endpoints manage these; regular users can read but not create/modify.
 
-using Package.Infrastructure.Domain;
+using EF.Domain;
 
 namespace Domain.Model.Entities;
 

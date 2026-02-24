@@ -5,7 +5,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 using Microsoft.Extensions.Logging;
-using Package.Infrastructure.Common;
+using EF.BackgroundServices.InternalMessageBus;
 using Application.Contracts.Events;
 using Application.Contracts.Repositories;
 using Domain.Model.Entities;

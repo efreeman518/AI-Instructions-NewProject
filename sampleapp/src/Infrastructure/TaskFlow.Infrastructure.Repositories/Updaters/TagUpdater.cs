@@ -5,7 +5,7 @@
 
 using Application.Models.Tag;
 using Domain.Model.Entities;
-using Package.Infrastructure.Domain;
+using EF.Domain;
 
 namespace Infrastructure.Repositories.Updaters;
 

@@ -10,6 +10,6 @@
 
   <ItemGroup>
     <!-- Provides: EntityBase, TenantEntityBase, DomainResult<T>, ITenantEntity<T> -->
-    <PackageReference Include="Package.Infrastructure.Domain" />
+    <PackageReference Include="EF.Domain" />
   </ItemGroup>
 </Project>

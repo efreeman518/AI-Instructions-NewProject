@@ -10,7 +10,7 @@
 
 ```csharp
 using System.Linq.Expressions;
-using Package.Infrastructure.Common;
+using EF.Common;
 
 namespace Application.Contracts.Mappers;
 

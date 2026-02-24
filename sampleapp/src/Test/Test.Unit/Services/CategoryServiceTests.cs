@@ -16,7 +16,7 @@ using Application.Services;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-using Package.Infrastructure.Common;
+using EF.Common;
 using Test.Support;
 using ZiggyCreatures.Caching.Fusion;
 

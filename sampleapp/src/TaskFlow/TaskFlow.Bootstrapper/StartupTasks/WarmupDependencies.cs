@@ -5,7 +5,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 using Microsoft.Extensions.Logging;
-using Package.Infrastructure.Common;
+using EF.Common;
 
 namespace TaskFlow.Bootstrapper;
 

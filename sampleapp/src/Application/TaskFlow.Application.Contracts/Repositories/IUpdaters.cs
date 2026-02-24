@@ -6,7 +6,7 @@
 //   3. Invalidate relevant caches
 //   4. Publish domain events via IInternalMessageBus
 
-using Package.Infrastructure.Common;
+using EF.Common;
 using Domain.Model.Entities;
 using Application.Models.TodoItem;
 

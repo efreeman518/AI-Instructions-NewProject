@@ -5,13 +5,13 @@
 // Both live in Application.Contracts so they can be consumed by Application.Services
 // without depending on Infrastructure.
 // ═══════════════════════════════════════════════════════════════
-// Pattern: Generic interfaces from Package.Infrastructure.Domain:
+// Pattern: Generic interfaces from EF.Domain:
 //   - IBaseRepositoryQuery<T, TDto> provides QueryPageProjectionAsync, QueryByIdProjectionAsync
 //   - IBaseRepositoryTrxn<T> provides Add, Update, Delete
 // Entity-specific repos extend these with custom query methods.
 // ═══════════════════════════════════════════════════════════════
 
-using Package.Infrastructure.Domain;
+using EF.Domain;
 using Domain.Model.Entities;
 using Application.Models.TodoItem;
 

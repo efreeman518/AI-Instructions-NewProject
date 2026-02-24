@@ -72,7 +72,7 @@ internal static class {Entity}Updater
 Generic utility for synchronizing two collections:
 
 ```csharp
-namespace Package.Infrastructure.Common.Utilities;
+namespace EF.Common.Utilities;
 
 public static class CollectionUtility
 {

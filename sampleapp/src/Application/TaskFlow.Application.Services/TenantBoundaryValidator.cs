@@ -8,7 +8,7 @@
 using Application.Contracts.Services;
 using Application.Services.Rules;
 using Microsoft.Extensions.Logging;
-using Package.Infrastructure.Common.Contracts;
+using EF.Common.Contracts;
 
 namespace Application.Services;
 

@@ -11,7 +11,7 @@ All entities inherit from `EntityBase` (from a shared infrastructure package). P
 - `byte[] RowVersion` — optimistic concurrency
 
 ```csharp
-// From Package.Infrastructure.Domain
+// From EF.Domain
 public abstract class EntityBase
 {
     public Guid Id { get; protected set; } = Guid.NewGuid();
@@ -100,19 +100,20 @@ public class DateRange  // Value object, no EntityBase
 
 **Polymorphic join pattern** — links any entity to a shared entity:
 ```csharp
-public class EntityPhone : EntityBase
+public class Attachment : EntityBase, ITenantEntity<Guid>
 {
-    public Guid EntityId { get; init; }      // FK to owning entity
-    public string EntityType { get; init; }   // discriminator
-    public Guid PhoneId { get; init; }
-    public Phone Phone { get; private set; } = null!;
+    public Guid TenantId { get; init; }
+    public Guid EntityId { get; init; }           // FK to owning entity (TodoItem or Comment)
+    public EntityType EntityType { get; init; }    // discriminator enum
+    public string FileName { get; private set; } = string.Empty;
+    public string BlobUri { get; private set; } = string.Empty;
 }
 ```
 
 ## Tenant Entity Interface
 
 ```csharp
-// From Package.Infrastructure.Domain.Contracts
+// From EF.Domain.Contracts
 public interface ITenantEntity<TTenantId>
 {
     TTenantId TenantId { get; }

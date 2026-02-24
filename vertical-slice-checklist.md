@@ -8,7 +8,7 @@ When adding a new entity to an existing solution, generate all files in this che
 
 ## Backend Vertical Slice
 
-For an entity named `{Entity}` (e.g., `Warehouse`):
+For an entity named `{Entity}` (e.g., `TodoItem`):
 
 ### Domain Layer
 

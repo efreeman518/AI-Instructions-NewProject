@@ -26,7 +26,7 @@ Use this file as the **single execution path** for compile/run verification whil
 ### Development Tools
 - [ ] Git repo initialized with `.gitignore` for .NET
 - [ ] `.NET SDK` installed (`dotnet --version`)
-- [ ] Docker Desktop running (if Aspire uses SQL/Redis containers)
+- [ ] Docker running (if Aspire uses SQL/Redis containers)
 - [ ] `nuget.config` includes `nuget.org` + all custom/private feeds
 - [ ] EF tools installed (`dotnet tool install -g dotnet-ef`)
 - [ ] Functions Core Tools installed (`func --version`) *(if using Functions)*
@@ -111,7 +111,7 @@ dotnet ef migrations add InitialCreate `
 
 ### Aspire AppHost
 
-- [ ] `src/Aspire/AppHost/AppHost.csproj` uses `Aspire.AppHost.Sdk`
+- [ ] `src/Aspire/AppHost/AppHost.csproj` has `<PackageReference Include="Aspire.Hosting.AppHost" />`
 - [ ] Required Aspire CLI env vars are set before terminal `dotnet run`
 - [ ] `dotnet build src/Aspire/AppHost` succeeds
 - [ ] `dotnet run --project src/Aspire/AppHost` starts resources

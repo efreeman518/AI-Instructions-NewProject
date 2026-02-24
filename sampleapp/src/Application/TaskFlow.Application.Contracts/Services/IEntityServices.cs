@@ -1,8 +1,8 @@
 // Pattern: Service interfaces for secondary entities.
 // Simpler entities have simpler service interfaces.
 
-using Package.Infrastructure.Common;
-using Package.Infrastructure.Domain;
+using EF.Common;
+using EF.Domain;
 using Application.Models.Category;
 using Application.Models.Tag;
 using Application.Models.Team;

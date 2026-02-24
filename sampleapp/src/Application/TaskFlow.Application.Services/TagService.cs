@@ -2,8 +2,8 @@
 // No tenant boundary checks since tags are shared across all tenants.
 
 using Microsoft.Extensions.Logging;
-using Package.Infrastructure.Common;
-using Package.Infrastructure.Domain;
+using EF.Common;
+using EF.Domain;
 using Application.Contracts.Repositories;
 using Application.Contracts.Services;
 using Application.Models.Tag;

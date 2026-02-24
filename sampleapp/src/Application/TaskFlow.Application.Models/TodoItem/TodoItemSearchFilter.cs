@@ -6,7 +6,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 using Domain.Model.Enums;
-using Package.Infrastructure.Domain;
+using EF.Domain;
 
 namespace Application.Models.TodoItem;
 

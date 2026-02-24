@@ -2,8 +2,8 @@
 // Demonstrates blob storage integration and EntityType discriminator pattern.
 
 using Microsoft.Extensions.Logging;
-using Package.Infrastructure.Common;
-using Package.Infrastructure.Domain.Contracts;
+using EF.Common;
+using EF.Domain.Contracts;
 using Application.Contracts.Mappers;
 using Application.Contracts.Repositories;
 using Application.Contracts.Services;

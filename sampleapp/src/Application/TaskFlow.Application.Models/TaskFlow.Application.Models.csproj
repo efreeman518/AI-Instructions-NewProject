@@ -10,6 +10,6 @@
 
   <ItemGroup>
     <!-- Provides: IEntityBaseDto, ITenantEntityDto base interfaces for DTOs -->
-    <PackageReference Include="Package.Infrastructure.Domain.Contracts" />
+    <PackageReference Include="EF.Domain.Contracts" />
   </ItemGroup>
 </Project>

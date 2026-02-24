@@ -13,19 +13,20 @@
     <!-- ═══════════════════════════════════════════════════════════════
          PRIVATE INFRASTRUCTURE PACKAGES
          Shared libraries providing base classes (EntityBase, RepositoryBase, etc.)
+         Source: https://github.com/efreeman518/EF.Packages
          ═══════════════════════════════════════════════════════════════ -->
-    <PackageVersion Include="Package.Infrastructure.Domain" Version="1.0.142" />
-    <PackageVersion Include="Package.Infrastructure.Domain.Contracts" Version="1.0.142" />
-    <PackageVersion Include="Package.Infrastructure.Data" Version="1.0.142" />
-    <PackageVersion Include="Package.Infrastructure.Data.Contracts" Version="1.0.142" />
-    <PackageVersion Include="Package.Infrastructure.Common" Version="1.0.142" />
-    <PackageVersion Include="Package.Infrastructure.Common.Contracts" Version="1.0.142" />
-    <PackageVersion Include="Package.Infrastructure.Host" Version="1.0.142" />
-    <PackageVersion Include="Package.Infrastructure.AspNetCore" Version="1.0.142" />
-    <PackageVersion Include="Package.Infrastructure.Auth" Version="1.0.142" />
-    <PackageVersion Include="Package.Infrastructure.Cache" Version="1.0.142" />
-    <PackageVersion Include="Package.Infrastructure.BackgroundServices" Version="1.0.142" />
-    <PackageVersion Include="Package.Infrastructure.Messaging" Version="1.0.141" />
+    <PackageVersion Include="EF.Domain" Version="1.0.4" />
+    <PackageVersion Include="EF.Domain.Contracts" Version="1.0.4" />
+    <PackageVersion Include="EF.Data" Version="1.0.4" />
+    <PackageVersion Include="EF.Data.Contracts" Version="1.0.4" />
+    <PackageVersion Include="EF.Common" Version="1.0.4" />
+    <PackageVersion Include="EF.Common.Contracts" Version="1.0.4" />
+    <PackageVersion Include="EF.Host" Version="1.0.4" />
+    <PackageVersion Include="EF.AspNetCore" Version="1.0.4" />
+    <PackageVersion Include="EF.Auth" Version="1.0.4" />
+    <PackageVersion Include="EF.Cache" Version="1.0.4" />
+    <PackageVersion Include="EF.BackgroundServices" Version="1.0.4" />
+    <PackageVersion Include="EF.Messaging" Version="1.0.4" />
 
     <!-- ═══════════════════════════════════════════════════════════════
          ENTITY FRAMEWORK CORE

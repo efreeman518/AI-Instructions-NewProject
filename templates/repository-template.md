@@ -12,8 +12,8 @@
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
-using Package.Infrastructure.Data;
-using Package.Infrastructure.Domain;
+using EF.Data;
+using EF.Domain;
 
 namespace Infrastructure.Repositories;
 
@@ -51,8 +51,8 @@ public class {Entity}RepositoryTrxn({Project}DbContextTrxn dbContext)
 ## File: Infrastructure/Repositories/{Entity}RepositoryQuery.cs
 
 ```csharp
-using Package.Infrastructure.Data;
-using Package.Infrastructure.Common;
+using EF.Data;
+using EF.Common;
 
 namespace Infrastructure.Repositories;
 
@@ -124,8 +124,8 @@ public class {Entity}RepositoryQuery({Project}DbContextQuery dbContext)
 ## File: Application/Contracts/Repositories/I{Entity}RepositoryTrxn.cs
 
 ```csharp
-using Package.Infrastructure.Data;
-using Package.Infrastructure.Domain;
+using EF.Data;
+using EF.Domain;
 
 namespace Application.Contracts.Repositories;
 
@@ -148,7 +148,7 @@ public interface I{Entity}RepositoryTrxn : IRepositoryBase
 ## File: Application/Contracts/Repositories/I{Entity}RepositoryQuery.cs
 
 ```csharp
-using Package.Infrastructure.Common;
+using EF.Common;
 
 namespace Application.Contracts.Repositories;
 

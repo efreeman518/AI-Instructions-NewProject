@@ -7,7 +7,7 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Package.Infrastructure.Common;
+using EF.BackgroundServices.InternalMessageBus;
 
 namespace TaskFlow.Bootstrapper;
 

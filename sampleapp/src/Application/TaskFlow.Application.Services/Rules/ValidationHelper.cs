@@ -5,7 +5,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 using Microsoft.Extensions.Logging;
-using Package.Infrastructure.Common.Contracts;
+using EF.Common.Contracts;
 
 namespace Application.Services.Rules;
 
@@ -134,7 +134,7 @@ public static class ValidationHelper
 
     /// <summary>
     /// Pattern: Combine multiple validation results — short-circuits on first failure if desired,
-    /// or collects all errors. Uses Result.Combine from Package.Infrastructure.
+    /// or collects all errors. Uses Result.Combine from EF.
     /// </summary>
     public static Result ValidateAll(params Result[] results) => Result.Combine(results);
 }

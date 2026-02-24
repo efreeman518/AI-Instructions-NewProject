@@ -13,6 +13,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Package.Infrastructure.Common" />
+    <PackageReference Include="EF.Common" />
   </ItemGroup>
 </Project>

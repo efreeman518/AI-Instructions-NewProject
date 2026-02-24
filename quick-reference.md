@@ -76,26 +76,27 @@ A single-page summary of naming conventions, project names, key patterns, and DI
 
 | Package | Used By | Purpose |
 |---------|---------|---------|
-| `Package.Infrastructure.Domain` | Domain.Model | `EntityBase`, `DomainResult<T>`, `ITenantEntity<T>` |
-| `Package.Infrastructure.Domain.Contracts` | Application.Contracts | `IEntityBaseDto`, `ITenantEntityDto`, `IRequestContext` |
-| `Package.Infrastructure.Data` | Infrastructure | `RepositoryBase<T>`, `EntityBaseConfiguration<T>` |
-| `Package.Infrastructure.Common` | Application.Services | `IInternalMessageBus`, `IMessageHandler<T>`, `Result` |
-| `Package.Infrastructure.Host` | API, Gateway, Scheduler | `IStartupTask`, host extensions |
+| `EF.Domain` | Domain.Model | `EntityBase`, `DomainResult<T>`, `ITenantEntity<T>` |
+| `EF.Domain.Contracts` | Application.Contracts | `IEntityBaseDto`, `DomainError`, `DomainResult<T>` |
+| `EF.Data` | Infrastructure | `RepositoryBase<TDbContext,TAuditIdType,TTenantIdType>`, `EntityBaseConfiguration<T>` |
+| `EF.Common` | Application.Services | `Result`, `PredicateBuilder`, `ResultExtensions` |
+| `EF.Common.Contracts` | Application.Contracts | `IRequestContext`, `PagedResponse<T>`, `SearchRequest<TFilter>`, `Sort` |
+| `EF.BackgroundServices` | Application.Services, Bootstrapper | `IInternalMessageBus`, `IMessageHandler<T>`, `IBackgroundTaskQueue` |
+| `EF.Host` | API, Gateway, Scheduler | `IStartupTask`, host extensions |
 
 ## Key Base Classes & Interfaces
 
 | Type | From | Purpose |
 |------|------|---------|
-| `EntityBase` | Domain.Contracts | Base entity with `Guid Id`, `byte[] RowVersion` |
-| `TenantEntityBase` | Domain.Contracts | Adds `Guid TenantId` to `EntityBase` |
-| `DomainResult<T>` | Domain.Contracts | Result monad — `Success(value)` / `Failure(errors)` |
-| `EntityBaseConfiguration<T>` | Infrastructure.Data | EF base config — Guid PK (`ValueGeneratedNever`), RowVersion |
-| `RepositoryBase<TCtx, TKey, TNullableKey>` | Infrastructure.Data | CRUD repository base with `UpsertAsync`, `DeleteAsync` |
-| `EntityBaseDto` | Domain.Contracts | Base DTO with `Guid? Id` |
-| `ITenantEntityDto` | Domain.Contracts | Interface requiring `TenantId` on DTOs |
-| `IRequestContext<TKey, TNullableKey>` | Domain.Contracts | Scoped request context (user, tenant, roles) |
-| `IInternalMessageBus` | Infrastructure.Common | Publish/subscribe for internal events |
-| `IMessageHandler<T>` | Infrastructure.Common | Handler interface for internal events |
+| `EntityBase` | EF.Domain | Base entity with `Guid Id` (`Guid.CreateVersion7()`), `byte[] RowVersion` |
+| `ITenantEntity<TTenantIdType>` | EF.Domain | Interface adding `TenantId` with `where TTenantIdType : struct` |
+| `DomainResult<T>` | EF.Domain.Contracts | Result monad — `Success(value)` / `Failure(errors)` with `DomainError` |
+| `EntityBaseConfiguration<T>` | EF.Data | EF base config — Guid PK (`ValueGeneratedNever`), RowVersion |
+| `RepositoryBase<TDbContext, TAuditIdType, TTenantIdType>` | EF.Data | CRUD repository base with `UpsertAsync`, `DeleteAsync` |
+| `IEntityBaseDto` | EF.Domain.Contracts | Base DTO interface with `Guid? Id` |
+| `IRequestContext<TAuditIdType, TTenantIdType>` | EF.Common.Contracts | Scoped request context (correlationId, auditId, tenantId, roles) |
+| `IInternalMessageBus` | EF.BackgroundServices (`EF.BackgroundServices.InternalMessageBus`) | Publish/subscribe for internal events |
+| `IMessageHandler<T>` | EF.BackgroundServices (`EF.BackgroundServices.InternalMessageBus`) | Handler interface for internal events |
 | `IFusionCacheProvider` | FusionCache | Named cache factory |
 
 ## DI Registration Patterns

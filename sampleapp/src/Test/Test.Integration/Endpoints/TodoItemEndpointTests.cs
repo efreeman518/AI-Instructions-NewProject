@@ -12,7 +12,7 @@ using System.Net.Http.Json;
 using Application.Models.TodoItem;
 using Domain.Model.Enums;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Package.Infrastructure.Common;
+using EF.Common;
 
 [assembly: Parallelize(Workers = 1, Scope = ExecutionScope.ClassLevel)]
 

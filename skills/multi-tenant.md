@@ -9,7 +9,7 @@ Multi-tenancy is implemented via **automatic EF query filters**, **tenant bounda
 Entities that are tenant-scoped implement `ITenantEntity<Guid>`:
 
 ```csharp
-// From Package.Infrastructure.Domain.Contracts
+// From EF.Domain.Contracts
 public interface ITenantEntity<TTenantId>
 {
     TTenantId TenantId { get; }
@@ -18,7 +18,7 @@ public interface ITenantEntity<TTenantId>
 
 ```csharp
 // Entity implementation
-public class Product : EntityBase, ITenantEntity<Guid>
+public class TodoItem : EntityBase, ITenantEntity<Guid>
 {
     public Guid TenantId { get; init; }  // init — set once at creation, never changed
     // ...
@@ -51,7 +51,7 @@ This means **every query** on a tenant entity automatically filters by the curre
 
 To bypass the filter (e.g., for global admin cross-tenant queries), use:
 ```csharp
-dbContext.Set<Product>().IgnoreQueryFilters().Where(...)
+dbContext.Set<TodoItem>().IgnoreQueryFilters().Where(...)
 ```
 
 ## Request Context
@@ -176,31 +176,31 @@ public sealed class TenantBoundaryValidator : ITenantBoundaryValidator
 Every service method calls boundary validation:
 
 ```csharp
-public async Task<Result<DefaultResponse<ProductDto>>> GetAsync(Guid id, CancellationToken ct = default)
+public async Task<Result<DefaultResponse<TodoItemDto>>> GetAsync(Guid id, CancellationToken ct = default)
 {
-    var entity = await repoTrxn.GetProductAsync(id, true, ct);
-    if (entity == null) return Result<DefaultResponse<ProductDto>>.None();
+    var entity = await repoTrxn.GetTodoItemAsync(id, true, ct);
+    if (entity == null) return Result<DefaultResponse<TodoItemDto>>.None();
 
     // Boundary check
     var boundary = tenantBoundaryValidator.EnsureTenantBoundary(
-        logger, requestContext.TenantId, requestContext.Roles, entity.TenantId, "Product:Get", nameof(Product), entity.Id);
-    if (boundary.IsFailure) return Result<DefaultResponse<ProductDto>>.Failure(boundary.ErrorMessage!);
+        logger, requestContext.TenantId, requestContext.Roles, entity.TenantId, "TodoItem:Get", nameof(TodoItem), entity.Id);
+    if (boundary.IsFailure) return Result<DefaultResponse<TodoItemDto>>.Failure(boundary.ErrorMessage!);
 
-    return Result<DefaultResponse<ProductDto>>.Success(new() { Item = entity.ToDto() });
+    return Result<DefaultResponse<TodoItemDto>>.Success(new() { Item = entity.ToDto() });
 }
 ```
 
 For search operations, force the tenant filter on the request:
 
 ```csharp
-public async Task<PagedResponse<ProductDto>> SearchAsync(SearchRequest<ProductSearchFilter> request, CancellationToken ct = default)
+public async Task<PagedResponse<TodoItemDto>> SearchAsync(SearchRequest<TodoItemSearchFilter> request, CancellationToken ct = default)
 {
     if (!IsGlobalAdmin)
     {
         request.Filter ??= new();
         request.Filter.TenantId = requestContext.TenantId;  // Override any client-supplied tenant
     }
-    return await repoQuery.SearchProductAsync(request, ct);
+    return await repoQuery.SearchTodoItemAsync(request, ct);
 }
 ```
 
@@ -209,8 +209,8 @@ public async Task<PagedResponse<ProductDto>> SearchAsync(SearchRequest<ProductSe
 API endpoints include `tenantId` in the route for tenant-scoped operations:
 
 ```
-v1/tenant/{tenantId}/product/{id}
-v1/tenant/{tenantId}/product/search
+v1/tenant/{tenantId}/todoitems/{id}
+v1/tenant/{tenantId}/todoitems/search
 ```
 
 With a `TenantMatch` authorization policy at the gateway/API level that verifies the route `tenantId` matches the user's claim.

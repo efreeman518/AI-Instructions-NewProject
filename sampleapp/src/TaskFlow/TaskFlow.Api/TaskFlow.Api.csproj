@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Package.Infrastructure.Host" />
+    <PackageReference Include="EF.Host" />
     <PackageReference Include="Microsoft.Identity.Web" />
     <PackageReference Include="Scalar.AspNetCore" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />

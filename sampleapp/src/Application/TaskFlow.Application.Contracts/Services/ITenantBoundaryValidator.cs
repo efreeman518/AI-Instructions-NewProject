@@ -4,7 +4,7 @@
 // Allows services to delegate boundary checks without coupling to static helpers.
 // ═══════════════════════════════════════════════════════════════
 
-using Package.Infrastructure.Common.Contracts;
+using EF.Common.Contracts;
 
 namespace Application.Contracts.Services;
 

@@ -9,8 +9,8 @@ using Application.Models.TodoItem;
 using Application.Models.Comment;
 using Domain.Model.Entities;
 using Domain.Model.ValueObjects;
-using Package.Infrastructure.Common;
-using Package.Infrastructure.Domain;
+using EF.Common;
+using EF.Domain;
 
 namespace Infrastructure.Repositories.Updaters;
 

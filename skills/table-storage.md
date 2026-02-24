@@ -2,14 +2,14 @@
 
 ## Prerequisites
 
-- [package-dependencies.md](package-dependencies.md) — `Package.Infrastructure.Table` package types
+- [package-dependencies.md](package-dependencies.md) — `EF.Table` package types
 - [solution-structure.md](solution-structure.md) — project layout and Infrastructure layer conventions
 - [bootstrapper.md](bootstrapper.md) — centralized DI registration
 - [configuration.md](configuration.md) — appsettings and secrets management
 
 ## Overview
 
-Table Storage access uses `Package.Infrastructure.Table` which provides a **repository abstraction** over Azure Table Storage via the Azure SDK `TableServiceClient`. Use Table Storage for structured NoSQL key-value data — audit logs, lookup tables, configuration data, lightweight event stores, and denormalized read models.
+Table Storage access uses `EF.Table` which provides a **repository abstraction** over Azure Table Storage via the Azure SDK `TableServiceClient`. Use Table Storage for structured NoSQL key-value data — audit logs, lookup tables, configuration data, lightweight event stores, and denormalized read models.
 
 > **When to use Table Storage vs SQL vs Cosmos DB:** Use Table Storage for high-volume, low-cost, key-value data with simple query patterns (filter by PartitionKey + RowKey). Use SQL for relational data. Use Cosmos DB for complex document queries, global distribution, or rich indexing.
 
@@ -45,7 +45,7 @@ public class {Entity}TableEntity : Azure.Data.Tables.ITableEntity
 | Tenant + Entity | `TenantId` | `EntityId` | Single tenant lookups |
 | Entity Type + Date | `"AuditLog"` | `{InverseTicks}_{Guid}` | Recent-first time queries |
 | Category + Id | `Category` | `ItemId` | Category scoped lookups |
-| Composite | `{TenantId}:{Year}` | `{OrderNumber}` | Tenant + time-range queries |
+| Composite | `{TenantId}:{Year}` | `{TodoItemId}` | Tenant + time-range queries |
 
 > **Key rules:**
 > - **PartitionKey** determines physical partitioning and query performance — queries within a single partition are fastest

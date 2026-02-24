@@ -7,7 +7,7 @@
 
 using TaskFlow.Api;
 using TaskFlow.Bootstrapper;
-using Package.Infrastructure.Common;
+using EF.Common;
 
 var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;

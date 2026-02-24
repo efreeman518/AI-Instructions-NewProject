@@ -1,6 +1,6 @@
 // Pattern: Non-tenant entity DTO — Tag (no TenantId).
 
-using Package.Infrastructure.Domain.Contracts;
+using EF.Domain.Contracts;
 
 namespace Application.Models.Tag;
 
@@ -17,7 +17,7 @@ public class TagDto : IEntityBaseDto
 }
 
 /// <summary>Search filter for Tag — no TenantId since Tags are global.</summary>
-public class TagSearchFilter : Package.Infrastructure.Domain.SearchFilterBase
+public class TagSearchFilter : EF.Domain.SearchFilterBase
 {
     public string? SearchText { get; set; }
 }

@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- [package-dependencies.md](package-dependencies.md) — `Package.Infrastructure.Messaging` package types
+- [package-dependencies.md](package-dependencies.md) — `EF.Messaging` package types
 - [solution-structure.md](solution-structure.md) — project layout and Infrastructure layer conventions
 - [bootstrapper.md](bootstrapper.md) — centralized DI registration
 - [configuration.md](configuration.md) — appsettings and secrets management
@@ -11,7 +11,7 @@
 
 ## Overview
 
-External messaging uses `Package.Infrastructure.Messaging` which provides abstractions over three Azure messaging services:
+External messaging uses `EF.Messaging` which provides abstractions over three Azure messaging services:
 
 | Service | Package Namespace | Pattern | Best For |
 |---------|------------------|---------|----------|
@@ -19,7 +19,7 @@ External messaging uses `Package.Infrastructure.Messaging` which provides abstra
 | **Event Grid** | `Messaging.EventGrid` | Publish-Subscribe | Event-driven reactions, Azure resource events, webhooks |
 | **Event Hub** | `Messaging.EventHub` | Stream ingestion | High-throughput telemetry, event streams, real-time analytics |
 
-> **Internal vs External Messaging:** Use `IInternalMessageBus` (from `Package.Infrastructure.BackgroundService`) for in-process domain events within the same host. Use the messaging abstractions in this skill for cross-service/cross-process communication.
+> **Internal vs External Messaging:** Use `IInternalMessageBus` (from `EF.BackgroundServices`) for in-process domain events within the same host. Use the messaging abstractions in this skill for cross-service/cross-process communication.
 
 ---
 
@@ -147,22 +147,22 @@ private static void AddServiceBusServices(IServiceCollection services, IConfigur
 ### Usage — Sending
 
 ```csharp
-public class OrderService(
+public class TodoItemService(
     I{Project}ServiceBusSender sbSender,
-    ILogger<OrderService> logger) : IOrderService
+    ILogger<TodoItemService> logger) : ITodoItemService
 {
-    public async Task<Result> SubmitOrderAsync(OrderDto dto, CancellationToken ct = default)
+    public async Task<Result> CompleteTodoItemAsync(Guid id, CancellationToken ct = default)
     {
-        // ... validate and save order ...
+        // ... validate and update todo item ...
 
         // Send message to queue for async processing
         await sbSender.SendMessageAsync(
-            queueOrTopicName: "order-processing",
-            message: JsonSerializer.Serialize(new OrderSubmittedMessage { OrderId = order.Id }),
+            queueOrTopicName: "todoitem-processing",
+            message: JsonSerializer.Serialize(new TodoItemCompletedMessage { TodoItemId = todoItem.Id }),
             correlationId: Activity.Current?.Id,
             metadata: new Dictionary<string, object>
             {
-                ["MessageType"] = nameof(OrderSubmittedMessage)
+                ["MessageType"] = nameof(TodoItemCompletedMessage)
             },
             cancellationToken: ct);
 
@@ -188,24 +188,24 @@ await sbSender.SendBatchAsync(
 ### Usage — Receiving (Background Service)
 
 ```csharp
-public class OrderProcessingBackgroundService(
+public class TodoItemProcessingBackgroundService(
     I{Project}ServiceBusProcessor sbProcessor,
     IServiceProvider serviceProvider,
-    ILogger<OrderProcessingBackgroundService> logger) : BackgroundService
+    ILogger<TodoItemProcessingBackgroundService> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         sbProcessor.RegisterProcessor(
-            queueOrTopicName: "order-processing",
+            queueOrTopicName: "todoitem-processing",
             subscriptionName: null,  // null for queue, set for topic subscription
             funcProcess: async args =>
             {
                 using var scope = serviceProvider.CreateScope();
-                var orderService = scope.ServiceProvider.GetRequiredService<IOrderService>();
+                var todoItemService = scope.ServiceProvider.GetRequiredService<ITodoItemService>();
 
-                var message = JsonSerializer.Deserialize<OrderSubmittedMessage>(
+                var message = JsonSerializer.Deserialize<TodoItemCompletedMessage>(
                     args.Message.Body.ToString());
-                await orderService.ProcessOrderAsync(message!.OrderId, stoppingToken);
+                await todoItemService.ProcessCompletionAsync(message!.TodoItemId, stoppingToken);
             },
             funcError: args =>
             {
@@ -214,7 +214,7 @@ public class OrderProcessingBackgroundService(
                 return Task.CompletedTask;
             });
 
-        await sbProcessor.StartProcessingAsync("order-processing", cancellationToken: stoppingToken);
+        await sbProcessor.StartProcessingAsync("todoitem-processing", cancellationToken: stoppingToken);
         await Task.Delay(Timeout.Infinite, stoppingToken);
     }
 }
@@ -312,10 +312,10 @@ private static void AddEventGridServices(IServiceCollection services, IConfigura
 ```csharp
 await egPublisher.SendAsync(new EventGridEvent
 {
-    Subject = $"/orders/{orderId}",
-    EventType = "Order.Approved",
+    Subject = $"/todoitems/{todoItemId}",
+    EventType = "TodoItem.Completed",
     DataVersion = "1.0",
-    Data = new { OrderId = orderId, ApprovedBy = userId }
+    Data = new { TodoItemId = todoItemId, CompletedBy = userId }
 }, ct);
 ```
 
@@ -516,10 +516,10 @@ In `AppHost/Program.cs`:
 ```csharp
 // Service Bus
 var serviceBus = builder.AddAzureServiceBus("ServiceBus1");
-serviceBus.AddQueue("order-processing");
-serviceBus.AddTopic("order-events")
-    .AddSubscription("billing")
-    .AddSubscription("shipping");
+serviceBus.AddQueue("todoitem-processing");
+serviceBus.AddTopic("todoitem-events")
+    .AddSubscription("notifications")
+    .AddSubscription("audit");
 
 // Event Hub
 var eventHub = builder.AddAzureEventHubs("EventHub1")

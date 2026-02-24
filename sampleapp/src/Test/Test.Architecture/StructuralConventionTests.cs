@@ -29,7 +29,7 @@ public class StructuralConventionTests : ArchitectureTestBase
             .And()
             .DoNotHaveNameMatching("TodoItemTag") // Junction entity — composite PK, no EntityBase
             .Should()
-            .Inherit(typeof(Package.Infrastructure.Domain.EntityBase))
+            .Inherit(typeof(EF.Domain.EntityBase))
             .GetResult();
 
         Assert.IsTrue(result.IsSuccessful,

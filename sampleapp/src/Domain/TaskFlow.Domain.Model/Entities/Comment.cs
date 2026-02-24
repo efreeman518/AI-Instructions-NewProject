@@ -2,7 +2,7 @@
 // Demonstrates: child of aggregate root (TodoItem), cascade delete,
 // temporal ordering, tenant entity (inherits tenant from parent).
 
-using Package.Infrastructure.Domain;
+using EF.Domain;
 
 namespace Domain.Model.Entities;
 

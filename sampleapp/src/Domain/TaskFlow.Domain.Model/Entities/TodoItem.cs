@@ -6,7 +6,7 @@
 
 using Domain.Model.Enums;
 using Domain.Model.ValueObjects;
-using Package.Infrastructure.Domain;
+using EF.Domain;
 
 namespace Domain.Model.Entities;
 

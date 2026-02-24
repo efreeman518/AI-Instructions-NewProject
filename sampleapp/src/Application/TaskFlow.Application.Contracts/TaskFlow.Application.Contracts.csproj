@@ -15,8 +15,8 @@
 
   <ItemGroup>
     <!-- Provides: IEntityBaseDto, ITenantEntityDto, IRequestContext -->
-    <PackageReference Include="Package.Infrastructure.Domain.Contracts" />
+    <PackageReference Include="EF.Domain.Contracts" />
     <!-- Provides: IInternalMessageBus, IMessageHandler<T>, Result -->
-    <PackageReference Include="Package.Infrastructure.Common" />
+    <PackageReference Include="EF.Common" />
   </ItemGroup>
 </Project>

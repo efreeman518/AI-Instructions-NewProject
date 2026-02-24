@@ -3,8 +3,8 @@
 // Returns Result (not exceptions) — composable with Result.Combine.
 // ═══════════════════════════════════════════════════════════════
 
-using Package.Infrastructure.Common.Contracts;
-using Package.Infrastructure.Domain.Contracts;
+using EF.Common.Contracts;
+using EF.Domain.Contracts;
 
 namespace Application.Services.Rules;
 

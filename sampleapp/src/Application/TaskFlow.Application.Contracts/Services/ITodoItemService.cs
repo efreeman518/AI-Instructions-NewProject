@@ -1,12 +1,12 @@
 // ═══════════════════════════════════════════════════════════════
 // Pattern: Service interfaces in Application.Contracts/Services/.
 // Services are the primary API consumed by endpoints.
-// They return Result<T> or Result (from Package.Infrastructure.Common).
+// They return Result<T> or Result (from EF.Common).
 // Services DO NOT return entities — always DTOs.
 // ═══════════════════════════════════════════════════════════════
 
-using Package.Infrastructure.Common;
-using Package.Infrastructure.Domain;
+using EF.Common;
+using EF.Domain;
 using Application.Models.TodoItem;
 
 namespace Application.Contracts.Services;

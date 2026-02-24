@@ -5,7 +5,7 @@
 // Demonstrates: audit trail / event sourcing pattern.
 
 using Domain.Model.Enums;
-using Package.Infrastructure.Domain;
+using EF.Domain;
 
 namespace Domain.Model.Entities;
 

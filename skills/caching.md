@@ -107,10 +107,10 @@ private static void ConfigureFusionCacheInstance(
 ### Getting a Named Cache
 
 ```csharp
-public class ProductService(
+public class TodoItemService(
     IFusionCacheProvider fusionCacheProvider,
     // ... other deps
-) : IProductService
+) : ITodoItemService
 {
     private readonly IFusionCache _cache = fusionCacheProvider.GetCache(AppConstants.DEFAULT_CACHE);
 }
@@ -119,13 +119,13 @@ public class ProductService(
 ### Cache-Aside Pattern
 
 ```csharp
-public async Task<ProductDto?> GetCachedAsync(Guid id, CancellationToken ct)
+public async Task<TodoItemDto?> GetCachedAsync(Guid id, CancellationToken ct)
 {
     return await _cache.GetOrSetAsync(
-        $"product:{id}",
+        $"todoitem:{id}",
         async (ctx, ct) =>
         {
-            var entity = await repoQuery.GetProductAsync(id, ct);
+            var entity = await repoQuery.GetTodoItemAsync(id, ct);
             return entity?.ToDto();
         },
         cancellationToken: ct);
@@ -135,9 +135,9 @@ public async Task<ProductDto?> GetCachedAsync(Guid id, CancellationToken ct)
 ### Cache Invalidation
 
 ```csharp
-public async Task InvalidateProductCacheAsync(Guid id, CancellationToken ct)
+public async Task InvalidateTodoItemCacheAsync(Guid id, CancellationToken ct)
 {
-    await _cache.RemoveAsync($"product:{id}", token: ct);
+    await _cache.RemoveAsync($"todoitem:{id}", token: ct);
 }
 ```
 
@@ -145,7 +145,7 @@ public async Task InvalidateProductCacheAsync(Guid id, CancellationToken ct)
 
 ```csharp
 // After create/update, set the cache proactively
-await _cache.SetAsync($"product:{entity.Id}", entity.ToDto(), token: ct);
+await _cache.SetAsync($"todoitem:{entity.Id}", entity.ToDto(), token: ct);
 ```
 
 ## Entity Cache Provider

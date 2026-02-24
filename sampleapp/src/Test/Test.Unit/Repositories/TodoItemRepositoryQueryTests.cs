@@ -57,7 +57,7 @@ public class TodoItemRepositoryQueryTests
             .BuildInMemory<TaskFlowDbContextQuery>();
 
         var repo = new TodoItemRepositoryQuery(db);
-        var request = new Package.Infrastructure.Common.SearchRequest<Application.Models.TodoItem.TodoItemSearchFilter>
+        var request = new EF.Common.SearchRequest<Application.Models.TodoItem.TodoItemSearchFilter>
         {
             Filter = new Application.Models.TodoItem.TodoItemSearchFilter { TenantId = TenantA },
             PageSize = 10,
@@ -83,7 +83,7 @@ public class TodoItemRepositoryQueryTests
             .BuildInMemory<TaskFlowDbContextQuery>();
 
         var repo = new TodoItemRepositoryQuery(db);
-        var request = new Package.Infrastructure.Common.SearchRequest<Application.Models.TodoItem.TodoItemSearchFilter>
+        var request = new EF.Common.SearchRequest<Application.Models.TodoItem.TodoItemSearchFilter>
         {
             Filter = new Application.Models.TodoItem.TodoItemSearchFilter { CategoryId = CategoryId },
             PageSize = 10,
@@ -108,7 +108,7 @@ public class TodoItemRepositoryQueryTests
             .BuildInMemory<TaskFlowDbContextQuery>();
 
         var repo = new TodoItemRepositoryQuery(db);
-        var request = new Package.Infrastructure.Common.SearchRequest<Application.Models.TodoItem.TodoItemSearchFilter>
+        var request = new EF.Common.SearchRequest<Application.Models.TodoItem.TodoItemSearchFilter>
         {
             Filter = new Application.Models.TodoItem.TodoItemSearchFilter { MinPriority = 4, MaxPriority = 5 },
             PageSize = 10,
@@ -134,7 +134,7 @@ public class TodoItemRepositoryQueryTests
             .BuildInMemory<TaskFlowDbContextQuery>();
 
         var repo = new TodoItemRepositoryQuery(db);
-        var request = new Package.Infrastructure.Common.SearchRequest<Application.Models.TodoItem.TodoItemSearchFilter>
+        var request = new EF.Common.SearchRequest<Application.Models.TodoItem.TodoItemSearchFilter>
         {
             Filter = null,
             PageSize = 10,
@@ -159,7 +159,7 @@ public class TodoItemRepositoryQueryTests
             .BuildInMemory<TaskFlowDbContextQuery>();
 
         var repo = new TodoItemRepositoryQuery(db);
-        var request = new Package.Infrastructure.Common.SearchRequest<Application.Models.TodoItem.TodoItemSearchFilter>
+        var request = new EF.Common.SearchRequest<Application.Models.TodoItem.TodoItemSearchFilter>
         {
             Filter = new Application.Models.TodoItem.TodoItemSearchFilter { TenantId = TenantA },
             PageSize = 2,
@@ -185,7 +185,7 @@ public class TodoItemRepositoryQueryTests
             .BuildInMemory<TaskFlowDbContextQuery>();
 
         var repo = new TodoItemRepositoryQuery(db);
-        var request = new Package.Infrastructure.Common.SearchRequest<Application.Models.TodoItem.TodoItemSearchFilter>
+        var request = new EF.Common.SearchRequest<Application.Models.TodoItem.TodoItemSearchFilter>
         {
             Filter = new Application.Models.TodoItem.TodoItemSearchFilter { TenantId = TenantA },
             PageSize = 10,
@@ -222,7 +222,7 @@ public class TodoItemRepositoryQueryTests
             .BuildSQLite<TaskFlowDbContextQuery>();
 
         var repo = new TodoItemRepositoryQuery(db);
-        var request = new Package.Infrastructure.Common.SearchRequest<Application.Models.TodoItem.TodoItemSearchFilter>
+        var request = new EF.Common.SearchRequest<Application.Models.TodoItem.TodoItemSearchFilter>
         {
             Filter = new Application.Models.TodoItem.TodoItemSearchFilter { Title = "bug" },
             PageSize = 10,
@@ -248,7 +248,7 @@ public class TodoItemRepositoryQueryTests
             .BuildSQLite<TaskFlowDbContextQuery>();
 
         var repo = new TodoItemRepositoryQuery(db);
-        var request = new Package.Infrastructure.Common.SearchRequest<Application.Models.TodoItem.TodoItemSearchFilter>
+        var request = new EF.Common.SearchRequest<Application.Models.TodoItem.TodoItemSearchFilter>
         {
             Filter = new Application.Models.TodoItem.TodoItemSearchFilter
             {

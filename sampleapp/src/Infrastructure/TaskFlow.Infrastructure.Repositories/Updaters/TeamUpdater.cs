@@ -8,8 +8,8 @@
 using Application.Models.Team;
 using Domain.Model.Entities;
 using Domain.Model.Enums;
-using Package.Infrastructure.Common;
-using Package.Infrastructure.Domain;
+using EF.Common;
+using EF.Domain;
 
 namespace Infrastructure.Repositories.Updaters;
 

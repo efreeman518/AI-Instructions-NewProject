@@ -16,8 +16,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Package.Infrastructure.Host" />
-    <PackageReference Include="Package.Infrastructure.Common" />
+    <PackageReference Include="EF.Host" />
+    <PackageReference Include="EF.Common" />
     <PackageReference Include="ZiggyCreatures.FusionCache" />
     <PackageReference Include="ZiggyCreatures.FusionCache.Serialization.SystemTextJson" />
     <PackageReference Include="ZiggyCreatures.FusionCache.Backplane.StackExchangeRedis" />

@@ -7,7 +7,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Package.Infrastructure.Common;
+using EF.Common;
 using TaskFlow.Bootstrapper;
 
 namespace Test.Support;

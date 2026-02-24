@@ -3,7 +3,7 @@
 // Lightweight entity — no business logic, no DomainResult factory.
 // Child collection sync via CollectionUtility.SyncCollectionWithResult in the Updater.
 
-using Package.Infrastructure.Domain;
+using EF.Domain;
 
 namespace Domain.Model.Entities;
 

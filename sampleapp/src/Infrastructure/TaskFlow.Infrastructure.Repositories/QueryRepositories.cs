@@ -11,8 +11,8 @@ using Application.Contracts.Repositories;
 using Application.Models;
 using Domain.Model.Entities;
 using Domain.Model.Enums;
-using Package.Infrastructure.Common;
-using Package.Infrastructure.Data;
+using EF.Common;
+using EF.Data;
 
 namespace Infrastructure.Repositories;
 

@@ -3,7 +3,7 @@
 // decimal field (HourlyRate) for time-tracking/money-type coverage.
 
 using Domain.Model.Enums;
-using Package.Infrastructure.Domain;
+using EF.Domain;
 
 namespace Domain.Model.Entities;
 

@@ -94,13 +94,13 @@ You describe your domain  →  AI reads the skill files  →  AI scaffolds the f
 
 Create a new repo on GitHub. Initialize it with a README and `.gitignore` for .NET:
 
-- **GitHub**: Click **New repository** → name it (e.g., `Contoso.Inventory`) → add `.gitignore` template: **VisualStudio** → **Create repository**
+- **GitHub**: Click **New repository** → name it (e.g., `TaskFlow`) → add `.gitignore` template: **VisualStudio** → **Create repository**
 
 ### 1b. Clone it locally
 
 ```bash
-git clone https://github.com/your-org/Contoso.Inventory.git
-cd Contoso.Inventory
+git clone https://github.com/your-org/TaskFlow.git
+cd TaskFlow
 ```
 
 ### 1c. Copy the instruction files into your repo
@@ -117,7 +117,7 @@ mkdir .instructions
 Your repo should look like this:
 
 ```
-Contoso.Inventory/
+TaskFlow/
 ├── .instructions/          ← Scaffolding instructions (this repo's contents)
 │   ├── SKILL.md
 │   ├── GET-STARTED-human.md
@@ -196,10 +196,10 @@ Most engineers start with a rough idea of their entities but haven't fully worke
 Open your AI assistant and use a prompt like:
 
 > **Example prompt:**
-> "I want to build a new application for managing warehouse inventory. Let's think through the domain together before we start coding. Here's what I know so far:
-> - We need to track Products, Warehouses, and stock levels
-> - Products belong to Categories
-> - Multiple warehouses can stock the same product
+> "I want to build a new application for managing team tasks and todo items. Let's think through the domain together before we start coding. Here's what I know so far:
+> - We need to track TodoItems, Categories, and Teams
+> - TodoItems can have Tags, Comments, and Reminders
+> - Team members can be assigned to todo items
 >
 > Help me think through the entities, relationships, business rules, and anything I might be missing."
 
@@ -227,34 +227,33 @@ After the domain discovery conversation, capture your inputs in structured form.
 ### Minimal Example
 
 ```yaml
-ProjectName: Inventory
+ProjectName: TaskFlow
 multiTenant: true
 customNugetFeeds:
   - name: "CompanyFeed"
     url: "https://pkgs.dev.azure.com/myorg/_packaging/myfeed/nuget/v3/index.json"
 
 entities:
-  - name: Product
+  - name: TodoItem
     isTenantEntity: true
     properties:
-      - name: Name
+      - name: Title
         type: string
-        maxLength: 100
+        maxLength: 200
         required: true
-      - name: Sku
+      - name: Description
         type: string
-        maxLength: 50
-        required: true
-      - name: Price
-        type: decimal
+        maxLength: 2000
+        required: false
+      - name: Priority
+        type: int
         required: true
 ```
 
 ### Fuller Example
 
 ```yaml
-ProjectName: Inventory
-OrganizationName: Contoso
+ProjectName: TaskFlow
 multiTenant: true
 authProvider: EntraID
 database: AzureSQL
@@ -278,41 +277,41 @@ unoProfile: starter
 uiThemeColor: "#6750A4"
 uiPages:
   - Home
-  - ProductList
-  - ProductDetail
+  - TodoItemList
+  - TodoItemDetail
   - Settings
 
 entities:
-  - name: Product
+  - name: TodoItem
     isTenantEntity: true
     properties:
-      - name: Name
+      - name: Title
         type: string
-        maxLength: 100
+        maxLength: 200
         required: true
-      - name: Sku
+      - name: Description
         type: string
-        maxLength: 50
-        required: true
-      - name: Price
-        type: decimal
+        maxLength: 2000
+        required: false
+      - name: Priority
+        type: int
         required: true
       - name: Status
         type: flags_enum
-        values: [None, IsInactive, IsDiscontinued, IsFeatured]
+        values: [None, IsStarted, IsCompleted, IsBlocked, IsCancelled]
     children:
       - name: Tags
         entity: Tag
         relationship: many-to-many
-        joinEntity: EntityTag
-      - name: Variants
-        entity: ProductVariant
+        joinEntity: TodoItemTag
+      - name: Comments
+        entity: Comment
         relationship: one-to-many
         cascadeDelete: true
     navigation:
       - name: Category
         entity: Category
-        required: true
+        required: false
         deleteRestrict: true
 
   - name: Category
@@ -326,22 +325,22 @@ entities:
   - name: Tag
     isTenantEntity: false
     properties:
-      - name: Label
+      - name: Name
         type: string
         maxLength: 50
         required: true
 
-  - name: ProductVariant
+  - name: Comment
     isTenantEntity: true
     properties:
-      - name: Color
+      - name: Text
         type: string
-        maxLength: 30
+        maxLength: 1000
         required: true
-      - name: Size
+      - name: AuthorId
         type: string
-        maxLength: 20
-        required: false
+        maxLength: 200
+        required: true
 ```
 
 Write your inputs in a YAML block or simply describe them in natural language — the AI will map them to the schema.
@@ -355,9 +354,9 @@ Once your domain inputs are finalized (from the discovery conversation or prepar
 > **Example prompt:**
 > "I want to scaffold a new .NET project using the instructions in `.instructions/`. Here are my domain inputs:
 >
-> ProjectName: Inventory
+> ProjectName: TaskFlow
 > multiTenant: true
-> entities: Product (Name, Sku, Price), Category (Name)
+> entities: TodoItem (Title, Description, Priority), Category (Name)
 >
 > Please start by creating the solution structure, then the domain model, data access, application layer, and API."
 
@@ -416,7 +415,7 @@ Use these references instead of re-specifying every file in the prompt:
 - [templates/](templates/) — canonical starter templates
 - [ai-build-optimization.md](ai-build-optimization.md) — prompt format that reduces retries
 
-> **Example prompt:** *"Add a new entity `Warehouse` with properties `Name` (string, 100, required) and `Location` (string, 200). Tenant-scoped, one-to-many with `Product`. Generate the full vertical slice with unit + endpoint tests, DI registration, and migration command."*
+> **Example prompt:** *"Add a new entity `Reminder` with properties `Message` (string, 500, optional) and `RemindAt` (DateTimeOffset, required). Tenant-scoped, one-to-many with `TodoItem`. Generate the full vertical slice with unit + endpoint tests, DI registration, and migration command."*
 
 ---
 

@@ -2,7 +2,7 @@
 // Demonstrates: cacheable static data entity, tenant entity, basic CRUD.
 // Categories are loaded into FusionCache at startup and refreshed on write.
 
-using Package.Infrastructure.Domain;
+using EF.Domain;
 
 namespace Domain.Model.Entities;
 

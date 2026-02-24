@@ -162,7 +162,7 @@ internal static class {Entity}Updater
 2. **Chain with Bind** — Entity.Update() → collection syncs → return
 3. **CollectionUtility.SyncCollectionWithResult** — Handles create/update/remove in one pass
 4. **RelatedDeleteBehavior** — Controls whether removes delete the entity or just the relationship
-5. **Nested updaters** — Parent updater can delegate to child updaters (e.g., Client → Person)
+5. **Nested updaters** — Parent updater can delegate to child updaters (e.g., Team → TeamMember)
 
 ## Design-Time Factory
 

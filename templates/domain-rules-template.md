@@ -38,7 +38,7 @@ public interface IRule<in T>
 
 ```csharp
 // File: src/Domain/{Project}.Domain.Rules/RuleBase.cs
-using Package.Infrastructure.Domain;
+using EF.Domain;
 
 namespace Domain.Rules;
 
@@ -152,7 +152,7 @@ public class AnyRule<T>(params IRule<T>[] rules) : IRule<T>
 
 ```csharp
 // File: src/Domain/{Project}.Domain.Rules/RuleExtensions.cs
-using Package.Infrastructure.Domain;
+using EF.Domain;
 
 namespace Domain.Rules;
 

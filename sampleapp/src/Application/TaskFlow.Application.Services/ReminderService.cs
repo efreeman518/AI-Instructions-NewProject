@@ -2,7 +2,7 @@
 // Demonstrates the ProcessDueRemindersAsync pattern used by TickerQ jobs.
 
 using Microsoft.Extensions.Logging;
-using Package.Infrastructure.Common;
+using EF.Common;
 using Application.Contracts.Repositories;
 using Application.Contracts.Services;
 using Application.Models.Reminder;

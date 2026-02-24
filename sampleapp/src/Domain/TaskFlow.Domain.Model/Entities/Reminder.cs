@@ -4,7 +4,7 @@
 // a notification to the assigned user.
 
 using Domain.Model.Enums;
-using Package.Infrastructure.Domain;
+using EF.Domain;
 
 namespace Domain.Model.Entities;
 

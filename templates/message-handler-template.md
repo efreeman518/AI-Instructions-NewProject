@@ -5,7 +5,7 @@
 | Field | Value |
 |-------|-------|
 | **File** | `src/Application/{Project}.Application.MessageHandlers/{EventName}Handler.cs` |
-| **Depends on** | `Application.Contracts` (for event DTOs in `Events/`), `Package.Infrastructure.Common` (for `IMessageHandler<T>`, `IInternalMessageBus`) |
+| **Depends on** | `Application.Contracts` (for event DTOs in `Events/`), `EF.BackgroundServices` (for `IMessageHandler<T>`, `IInternalMessageBus` in namespace `EF.BackgroundServices.InternalMessageBus`) |
 | **Referenced by** | Auto-registered by `IInternalMessageBus.AutoRegisterHandlers()` in Bootstrapper |
 
 ---
@@ -35,7 +35,7 @@ public record {EventName}(
 // File: src/Application/{Project}.Application.MessageHandlers/{EventName}Handler.cs
 using Application.Contracts.Events;
 using Microsoft.Extensions.Logging;
-using Package.Infrastructure.Common;
+using EF.BackgroundServices.InternalMessageBus;
 
 namespace Application.MessageHandlers;
 

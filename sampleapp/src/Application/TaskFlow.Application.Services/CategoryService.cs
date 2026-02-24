@@ -4,9 +4,9 @@
 // ═══════════════════════════════════════════════════════════════
 
 using Microsoft.Extensions.Logging;
-using Package.Infrastructure.Common;
-using Package.Infrastructure.Domain;
-using Package.Infrastructure.Domain.Contracts;
+using EF.Common;
+using EF.Domain;
+using EF.Domain.Contracts;
 using Application.Contracts.Repositories;
 using Application.Contracts.Services;
 using Application.Models.Category;

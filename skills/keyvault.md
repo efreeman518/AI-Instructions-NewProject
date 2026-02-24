@@ -2,14 +2,14 @@
 
 ## Prerequisites
 
-- [package-dependencies.md](package-dependencies.md) — `Package.Infrastructure.KeyVault` package types
+- [package-dependencies.md](package-dependencies.md) — `EF.KeyVault` package types
 - [configuration.md](configuration.md) — appsettings, secrets management, and Options pattern
 - [identity-management.md](identity-management.md) — managed identity for Key Vault access
 - [bootstrapper.md](bootstrapper.md) — centralized DI registration
 
 ## Overview
 
-Key Vault access uses `Package.Infrastructure.KeyVault` which provides abstractions over Azure Key Vault for **secrets**, **keys**, and **certificates** management, plus a **crypto utility** for encrypt/decrypt operations using vault-managed keys.
+Key Vault access uses `EF.KeyVault` which provides abstractions over Azure Key Vault for **secrets**, **keys**, and **certificates** management, plus a **crypto utility** for encrypt/decrypt operations using vault-managed keys.
 
 > **When to use Key Vault directly vs configuration:** Use the configuration provider (`Azure.Extensions.AspNetCore.Configuration.Secrets`) for secrets that map to app settings (connection strings, API keys). Use the `IKeyVaultManager` interface for runtime secret operations — dynamic secret creation, key rotation, certificate management, or when secrets need to be read/written programmatically by application logic.
 

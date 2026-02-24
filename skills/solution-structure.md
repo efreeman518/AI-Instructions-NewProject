@@ -51,7 +51,7 @@ src/
 ## Project Reference Rules (Dependency Flow)
 
 ```
-Domain.Model ← Domain.Shared (+ Package.Infrastructure.Domain for EntityBase)
+Domain.Model ← Domain.Shared (+ EF.Domain for EntityBase)
 Domain.Rules ← Domain.Model, Domain.Shared
      ↑
 Application.Contracts ← Application.Models, Domain.Model
@@ -94,7 +94,7 @@ Test.Integration ← Api (via WebApplicationFactory)
 
 Use Central Package Management. All NuGet versions are declared here, individual `.csproj` files use `<PackageReference Include="..." />` without version.
 
-> **Reference implementation:** See `sampleapp/src/Directory.Packages.props` for a complete example with ~55 packages covering EF Core, ASP.NET, Identity, Caching, Azure, YARP, Aspire, Testing, and Package.Infrastructure.* internal packages.
+> **Reference implementation:** See `sampleapp/src/Directory.Packages.props` for a complete example with ~55 packages covering EF Core, ASP.NET, Identity, Caching, Azure, YARP, Aspire, Testing, and EF.* internal packages.
 
 ```xml
 <Project>
@@ -207,7 +207,7 @@ This reference map shows the dependency flow as a lookup table. Use it to verify
 # Project → References (direct dependencies only)
 Domain.Model:
   - Domain.Shared
-  - Package.Infrastructure.Domain
+  - EF.Domain
 
 Domain.Shared:
   - (none — leaf node)
@@ -220,43 +220,43 @@ Application.Contracts:
   - Application.Models
   - Domain.Model
   - Domain.Shared
-  - Package.Infrastructure.Domain.Contracts
+  - EF.Domain.Contracts
 
 Application.Models:
-  - Package.Infrastructure.Common
+  - EF.Common
 
 Application.Services:
   - Application.Contracts
   - Application.Models
   - Domain.Model
   - Domain.Shared
-  - Package.Infrastructure.Common
+  - EF.Common
 
 Application.MessageHandlers:
   - Application.Contracts
-  - Package.Infrastructure.Common
+  - EF.Common
 
 Infrastructure.Data:
   - Domain.Model
   - Domain.Shared
-  - Package.Infrastructure.Data
+  - EF.Data
 
 Infrastructure.Repositories:
   - Application.Contracts
   - Application.Models
   - Infrastructure.Data
-  - Package.Infrastructure.Data
+  - EF.Data
 
 Infrastructure.Utility:
-  - Package.Infrastructure.Common
+  - EF.Common
 
 Infrastructure.EntraExt:
   - Application.Contracts
-  - Package.Infrastructure.Common
+  - EF.Common
 
 Infrastructure.Notification:
   - Application.Contracts
-  - Package.Infrastructure.Common
+  - EF.Common
 
 "{Host}.Bootstrapper":
   - Application.Services
@@ -265,7 +265,7 @@ Infrastructure.Notification:
   - Infrastructure.Utility
   - Infrastructure.EntraExt       # (if identity enabled)
   - Infrastructure.Notification   # (if notifications enabled)
-  - Package.Infrastructure.Host
+  - EF.Host
 
 "{Host}.Api":
   - "{Host}.Bootstrapper"
@@ -315,7 +315,7 @@ After creating the solution structure, verify:
 - [ ] `.slnx` file lists all projects and builds with `dotnet build`
 - [ ] `Directory.Packages.props` exists and all `.csproj` files use `<PackageReference>` without version
 - [ ] `global.json` exists with `rollForward: latestFeature`
-- [ ] `nuget.config` includes the private NuGet source for `Package.Infrastructure.*` packages
+- [ ] `nuget.config` includes the private NuGet source for `EF.*` packages
 - [ ] `nuget.config` includes `nuget.org` and all custom NuGet feeds specified in `customNugetFeeds`
 - [ ] All packages in `Directory.Packages.props` are at the **latest stable versions** from nuget.org and custom feeds
 - [ ] Project references follow the dependency flow (Domain → Application → Infrastructure → Bootstrapper → Host)

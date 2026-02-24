@@ -4,7 +4,7 @@
 // the collection and methods. Services invoke the rule before status changes.
 
 using Domain.Model.Enums;
-using Package.Infrastructure.Domain;
+using EF.Domain;
 
 namespace Domain.Model.Entities;
 

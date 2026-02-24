@@ -9,7 +9,7 @@ using Application.Contracts.Repositories;
 using Application.Models;
 using Domain.Model.Entities;
 using Microsoft.EntityFrameworkCore;
-using Package.Infrastructure.Data;
+using EF.Data;
 
 namespace Infrastructure.Repositories;
 

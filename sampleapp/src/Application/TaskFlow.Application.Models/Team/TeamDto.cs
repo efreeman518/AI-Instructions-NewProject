@@ -1,7 +1,7 @@
 // Pattern: Parent entity DTO with child collection — Team + TeamMemberDto.
 
 using Domain.Model.Enums;
-using Package.Infrastructure.Domain.Contracts;
+using EF.Domain.Contracts;
 
 namespace Application.Models.Team;
 
@@ -37,7 +37,7 @@ public class TeamMemberDto
     public DateTimeOffset JoinedAt { get; set; }
 }
 
-public class TeamSearchFilter : Package.Infrastructure.Domain.SearchFilterBase
+public class TeamSearchFilter : EF.Domain.SearchFilterBase
 {
     public Guid? TenantId { get; set; }
     public string? SearchText { get; set; }

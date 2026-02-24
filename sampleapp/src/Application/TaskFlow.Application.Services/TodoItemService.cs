@@ -7,9 +7,9 @@
 // ═══════════════════════════════════════════════════════════════
 
 using Microsoft.Extensions.Logging;
-using Package.Infrastructure.Common;
-using Package.Infrastructure.Domain;
-using Package.Infrastructure.Domain.Contracts;
+using EF.Common;
+using EF.Domain;
+using EF.Domain.Contracts;
 using Application.Contracts.Events;
 using Application.Contracts.Mappers;
 using Application.Contracts.Repositories;

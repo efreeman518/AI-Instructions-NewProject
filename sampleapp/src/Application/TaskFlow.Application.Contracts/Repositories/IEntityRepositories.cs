@@ -1,7 +1,7 @@
 // Pattern: Simple entity repository interfaces — Category, Tag, Team.
 // Category and Team are tenant entities; Tag is a non-tenant shared entity.
 
-using Package.Infrastructure.Domain;
+using EF.Domain;
 using Domain.Model.Entities;
 using Application.Models.Category;
 using Application.Models.Tag;

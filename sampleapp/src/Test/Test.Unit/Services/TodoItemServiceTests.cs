@@ -18,8 +18,9 @@ using Domain.Model.Enums;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-using Package.Infrastructure.Common;
-using Package.Infrastructure.Domain;
+using EF.Common;
+using EF.BackgroundServices.InternalMessageBus;
+using EF.Domain;
 using Test.Support;
 using ZiggyCreatures.Caching.Fusion;
 

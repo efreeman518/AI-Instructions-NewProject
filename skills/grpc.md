@@ -2,14 +2,14 @@
 
 ## Prerequisites
 
-- [package-dependencies.md](package-dependencies.md) — `Package.Infrastructure.Grpc` package types
+- [package-dependencies.md](package-dependencies.md) — `EF.Grpc` package types
 - [solution-structure.md](solution-structure.md) — project layout
 - [bootstrapper.md](bootstrapper.md) — centralized DI registration
 - [api.md](api.md) — API endpoint patterns (gRPC complements REST APIs)
 
 ## Overview
 
-gRPC support uses `Package.Infrastructure.Grpc` which provides **error interceptors** for both client and service sides. These interceptors standardize error handling across gRPC calls — catching exceptions, mapping to gRPC status codes, and surfacing structured error information.
+gRPC support uses `EF.Grpc` which provides **error interceptors** for both client and service sides. These interceptors standardize error handling across gRPC calls — catching exceptions, mapping to gRPC status codes, and surfacing structured error information.
 
 > **When to use gRPC vs REST:** Use gRPC for internal service-to-service communication where performance, streaming, and strong typing matter. Use REST (Minimal APIs) for external/public APIs, browser clients, and third-party integrations.
 

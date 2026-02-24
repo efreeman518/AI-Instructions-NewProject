@@ -1,6 +1,6 @@
 // Pattern: Simple entity DTO — Category.
 
-using Package.Infrastructure.Domain.Contracts;
+using EF.Domain.Contracts;
 
 namespace Application.Models.Category;
 
@@ -29,7 +29,7 @@ public class CategoryDto : IEntityBaseDto
 /// Pattern: Search filter for a simple entity.
 /// Demonstrates that even simple entities follow the same filter pattern.
 /// </summary>
-public class CategorySearchFilter : Package.Infrastructure.Domain.SearchFilterBase
+public class CategorySearchFilter : EF.Domain.SearchFilterBase
 {
     public Guid? TenantId { get; set; }
     public string? SearchText { get; set; }

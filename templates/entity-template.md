@@ -10,8 +10,8 @@
 
 ```csharp
 using Domain.Shared;
-using Package.Infrastructure.Domain;
-using Package.Infrastructure.Domain.Contracts;
+using EF.Domain;
+using EF.Domain.Contracts;
 
 namespace Domain.Model;
 

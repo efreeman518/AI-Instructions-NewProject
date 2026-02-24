@@ -2,14 +2,14 @@
 
 ## Prerequisites
 
-- [package-dependencies.md](package-dependencies.md) — `Package.Infrastructure.CosmosDb` package types
+- [package-dependencies.md](package-dependencies.md) — `EF.CosmosDb` package types
 - [solution-structure.md](solution-structure.md) — project layout and Infrastructure layer conventions
 - [bootstrapper.md](bootstrapper.md) — centralized DI registration
 - [configuration.md](configuration.md) — appsettings and secrets management
 
 ## Overview
 
-Cosmos DB data access uses `Package.Infrastructure.CosmosDb` which provides a **repository abstraction** over the Azure Cosmos DB SDK v3. Entities that need document-store semantics — flexible schema, horizontal partitioning, global distribution, or **deeply nested JSON structures** — use Cosmos DB instead of EF Core/SQL.
+Cosmos DB data access uses `EF.CosmosDb` which provides a **repository abstraction** over the Azure Cosmos DB SDK v3. Entities that need document-store semantics — flexible schema, horizontal partitioning, global distribution, or **deeply nested JSON structures** — use Cosmos DB instead of EF Core/SQL.
 
 > **When to use Cosmos DB vs SQL:** Use Cosmos DB for high-throughput, partition-friendly data (audit logs, event streams, denormalized read models, IoT telemetry, session/cart data) and for documents with deep/nested structure (embedded objects, arrays of child objects, dictionaries) that would require many tables and JOINs in SQL. Use EF Core/SQL for relational data with complex joins, transactions, and referential integrity.
 
@@ -54,48 +54,51 @@ Cosmos DB documents can contain deeply nested JSON — embedded objects, arrays,
 
 ```csharp
 // Embedded value object — stored as nested JSON in the document
-public class Address
+public class Schedule
 {
-    public string Street { get; set; } = string.Empty;
-    public string City { get; set; } = string.Empty;
-    public string State { get; set; } = string.Empty;
-    public string ZipCode { get; set; } = string.Empty;
+    public DateTimeOffset? StartDate { get; set; }
+    public DateTimeOffset? DueDate { get; set; }
+}
+
+public class TeamInfo
+{
+    public string Name { get; set; } = string.Empty;
+    public string Department { get; set; } = string.Empty;
 }
 
 // Embedded child collection — stored as JSON array in the document
-public class LineItem
+public class ChecklistItem
 {
-    public Guid ProductId { get; set; }
-    public string ProductName { get; set; } = null!;
-    public int Quantity { get; set; }
-    public decimal UnitPrice { get; set; }
+    public string Description { get; set; } = null!;
+    public bool IsComplete { get; set; }
+    public int SortOrder { get; set; }
 }
 
-public class Order : CosmosDbEntity
+public class TodoItemDocument : CosmosDbEntity
 {
     public override string PartitionKey => TenantId.ToString();
     public Guid TenantId { get; private set; }
-    public string OrderNumber { get; private set; } = null!;
+    public string Title { get; private set; } = null!;
 
     // Embedded object — single nested JSON object
-    public Address ShippingAddress { get; private set; } = new();
+    public Schedule Schedule { get; private set; } = new();
 
     // Embedded collection — JSON array of objects
-    public List<LineItem> LineItems { get; private set; } = [];
+    public List<ChecklistItem> ChecklistItems { get; private set; } = [];
 
     // Dynamic key-value bag — JSON object with variable keys
     public Dictionary<string, string> Metadata { get; private set; } = [];
 
     // Deeply nested — objects within objects
-    public CustomerInfo Customer { get; private set; } = new();
+    public AssigneeInfo Assignee { get; private set; } = new();
 }
 
-public class CustomerInfo
+public class AssigneeInfo
 {
-    public string Name { get; set; } = null!;
+    public string DisplayName { get; set; } = null!;
     public string Email { get; set; } = null!;
-    public Address BillingAddress { get; set; } = new();  // nested within nested
-    public List<string> PhoneNumbers { get; set; } = [];   // simple array
+    public TeamInfo Team { get; set; } = new();       // nested within nested
+    public List<string> Roles { get; set; } = [];      // simple array
 }
 ```
 
@@ -105,31 +108,27 @@ public class CustomerInfo
   "id": "a1b2c3d4-...",
   "partitionKey": "tenant-guid",
   "tenantId": "tenant-guid",
-  "orderNumber": "ORD-001",
-  "shippingAddress": {
-    "street": "123 Main St",
-    "city": "Seattle",
-    "state": "WA",
-    "zipCode": "98101"
+  "title": "Implement login page",
+  "schedule": {
+    "startDate": "2026-03-01T00:00:00Z",
+    "dueDate": "2026-03-15T00:00:00Z"
   },
-  "lineItems": [
-    { "productId": "...", "productName": "Widget", "quantity": 2, "unitPrice": 29.99 },
-    { "productId": "...", "productName": "Gadget", "quantity": 1, "unitPrice": 49.99 }
+  "checklistItems": [
+    { "description": "Create wireframe", "isComplete": true, "sortOrder": 1 },
+    { "description": "Write unit tests", "isComplete": false, "sortOrder": 2 }
   ],
   "metadata": {
-    "source": "web",
-    "campaign": "summer-sale"
+    "source": "sprint-planning",
+    "sprint": "sprint-12"
   },
-  "customer": {
-    "name": "Jane Doe",
+  "assignee": {
+    "displayName": "Jane Doe",
     "email": "jane@example.com",
-    "billingAddress": {
-      "street": "456 Oak Ave",
-      "city": "Portland",
-      "state": "OR",
-      "zipCode": "97201"
+    "team": {
+      "name": "Frontend Team",
+      "department": "Engineering"
     },
-    "phoneNumbers": ["555-0100", "555-0200"]
+    "roles": ["Developer", "Reviewer"]
   }
 }
 ```
@@ -138,11 +137,11 @@ public class CustomerInfo
 
 | Pattern | C# Type | JSON Shape | When to Use |
 |---------|---------|------------|-------------|
-| Single nested object | `Address` (POCO) | `{ "street": ..., "city": ... }` | Value objects, contact info, configuration sections |
-| Collection of objects | `List<LineItem>` | `[ { ... }, { ... } ]` | Child items that always load with parent, no independent access needed |
-| Simple array | `List<string>`, `List<Guid>` | `[ "a", "b" ]` | Tags, labels, phone numbers |
+| Single nested object | `Schedule` (POCO) | `{ "startDate": ..., "dueDate": ... }` | Value objects, date ranges, configuration sections |
+| Collection of objects | `List<ChecklistItem>` | `[ { ... }, { ... } ]` | Child items that always load with parent, no independent access needed |
+| Simple array | `List<string>`, `List<Guid>` | `[ "a", "b" ]` | Tags, labels, roles |
 | Dictionary / dynamic bag | `Dictionary<string, string>` | `{ "key1": "val1" }` | Metadata, preferences, feature flags, variable attributes |
-| Deeply nested | Object containing objects | `{ "a": { "b": { } } }` | When the domain naturally nests (customer → address → geo) |
+| Deeply nested | Object containing objects | `{ "a": { "b": { } } }` | When the domain naturally nests (assignee → team → department) |
 | Mixed | Any combination above | Complex document | Real-world documents often combine all patterns |
 
 > **SQL vs Cosmos DB nesting rule of thumb:** If a nested structure would require 3+ tables and JOINs in SQL, it's a strong signal to use Cosmos DB where the entire aggregate is one document. If nested children need independent querying, indexing, or cross-entity relationships, keep them in SQL as separate entities.

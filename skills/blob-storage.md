@@ -2,14 +2,14 @@
 
 ## Prerequisites
 
-- [package-dependencies.md](package-dependencies.md) — `Package.Infrastructure.Storage` package types
+- [package-dependencies.md](package-dependencies.md) — `EF.Storage` package types
 - [solution-structure.md](solution-structure.md) — project layout and Infrastructure layer conventions
 - [bootstrapper.md](bootstrapper.md) — centralized DI registration
 - [configuration.md](configuration.md) — appsettings and secrets management
 
 ## Overview
 
-Blob Storage access uses `Package.Infrastructure.Storage` which provides a **repository abstraction** over Azure Blob Storage via the Azure SDK `BlobServiceClient`. Use Blob Storage for unstructured binary data — file uploads, document attachments, images, backups, and large payloads.
+Blob Storage access uses `EF.Storage` which provides a **repository abstraction** over Azure Blob Storage via the Azure SDK `BlobServiceClient`. Use Blob Storage for unstructured binary data — file uploads, document attachments, images, backups, and large payloads.
 
 > **When to use Blob Storage:** Use for files, images, documents, backups, or any binary/large-text content. Not for structured queryable data (use SQL or Cosmos DB) or key-value lookups (use Table Storage).
 

@@ -1,7 +1,7 @@
 // Pattern: Repository interfaces for child/auxiliary entities.
 // These entities may only need Query or Trxn, not both.
 
-using Package.Infrastructure.Domain;
+using EF.Domain;
 using Domain.Model.Entities;
 using Application.Models.Comment;
 using Application.Models.Attachment;

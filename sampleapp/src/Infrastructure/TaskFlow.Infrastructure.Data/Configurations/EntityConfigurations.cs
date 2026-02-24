@@ -8,7 +8,7 @@ using Domain.Model.Entities;
 using Domain.Model.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Package.Infrastructure.Data;
+using EF.Data;
 
 namespace Infrastructure.Configurations;
 

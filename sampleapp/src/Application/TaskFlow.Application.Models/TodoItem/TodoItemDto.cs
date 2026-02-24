@@ -1,11 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
 // Pattern: DTO classes live in Application.Models/{EntityName}/.
-// DTOs implement IEntityBaseDto from Package.Infrastructure.Domain.Contracts.
+// DTOs implement IEntityBaseDto from EF.Domain.Contracts.
 // They are flat, serializable, and carry no behavior.
 // ═══════════════════════════════════════════════════════════════
 
 using Domain.Model.Enums;
-using Package.Infrastructure.Domain.Contracts;
+using EF.Domain.Contracts;
 
 namespace Application.Models.TodoItem;
 

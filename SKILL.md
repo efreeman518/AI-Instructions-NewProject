@@ -213,7 +213,7 @@ When the conversation has produced a clear domain model, the AI should:
 | Key Vault | [skills/keyvault.md](skills/keyvault.md) | Runtime secrets, key management, certificates, field-level encryption via Key Vault crypto utility |
 | gRPC | [skills/grpc.md](skills/grpc.md) | gRPC service/client error interceptors, proto contracts — for internal service-to-service communication |
 | External API Integration | [skills/external-api.md](skills/external-api.md) | Refit typed HTTP clients + .NET resilience (retry, circuit breaker, timeout) — each external service in its own `Infrastructure.{ServiceName}` project |
-| Package Dependencies | [skills/package-dependencies.md](skills/package-dependencies.md) | Private NuGet packages (Package.Infrastructure.*), Directory.Packages.props, version policy |
+| Package Dependencies | [skills/package-dependencies.md](skills/package-dependencies.md) | Private NuGet packages (EF.*), Directory.Packages.props, version policy |
 | CI/CD | [skills/cicd.md](skills/cicd.md) | GitHub Actions workflows, build/test/deploy pipelines, environment promotion |
 | **Infrastructure as Code** | [skills/iac.md](skills/iac.md) | Azure Bicep templates — modules for Container Apps/App Service, SQL, Redis, Key Vault, ACR, managed identity, per-environment params, deployment scripts |
 

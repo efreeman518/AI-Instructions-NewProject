@@ -19,56 +19,54 @@ Provide a list of entities. For each entity:
 
 ```yaml
 entities:
-  - name: Product                    # PascalCase entity name
+  - name: TodoItem                   # PascalCase entity name
     dataStore: sql                   # sql (default) | cosmosdb | table | blob
     isTenantEntity: true             # implements ITenantEntity<Guid>?
     partitionKeyProperty: TenantId   # cosmosdb/table only — property used as partition key
     properties:                      # scalar properties (Id, RowVersion are automatic)
-      - name: Name
+      - name: Title
         type: string
-        maxLength: 100
+        maxLength: 200
         required: true
-      - name: Sku
+      - name: Description
         type: string
-        maxLength: 50
-        required: true
-      - name: Price
-        type: decimal
+        maxLength: 2000
+        required: false
+      - name: Priority
+        type: int
         required: true
       - name: Status
         type: flags_enum              # generates a [Flags] enum in Domain.Shared
-        values: [None, IsInactive, IsDiscontinued, IsFeatured]
+        values: [None, IsStarted, IsCompleted, IsBlocked, IsCancelled]
     children:                         # child collections (generates join entities, updaters, etc.)
       - name: Tags
         entity: Tag
         relationship: many-to-many    # many-to-many | one-to-many | polymorphic-join
-        joinEntity: EntityTag         # for many-to-many, the join entity name
-      - name: Variants
-        entity: ProductVariant
+        joinEntity: TodoItemTag       # for many-to-many, the join entity name
+      - name: Comments
+        entity: Comment
         relationship: one-to-many
         cascadeDelete: true
     embedded:                          # cosmosdb only — nested objects stored inside the document
-      - name: Address                  # becomes a C# class serialized as nested JSON
+      - name: Schedule                 # becomes a C# class serialized as nested JSON
         properties:
-          - { name: Street, type: string, maxLength: 200 }
-          - { name: City, type: string, maxLength: 100 }
-          - { name: State, type: string, maxLength: 2 }
-          - { name: ZipCode, type: string, maxLength: 10 }
+          - { name: StartDate, type: DateTimeOffset?, maxLength: null }
+          - { name: DueDate, type: DateTimeOffset?, maxLength: null }
       - name: Preferences              # can be a dictionary / dynamic bag
         type: dictionary               # dictionary | object | list
         keyType: string
         valueType: string
-      - name: LineItems                # embedded collection (array of objects in the document)
+      - name: ChecklistItems           # embedded collection (array of objects in the document)
         type: list
         properties:
-          - { name: ProductId, type: Guid, required: true }
-          - { name: ProductName, type: string, maxLength: 200 }
-          - { name: Quantity, type: int, required: true }
-          - { name: UnitPrice, type: decimal, required: true }
+          - { name: TodoItemId, type: Guid, required: true }
+          - { name: Description, type: string, maxLength: 500 }
+          - { name: IsComplete, type: bool, required: true }
+          - { name: SortOrder, type: int, required: true }
     navigation:                       # navigation properties (non-collection)
       - name: Category
         entity: Category
-        required: true
+        required: false
         deleteRestrict: true          # OnDelete(DeleteBehavior.Restrict)
 ```
 
@@ -88,20 +86,20 @@ Use `dataStore` on each entity to pick the right storage engine. If omitted, `sq
 #### When to Choose Each Store
 
 **SQL (`dataStore: sql`)** — the default. Use for:
-- Core business entities with referential integrity (Orders → LineItems → Products)
+- Core business entities with referential integrity (TodoItem → Comments → Tags)
 - Data that participates in complex queries, reports, or cross-entity transactions
 - Entities with many-to-many or polymorphic relationships
 - Anything requiring ACID transactions spanning multiple entity types
-- *Examples:* Users, Orders, Products, Invoices, Appointments
+- *Examples:* TodoItem, Category, Team, TeamMember, Reminder
 
 **Cosmos DB (`dataStore: cosmosdb`)** — use for:
 - Entities with variable/evolving schema (e.g., device telemetry, form submissions with dynamic fields)
 - **Documents with deep/nested JSON structure** — embedded objects, arrays of child objects, dictionaries, and mixed-depth hierarchies that would require multiple tables and JOINs in SQL but are naturally represented as a single document
 - Read-heavy workloads with known access patterns (always query by tenant + entity id)
-- Data that naturally forms self-contained aggregates (an order with embedded line items, an address object, a preferences dictionary — all in one document)
+- Data that naturally forms self-contained aggregates (a todo item with embedded checklist items, a schedule object, a preferences dictionary — all in one document)
 - Global distribution requirements or extreme horizontal scale
 - Event sourcing or change-feed-driven architectures
-- *Examples:* UserProfiles with nested address + arbitrary preferences, IoT telemetry with variable sensor payloads, product catalog with variant schemas, orders with embedded line items, form submissions with dynamic field structures, configuration documents with nested sections
+- *Examples:* TodoItem profiles with nested schedule + arbitrary preferences, IoT telemetry with variable sensor payloads, team dashboards with embedded member summaries, todo items with embedded checklist items, form submissions with dynamic field structures, configuration documents with nested sections
 - *Key decision:* If you never need cross-entity JOINs and can identify a good partition key, Cosmos DB may outperform SQL at scale. If the data has deep nesting that would normalize into 3+ SQL tables, that's a strong Cosmos DB signal
 
 **Table Storage (`dataStore: table`)** — use for:
@@ -124,13 +122,13 @@ Many real-world entities span multiple stores. Common combinations:
 
 | Pattern | SQL | Cosmos DB | Table | Blob | Example |
 |---------|-----|-----------|-------|------|---------|
-| **Structured + Attachments** | Entity metadata, FKs | — | — | File content | Order with uploaded PO document |
+| **Structured + Attachments** | Entity metadata, FKs | — | — | File content | TodoItem with uploaded Attachment document |
 | **Relational + Audit Trail** | Core entity CRUD | — | Append-only change log | — | Patient record with immutable audit history |
-| **Relational + Read Cache** | Source of truth | Denormalized read model (change feed from SQL via events) | — | — | Product catalog: SQL for writes, Cosmos for fast reads |
+| **Relational + Read Cache** | Source of truth | Denormalized read model (change feed from SQL via events) | — | — | Category catalog: SQL for writes, Cosmos for fast reads |
 | **Relational + Telemetry** | Device/sensor registration | Time-series telemetry data | — | Raw data exports | IoT platform |
 | **Search + Binary** | Searchable metadata | — | — | Raw documents | Document management system |
 
-> For hybrid patterns, model the primary entity with `dataStore: sql` (or cosmosdb) and reference the secondary store through a service-layer abstraction. For example, an `Order` entity (`dataStore: sql`) with file attachments uses `IBlobRepository` in the `OrderService` — the blob interaction is in the service, not on the entity itself.
+> For hybrid patterns, model the primary entity with `dataStore: sql` (or cosmosdb) and reference the secondary store through a service-layer abstraction. For example, a `TodoItem` entity (`dataStore: sql`) with file attachments uses `IBlobRepository` in the `TodoItemService` — the blob interaction is in the service, not on the entity itself.
 
 #### Decision Flowchart (Simplified)
 
@@ -157,10 +155,10 @@ Does the data need semantic search / similarity matching?
 
 | Type | Description | Example |
 |------|-------------|---------|
-| `one-to-many` | Parent owns collection of children | Product → Variants |
-| `many-to-many` | Via explicit join entity (no EF implicit) | Product → EntityTag → Tag |
-| `polymorphic-join` | Join entity with EntityId + EntityType for shared tables | Person → EntityPhone → Phone |
-| `self-referencing` | Entity relates to itself via join entity | QGroup → QGroupRelationship → QGroup |
+| `one-to-many` | Parent owns collection of children | TodoItem → Comments |
+| `many-to-many` | Via explicit join entity (no EF implicit) | TodoItem → TodoItemTag → Tag |
+| `polymorphic-join` | Join entity with EntityId + EntityType for shared tables | TodoItem/Comment → Attachment |
+| `self-referencing` | Entity relates to itself via ParentId or join entity | TodoItem → TodoItem (ParentId) |
 
 ### Relationship Modeling Guide
 
@@ -172,18 +170,18 @@ Parent owns a collection. Child has a FK back to parent. Use `cascadeDelete: tru
 
 ```yaml
 children:
-  - name: ScheduledCallClients
-    entity: ScheduledCallClient
+  - name: Comments
+    entity: Comment
     relationship: one-to-many
     cascadeDelete: true
 ```
 
 **EF Configuration:**
 ```csharp
-// In ClientConfiguration : EntityBaseConfiguration<Client>
-builder.HasMany(e => e.ScheduledCallClients)
+// In TodoItemConfiguration : EntityBaseConfiguration<TodoItem>
+builder.HasMany(e => e.Comments)
     .WithOne()
-    .HasForeignKey("ClientId")
+    .HasForeignKey("TodoItemId")
     .OnDelete(DeleteBehavior.Cascade);
 ```
 
@@ -193,79 +191,72 @@ Entity references a lookup/type entity. No back-navigation collection on the ref
 
 ```yaml
 navigation:
-  - name: ClientType
-    entity: ClientType
-    required: true
+  - name: Category
+    entity: Category
+    required: false
     deleteRestrict: true
 ```
 
 **EF Configuration:**
 ```csharp
-// In ClientConfiguration : EntityBaseConfiguration<Client>
-builder.HasOne(e => e.ClientType)
-    .WithMany()
+// In TodoItemConfiguration : EntityBaseConfiguration<TodoItem>
+builder.HasOne<Category>()
+    .WithMany(e => e.TodoItems)
+    .HasForeignKey(e => e.CategoryId)
     .OnDelete(DeleteBehavior.Restrict);
 ```
 
 #### Many-to-Many (explicit join entity)
 
-Always use an explicit join entity — never EF implicit many-to-many. The join entity can carry extra payload (e.g., `Context`, `Sequence`).
+Always use an explicit join entity — never EF implicit many-to-many. The join entity can carry extra payload (e.g., `AppliedAt`).
 
 ```yaml
 children:
-  - name: QGroups
-    entity: QGroup
+  - name: Tags
+    entity: Tag
     relationship: many-to-many
-    joinEntity: ClientTypeQGroup
+    joinEntity: TodoItemTag
     joinProperties:
-      - { name: Context, type: string, maxLength: 50 }
-      - { name: Sequence, type: int }
+      - { name: AppliedAt, type: DateTimeOffset }
 ```
 
 **EF Configuration:**
 ```csharp
-// In ClientTypeQGroupConfiguration : EntityBaseConfiguration<ClientTypeQGroup>
-builder.HasOne<ClientType>()
-    .WithMany()
-    .HasForeignKey(e => e.ClientTypeId);
+// In TodoItemTagConfiguration (composite key entity — no EntityBase)
+builder.HasKey(e => new { e.TodoItemId, e.TagId });
 
-builder.HasOne<QGroup>()
-    .WithMany()
-    .HasForeignKey(e => e.QGroupId);
+builder.HasOne(e => e.TodoItem)
+    .WithMany(e => e.TodoItemTags)
+    .HasForeignKey(e => e.TodoItemId);
+
+builder.HasOne(e => e.Tag)
+    .WithMany(e => e.TodoItemTags)
+    .HasForeignKey(e => e.TagId);
 
 // Composite clustered index for fast lookups
-builder.HasIndex(e => new { e.ClientTypeId, e.QGroupId, e.Context, e.Sequence })
+builder.HasIndex(e => new { e.TodoItemId, e.TagId })
     .IsClustered();
 ```
 
-#### Self-Referencing (via join entity)
+#### Self-Referencing (direct FK)
 
-Entity relates to itself through a join entity with two FKs pointing to the same table. Both sides use `Restrict` delete to prevent cascading cycles.
+Entity relates to itself through a nullable FK back to the same table. Use `Restrict` delete to prevent cascading cycles.
 
 ```yaml
 children:
-  - name: ChildRelationships
-    entity: QGroupRelationship
+  - name: Children
+    entity: TodoItem
     relationship: self-referencing
-    selfReferenceKeys: [MainQGroupId, ChildQGroupId]
+    selfReferenceKey: ParentId
 ```
 
 **EF Configuration:**
 ```csharp
-// In QGroupRelationshipConfiguration : EntityBaseConfiguration<QGroupRelationship>
-builder.HasOne<QGroup>()
-    .WithMany()
-    .HasForeignKey(e => e.MainQGroupId)
+// In TodoItemConfiguration : EntityBaseConfiguration<TodoItem>
+builder.HasOne(e => e.Parent)
+    .WithMany(e => e.Children)
+    .HasForeignKey(e => e.ParentId)
     .OnDelete(DeleteBehavior.Restrict);
-
-builder.HasOne<QGroup>()
-    .WithMany()
-    .HasForeignKey(e => e.ChildQGroupId)
-    .OnDelete(DeleteBehavior.Restrict);
-
-// Prevent duplicate relationships
-builder.HasIndex(e => new { e.MainQGroupId, e.ChildQGroupId })
-    .IsUnique();
 ```
 
 #### Polymorphic Join (EntityType + EntityId discriminator)
@@ -274,17 +265,18 @@ A shared table (e.g., `EntityTag`, `EntityEmail`) stores data for multiple entit
 
 ```yaml
 children:
-  - name: Tags
-    entity: Tag
+  - name: Attachments
+    entity: Attachment
     relationship: polymorphic-join
-    joinEntity: EntityTag
-    polymorphicEntityTypes: [Client, Person, Facility]
+    joinEntity: Attachment
+    polymorphicEntityTypes: [TodoItem, Comment]
 ```
 
 **EF Configuration:**
 ```csharp
-// In EntityTagConfiguration : EntityBaseConfiguration<EntityTag>
+// In AttachmentConfiguration : EntityBaseConfiguration<Attachment>
 builder.Property(e => e.EntityType)
+    .HasConversion<string>()
     .HasMaxLength(50)
     .IsRequired();
 
@@ -295,8 +287,8 @@ builder.HasIndex(e => new { e.EntityType, e.EntityId });
 
 // Enforce valid discriminator values
 builder.HasCheckConstraint(
-    "CK_EntityTag_EntityType",
-    "[EntityType] IN ('Client', 'Person', 'Facility')");
+    "CK_Attachment_EntityType",
+    "[EntityType] IN ('TodoItem', 'Comment')");
 ```
 
 > **Note:** Polymorphic joins do NOT use EF navigation properties to the parent entity. The service layer resolves the parent type at runtime based on `EntityType`.
@@ -307,46 +299,47 @@ Define internal events that flow through `IInternalMessageBus`. Each event gener
 
 ```yaml
 events:
-  - name: UserCreated                       # PascalCase event name → generates UserCreated.cs + UserCreatedHandler.cs
-    raisedBy: User                           # entity or service that publishes the event
+  - name: TodoItemCreated                   # PascalCase event name → generates TodoItemCreated.cs + TodoItemCreatedHandler.cs
+    raisedBy: TodoItem                       # entity or service that publishes the event
     trigger: afterCreate                     # afterCreate | afterUpdate | afterDelete | afterStatusChange | custom
     payload:                                 # event-specific properties (Id is automatic)
       - { name: TenantId, type: Guid? }
-      - { name: Username, type: string }
-      - { name: Email, type: string }
-      - { name: FirstName, type: string }
-      - { name: LastName, type: string }
+      - { name: Title, type: string }
+      - { name: Priority, type: int }
+      - { name: CategoryId, type: Guid? }
+      - { name: AssignedToId, type: Guid? }
     handlers:                                # one handler class per entry
-      - name: SendWelcomeEmail
-        description: "Send onboarding email to new user"
-        dependsOn: [INotificationService]    # services injected into handler
-      - name: AuditUserCreation
-        description: "Write audit log entry"
-
-  - name: OrderApproved
-    raisedBy: Order
-    trigger: afterStatusChange               # triggered by state machine transition
-    transitionFrom: Submitted
-    transitionTo: Approved
-    payload:
-      - { name: TenantId, type: Guid }
-      - { name: OrderNumber, type: string }
-      - { name: ApprovedBy, type: string }
-    handlers:
-      - name: NotifyOrderApproved
-        description: "Email customer that order is approved"
+      - name: RecordTodoItemHistory
+        description: "Create audit trail entry for the new todo item"
+        dependsOn: [ITodoItemHistoryRepository]
+      - name: NotifyAssignee
+        description: "Send notification to assigned team member"
         dependsOn: [INotificationService]
 
-  - name: RescheduleCallRequest
-    raisedBy: ScheduledCallService           # raised from a custom action, not entity lifecycle
+  - name: TodoItemCompleted
+    raisedBy: TodoItem
+    trigger: afterStatusChange               # triggered by state machine transition
+    transitionFrom: IsStarted
+    transitionTo: IsCompleted
+    payload:
+      - { name: TenantId, type: Guid }
+      - { name: Title, type: string }
+      - { name: CompletedBy, type: string }
+    handlers:
+      - name: NotifyTodoItemCompleted
+        description: "Notify team that todo item is completed"
+        dependsOn: [INotificationService]
+
+  - name: ReminderRescheduled
+    raisedBy: ReminderService                # raised from a custom action, not entity lifecycle
     trigger: custom
     payload:
-      - { name: ScheduledCallClientId, type: Guid }
-      - { name: RescheduledDateTime, type: DateTime }
+      - { name: ReminderId, type: Guid }
+      - { name: RescheduledDateTime, type: DateTimeOffset }
     handlers:
       - name: ProcessReschedule
-        description: "Invoke rescheduling logic"
-        dependsOn: [IScheduledCallService]
+        description: "Update the scheduled reminder job"
+        dependsOn: [IReminderService]
 ```
 
 ### Event Trigger Types
@@ -377,17 +370,17 @@ Rules can be declared at the entity level (inline) or in a standalone section fo
 
 ```yaml
 entities:
-  - name: Product
+  - name: TodoItem
     rules:
-      - name: PriceMustBePositive
-        condition: "Price > 0"
-        errorMessage: "Product price must be greater than zero."
-      - name: SkuFormat
-        condition: "Sku matches ^[A-Z]{2,4}-\\d{4,8}$"
-        errorMessage: "SKU must follow the format XX-0000 (2-4 uppercase letters, dash, 4-8 digits)."
-      - name: NameRequired
-        condition: "!string.IsNullOrWhiteSpace(Name)"
-        errorMessage: "Product name is required."
+      - name: TitleRequired
+        condition: "!string.IsNullOrWhiteSpace(Title)"
+        errorMessage: "Todo item title is required."
+      - name: PriorityInRange
+        condition: "Priority >= 1 && Priority <= 5"
+        errorMessage: "Priority must be between 1 and 5."
+      - name: CannotBeCompletedAndBlocked
+        condition: "!(Status.HasFlag(IsCompleted) && Status.HasFlag(IsBlocked))"
+        errorMessage: "A todo item cannot be both Completed and Blocked."
 ```
 
 ### Standalone (cross-entity or complex)
@@ -395,14 +388,14 @@ entities:
 ```yaml
 domainRules:
   - name: TenantQuotaNotExceeded
-    appliesTo: [Product, Warehouse]          # multiple entities share this rule
+    appliesTo: [TodoItem, Team]              # multiple entities share this rule
     description: "Tenant cannot exceed maximum entity count per plan"
     dependsOn: [ITenantService]              # requires injected service context
     errorMessage: "Tenant has reached the maximum allowed {Entity} count."
-  - name: CannotDeleteActiveParent
+  - name: CannotDeleteCategoryWithTodoItems
     appliesTo: [Category]
-    condition: "entity.Children.Count == 0"
-    errorMessage: "Cannot delete a category that still has child products."
+    condition: "entity.TodoItems.Count == 0"
+    errorMessage: "Cannot delete a category that still has todo items."
 ```
 
 ### Rule Generation Rules
@@ -426,35 +419,34 @@ State machines are defined inline on the entity:
 
 ```yaml
 entities:
-  - name: Order
+  - name: TodoItem
     isTenantEntity: true
     properties:
-      - { name: OrderNumber, type: string, maxLength: 50, required: true }
-      - { name: Total, type: decimal, required: true }
+      - { name: Title, type: string, maxLength: 200, required: true }
+      - { name: Priority, type: int, required: true }
     stateMachine:
       field: Status                           # property that holds the state (generated as enum)
-      initial: Draft                          # default state on Create()
-      states: [Draft, Submitted, Approved, Shipped, Delivered, Cancelled]
+      initial: None                           # default state on Create()
+      states: [None, InProgress, Blocked, Completed, Cancelled]
       transitions:
-        - from: Draft
-          to: Submitted
-          action: Submit                      # generates SubmitAsync() on service + POST endpoint
-        - from: Submitted
-          to: Approved
-          action: Approve
-          raisesEvent: OrderApproved          # references event defined in events section
-          guardRule: ApproverRequired         # optional — must pass this domain rule first
-        - from: Submitted
+        - from: None
+          to: InProgress
+          action: Start                       # generates StartAsync() on service + POST endpoint
+        - from: InProgress
+          to: Completed
+          action: Complete
+          raisesEvent: TodoItemCompleted       # references event defined in events section
+          guardRule: AllSubtasksComplete        # optional — must pass this domain rule first
+        - from: InProgress
+          to: Blocked
+          action: Block
+        - from: Blocked
+          to: InProgress
+          action: Unblock
+        - from: InProgress
           to: Cancelled
           action: Cancel
-        - from: Approved
-          to: Shipped
-          action: Ship
-          raisesEvent: OrderShipped
-        - from: Shipped
-          to: Delivered
-          action: Deliver
-        - from: [Draft, Submitted]            # multiple source states
+        - from: [None, InProgress, Blocked]    # multiple source states
           to: Cancelled
           action: Cancel
 ```
@@ -477,21 +469,25 @@ For entity-specific operations that go beyond CRUD and state transitions (e.g., 
 
 ```yaml
 entities:
-  - name: ScheduledCall
+  - name: Reminder
     customActions:
       - name: Reschedule
         params:
-          - { name: NewDateTime, type: DateTime }
-        raisesEvent: RescheduleCallRequest
-        description: "Move the scheduled call to a new date/time"
-      - name: AssignAgent
+          - { name: NewRemindAt, type: DateTimeOffset }
+        raisesEvent: ReminderRescheduled
+        description: "Move the reminder to a new date/time"
+      - name: Deactivate
+        description: "Deactivate this reminder so it no longer fires"
+  - name: TodoItem
+    customActions:
+      - name: Reassign
         params:
-          - { name: AgentId, type: Guid }
+          - { name: AssignedToId, type: Guid }
           - { name: Notes, type: string? }
-        description: "Assign a call agent to this scheduled call"
+        description: "Reassign this todo item to a different team member"
       - name: Clone
-        returns: ScheduledCallDto              # non-void return
-        description: "Create a copy of this scheduled call with a new ID"
+        returns: TodoItemDto                   # non-void return
+        description: "Create a copy of this todo item with a new ID"
 ```
 
 ### Custom Action Generation Rules
@@ -509,7 +505,7 @@ entities:
 
 > **Complex workflows are specific to each use case and are not code-generated from schema inputs.** The sections above (events, state machines, custom actions, scheduled jobs, domain rules) provide the building blocks — workflows compose them in application code.
 
-Entity state machines handle **single-entity lifecycle** well (e.g., `Order: Draft → Submitted → Approved → Shipped`). However, real business workflows often span **multiple entities, external service calls, decision branches, retries, compensation, async waits, and human intervention** — e.g., "validate inventory across Products, process Payment, create Shipment, handle failures with SupportTicket escalation." This level of orchestration is inherently custom and should not be captured declaratively.
+Entity state machines handle **single-entity lifecycle** well (e.g., `TodoItem: None → InProgress → Completed`). However, real business workflows often span **multiple entities, external service calls, decision branches, retries, compensation, async waits, and human intervention** — e.g., "validate team capacity across TeamMembers, send Reminder notifications, escalate blocked TodoItems, handle failures with audit history recording." This level of orchestration is inherently custom and should not be captured declaratively.
 
 ### How to describe workflows to the AI
 
@@ -517,18 +513,18 @@ Provide an optional `workflows` section as **descriptive hints** for the AI. The
 
 ```yaml
 workflows:
-  - name: OrderFulfillment
+  - name: TodoItemEscalation
     description: |
-      1. Order submitted → validate inventory across Product entities
-      2. If inventory insufficient → create BackorderRequest, notify purchasing, wait
-      3. If inventory OK → process Payment via external gateway
-      4. If payment fails → retry 3x, then escalate to SupportTicket
-      5. If payment succeeds → approve Order, create Shipment, deduct inventory
-      6. Shipment delivered → complete Order, notify customer
-    involvedEntities: [Order, Product, Payment, Shipment, BackorderRequest, SupportTicket]
+      1. TodoItem blocked for >48h → check if assigned team member is active
+      2. If assignee inactive → reassign to team lead via Team.Members
+      3. Send Reminder notification to new assignee
+      4. If still blocked after 72h → escalate via notification to all team admins
+      5. Record all actions in TodoItemHistory
+      6. If manually unblocked → clear escalation reminders, resume normal flow
+    involvedEntities: [TodoItem, Team, TeamMember, Reminder, TodoItemHistory]
     pattern: orchestrator                    # orchestrator | choreography
-    compensationRequired: true               # indicates rollback/compensation steps exist
-    notes: "Payment gateway is external — needs idempotency keys and retry policy"
+    compensationRequired: false
+    notes: "Escalation thresholds are configurable per tenant"
 ```
 
 ### What the AI generates from workflow hints
@@ -634,17 +630,17 @@ When `aiSearchProvider` is set, define which entities participate in vector inde
 aiServices:
   aiSearchProvider: azureAiSearch
   vectorEntities:
-    - entity: Product
-      searchableFields: [Name, Description]          # text fields to embed
+    - entity: TodoItem
+      searchableFields: [Title, Description]          # text fields to embed
       embeddingModel: text-embedding-3-small          # OpenAI / Azure OpenAI embedding model
       dimensions: 1536                                 # embedding vector dimensions
-      indexName: products-index                        # Azure AI Search index name (azureAiSearch only)
+      indexName: todoitems-index                       # Azure AI Search index name (azureAiSearch only)
       hybridSearch: true                               # combine vector + keyword search (azureAiSearch only)
-    - entity: KnowledgeArticle
-      searchableFields: [Title, Content]
+    - entity: Comment
+      searchableFields: [Text]
       embeddingModel: text-embedding-3-small
       dimensions: 1536
-      indexName: knowledge-index
+      indexName: comments-index
 ```
 
 #### When to Choose Each Vector Search Backend
@@ -669,17 +665,17 @@ aiServices:
   includeMultiAgent: true
   agents:
     - name: TriageAgent
-      description: "Classifies incoming support requests and routes to the appropriate handler"
+      description: "Classifies incoming todo items by priority and routes to the appropriate team"
       modelEndpoint: gpt-4o                           # Azure OpenAI deployment name
-      tools: [TicketClassifier, PriorityScorer, SearchKnowledgeBase, GetCustomerHistory]
-    - name: RecommendationAgent
-      description: "Provides product recommendations based on customer profile and order history"
+      tools: [TodoItemClassifier, PriorityScorer, SearchTodoItems, GetTeamHistory]
+    - name: AssignmentAgent
+      description: "Suggests optimal team member assignment based on workload and expertise"
       modelEndpoint: gpt-4o
-      tools: [ProductMatcher, HistoryAnalyzer]
+      tools: [TeamMemberMatcher, WorkloadAnalyzer]
     - name: OrchestratorAgent
-      description: "Coordinates multi-agent handoff for complex customer requests"
+      description: "Coordinates multi-agent handoff for complex task management workflows"
       modelEndpoint: gpt-4o
-      delegates: [TriageAgent, RecommendationAgent]   # agents this orchestrator can delegate to
+      delegates: [TriageAgent, AssignmentAgent]        # agents this orchestrator can delegate to
 ```
 
 ### AI Services Generation Rules
@@ -769,20 +765,20 @@ Optionally provide detailed channel definitions to scaffold concrete senders/rec
 
 ```yaml
 messagingChannels:
-  - name: OrderEvents
+  - name: TodoItemEvents
     provider: serviceBus               # serviceBus | eventGrid | eventHub
     direction: send                     # send | receive | both
-    topicOrQueue: order-events          # queue/topic name (Service Bus) or topic name (Event Grid/Hub)
+    topicOrQueue: todoitem-events       # queue/topic name (Service Bus) or topic name (Event Grid/Hub)
     subscriptionName: api-handler       # Service Bus subscription (receive/both only)
-    messageType: OrderEventMessage      # DTO type published/consumed
-    description: "Publish order lifecycle events to downstream services"
-  - name: PaymentConfirmations
+    messageType: TodoItemEventMessage   # DTO type published/consumed
+    description: "Publish todo item lifecycle events to downstream services"
+  - name: ReminderNotifications
     provider: serviceBus
     direction: receive
-    topicOrQueue: payment-confirmations
-    subscriptionName: order-processor
-    messageType: PaymentConfirmedMessage
-    description: "Consume payment confirmations from billing service"
+    topicOrQueue: reminder-notifications
+    subscriptionName: reminder-processor
+    messageType: ReminderNotificationMessage
+    description: "Consume reminder-triggered notification messages"
   - name: AuditLog
     provider: eventHub
     direction: send
@@ -795,7 +791,7 @@ messagingChannels:
 
 - Each channel generates:
   - `I{Name}Sender` / `I{Name}Publisher` interface in `Application.Contracts/Services/`
-  - Concrete implementation in `Infrastructure.Repositories/` inheriting from the appropriate `Package.Infrastructure.Messaging` base class
+  - Concrete implementation in `Infrastructure.Repositories/` inheriting from the appropriate `EF.Messaging` base class
   - DI registration in `Bootstrapper`
   - For `direction: receive` or `both`: a `BackgroundService` processor in `TaskFlow.BackgroundServices`
 - See [skills/messaging.md](skills/messaging.md) for implementation patterns and base class APIs
@@ -818,18 +814,18 @@ Define the jobs the scheduler should run. Each job generates a `{JobName}Handler
 
 ```yaml
 scheduledJobs:
-  - name: SyncStaleOrders
+  - name: SyncOverdueTodoItems
     cron: "0 */2 * * *"                     # every 2 hours
-    description: "Re-process orders stuck in Pending for >24h"
-    dependsOn: [IOrderService]               # services injected into handler
-  - name: NightlyReportGeneration
+    description: "Flag todo items past their due date as overdue"
+    dependsOn: [ITodoItemService]            # services injected into handler
+  - name: NightlyTaskReport
     cron: "0 3 * * *"                        # daily at 3 AM
-    description: "Generate daily summary report and email to admins"
-    dependsOn: [IReportService, INotificationService]
-  - name: CleanupExpiredSessions
+    description: "Generate daily task summary and email to team admins"
+    dependsOn: [ITodoItemService, INotificationService]
+  - name: CleanupCompletedTodoItems
     cron: "0 0 * * 0"                        # weekly on Sunday midnight
-    description: "Remove expired user sessions older than 30 days"
-    dependsOn: [ISessionRepository]
+    description: "Archive completed todo items older than 90 days"
+    dependsOn: [ITodoItemService]
   - name: RetryFailedNotifications
     cron: "*/15 * * * *"                     # every 15 minutes
     description: "Retry notifications that failed to send"
@@ -863,26 +859,26 @@ Optionally provide detailed trigger definitions to scaffold functions with speci
 
 ```yaml
 functionDefinitions:
-  - name: ProcessOrderBlob
+  - name: ProcessAttachmentBlob
     trigger: blob
-    blobPath: "orders/{name}"                # container/path pattern
-    description: "Parse uploaded order CSV and create Order entities"
-    dependsOn: [IOrderService]
-  - name: HandlePaymentMessage
+    blobPath: "attachments/{name}"           # container/path pattern
+    description: "Process uploaded attachment and update Attachment entity metadata"
+    dependsOn: [IAttachmentService]
+  - name: HandleReminderMessage
     trigger: serviceBusQueue
-    queueName: "payment-events"              # Service Bus queue name
-    description: "Process payment confirmation from external system"
-    dependsOn: [IPaymentService, IOrderService]
+    queueName: "reminder-events"             # Service Bus queue name
+    description: "Process reminder trigger from scheduler"
+    dependsOn: [IReminderService, INotificationService]
   - name: OnBlobCreatedEvent
     trigger: eventGrid
     eventType: "Microsoft.Storage.BlobCreated"
-    description: "React to blob creation events for document processing"
-    dependsOn: [IDocumentService]
+    description: "React to blob creation events for attachment processing"
+    dependsOn: [IAttachmentService]
   - name: DailyCleanup
     trigger: timer
     schedule: "0 0 2 * * *"                  # NCRONTAB 6-field (sec min hr day month dow)
-    description: "Clean up temporary files and expired tokens"
-    dependsOn: [ICleanupService]
+    description: "Clean up expired reminders and archived todo items"
+    dependsOn: [ITodoItemService, IReminderService]
   - name: HealthCheck
     trigger: http
     route: "health"
@@ -927,11 +923,11 @@ When `unoProfile: full`, include richer navigation shell/flyout/dialog routes wh
 ```yaml
 uiPages:
   - name: Home                        # Landing page
-  - name: ProductList                  # List page for Product entity
-    entity: Product
+  - name: TodoItemList                 # List page for TodoItem entity
+    entity: TodoItem
     type: list
-  - name: ProductDetail                # Detail page for Product entity
-    entity: Product
+  - name: TodoItemDetail               # Detail page for TodoItem entity
+    entity: TodoItem
     type: detail
   - name: Settings                     # Settings page
 ```
@@ -954,18 +950,18 @@ Map domain events to notification deliveries. Each trigger generates wiring in t
 
 ```yaml
 notificationTriggers:
-  - event: UserCreated                       # references an event from the events section
+  - event: TodoItemCreated                   # references an event from the events section
     channel: email
-    template: WelcomeEmail                   # template name (generates a placeholder template)
-    description: "Send welcome email on user registration"
-  - event: OrderShipped
-    channel: [email, sms]                    # multiple channels
-    template: ShipmentNotification
-    description: "Notify customer that order has shipped"
-  - event: PaymentFailed
+    template: NewTodoItemAssigned             # template name (generates a placeholder template)
+    description: "Notify assigned team member about new todo item"
+  - event: TodoItemCompleted
+    channel: [email, appPush]                # multiple channels
+    template: TodoItemCompletedNotification
+    description: "Notify team that todo item is completed"
+  - event: ReminderRescheduled
     channel: [email, appPush]
-    template: PaymentFailedAlert
-    description: "Alert customer and ops about failed payment"
+    template: ReminderRescheduledAlert
+    description: "Alert assignee about rescheduled reminder"
 ```
 
 ### Notification Generation Rules
@@ -982,21 +978,17 @@ Define initial reference data that should be seeded during database creation or 
 
 ```yaml
 seedData:
-  - entity: ClientType
+  - entity: Category
     rows:
-      - { Name: "Enterprise", Description: "Enterprise-level client" }
-      - { Name: "SMB", Description: "Small/medium business" }
-      - { Name: "Individual", Description: "Individual consumer" }
-  - entity: OrderStatus
-    description: "Lookup table for order status display names"
+      - { Name: "Work", Description: "Work-related tasks", ColorHex: "#4A90D9", DisplayOrder: 1 }
+      - { Name: "Personal", Description: "Personal tasks", ColorHex: "#50C878", DisplayOrder: 2 }
+      - { Name: "Urgent", Description: "Urgent and time-sensitive tasks", ColorHex: "#FF5733", DisplayOrder: 3 }
+  - entity: Tag
+    description: "Global tags for labeling todo items"
     rows:
-      - { Name: "Draft", DisplayName: "Draft", SortOrder: 1 }
-      - { Name: "Submitted", DisplayName: "Pending Review", SortOrder: 2 }
-      - { Name: "Approved", DisplayName: "Approved", SortOrder: 3 }
-  - entity: AppSetting
-    rows:
-      - { Key: "MaxUploadSizeMB", Value: "25", Description: "Maximum file upload size" }
-      - { Key: "SessionTimeoutMinutes", Value: "30", Description: "User session timeout" }
+      - { Name: "bug", Description: "Bug or defect" }
+      - { Name: "feature", Description: "New feature request" }
+      - { Name: "high-priority", Description: "Requires immediate attention" }
 ```
 
 ### Seed Data Generation Rules
@@ -1012,22 +1004,22 @@ seedData:
 ## Example Minimal Input
 
 ```yaml
-ProjectName: Inventory
+ProjectName: TaskFlow
 multiTenant: true
 includeUnoUI: true
 entities:
-  - name: Product
+  - name: TodoItem
     isTenantEntity: true
     properties:
-      - { name: Name, type: string, maxLength: 100, required: true }
-      - { name: Sku, type: string, maxLength: 50, required: true }
-      - { name: Price, type: decimal, required: true }
-      - { name: Status, type: flags_enum, values: [None, IsInactive, IsDiscontinued] }
+      - { name: Title, type: string, maxLength: 200, required: true }
+      - { name: Description, type: string, maxLength: 2000, required: false }
+      - { name: Priority, type: int, required: true }
+      - { name: Status, type: flags_enum, values: [None, IsStarted, IsCompleted, IsBlocked, IsCancelled] }
     children:
-      - { name: Categories, entity: Category, relationship: many-to-many, joinEntity: ProductCategory }
+      - { name: Tags, entity: Tag, relationship: many-to-many, joinEntity: TodoItemTag }
     rules:
-      - { name: PriceMustBePositive, condition: "Price > 0", errorMessage: "Price must be greater than zero." }
-      - { name: SkuRequired, condition: "!string.IsNullOrWhiteSpace(Sku)", errorMessage: "SKU is required." }
+      - { name: TitleRequired, condition: "!string.IsNullOrWhiteSpace(Title)", errorMessage: "Title is required." }
+      - { name: PriorityInRange, condition: "Priority >= 1 && Priority <= 5", errorMessage: "Priority must be between 1 and 5." }
   - name: Category
     isTenantEntity: true
     properties:
@@ -1042,7 +1034,7 @@ From this input, the AI assistant generates the full vertical slice for each ent
 A richer example demonstrating events, state machines, custom actions, jobs, and notifications:
 
 ```yaml
-ProjectName: OrderManagement
+ProjectName: TaskFlow
 OrganizationName: Contoso
 multiTenant: true
 authProvider: EntraID
@@ -1057,119 +1049,145 @@ includeFunctionApp: true
 functionProfile: starter
 includeScheduler: true
 notifications: true
-notificationChannels: [email, sms]
+notificationChannels: [email, appPush]
 
 entities:
-  - name: Order
+  - name: TodoItem
     isTenantEntity: true
     properties:
-      - { name: OrderNumber, type: string, maxLength: 50, required: true }
-      - { name: Total, type: decimal, required: true }
-      - { name: Notes, type: string, maxLength: 1000, required: false }
+      - { name: Title, type: string, maxLength: 200, required: true }
+      - { name: Description, type: string, maxLength: 2000, required: false }
+      - { name: Priority, type: int, required: true }
+      - { name: EstimatedHours, type: decimal?, required: false }
+      - { name: ActualHours, type: decimal?, required: false }
     children:
-      - { name: LineItems, entity: OrderLineItem, relationship: one-to-many, cascadeDelete: true }
+      - { name: Comments, entity: Comment, relationship: one-to-many, cascadeDelete: true }
+      - { name: Tags, entity: Tag, relationship: many-to-many, joinEntity: TodoItemTag }
+      - { name: Reminders, entity: Reminder, relationship: one-to-many, cascadeDelete: true }
     navigation:
-      - { name: Customer, entity: Customer, required: true, deleteRestrict: true }
+      - { name: Category, entity: Category, required: false, deleteRestrict: true }
     rules:
-      - { name: TotalMustBePositive, condition: "Total > 0", errorMessage: "Order total must be positive." }
-      - { name: MustHaveLineItems, condition: "LineItems.Count > 0", errorMessage: "Order must have at least one line item." }
+      - { name: TitleRequired, condition: "!string.IsNullOrWhiteSpace(Title)", errorMessage: "Title is required." }
+      - { name: PriorityInRange, condition: "Priority >= 1 && Priority <= 5", errorMessage: "Priority must be between 1 and 5." }
     stateMachine:
       field: Status
-      initial: Draft
-      states: [Draft, Submitted, Approved, Shipped, Delivered, Cancelled]
+      initial: None
+      states: [None, InProgress, Blocked, Completed, Cancelled]
       transitions:
-        - { from: Draft, to: Submitted, action: Submit }
-        - { from: Submitted, to: Approved, action: Approve, raisesEvent: OrderApproved }
-        - { from: Submitted, to: Cancelled, action: Cancel }
-        - { from: Approved, to: Shipped, action: Ship, raisesEvent: OrderShipped }
-        - { from: Shipped, to: Delivered, action: Deliver }
+        - { from: None, to: InProgress, action: Start }
+        - { from: InProgress, to: Completed, action: Complete, raisesEvent: TodoItemCompleted }
+        - { from: InProgress, to: Blocked, action: Block }
+        - { from: Blocked, to: InProgress, action: Unblock }
+        - { from: [None, InProgress, Blocked], to: Cancelled, action: Cancel }
     customActions:
       - name: Clone
-        returns: OrderDto
-        description: "Create a copy of this order as a new Draft"
+        returns: TodoItemDto
+        description: "Create a copy of this todo item as a new item"
+      - name: Reassign
+        params:
+          - { name: AssignedToId, type: Guid }
+        description: "Reassign to a different team member"
 
-  - name: OrderLineItem
+  - name: Comment
     isTenantEntity: true
     properties:
-      - { name: ProductName, type: string, maxLength: 200, required: true }
-      - { name: Quantity, type: int, required: true }
-      - { name: UnitPrice, type: decimal, required: true }
+      - { name: Text, type: string, maxLength: 1000, required: true }
+      - { name: AuthorId, type: string, maxLength: 200, required: true }
+      - { name: CreatedAt, type: DateTimeOffset, required: true }
 
-  - name: Customer
+  - name: Category
     isTenantEntity: true
     properties:
-      - { name: Name, type: string, maxLength: 200, required: true }
-      - { name: Email, type: string, maxLength: 254, required: true }
-      - { name: Phone, type: string, maxLength: 20, required: false }
+      - { name: Name, type: string, maxLength: 100, required: true }
+      - { name: Description, type: string, maxLength: 500, required: false }
+      - { name: ColorHex, type: string, maxLength: 7, required: false }
+      - { name: DisplayOrder, type: int, required: true }
+
+  - name: Tag
+    isTenantEntity: false
+    properties:
+      - { name: Name, type: string, maxLength: 50, required: true }
+      - { name: Description, type: string, maxLength: 200, required: false }
+
+  - name: Team
+    isTenantEntity: true
+    properties:
+      - { name: Name, type: string, maxLength: 100, required: true }
+      - { name: Description, type: string, maxLength: 500, required: false }
+    children:
+      - { name: Members, entity: TeamMember, relationship: one-to-many, cascadeDelete: true }
+
+  - name: TeamMember
+    isTenantEntity: true
+    properties:
+      - { name: UserId, type: string, maxLength: 200, required: true }
+      - { name: DisplayName, type: string, maxLength: 200, required: true }
+      - { name: Role, type: enum, values: [Owner, Admin, Member] }
+      - { name: HourlyRate, type: decimal?, required: false }
 
 events:
-  - name: OrderApproved
-    raisedBy: Order
-    trigger: afterStatusChange
-    transitionFrom: Submitted
-    transitionTo: Approved
+  - name: TodoItemCreated
+    raisedBy: TodoItem
+    trigger: afterCreate
     payload:
       - { name: TenantId, type: Guid }
-      - { name: OrderNumber, type: string }
-      - { name: ApprovedBy, type: string }
+      - { name: Title, type: string }
+      - { name: Priority, type: int }
     handlers:
-      - { name: NotifyCustomerOrderApproved, description: "Email customer", dependsOn: [INotificationService] }
-  - name: OrderShipped
-    raisedBy: Order
+      - { name: RecordTodoItemHistory, description: "Write audit trail", dependsOn: [ITodoItemHistoryRepository] }
+  - name: TodoItemCompleted
+    raisedBy: TodoItem
     trigger: afterStatusChange
-    transitionFrom: Approved
-    transitionTo: Shipped
+    transitionFrom: InProgress
+    transitionTo: Completed
     payload:
       - { name: TenantId, type: Guid }
-      - { name: OrderNumber, type: string }
-      - { name: TrackingNumber, type: string? }
+      - { name: Title, type: string }
+      - { name: CompletedBy, type: string }
     handlers:
-      - { name: NotifyCustomerOrderShipped, description: "Email + SMS customer", dependsOn: [INotificationService] }
+      - { name: NotifyTeamTodoCompleted, description: "Notify team members", dependsOn: [INotificationService] }
 
 scheduledJobs:
-  - name: SyncStaleOrders
+  - name: SyncOverdueTodoItems
     cron: "0 */2 * * *"
-    description: "Re-process orders stuck in Submitted for >24h"
-    dependsOn: [IOrderService]
-  - name: NightlyOrderReport
+    description: "Flag todo items past their due date as overdue"
+    dependsOn: [ITodoItemService]
+  - name: NightlyTaskReport
     cron: "0 3 * * *"
-    description: "Generate daily order summary and email to admins"
-    dependsOn: [IOrderService, INotificationService]
+    description: "Generate daily task summary and email to team admins"
+    dependsOn: [ITodoItemService, INotificationService]
 
 messagingProviders: [serviceBus]
 messagingChannels:
-  - name: OrderEvents
+  - name: TodoItemEvents
     provider: serviceBus
     direction: send
-    topicOrQueue: order-events
-    messageType: OrderEventMessage
-    description: "Publish order lifecycle events"
-  - name: PaymentConfirmations
+    topicOrQueue: todoitem-events
+    messageType: TodoItemEventMessage
+    description: "Publish todo item lifecycle events"
+  - name: ReminderNotifications
     provider: serviceBus
     direction: receive
-    topicOrQueue: payment-confirmations
-    subscriptionName: order-processor
-    messageType: PaymentConfirmedMessage
-    description: "Consume payment confirmations from billing service"
-
-externalApis:
-  - name: Stripe
-    baseUrl: "https://api.stripe.com"
-    authScheme: apiKey
-    description: "Payment processing"
-    operations:
-      - { name: CreateCharge, method: POST, path: "/v1/charges", requestType: CreateChargeRequest, responseType: ChargeResponse }
-      - { name: GetCharge, method: GET, path: "/v1/charges/{chargeId}", responseType: ChargeResponse }
+    topicOrQueue: reminder-notifications
+    subscriptionName: reminder-processor
+    messageType: ReminderNotificationMessage
+    description: "Consume reminder-triggered notification messages"
 
 notificationTriggers:
-  - { event: OrderApproved, channel: email, template: OrderApprovedEmail }
-  - { event: OrderShipped, channel: [email, sms], template: OrderShippedNotification }
+  - { event: TodoItemCreated, channel: email, template: NewTodoItemAssigned }
+  - { event: TodoItemCompleted, channel: [email, appPush], template: TodoItemCompletedNotification }
 
 seedData:
-  - entity: Customer
+  - entity: Category
     rows:
-      - { Name: "Contoso Ltd", Email: "orders@contoso.com", Phone: "555-0100" }
-      - { Name: "Fabrikam Inc", Email: "purchasing@fabrikam.com", Phone: "555-0200" }
+      - { Name: "Work", Description: "Work-related tasks", ColorHex: "#4A90D9", DisplayOrder: 1 }
+      - { Name: "Personal", Description: "Personal tasks", ColorHex: "#50C878", DisplayOrder: 2 }
+      - { Name: "Urgent", Description: "Urgent and time-sensitive tasks", ColorHex: "#FF5733", DisplayOrder: 3 }
+  - entity: Tag
+    rows:
+      - { Name: "bug", Description: "Bug or defect" }
+      - { Name: "feature", Description: "New feature request" }
+      - { Name: "high-priority", Description: "Requires immediate attention" }
 ```
 
-From these inputs, the AI scaffolds entities with full CRUD, state machine transitions, domain events with handlers, scheduled background jobs, messaging channels, external API integrations, notification wiring, and seed data — all in one pass.
+From these inputs, the AI scaffolds entities with full CRUD, state machine transitions, domain events with handlers, scheduled background jobs, messaging channels, notification wiring, and seed data — all in one pass.
