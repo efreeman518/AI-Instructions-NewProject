@@ -247,5 +247,5 @@ public async Task<Result> DeactivateAsync(Guid id, CancellationToken ct = defaul
 - Rules should be **pure functions** — no I/O, no database access, no service calls.
 - Keep rules in `Domain.Rules` project — they depend only on `Domain.Model` and `Domain.Shared`.
 - Rules that require external data (e.g., uniqueness checks) belong in the **Application.Services** layer, not in domain rules.
-- The reference solution (`sampleapp/`) includes 5 domain rules + `RuleBase` demonstrating this pattern. See `sampleapp/src/Domain/TaskFlow.Domain.Model/Rules/`.
+- Keep generated rule files in `src/Domain/{Project}.Domain.Rules/` for consistency with solution structure.
 - For simple validations (e.g., required fields, string length), use the inline `Valid()` method in the entity. Reserve the specification pattern for compound or cross-entity business rules.

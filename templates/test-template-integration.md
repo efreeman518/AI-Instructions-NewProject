@@ -43,9 +43,13 @@ public abstract class EndpointTestBase : DbIntegrationTestBase
 [TestClass]
 public class {Entity}EndpointsTests : EndpointTestBase
 {
+    [TestCategory("Endpoint")]
+    [TestCategory("Integration")]
     [TestMethod]
     public async Task CRUD_Pass() { /* POST/GET/PUT/DELETE + 404 */ }
 
+    [TestCategory("Endpoint")]
+    [TestCategory("Integration")]
     [TestMethod]
     public async Task GetPage_ReturnsOk() { }
 }

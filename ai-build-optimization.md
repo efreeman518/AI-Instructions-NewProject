@@ -1,23 +1,6 @@
 # AI Build Optimization Playbook
 
-Use this file to keep scaffolding deterministic, context-efficient, and verifiable.
-
-## Core Rules
-
-- Execute one phase at a time.
-- Keep instruction context small (target `≤30K` per phase).
-- Validate immediately after generation (`dotnet build` first).
-- One code-fix pass per failure set; then flag blockers for engineer.
-- Never modify/build `sampleapp/`.
-
-## High-Confidence Workflow
-
-1. Domain discovery conversation
-2. Capture YAML inputs from [domain-inputs.schema.md](domain-inputs.schema.md)
-3. Choose mode/profiles (`scaffoldMode`, `testingProfile`, optional `functionProfile`/`unoProfile`)
-4. Run one phase using only required skills/templates
-5. Validate + checkpoint in `HANDOFF.md`
-6. Move to next phase
+Use this file for prompt patterns, fail-fast decisions, validation cadence, and context-load details. Workflow and context rules are in [SKILL.md](SKILL.md).
 
 ## Fail-Fast Protocol
 
@@ -26,10 +9,22 @@ After every build:
 - **Code-generation issue** (usings/references/DI/wiring/packages):
   - attempt one focused fix pass
   - rebuild
+- **Missing package in `Directory.Packages.props`** (package reference not found in central props):
+  - add the package at latest stable version, then restore and rebuild
+  - if it requires a private feed that is not restoring, classify as an infrastructure issue
 - **Infrastructure issue** (feed auth, env vars, Docker, certs, SQL/cloud access):
   - do not loop fixes
-  - document blocker in `HANDOFF.md`
+  - document blocker in `HANDOFF.md` (create if missing)
   - point engineer to [engineer-checklist.md](engineer-checklist.md)
+
+## Missing-Inputs Protocol
+
+When domain inputs are absent or ambiguous before scaffolding:
+
+- **Required** (`ProjectName`, `customNugetFeeds`, at least one entity): ask before proceeding
+- **Mode/profile defaults** (`scaffoldMode`, `testingProfile`): infer `full` / `balanced`; note the assumption inline and continue
+- **Optional feature flags** (`includeGateway`, `includeFunctionApp`, `includeUnoUI`, etc.): default to `false`; note and continue
+- **Partial entity definitions**: scaffold what is defined; emit `// TODO` stubs for missing properties/rules and list them under Blockers in `HANDOFF.md`
 
 ## Prompt Patterns
 
@@ -58,9 +53,10 @@ Inputs:
 - entities
 Constraints:
 - Never modify sampleapp/
+- Never build or compile sampleapp/
 - Use templates + placeholder tokens
 - Build after generation
-- One code-fix pass max; infra blockers go to HANDOFF.md
+- One code-fix pass max; infra blockers go to HANDOFF.md (create if missing)
 ```
 
 ### Fix-only
@@ -70,7 +66,7 @@ Fix only current build/test failures.
 No unrelated refactors.
 Preserve public contracts unless required.
 Re-run same validation command.
-If still failing after one pass, log in HANDOFF.md.
+If still failing after one pass, log in HANDOFF.md (create if missing).
 ```
 
 ### Vertical slice
@@ -85,16 +81,9 @@ Report generated files + follow-ups.
 ## Validation Cadence
 
 - Foundation/App Core: `dotnet build`
-- Feature slice: build + targeted unit/endpoint/integration tests
+- Feature slice: build + targeted unit, endpoint, and integration tests
 - Pre-merge baseline: full test run
 - IaC validation: run commands from [engineer-checklist.md](engineer-checklist.md)
-
-## Context Control
-
-- Load only active phase files.
-- Prefer references/diffs over large pasted content.
-- Use [sampleapp-patterns.md](sampleapp-patterns.md) before raw sampleapp files.
-- Use MCP servers for up-to-date APIs/packages.
 
 ## Phase Loading Manifest
 
@@ -111,7 +100,10 @@ Report generated files + follow-ups.
 - `templates/entity-template.md`
 - `templates/ef-configuration-template.md`
 - `templates/repository-template.md`
+- `templates/domain-rules-template.md` *(if rules/state machine used)*
+- `templates/appsettings-template.md`
 - relevant sections of [domain-inputs.schema.md](domain-inputs.schema.md)
+- `skills/cosmosdb-data.md` / `skills/table-storage.md` / `skills/blob-storage.md` *(if non-SQL entities)*
 
 ### Phase 2 — App Core
 - `skills/application-layer.md`
@@ -121,6 +113,7 @@ Report generated files + follow-ups.
 - `templates/mapper-template.md`
 - `templates/service-template.md`
 - `templates/endpoint-template.md`
+- `templates/message-handler-template.md` *(if events/handlers used)*
 
 ### Phase 3 — Runtime/Edge
 Load only enabled concerns:
@@ -144,9 +137,9 @@ Load only enabled concerns:
 - `skills/iac.md`
 - `skills/cicd.md`
 
-## Session Handoff (`HANDOFF.md`)
+## Session State (`HANDOFF.md`, create/update)
 
-Update at phase boundaries or when context is high.
+Create this file in the target project root if it does not exist, then update it at phase boundaries or when context is high.
 
 Include:
 - completed phases

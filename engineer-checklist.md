@@ -9,7 +9,8 @@ Use this file as the **single execution path** for compile/run verification whil
 1. Run **Preflight** once per machine/repo.
 2. After every AI phase, run the **Phase Execution Loop**.
 3. Run only the optional sections that match enabled hosts/workloads.
-4. If a step fails, log it in `HANDOFF.md`, keep scope moving, and return later.
+4. If a step fails, create `HANDOFF.md` if missing, log the issue, keep scope moving, and return later.
+5. Treat `sampleapp/` as code reference only; never build/compile/test inside `sampleapp/`.
 
 ---
 
@@ -38,24 +39,7 @@ Use this file as the **single execution path** for compile/run verification whil
 
 Configure these in your AI client (VS Code `settings.json` or Claude Desktop config) so the AI can look up current docs and interact with tools during scaffolding.
 
-**Essential (configure now):**
-- [ ] **Microsoft Docs** MCP (`mcp-microsoftdocs`) — .NET, Aspire, EF Core, Azure, Bicep, Entra ID
-- [ ] **Context7** MCP (`@upstash/context7-mcp`) — Uno Platform, YARP, FusionCache, Kiota, TickerQ, CommunityToolkit
-
-**Recommended (high-value):**
-- [ ] **GitHub** MCP (`@modelcontextprotocol/server-github`) *(if using GitHub)* — repo management, Actions status
-- [ ] **Azure** MCP (`@azure/mcp`) *(if deploying to Azure)* — resource management, deployment validation
-- [ ] **Playwright** MCP (`@executeautomation/playwright-mcp-server`) *(if scaffolding E2E tests)* — browser automation
-- [ ] **Fetch** MCP (`@modelcontextprotocol/server-fetch`) — retrieve OpenAPI specs, package docs, release notes
-- [ ] **Sequential Thinking** MCP (`@modelcontextprotocol/server-sequential-thinking`) — structured reasoning for domain modeling
-
-**Optional (add as needed):**
-- [ ] **Git** MCP (`@modelcontextprotocol/server-git`) — direct git operations (commits, diffs, branches)
-- [ ] **Docker** MCP (`@modelcontextprotocol/server-docker`) — container management for Aspire local dev
-- [ ] **Memory** MCP (`@modelcontextprotocol/server-memory`) — persistent knowledge graph across sessions
-- [ ] **Brave Search** (`@anthropic/mcp-brave-search`) or **Tavily** (`@tavily/mcp-server`) — web search for troubleshooting
-
-> See [GET-STARTED-human.md](GET-STARTED-human.md) prerequisites for full descriptions and phase mapping.
+- [ ] MCP servers configured per [GET-STARTED-human.md](GET-STARTED-human.md) (Essential + phase-relevant)
 
 ---
 
@@ -72,7 +56,7 @@ dotnet test --filter "TestCategory=Unit"
 - [ ] Restore succeeds
 - [ ] Build succeeds
 - [ ] Unit tests pass
-- [ ] Results recorded in `HANDOFF.md` if any step fails
+- [ ] Results recorded in `HANDOFF.md` (create if missing) if any step fails
 
 If build/test fails after one AI code-fix pass, keep moving with non-blocked phases and return later.
 
@@ -144,16 +128,16 @@ dotnet ef migrations add InitialCreate `
 
 ## Delivery Checks
 
-- [ ] Integration/endpoint tests pass for current scope
+- [ ] Endpoint and integration tests pass for current scope
 - [ ] Optional architecture tests pass (if included)
 - [ ] `az bicep build --file infra/main.bicep` succeeds *(if IaC enabled)*
 - [ ] Aspire ↔ IaC names/connection strings are aligned
 
 ---
 
-## Failure Handoff Template
+## Failure Session State Template (`HANDOFF.md`)
 
-When a step fails, add this to `HANDOFF.md`:
+When a step fails, create `HANDOFF.md` if needed, then add this:
 
 ```markdown
 ### Execution Blocker
@@ -162,6 +146,17 @@ When a step fails, add this to `HANDOFF.md`:
 - Symptom: <short error summary>
 - Classification: code-generation | infrastructure
 - Next action: <what engineer will do next>
+```
+
+Example:
+
+```markdown
+### Execution Blocker
+- Step: Phase Execution Loop -> `dotnet restore`
+- Command: dotnet restore src/TaskFlow.slnx
+- Symptom: NU1301 Unable to load the service index for source https://pkgs.dev.azure.com/<org>/<feed>/nuget/v3/index.json
+- Classification: infrastructure
+- Next action: Engineer validates feed credentials and `nuget.config`, then reruns restore before AI continues phase scaffolding
 ```
 
 ---

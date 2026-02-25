@@ -144,7 +144,7 @@ builder.Services
 
 After generating the Bootstrapper, confirm:
 
-- [ ] Single `RegisterServices.cs` with public `AddBootstrapper(this IServiceCollection, IConfiguration)` extension method
+- [ ] Single `RegisterServices.cs` with public `RegisterDomainServices`, `RegisterApplicationServices`, and `RegisterInfrastructureServices` extension methods
 - [ ] DbContexts registered via pooled factory with scoped wrappers
 - [ ] All `I{Entity}RepositoryTrxn` and `I{Entity}RepositoryQuery` interfaces registered
 - [ ] All `I{Entity}Service` implementations registered

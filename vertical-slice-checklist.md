@@ -18,12 +18,12 @@ For entity `{Entity}`:
 | Data | `src/Infrastructure/{Project}.Infrastructure.Repositories/{Entity}RepositoryTrxn.cs` | [repository-template.md](templates/repository-template.md) | yes |
 | Data | `src/Infrastructure/{Project}.Infrastructure.Repositories/{Entity}RepositoryQuery.cs` | [repository-template.md](templates/repository-template.md) | yes |
 | Data (optional) | `src/Infrastructure/{Project}.Infrastructure.Repositories/Updaters/{Entity}Updater.cs` | [updater-template.md](templates/updater-template.md) | if child collections |
-| App | `src/Application/{Project}.Application.Contracts/DTOs/{Entity}Dto.cs` | [dto-template.md](templates/dto-template.md) | yes |
-| App | `src/Application/{Project}.Application.Contracts/DTOs/{Entity}SearchFilter.cs` | [dto-template.md](templates/dto-template.md) | yes |
-| App | `src/Application/{Project}.Application.Contracts/Interfaces/I{Entity}Service.cs` | [service-template.md](templates/service-template.md) | yes |
-| App | `src/Application/{Project}.Application.Contracts/Interfaces/I{Entity}RepositoryTrxn.cs` | [repository-template.md](templates/repository-template.md) | yes |
-| App | `src/Application/{Project}.Application.Contracts/Interfaces/I{Entity}RepositoryQuery.cs` | [repository-template.md](templates/repository-template.md) | yes |
-| App | `src/Application/{Project}.Application.Services/Mappers/{Entity}Mapper.cs` | [mapper-template.md](templates/mapper-template.md) | yes |
+| App | `src/Application/{Project}.Application.Models/{Entity}/{Entity}Dto.cs` | [dto-template.md](templates/dto-template.md) | yes |
+| App | `src/Application/{Project}.Application.Models/{Entity}/{Entity}SearchFilter.cs` | [dto-template.md](templates/dto-template.md) | yes |
+| App | `src/Application/{Project}.Application.Contracts/Services/I{Entity}Service.cs` | [service-template.md](templates/service-template.md) | yes |
+| App | `src/Application/{Project}.Application.Contracts/Repositories/I{Entity}RepositoryTrxn.cs` | [repository-template.md](templates/repository-template.md) | yes |
+| App | `src/Application/{Project}.Application.Contracts/Repositories/I{Entity}RepositoryQuery.cs` | [repository-template.md](templates/repository-template.md) | yes |
+| App | `src/Application/{Project}.Application.Contracts/Mappers/{Entity}Mapper.cs` | [mapper-template.md](templates/mapper-template.md) | yes |
 | App | `src/Application/{Project}.Application.Services/Services/{Entity}Service.cs` | [service-template.md](templates/service-template.md) | yes |
 | App (optional) | `src/Application/{Project}.Application.Services/Validators/{Entity}Validator.cs` | — | if custom validator used |
 | API | `src/{Host}/{Host}.Api/Endpoints/{Entity}Endpoints.cs` | [endpoint-template.md](templates/endpoint-template.md) | yes |

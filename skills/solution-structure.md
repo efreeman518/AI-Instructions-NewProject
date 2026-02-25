@@ -57,6 +57,8 @@ src/
 
 Reference implementation: `sampleapp/src/`.
 
+Note: sampleapp may co-locate some rule classes under `Domain.Model/Rules`; for new scaffolds, keep rules in the dedicated `{Project}.Domain.Rules` project.
+
 ---
 
 ## Dependency Direction (Contract)

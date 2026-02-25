@@ -2,6 +2,8 @@
 
 Single input contract for scaffolding. Complete domain discovery first (see [SKILL.md](SKILL.md)), then submit a compact YAML payload.
 
+> **Selective Loading:** During scaffolding, load only the sections you need. `Required First`, `Core Identity`, and `Entity Contract` are always needed. Load remaining sections only when the corresponding feature is enabled in domain inputs.
+
 ## Required First
 
 - `ProjectName`
@@ -98,7 +100,7 @@ entities:
 
 ---
 
-## Security and Tenant Inputs
+## Security and Tenant Inputs *(load when `authProvider` ≠ None or `multiTenant: true`)*
 
 | Input | Default | Values |
 |---|---|---|
@@ -145,12 +147,11 @@ entities:
 | `includeGateway` | `true` |
 | `includeFunctionApp` | `false` |
 | `includeScheduler` | `false` |
-| `includeBlazorUI` | `false` |
 | `includeUnoUI` | `false` |
 
 ---
 
-## AI and Testing Inputs
+## AI and Testing Inputs *(load when `includeAiServices: true` or configuring test profiles)*
 
 ### AI
 
@@ -180,7 +181,7 @@ Templates:
 
 ---
 
-## Integration Blocks (Optional)
+## Integration Blocks *(load only subsections for enabled features)*
 
 Use these sections only when the feature is enabled:
 

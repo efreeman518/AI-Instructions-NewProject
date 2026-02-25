@@ -19,8 +19,7 @@ Use for:
 - Use `.slnx` (not legacy `.sln`).
 - Use central package management (`Directory.Packages.props`).
 - After adding packages, update to latest stable and verify restore/build.
-- Record instruction gaps in [UPDATE-INSTRUCTIONS.md](UPDATE-INSTRUCTIONS.md) (do not hot-edit baseline instructions mid-scaffold).
-
+- Record instruction gaps in [UPDATE-INSTRUCTIONS.md](UPDATE-INSTRUCTIONS.md) (do not hot-edit baseline instructions mid-scaffold).- Prefer latest stable .NET SDK and package releases. MCP server setup: see [GET-STARTED-human.md](GET-STARTED-human.md).
 ## Context Budget Rules (Mandatory)
 
 1. Load at most **4 skills + 4 templates** per turn.
@@ -32,7 +31,17 @@ Use for:
    - [domain-inputs.schema.md](domain-inputs.schema.md): only active sections
    - `templates/test-template-*.md`: only needed test type
    - [skills/uno-ui.md](skills/uno-ui.md): dedicated session preferred
-7. When context is high and work is stable, create/update `HANDOFF.md`.
+7. When context is high and work is stable, create `HANDOFF.md` if missing, then update it.
+
+## Session Start (Every AI Turn)
+
+Before any scaffolding work in a new AI session:
+1. Load `SKILL.md` + `placeholder-tokens.md` + `ai-build-optimization.md` (always set)
+2. Check target project root for an existing `HANDOFF.md` — if found: read **Current Phase** to select the matching Phase Loading Manifest entry; read **Next Load Set** for the exact files to load; read **Blockers** to decide whether to continue or route to engineer first
+3. Check `domain-inputs.schema.md` for `scaffoldMode`, `testingProfile`, and enabled flags before loading phase files
+4. If required inputs are missing or ambiguous, apply the **Missing-Inputs Protocol** in [ai-build-optimization.md](ai-build-optimization.md) before proceeding
+
+---
 
 ## Scaffolding Modes
 
@@ -40,7 +49,21 @@ Use for:
 Production-grade architecture with optional workloads and broader quality gates.
 
 ### `lite`
-Minimal clean architecture for internal tools/PoCs/services. Excludes by default: Gateway, multi-tenant, caching, Uno UI, scheduler/background, Function App, Aspire-heavy orchestration.
+Minimal clean architecture for internal tools/PoCs/services.
+
+| Excluded in `lite` | Skill / Phase |
+|---|---|
+| API Gateway (YARP) | `skills/gateway.md` |
+| Multi-tenancy | `skills/multi-tenant.md` |
+| Distributed caching | `skills/caching.md` |
+| Aspire orchestration | `skills/aspire.md` |
+| Scheduler/background services | `skills/background-services.md` |
+| Function App | `skills/function-app.md` |
+| Uno UI | `skills/uno-ui.md` |
+| Notifications | `skills/notifications.md` |
+| IaC + CI/CD pipeline | `skills/iac.md`, `skills/cicd.md` |
+
+In `lite` mode, load only: Foundation + App Core + Configuration + Identity + Testing. Add optional hosts only after core stabilizes.
 
 Set mode in [domain-inputs.schema.md](domain-inputs.schema.md) (`scaffoldMode`).
 
@@ -51,41 +74,32 @@ Set mode in [domain-inputs.schema.md](domain-inputs.schema.md) (`scaffoldMode`).
 3. Choose mode (`full`/`lite`) and profiles (`testingProfile`, `functionProfile`, `unoProfile`)
 4. Execute skills phase-by-phase (below)
 5. Validate (`dotnet build`, then targeted tests)
-6. Capture blockers/next actions in `HANDOFF.md`
+6. Capture blockers/next actions in `HANDOFF.md` (create if missing in the target project root)
 
-## Domain Discovery Protocol (Condensed)
+## Phase File Router
 
-Before code generation, collaborate on:
-- Business context and core workflows
-- Entities and lifecycle states
-- Relationships and boundaries
-- Rules/invariants
-- Data-store choices (SQL/Cosmos/Table/Blob)
-- Tenancy/access model
-- Events/integration points
-- AI/vector/agent opportunities (if relevant)
-
-Transition only after model summary is confirmed.
+Per-phase file load lists are in the **Phase Loading Manifest** in [ai-build-optimization.md](ai-build-optimization.md). Load the minimum set for the current phase only.
 
 ## Skills (Recommended Order)
 
 1. [skills/solution-structure.md](skills/solution-structure.md)
 2. [skills/domain-model.md](skills/domain-model.md)
-3. [skills/data-access.md](skills/data-access.md)
-4. [skills/application-layer.md](skills/application-layer.md)
-5. [skills/bootstrapper.md](skills/bootstrapper.md)
-6. [skills/api.md](skills/api.md)
-7. [skills/gateway.md](skills/gateway.md) *(if enabled)*
-8. [skills/multi-tenant.md](skills/multi-tenant.md) *(if enabled)*
-9. [skills/caching.md](skills/caching.md) *(if enabled)*
-10. [skills/aspire.md](skills/aspire.md) *(if enabled)*
-11. [skills/background-services.md](skills/background-services.md) *(if scheduler enabled)*
-12. [skills/function-app.md](skills/function-app.md) *(if enabled)*
-13. [skills/uno-ui.md](skills/uno-ui.md) *(if enabled)*
-14. [skills/notifications.md](skills/notifications.md) *(if enabled)*
-15. [skills/configuration.md](skills/configuration.md)
-16. [skills/identity-management.md](skills/identity-management.md)
-17. Optional infra/data integrations as needed:
+3. [skills/data-access.md](skills/data-access.md) *(+ cosmosdb/table/blob skills if non-SQL entities)*
+4. [skills/package-dependencies.md](skills/package-dependencies.md) *(load with Foundation; re-reference any time packages change)*
+5. [skills/application-layer.md](skills/application-layer.md)
+6. [skills/bootstrapper.md](skills/bootstrapper.md)
+7. [skills/api.md](skills/api.md)
+8. [skills/gateway.md](skills/gateway.md) *(if enabled)*
+9. [skills/multi-tenant.md](skills/multi-tenant.md) *(if enabled)*
+10. [skills/caching.md](skills/caching.md) *(if enabled)*
+11. [skills/aspire.md](skills/aspire.md) *(if enabled)*
+12. [skills/configuration.md](skills/configuration.md)
+13. [skills/background-services.md](skills/background-services.md) *(if scheduler enabled)*
+14. [skills/function-app.md](skills/function-app.md) *(if enabled)*
+15. [skills/uno-ui.md](skills/uno-ui.md) *(if enabled)*
+16. [skills/notifications.md](skills/notifications.md) *(if enabled)*
+17. [skills/identity-management.md](skills/identity-management.md)
+18. Optional infra/data integrations as needed:
     - [skills/cosmosdb-data.md](skills/cosmosdb-data.md)
     - [skills/table-storage.md](skills/table-storage.md)
     - [skills/blob-storage.md](skills/blob-storage.md)
@@ -93,11 +107,10 @@ Transition only after model summary is confirmed.
     - [skills/keyvault.md](skills/keyvault.md)
     - [skills/grpc.md](skills/grpc.md)
     - [skills/external-api.md](skills/external-api.md)
-18. Delivery:
+19. Delivery:
     - [skills/testing.md](skills/testing.md)
     - [skills/iac.md](skills/iac.md)
     - [skills/cicd.md](skills/cicd.md)
-    - [skills/package-dependencies.md](skills/package-dependencies.md)
 
 ## Template Usage
 
@@ -128,18 +141,3 @@ Generate one complete slice, validate, then move to next slice.
 - Keep Aspire config and IaC names aligned
 - Start with minimal viable profiles, promote later
 
-## Reference Files
-
-- [placeholder-tokens.md](placeholder-tokens.md)
-- [domain-inputs.schema.md](domain-inputs.schema.md)
-- [ai-build-optimization.md](ai-build-optimization.md)
-- [sampleapp-patterns.md](sampleapp-patterns.md)
-- [quick-reference.md](quick-reference.md)
-- [engineer-checklist.md](engineer-checklist.md)
-- [troubleshooting.md](troubleshooting.md)
-- [GET-STARTED-human.md](GET-STARTED-human.md)
-
-## Tooling Notes
-
-- Prefer latest stable .NET and package releases.
-- Configure MCP servers before scaffolding; canonical MCP guidance is in [GET-STARTED-human.md](GET-STARTED-human.md).

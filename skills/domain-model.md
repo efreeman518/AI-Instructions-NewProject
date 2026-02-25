@@ -14,7 +14,7 @@ All entities inherit from `EntityBase` (from a shared infrastructure package). P
 // From EF.Domain
 public abstract class EntityBase
 {
-    public Guid Id { get; protected set; } = Guid.NewGuid();
+    public Guid Id { get; protected set; } = Guid.CreateVersion7();
     public byte[] RowVersion { get; set; } = [];
 }
 ```
@@ -135,7 +135,9 @@ public class BusinessRuleException(string message) : Exception(message);
 
 Domain rules use the specification pattern for reusable business validation:
 
-> **Reference implementation:** See `sampleapp/src/Domain/TaskFlow.Domain.Model/Rules/` — `RuleBase.cs` (abstract base), `TodoItemStatusTransitionRule.cs` (state machine), `CategoryDeletionRule.cs` (cross-entity check), `TeamDeactivationRule.cs` (active member check), `TodoItemHierarchyRule.cs` (self-reference depth guard).
+> **Canonical placement:** `src/Domain/{Project}.Domain.Rules/`.
+>
+> Rule type examples remain applicable from the sampleapp (`RuleBase`, state-transition checks, hierarchy guards), but generated projects should place rules in `Domain.Rules`.
 
 ## DomainResult Pattern
 
@@ -158,7 +160,7 @@ After generating domain entities, confirm:
 - [ ] Private/protected constructor + static `Create()` factory method returning `DomainResult<T>`
 - [ ] All setters are `private set` — mutations go through named methods
 - [ ] Flags enum is defined with `[Flags]` attribute and `None = 0` value
-- [ ] Child collections are `IReadOnlyList<T>` backed by private `List<T>` with `Add/Remove` methods
+- [ ] Child collections use `ICollection<T>` with controlled mutation methods (`Add/Remove`) on the entity
 - [ ] `RowVersion` property exists for concurrency (configured in EF, not in entity)
 - [ ] No infrastructure concerns (no EF attributes, no `DbContext`, no DTOs)
 - [ ] Cross-references: Entity properties align with [dto-template.md](../templates/dto-template.md), EF config covers all relationships per [ef-configuration-template.md](../templates/ef-configuration-template.md)

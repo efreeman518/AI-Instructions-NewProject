@@ -80,7 +80,7 @@ High-signal lookup for naming, structure, dependencies, DI patterns, and common 
 Keep registrations in `RegisterServices.cs` under Bootstrapper:
 
 ```csharp
-public static IServiceCollection AddBootstrapper(this IServiceCollection services, IConfiguration config)
+public static IServiceCollection RegisterInfrastructureServices(this IServiceCollection services, IConfiguration config)
 {
     services.AddDbContextPool<{App}DbContextTrxn>(/* ... */);
     services.AddDbContextPool<{App}DbContextQuery>(/* ... */);
@@ -107,7 +107,8 @@ public static IServiceCollection AddBootstrapper(this IServiceCollection service
 ```csharp
 private static void SetupApiVersionedEndpoints(WebApplication app)
 {
-    var group = app.MapGroup("api/v1").RequireAuthorization();
+    var group = app.MapGroup("v{apiVersion:apiVersion}/tenant/{tenantId}/{entity}")
+        .RequireAuthorization("TenantMatch");
     group.Map{Entity}Endpoints(problemDetailsIncludeStackTrace);
 }
 ```
@@ -157,12 +158,3 @@ Use underscores in `Projects.{Host}_Api` style identifiers.
 | `ServiceAuth:{clusterId}` | service-to-service token config |
 | `CacheDurations` | cache TTL settings |
 | `OpenApiSettings:Enable` | OpenAPI docs toggle |
-
----
-
-## Canonical References
-
-- Architecture flow and skill order: [SKILL.md](SKILL.md)
-- Slice-level generation checklist: [vertical-slice-checklist.md](vertical-slice-checklist.md)
-- Prompt/context strategy: [ai-build-optimization.md](ai-build-optimization.md)
-- Placeholder semantics: [placeholder-tokens.md](placeholder-tokens.md)

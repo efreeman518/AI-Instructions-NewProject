@@ -88,7 +88,7 @@ Add optional hosts after core backend slices stabilize.
 2. Produce YAML inputs using [domain-inputs.schema.md](domain-inputs.schema.md)
 3. Scaffold by phase using [SKILL.md](SKILL.md) + [ai-build-optimization.md](ai-build-optimization.md)
 4. Validate after each phase (`dotnet build`, then targeted tests)
-5. Update `HANDOFF.md` at phase boundaries
+5. Create `HANDOFF.md` if missing, then update it at phase boundaries
 
 ## Domain Discovery Prompt Starter
 
@@ -114,13 +114,13 @@ Constraints:
 - Never modify sampleapp/
 - Follow placeholder tokens and templates
 - Validate with dotnet build after generation
-- One code-fix pass max, then flag infra blockers in HANDOFF.md
+- One code-fix pass max, then flag infra blockers in HANDOFF.md (create if missing)
 ```
 
 ## Validation Cadence
 
 - Phase scaffold: `dotnet build`
-- Feature slices: targeted unit/endpoint/integration tests
+- Feature slices: targeted unit, endpoint, and integration tests
 - Pre-merge: full test run
 - IaC checks: run infra validation commands from [engineer-checklist.md](engineer-checklist.md)
 
@@ -128,7 +128,7 @@ Constraints:
 
 - AI handles code-generation issues in one pass.
 - Engineer handles infra/environment issues (feeds, auth, Docker, ports, certs, cloud auth).
-- AI logs blockers in `HANDOFF.md` with exact next action.
+- AI creates `HANDOFF.md` if needed, then logs blockers with exact next action.
 
 ## Core References
 
@@ -136,13 +136,16 @@ Constraints:
 - [domain-inputs.schema.md](domain-inputs.schema.md)
 - [ai-build-optimization.md](ai-build-optimization.md)
 - [sampleapp-patterns.md](sampleapp-patterns.md)
-- [quick-reference.md](quick-reference.md)
+- [quick-reference.md](quick-reference.md) *(on-demand during implementation details and naming lookups)*
 - [engineer-checklist.md](engineer-checklist.md)
-- [troubleshooting.md](troubleshooting.md)
+- [troubleshooting.md](troubleshooting.md) *(on-demand when failures occur)*
+
+For default phase flow, load only the minimal set in [SKILL.md](SKILL.md) and pull quick-reference/troubleshooting only when needed.
 
 ## Important Guardrails
 
 - `sampleapp/` is reference-only.
+- Never build or compile `sampleapp/`; build/test only the new project being scaffolded.
 - Do not over-scaffold optional workloads on first pass.
 - Keep context small; load only files needed for the current phase.
 - Capture instruction improvements in [UPDATE-INSTRUCTIONS.md](UPDATE-INSTRUCTIONS.md).

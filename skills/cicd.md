@@ -46,7 +46,7 @@ Run on PRs to `main`/`develop`:
 - setup .NET from `src/global.json`
 - `dotnet restore`
 - `dotnet build --no-restore`
-- targeted test runs by category
+- targeted test runs by category (Endpoint path by default, broader Integration path optionally gated)
 - publish TRX and coverage artifacts
 
 Minimal shape:
@@ -59,6 +59,11 @@ on:
     branches: [main, develop]
     paths-ignore: ['**.md', 'infra/**']
   workflow_dispatch:
+    inputs:
+      includeIntegration:
+        type: boolean
+        default: false
+        description: "Run non-endpoint integration tests"
 
 jobs:
   build-and-test:
@@ -72,18 +77,20 @@ jobs:
       - run: dotnet build src/{SolutionName}.slnx --no-restore --configuration Release
       - run: dotnet test src/{SolutionName}.slnx --no-build --filter "TestCategory=Unit"
       - run: dotnet test src/{SolutionName}.slnx --no-build --filter "TestCategory=Endpoint"
+      - if: ${{ github.event_name == 'workflow_dispatch' && inputs.includeIntegration == true }}
+        run: dotnet test src/{SolutionName}.slnx --no-build --filter "TestCategory=Integration&TestCategory!=Endpoint"
       - run: dotnet test src/{SolutionName}.slnx --no-build --filter "TestCategory=Architecture"
 ```
 
 ### Test Category Policy
 
-| Category | Default in PR CI |
-|---|---|
-| `Unit` | required |
-| `Endpoint` | required (if SQL-dependent endpoints exist) |
-| `Architecture` | required |
-| `Integration` | optional by repo policy |
-| `E2E`, `Load`, `Benchmark` | release/on-demand only |
+    | Category | PR Default | Optional / Manual |
+    |---|---|---|
+    | `Unit` | required | — |
+    | `Endpoint` | required (WebApplicationFactory endpoint coverage) | — |
+    | `Architecture` | required | — |
+    | `Integration` | — | non-endpoint integration path (workflow dispatch) |
+    | `E2E`, `Load`, `Benchmark` | — | release/on-demand only |
 
 ---
 

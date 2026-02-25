@@ -6,8 +6,8 @@ Use this skill to scaffold tests by profile and phase.
 
 | Profile | Include by default |
 |---|---|
-| `minimal` | Unit + Integration/Endpoint |
-| `balanced` | Unit + Integration/Endpoint + Architecture + Test.Support |
+| `minimal` | Unit + Endpoint |
+| `balanced` | Minimal + Integration + Architecture + Test.Support |
 | `comprehensive` | Balanced + Playwright E2E + Load + Benchmarks |
 
 Rule: start `balanced`, then add E2E/load/benchmarks once core slices stabilize.
@@ -70,6 +70,7 @@ Example:
 Use category tags for targeted commands:
 
 - `Unit`
+- `Endpoint`
 - `Integration`
 - `Architecture`
 - `E2E`
@@ -79,6 +80,25 @@ Use category tags for targeted commands:
 ```csharp
 [TestCategory("Unit")]
 public void Validate_Name_ReturnsExpected() { }
+```
+
+### Endpoint vs Integration (Execution Contract)
+
+- `Endpoint`: API endpoint behavior tested through `WebApplicationFactory` (request/response/auth/status contract).
+- `Integration`: broader integration scenarios across infrastructure/services that are not endpoint contract tests.
+- Endpoint tests in `Test.Integration` should include **both** categories:
+  - `TestCategory("Endpoint")`
+  - `TestCategory("Integration")`
+- Non-endpoint integration tests should use only `TestCategory("Integration")`.
+
+Command split:
+
+```powershell
+# Endpoint contract path (default CI path)
+dotnet test --filter "TestCategory=Endpoint"
+
+# Broader integration path (optional/gated)
+dotnet test --filter "TestCategory=Integration&TestCategory!=Endpoint"
 ```
 
 ---
@@ -108,7 +128,7 @@ Pattern:
 public async Task CRUD_InMemory_Pass() { }
 ```
 
-### 3) Integration/Endpoint tests (`Test.Integration`)
+### 3) Endpoint and Integration tests (`Test.Integration`)
 
 - Use `CustomApiFactory<TProgram>` and test appsettings
 - Remove `IHostedService` registrations in test host when needed
@@ -118,6 +138,8 @@ public async Task CRUD_InMemory_Pass() { }
 Pattern:
 
 ```csharp
+[TestCategory("Endpoint")]
+[TestCategory("Integration")]
 [TestMethod]
 public async Task CRUD_Pass() { }
 ```
@@ -173,7 +195,8 @@ Keep a `coverlet.runsettings` for stable include/exclude behavior across CI.
 ## Verification
 
 - [ ] Unit tests run cleanly
-- [ ] Integration tests run against isolated data
+- [ ] Endpoint tests run against in-memory host via `WebApplicationFactory`
+- [ ] Non-endpoint integration tests run against isolated data
 - [ ] Architecture tests enforce layering rules
 - [ ] Optional suites (E2E/load/benchmarks) only enabled when needed
 - [ ] Test projects and categories align with selected profile
