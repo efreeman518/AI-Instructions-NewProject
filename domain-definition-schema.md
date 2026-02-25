@@ -18,6 +18,15 @@ OrganizationName: ""       # optional namespace prefix
 
 Define what the business calls things, their lifecycle, and how they relate.
 
+> **⚠️ Naming Conflicts:** Avoid entity names that collide with C# framework types. Common conflicts:
+> - `Task` → conflicts with `System.Threading.Tasks.Task` — use `WorkItem`, `ProjectTask`, or `JobTask`
+> - `Thread` → conflicts with `System.Threading.Thread` — use `Discussion`, `Conversation`
+> - `Timer` → conflicts with `System.Threading.Timer` — use `Reminder`, `Schedule`
+> - `Type` → conflicts with `System.Type` — use `Category`, `Classification`
+> - `String`, `Object`, `Action`, `Attribute`, `File`, `Path` → all conflict with System types
+>
+> These collisions cause subtle compilation errors or require `global::` disambiguations throughout the codebase.
+
 ```yaml
 entities:
   - name: TodoItem
@@ -103,6 +112,17 @@ Design guidance: [domain-design-guide.md](domain-design-guide.md#state-machine-d
 
 ## Events
 
+### Trigger Types
+
+| Trigger | Description |
+|---------|-------------|
+| `afterCreate` | Raised after an entity is created |
+| `afterUpdate` | Raised after any property is updated |
+| `afterStatusChange` | Raised after a state machine transition completes |
+| `afterAction(<ActionName>)` | Raised after a named custom domain action (e.g., `afterAction(Reschedule)`) |
+| `afterDelete` | Raised after an entity is (soft-)deleted |
+| `scheduled` | Emitted by a background job or scheduler on a time-based trigger |
+
 ```yaml
 events:
   - name: TodoItemCreated
@@ -113,6 +133,14 @@ events:
     raisedBy: TodoItem
     trigger: afterStatusChange
     payload: [TenantId, TodoItemId, CompletedBy]
+  - name: TodoItemOverdueSuspected
+    raisedBy: TodoItem
+    trigger: scheduled
+    payload: [TenantId, TodoItemId, DueDate]
+  - name: TodoItemRescheduled
+    raisedBy: TodoItem
+    trigger: afterAction(Reschedule)
+    payload: [TenantId, TodoItemId, NewDueDate]
 ```
 
 ## Workflows
@@ -122,12 +150,16 @@ workflows:
   - name: TodoItemEscalation
     pattern: orchestrator
     involvedEntities: [TodoItem, Team, TeamMember, Reminder]
-    steps: ["Check overdue items", "Notify member", "Escalate after threshold"]
-    compensationRequired: false
+    steps:
+      - "Check overdue items"
+      - "Notify member"
+      - "Escalate after threshold"
+    compensationRequired: true
     compensation:
       rollbackOrder: reverse-step-order
       rules:
-        - { onFailureOfStep: "Notify member", compensationAction: "Revoke pending notification" }
+        - { onFailureOfStep: "Notify member", compensationAction: "Cancel queued notification" }
+        - { onFailureOfStep: "Escalate after threshold", compensationAction: "Revoke escalation and reset status" }
     notes: "Thresholds configurable per tenant"
 ```
 
@@ -186,5 +218,13 @@ ugcLifecyclePolicy:
 multiTenant: true
 tenantIsolation: "row-level"     # row-level | schema | database
 globalAdminRole: GlobalAdmin
-authProvider: EntraID             # EntraID | EntraExternal | None
+authProvider: EntraID             # EntraID | EntraExternal | Google | Facebook | Apple | OAuth2 | None
+authScenario: enterprise          # enterprise | external | hybrid
 ```
+
+Auth provider options:
+- **Enterprise / internal:** `EntraID` — SSO, conditional access, group-based roles
+- **External / consumer:** `EntraExternal`, `Google`, `Facebook`, `Apple`, `OAuth2` — social/OIDC providers
+- **Hybrid:** combine `EntraID` for internal with `EntraExternal` or social providers for external users
+
+> **Note:** Authentication is configured in the final phase (Phase 4f). During earlier phases, auth is stubbed. See [skills/identity-management.md](skills/identity-management.md).

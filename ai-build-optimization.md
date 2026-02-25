@@ -25,6 +25,15 @@ When domain inputs are absent or ambiguous before scaffolding:
 - **Defaults** (modes/profiles/flags): use [resource-implementation-schema.md](resource-implementation-schema.md) **Canonical Defaults**; note assumptions inline and continue
 - **Partial entity definitions**: scaffold what is defined; emit `// TODO` stubs for missing properties/rules and list them under Blockers in `HANDOFF.md`
 
+### Phase 3 Pre-Flight: Custom NuGet Feeds
+
+At the **beginning of Phase 3**, before any code generation:
+
+1. Ask: _"Do you have any custom/private NuGet feeds required for this project? If so, provide the feed URL(s) and authentication method (PAT, Azure Artifacts credential provider, etc.)."_
+2. Update `nuget.config` with provided feeds, or remove the placeholder if not needed.
+3. Run `dotnet restore` as a build checkpoint — must exit 0 before continuing to Phase 4.
+4. If restore fails due to feed auth, classify as infrastructure issue and document in `HANDOFF.md`.
+
 ## Session Bootstrap
 
 For a new AI session, load [START-AI.md](START-AI.md) first, then load only the phase files required for the active step.
@@ -165,7 +174,6 @@ For any slice spanning SQL + Cosmos/Table/Blob + messaging, require:
 - `templates/entity-template.md`
 - `templates/ef-configuration-template.md`
 - `templates/repository-template.md`
-- `templates/domain-rules-template.md` *(if rules/state machine used)*
 - `templates/appsettings-template.md`
 - relevant sections of [resource-implementation-schema.md](resource-implementation-schema.md)
 - `skills/cosmosdb-data.md` / `skills/table-storage.md` / `skills/blob-storage.md` *(if non-SQL entities)*
@@ -198,9 +206,12 @@ Load only enabled concerns:
 ### Phase 4e — Quality + Delivery
 - `skills/testing.md`
 - relevant `templates/test-template-*.md`
-- `skills/identity-management.md`
 - `skills/iac.md`
 - `skills/cicd.md`
+
+### Phase 4f — Authentication (Final)
+- `skills/identity-management.md`
+- Replace auth stubs with real provider configuration
 
 ## Session State (`HANDOFF.md`)
 

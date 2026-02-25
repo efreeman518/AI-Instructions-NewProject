@@ -23,7 +23,7 @@ Produced after Phase 1 (domain definition) and Phase 2 (resource mapping) are co
 - [ ] Domain model entities + enums + value objects
 - [ ] EF configurations per entity (using Phase 2 datatypes)
 - [ ] Repository interfaces + implementations
-- [ ] Domain rules + state machines
+- [ ] Domain rules (co-located in Domain.Model/Rules/) + state machines
 - [ ] **Checkpoint:** `dotnet build` passes
 
 ### Phase 4b — App Core
@@ -53,10 +53,21 @@ Produced after Phase 1 (domain definition) and Phase 2 (resource mapping) are co
 - [ ] Unit tests per testing profile
 - [ ] Integration tests
 - [ ] Architecture tests (if enabled)
-- [ ] Identity management wiring
 - [ ] IaC templates
 - [ ] CI/CD pipeline
 - [ ] **Checkpoint:** full test suite passes
+
+### Phase 4f — Authentication (Final)
+- [ ] Prompt for identity provider scenario (see options below)
+- [ ] Replace auth stubs with real identity configuration
+- [ ] Wire auth middleware, token validation, and role/scope checks
+- [ ] Update appsettings with provider-specific configuration
+- [ ] **Checkpoint:** authenticated endpoints respond correctly
+
+**Identity Provider Options:**
+- **Enterprise / internal users:** Microsoft Entra ID — SSO, conditional access, group-based roles
+- **External / consumer users:** Microsoft Entra External ID, Google, Facebook, Apple, OAuth2/OIDC
+- **Hybrid:** Entra ID for internal + Entra External ID or social providers for external users
 
 ## Open Questions
 

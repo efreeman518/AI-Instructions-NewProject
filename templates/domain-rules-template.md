@@ -4,7 +4,7 @@
 
 | Field | Value |
 |-------|-------|
-| **File** | `src/Domain/{Project}.Domain.Rules/{Entity}Rules.cs` |
+| **File** | `src/Domain/{Project}.Domain.Model/Rules/{Entity}Rules.cs` |
 | **Depends on** | `Domain.Model` (entity types), `Domain.Shared` (enums, constants) |
 | **Referenced by** | `Application.Services` (called in service methods before state transitions) |
 
@@ -19,8 +19,8 @@ Domain rules use the **Specification pattern** to encode complex business invari
 ## Rule Interface
 
 ```csharp
-// File: src/Domain/{Project}.Domain.Rules/IRule.cs
-namespace Domain.Rules;
+// File: src/Domain/{Project}.Domain.Model/Rules/IRule.cs
+namespace Domain.Model.Rules;
 
 /// <summary>
 /// A domain rule that can be evaluated against a subject.
@@ -37,10 +37,10 @@ public interface IRule<in T>
 ## Base Rule Implementation
 
 ```csharp
-// File: src/Domain/{Project}.Domain.Rules/RuleBase.cs
+// File: src/Domain/{Project}.Domain.Model/Rules/RuleBase.cs
 using EF.Domain;
 
-namespace Domain.Rules;
+namespace Domain.Model.Rules;
 
 public abstract class RuleBase<T> : IRule<T>
 {
@@ -62,11 +62,11 @@ public abstract class RuleBase<T> : IRule<T>
 ## Entity-Specific Rules
 
 ```csharp
-// File: src/Domain/{Project}.Domain.Rules/{Entity}Rules.cs
+// File: src/Domain/{Project}.Domain.Model/Rules/{Entity}Rules.cs
 using Domain.Model;
 using Domain.Shared;
 
-namespace Domain.Rules;
+namespace Domain.Model.Rules;
 
 /// <summary>
 /// {Entity} must have a non-empty name.
@@ -119,8 +119,8 @@ public class {Entity}ValidStatusTransitionRule(
 Combine multiple rules with AND/OR logic:
 
 ```csharp
-// File: src/Domain/{Project}.Domain.Rules/CompositeRule.cs
-namespace Domain.Rules;
+// File: src/Domain/{Project}.Domain.Model/Rules/CompositeRule.cs
+namespace Domain.Model.Rules;
 
 /// <summary>
 /// All rules must be satisfied (AND logic).
@@ -151,10 +151,10 @@ public class AnyRule<T>(params IRule<T>[] rules) : IRule<T>
 ## Rule Evaluation Helpers
 
 ```csharp
-// File: src/Domain/{Project}.Domain.Rules/RuleExtensions.cs
+// File: src/Domain/{Project}.Domain.Model/Rules/RuleExtensions.cs
 using EF.Domain;
 
-namespace Domain.Rules;
+namespace Domain.Model.Rules;
 
 public static class RuleExtensions
 {
@@ -245,8 +245,8 @@ public async Task<Result> DeactivateAsync(Guid id, CancellationToken ct = defaul
 ## Notes
 
 - Rules should be **pure functions** — no I/O, no database access, no service calls.
-- Keep rules in `Domain.Rules` project — they depend only on `Domain.Model` and `Domain.Shared`.
+- Keep rules co-located in `Domain.Model/Rules/` — they depend only on `Domain.Model` and `Domain.Shared`.
 - Rules that require external data (e.g., uniqueness checks) belong in the **Application.Services** layer, not in domain rules.
-- Keep generated rule files in `src/Domain/{Project}.Domain.Rules/` for consistency with solution structure.
+- Keep generated rule files in `src/Domain/{Project}.Domain.Model/Rules/` for consistency with solution structure.
 - For simple validations (e.g., required fields, string length), use the inline `Valid()` method in the entity. Reserve the specification pattern for compound or cross-entity business rules.
 - For actor/state-dependent decisions, model policy matrices as explicit rule families (one rule per matrix row/group) instead of embedding large conditional blocks in services.

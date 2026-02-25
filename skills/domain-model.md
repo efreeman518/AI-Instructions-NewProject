@@ -110,6 +110,61 @@ public class Attachment : EntityBase, ITenantEntity<Guid>
 }
 ```
 
+## Join Entity Pattern (Many-to-Many)
+
+The **default** pattern for many-to-many join entities is to **inherit from `EntityBase`** with FK properties on both sides. This gives the join entity its own `Id` and `RowVersion`, and allows adding properties later (e.g., `AssignedDate`, `SortOrder`, `CreatedBy`).
+
+**Only use a pure composite-key join entity (no `EntityBase`) when there is high confidence the join will remain a pure association with no additional properties.**
+
+> **Reference implementation:** Update `sampleapp/src/Domain/TaskFlow.Domain.Model/Entities/TodoItemTag.cs` to follow this pattern.
+
+```csharp
+// Default join entity pattern — inherits EntityBase
+public class {Parent}{Related} : EntityBase
+{
+    public static DomainResult<{Parent}{Related}> Create(Guid parentId, Guid relatedId)
+    {
+        var entity = new {Parent}{Related}(parentId, relatedId);
+        return DomainResult<{Parent}{Related}>.Success(entity);
+    }
+
+    private {Parent}{Related}(Guid parentId, Guid relatedId)
+    {
+        {Parent}Id = parentId;
+        {Related}Id = relatedId;
+    }
+
+    private {Parent}{Related}() { }  // EF Core
+
+    public Guid {Parent}Id { get; init; }
+    public Guid {Related}Id { get; init; }
+
+    // Navigation properties
+    public {Parent} {Parent} { get; private set; } = null!;
+    public {Related} {Related} { get; private set; } = null!;
+
+    // Additional properties can be added later without PK migration
+    // public DateTimeOffset AssignedDate { get; private set; }
+    // public int SortOrder { get; private set; }
+}
+```
+
+**EF Configuration for join entity with `EntityBase`:**
+```csharp
+// Unique constraint on the FK pair (not composite PK — PK is Id from EntityBase)
+builder.HasIndex(e => new { e.{Parent}Id, e.{Related}Id }).IsUnique();
+
+builder.HasOne(e => e.{Parent})
+    .WithMany(e => e.{Parent}{Related}s)
+    .HasForeignKey(e => e.{Parent}Id)
+    .OnDelete(DeleteBehavior.Cascade);
+
+builder.HasOne(e => e.{Related})
+    .WithMany()
+    .HasForeignKey(e => e.{Related}Id)
+    .OnDelete(DeleteBehavior.Restrict);
+```
+
 ## Tenant Entity Interface
 
 ```csharp
@@ -135,9 +190,9 @@ public class BusinessRuleException(string message) : Exception(message);
 
 Domain rules use the specification pattern for reusable business validation:
 
-> **Canonical placement:** `src/Domain/{Project}.Domain.Rules/`.
+> **Canonical placement:** `src/Domain/{Project}.Domain.Model/Rules/`.
 >
-> Rule type examples remain applicable from the sampleapp (`RuleBase`, state-transition checks, hierarchy guards), but generated projects should place rules in `Domain.Rules`.
+> Co-locate rules with the domain model. A separate `Domain.Rules` project is not required.
 
 ## DomainResult Pattern
 

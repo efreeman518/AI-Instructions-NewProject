@@ -105,3 +105,54 @@ For playlist-driven content entities, model ordered blocks with:
 - explicit `Position`
 - block discriminator/type
 - payload invariants enforced in `Valid()`/domain rules (for example text block requires text, image block requires image URL)
+
+## File: Domain/Model/Entities/{Parent}{Related}.cs (Join Entity)
+
+Default many-to-many join entity pattern — inherits `EntityBase` with FK on both sides. Only use a pure composite-key join (no `EntityBase`) when confident the join will remain a pure association.
+
+```csharp
+using EF.Domain;
+
+namespace Domain.Model;
+
+public class {Parent}{Related} : EntityBase
+{
+    public static DomainResult<{Parent}{Related}> Create(Guid parentId, Guid relatedId)
+    {
+        var entity = new {Parent}{Related}(parentId, relatedId);
+        return DomainResult<{Parent}{Related}>.Success(entity);
+    }
+
+    private {Parent}{Related}(Guid parentId, Guid relatedId)
+    {
+        {Parent}Id = parentId;
+        {Related}Id = relatedId;
+    }
+
+    private {Parent}{Related}() { }
+
+    public Guid {Parent}Id { get; init; }
+    public Guid {Related}Id { get; init; }
+
+    public {Parent} {Parent} { get; private set; } = null!;
+    public {Related} {Related} { get; private set; } = null!;
+
+    // Add properties as needed (e.g., AssignedDate, SortOrder, CreatedBy)
+}
+```
+
+**EF Configuration:**
+```csharp
+// Unique constraint on FK pair (PK is Id from EntityBase)
+builder.HasIndex(e => new { e.{Parent}Id, e.{Related}Id }).IsUnique();
+
+builder.HasOne(e => e.{Parent})
+    .WithMany(e => e.{Parent}{Related}s)
+    .HasForeignKey(e => e.{Parent}Id)
+    .OnDelete(DeleteBehavior.Cascade);
+
+builder.HasOne(e => e.{Related})
+    .WithMany()
+    .HasForeignKey(e => e.{Related}Id)
+    .OnDelete(DeleteBehavior.Restrict);
+```

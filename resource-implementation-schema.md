@@ -261,10 +261,56 @@ Options: Azure Service Bus, Event Grid, Event Hubs. See [skills/messaging.md](sk
 
 - `externalApis` — external API integrations ([skills/external-api.md](skills/external-api.md))
 - `includeGrpc` — gRPC services
-- `notifications` — notification channels/triggers ([skills/notifications.md](skills/notifications.md))
-- `scheduledJobs` — background job definitions
-- `functionDefinitions` — Azure Function triggers/definitions
 - `seedData` — initial data seeding
+
+#### Notifications
+
+```yaml
+notifications:
+  - name: TaskOverdueNotification
+    trigger: TodoItemOverdueSuspected          # domain event name
+    channel: email                              # email | push | sms | in-app
+    template: "task-overdue"                    # template identifier
+    recipients: [AssignedMember, TeamLead]
+  - name: TaskCompletedNotification
+    trigger: TodoItemCompleted
+    channel: in-app
+    template: "task-completed"
+    recipients: [Creator]
+```
+
+See [skills/notifications.md](skills/notifications.md).
+
+#### Scheduled Jobs
+
+```yaml
+scheduledJobs:
+  - name: OverdueTaskCheck
+    schedule: "0 */6 * * *"                     # cron expression
+    description: "Check for overdue tasks and raise TodoItemOverdueSuspected events"
+    targetService: TodoItemService
+    method: CheckOverdueItemsAsync
+  - name: DailyDigest
+    schedule: "0 8 * * 1-5"
+    description: "Send daily task summary to team leads"
+    targetService: NotificationService
+    method: SendDailyDigestAsync
+```
+
+#### Function Definitions
+
+```yaml
+functionDefinitions:
+  - name: ProcessTaskEvent
+    trigger: serviceBusTopic                    # serviceBusTopic | httpTrigger | timerTrigger | blobTrigger | queueTrigger
+    channel: DomainEvents                       # messaging channel name (if topic/queue trigger)
+    subscription: task-events                   # subscription name (if topic trigger)
+    description: "Process domain events for task lifecycle changes"
+  - name: GenerateReport
+    trigger: timerTrigger
+    schedule: "0 0 1 * *"
+    description: "Generate monthly task completion report"
+```
 
 ### High-Ingest Operational Controls (Optional)
 

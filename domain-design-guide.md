@@ -114,11 +114,12 @@ workflows:
       - "Check overdue items"
       - "Notify assigned member"
       - "Escalate to lead after threshold"
-    compensationRequired: false
+    compensationRequired: true
     compensation:
       rollbackOrder: reverse-step-order
       rules:
         - { onFailureOfStep: "Notify assigned member", compensationAction: "Cancel queued notification" }
+        - { onFailureOfStep: "Escalate to lead after threshold", compensationAction: "Revoke escalation and reset status" }
     notes: "Thresholds configurable per tenant"
 ```
 

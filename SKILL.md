@@ -26,7 +26,7 @@ Use for:
 
 ## Context Budget Rules (Mandatory)
 
-1. Load at most **4 skills + 4 templates** per turn.
+1. Load at most **4 skills + 5 templates** per turn.
 2. Keep instruction context around **≤30K tokens per phase**.
 3. Use [ai-build-optimization.md](ai-build-optimization.md) Phase Loading Manifest.
 4. Unload prior phase docs when transitioning.
@@ -123,7 +123,10 @@ Per-phase file load lists are in the **Phase Loading Manifest** in [ai-build-opt
 15. [skills/uno-ui.md](skills/uno-ui.md) *(if enabled)*
 16. [skills/notifications.md](skills/notifications.md) *(if enabled)*
 ### 4e — Quality + Delivery
-17. [skills/identity-management.md](skills/identity-management.md)
+17. Testing + delivery:
+    - [skills/testing.md](skills/testing.md)
+    - [skills/iac.md](skills/iac.md)
+    - [skills/cicd.md](skills/cicd.md)
 18. Optional infra/data integrations as needed:
     - [skills/cosmosdb-data.md](skills/cosmosdb-data.md)
     - [skills/table-storage.md](skills/table-storage.md)
@@ -132,10 +135,9 @@ Per-phase file load lists are in the **Phase Loading Manifest** in [ai-build-opt
     - [skills/keyvault.md](skills/keyvault.md)
     - [skills/grpc.md](skills/grpc.md)
     - [skills/external-api.md](skills/external-api.md)
-19. Delivery:
-    - [skills/testing.md](skills/testing.md)
-    - [skills/iac.md](skills/iac.md)
-    - [skills/cicd.md](skills/cicd.md)
+
+### 4f — Authentication (Final)
+19. [skills/identity-management.md](skills/identity-management.md) *(defer to end; use stubs in earlier phases)*
 
 ## Template Usage
 
@@ -162,7 +164,7 @@ Generate one complete slice, validate, then move to next slice.
 - `DomainResult`-style railway flow
 - Tenant-safe defaults where enabled
 - SQL defaults: `nvarchar(N)`, `decimal(10,4)`, `datetime2`
-- Stub external dependencies for local compile/run
+- Stub external dependencies for local compile/run — generate compilable no-op implementations with `// TODO: [CONFIGURE]` comments at every integration point (stub class, DI registration, appsettings section)
 - Keep Aspire config and IaC names aligned
 - Start with minimal viable profiles, promote later
 

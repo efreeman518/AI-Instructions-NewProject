@@ -1,16 +1,41 @@
 # Identity Management
 
-Use this skill when domain inputs enable `authProvider` and the solution needs Entra-based authentication or Graph-backed user management.
+Use this skill when domain inputs enable `authProvider` and the solution needs authentication or identity-backed user management. **This skill is applied as the final phase (Phase 4f)** — earlier phases use auth stubs so the project compiles and runs without identity configuration.
 
 Reference implementation: `sampleapp/src/TaskFlow/TaskFlow.Api/Auth/`, `sampleapp/src/TaskFlow/TaskFlow.Gateway/Auth/`.
 
-## Modes
+## Identity Provider Scenarios
 
-| Scenario | Provider | Typical use |
+Prompt the user at the start of this phase to select the appropriate scenario:
+
+| Scenario | Provider(s) | Typical use |
 |---|---|---|
-| Public-facing users | Entra External ID | Customer/self-service portals |
-| Enterprise/internal users | Entra ID | Internal apps and admin portals |
-| Mixed | Both | Public UI + enterprise back-office |
+| Enterprise / internal users | Microsoft Entra ID | Internal apps, admin portals, SSO, conditional access, group-based roles |
+| External / consumer users | Microsoft Entra External ID, Google, Facebook, Apple, OAuth2/OIDC | Customer-facing apps, self-service portals |
+| Hybrid | Entra ID + Entra External ID / social providers | Public UI for external users + enterprise back-office for internal users |
+
+## Pre-Auth Stub Pattern (Phases 4a–4e)
+
+Until this phase is reached, authentication must be **stubbed** so the project compiles and runs:
+
+```csharp
+// File: {Host}.Api/Auth/AuthStub.cs
+// TODO: [CONFIGURE] Authentication — replace this stub with real identity provider configuration (see skills/identity-management.md)
+
+public static class AuthStub
+{
+    public static IServiceCollection AddAuthStub(this IServiceCollection services)
+    {
+        // No-op auth — all endpoints accessible without authentication
+        // Remove this stub and wire real auth in Phase 4f
+        return services;
+    }
+}
+```
+
+- Register `builder.Services.AddAuthStub()` in the host's `Program.cs`
+- Do **not** add `[Authorize]` attributes or `RequireAuthorization()` until real auth is wired
+- All endpoints should work without authentication during development
 
 ## Projects
 

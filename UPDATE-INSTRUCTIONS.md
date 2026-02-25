@@ -62,4 +62,6 @@ Your job is to read the findings below and apply approved changes to the instruc
 - **Discovered during:** {phase name — e.g., "Phase 4 MCP discovery before Uno UI scaffolding"}
 -->
 
-<!-- No pending findings. -->
+---
+
+<!-- All findings from trial run (PlanTrack app, February 2026) applied on 2026-02-25. Section cleared. -->

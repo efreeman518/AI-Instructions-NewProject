@@ -23,6 +23,7 @@ Then load only the phase files you need.
   - `implementation-plan.md`
   - `domain-definition-schema.md` (reference)
   - `resource-implementation-schema.md` (reference)
+  - **Pre-flight:** Prompt user for any custom/private NuGet feed URLs and auth method before proceeding. Update `nuget.config` and verify `dotnet restore` exits 0.
 - **Phase 4 (Implementation)**
   - `SKILL.md`
   - `placeholder-tokens.md`

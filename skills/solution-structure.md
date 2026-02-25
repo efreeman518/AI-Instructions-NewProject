@@ -20,8 +20,7 @@ Define the canonical clean-architecture layout and dependency direction used by 
 src/
 ├── Domain/
 │   ├── {Project}.Domain.Model/
-│   ├── {Project}.Domain.Shared/
-│   └── {Project}.Domain.Rules/
+│   └── {Project}.Domain.Shared/
 ├── Application/
 │   ├── {Project}.Application.Contracts/
 │   ├── {Project}.Application.Models/
@@ -57,7 +56,7 @@ src/
 
 Reference implementation: `sampleapp/src/`.
 
-Note: sampleapp may co-locate some rule classes under `Domain.Model/Rules`; for new scaffolds, keep rules in the dedicated `{Project}.Domain.Rules` project.
+Note: Domain rules and specifications live in `Domain.Model/Rules/` (or `Domain.Model/Specifications/`). A separate `Domain.Rules` project is not required.
 
 ---
 
@@ -66,7 +65,7 @@ Note: sampleapp may co-locate some rule classes under `Domain.Model/Rules`; for 
 Required flow:
 
 ```
-Domain.Shared <- Domain.Model <- Domain.Rules
+Domain.Shared <- Domain.Model
             \-> Application.Models <- Application.Contracts <- Application.Services
                                                 \-> Application.MessageHandlers
 Domain.Model -> Infrastructure.Data -> Infrastructure.Repositories
@@ -139,7 +138,6 @@ Do not keep both formats in active use.
 |---|---|
 | `Domain.Shared` | none |
 | `Domain.Model` | `Domain.Shared` |
-| `Domain.Rules` | `Domain.Model`, `Domain.Shared` |
 | `Application.Models` | shared/common abstractions as needed |
 | `Application.Contracts` | `Application.Models`, `Domain.Model`, `Domain.Shared` |
 | `Application.Services` | `Application.Contracts`, `Application.Models`, domain projects |
