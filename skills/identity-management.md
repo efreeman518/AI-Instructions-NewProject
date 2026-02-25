@@ -2,6 +2,8 @@
 
 Use this skill when domain inputs enable `authProvider` and the solution needs Entra-based authentication or Graph-backed user management.
 
+Reference implementation: `sampleapp/src/TaskFlow/TaskFlow.Api/Auth/`, `sampleapp/src/TaskFlow/TaskFlow.Gateway/Auth/`.
+
 ## Modes
 
 | Scenario | Provider | Typical use |

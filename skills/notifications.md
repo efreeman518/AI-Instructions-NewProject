@@ -1,5 +1,7 @@
 # Notifications
 
+Reference implementation: `sampleapp/src/Infrastructure/TaskFlow.Infrastructure.Notification/`.
+
 ## Purpose
 
 Provide multi-channel outbound notifications (email, SMS, web push, app push) through a unified service with pluggable channel providers.

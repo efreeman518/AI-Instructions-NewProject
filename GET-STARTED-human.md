@@ -55,8 +55,10 @@ Expected shape:
 ```text
 <YourApp>/
   .instructions/
+    AI-START.md
     SKILL.md
-    domain-inputs.schema.md
+    domain-definition-schema.md
+    resource-implementation-schema.md
     skills/
     templates/
   README.md
@@ -71,76 +73,67 @@ Set these early in domain inputs:
 - `functionProfile`: `starter|full` (if Functions enabled)
 - `unoProfile`: `starter|full` (if Uno UI enabled)
 
-Recommended first pass:
-
-```yaml
-scaffoldMode: full
-testingProfile: balanced
-includeFunctionApp: false
-includeUnoUI: false
-```
+Defaults are defined once in [resource-implementation-schema.md](resource-implementation-schema.md) under **Canonical Defaults**. Prefer those values unless a project requirement explicitly overrides them.
 
 Add optional hosts after core backend slices stabilize.
 
 ## Workflow
 
-1. **Domain discovery conversation** with AI (before YAML)
-2. Produce YAML inputs using [domain-inputs.schema.md](domain-inputs.schema.md)
-3. Scaffold by phase using [SKILL.md](SKILL.md) + [ai-build-optimization.md](ai-build-optimization.md)
-4. Validate after each phase (`dotnet build`, then targeted tests)
-5. Create `HANDOFF.md` if missing, then update it at phase boundaries
+1. **Phase 1 — Domain Discovery:** model entities, relationships, events, workflows in business language → [domain-definition-schema.md](domain-definition-schema.md)
+2. **Phase 2 — Resource Definition:** map domain to Aspire/Azure resources, datatypes, messaging, hosting → [resource-implementation-schema.md](resource-implementation-schema.md)
+3. **Phase 3 — Implementation Plan:** ordered steps, resolve open questions → `implementation-plan.md` in project root
+4. **Phase 4 — Implementation:** start AI session with [AI-START.md](AI-START.md), then execute sub-phases (4a-4e) → [SKILL.md](SKILL.md) + [ai-build-optimization.md](ai-build-optimization.md)
+5. During Phase 4, create/update `HANDOFF.md` at session boundaries when context is high
 
-## Domain Discovery Prompt Starter
+## Phase 1 — Domain Discovery Prompt
 
 ```text
-Help me model this domain before we scaffold code.
-I want to define entities, relationships, lifecycle states, business rules,
-data stores, tenancy/auth model, and integration events.
-Ask clarifying questions, summarize each iteration, then generate YAML inputs.
+Help me model this business domain.
+Define entities, relationships, lifecycle states, business rules, events, and workflows.
+Use business language — no databases, no datatypes, no implementation.
+Ask clarifying questions, summarize each iteration, then produce domain-definition YAML.
+```
+
+## Phase 2 — Resource Definition Prompt
+
+```text
+Review the domain definition and help me choose:
+- Data stores per entity (SQL, CosmosDB, Table, Blob)
+- Datatypes, lengths, and precision for EF configuration
+- Messaging infrastructure (Service Bus, Event Grid, Event Hubs)
+- Hosting model (Container Apps, App Service)
+- UI hosting if applicable
+Map domain constructs to Aspire resources and Azure services.
 ```
 
 ## Scaffolding Prompt Starter
 
-```text
-Use .instructions/ and scaffold only this phase.
-Inputs:
-- ProjectName: <name>
-- scaffoldMode: <full|lite>
-- testingProfile: <...>
-- hosts enabled: <api/gateway/functions/scheduler/ui>
-- customNugetFeeds: <...>
-- entities: <...>
-Constraints:
-- Never modify sampleapp/
-- Follow placeholder tokens and templates
-- Validate with dotnet build after generation
-- One code-fix pass max, then flag infra blockers in HANDOFF.md (create if missing)
-```
+See **Prompt Patterns** in [ai-build-optimization.md](ai-build-optimization.md).
 
 ## Validation Cadence
 
-- Phase scaffold: `dotnet build`
-- Feature slices: targeted unit, endpoint, and integration tests
-- Pre-merge: full test run
-- IaC checks: run infra validation commands from [engineer-checklist.md](engineer-checklist.md)
+See **Validation Cadence** in [ai-build-optimization.md](ai-build-optimization.md). IaC checks: [engineer-checklist.md](engineer-checklist.md).
 
 ## Troubleshooting Model
 
 - AI handles code-generation issues in one pass.
 - Engineer handles infra/environment issues (feeds, auth, Docker, ports, certs, cloud auth).
-- AI creates `HANDOFF.md` if needed, then logs blockers with exact next action.
+- During Phase 4 execution, AI creates `HANDOFF.md` when context is high or at session boundaries.
 
 ## Core References
 
+- [AI-START.md](AI-START.md) *(AI session bootstrap; load first)*
 - [SKILL.md](SKILL.md)
-- [domain-inputs.schema.md](domain-inputs.schema.md)
+- [domain-definition-schema.md](domain-definition-schema.md) *(Phase 1 output)*
+- [resource-implementation-schema.md](resource-implementation-schema.md) *(Phase 2 output)*
+- [implementation-plan.md](implementation-plan.md) *(Phase 3 template)*
 - [ai-build-optimization.md](ai-build-optimization.md)
-- [sampleapp-patterns.md](sampleapp-patterns.md)
-- [quick-reference.md](quick-reference.md) *(on-demand during implementation details and naming lookups)*
+- [sampleapp-patterns.md](sampleapp-patterns.md) *(strictly on-demand for cross-project pattern selection)*
+- [quick-reference.md](quick-reference.md) *(strictly on-demand for naming/DI/config lookups)*
 - [engineer-checklist.md](engineer-checklist.md)
 - [troubleshooting.md](troubleshooting.md) *(on-demand when failures occur)*
 
-For default phase flow, load only the minimal set in [SKILL.md](SKILL.md) and pull quick-reference/troubleshooting only when needed.
+For default phase flow, start with [AI-START.md](AI-START.md) only, then load phase files incrementally.
 
 ## Important Guardrails
 

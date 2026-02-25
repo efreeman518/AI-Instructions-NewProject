@@ -1,5 +1,7 @@
 # Messaging
 
+Base types (`IServiceBusSender`, `IEventGridPublisher`, `IEventHubProducer`) come from the `EF.Messaging` package — see [package-dependencies.md](package-dependencies.md) and the [EF.Packages repo](https://github.com/efreeman518/EF.Packages) for full API details.
+
 ## Prerequisites
 
 - [package-dependencies.md](package-dependencies.md)

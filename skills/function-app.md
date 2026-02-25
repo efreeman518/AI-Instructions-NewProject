@@ -1,5 +1,7 @@
 # Azure Functions (Isolated Worker)
 
+Reference implementation: `sampleapp/src/Functions/TaskFlow.FunctionApp/`.
+
 ## Prerequisites
 
 - [solution-structure.md](solution-structure.md)
@@ -22,7 +24,7 @@ Use an isolated-worker Function App for trigger-driven workloads that should run
 
 ## Profile Strategy
 
-Set `functionProfile` in [domain-inputs.schema.md](../domain-inputs.schema.md):
+Set `functionProfile` in [resource-implementation-schema.md](../resource-implementation-schema.md):
 
 - `starter`: host + HTTP + Timer first.
 - `full`: add Blob/StorageQueue/ServiceBus/EventGrid after dependencies are ready.

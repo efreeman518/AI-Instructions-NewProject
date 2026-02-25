@@ -7,9 +7,11 @@ Use this file as a compact contract map for private/shared packages.
 - Internal packages source: <https://github.com/efreeman518/EF.Packages>
 - Reference usage: `sampleapp/src/Directory.Packages.props`, `sampleapp/src/nuget.config`
 
+> **AI lookup rule:** This file provides a compact contract map. When you need full API signatures, constructor parameters, or method overloads for any `EF.*` base type (e.g., `TableRepositoryBase`, `IBlobRepository`, `ICosmosDbRepository`, `IKeyVaultManager`), use the GitHub MCP server to read the source from the [EF.Packages repo](https://github.com/efreeman518/EF.Packages).
+
 ## Feed + Version Rules (Mandatory)
 
-1. `nuget.config` must include `nuget.org` and all `customNugetFeeds` from [../domain-inputs.schema.md](../domain-inputs.schema.md).
+1. `nuget.config` must include `nuget.org` and all `customNugetFeeds` from [resource-implementation-schema.md](../resource-implementation-schema.md).
 2. Use central package versions in `Directory.Packages.props`.
 3. After adding packages, restore and update to latest stable versions.
 4. Re-verify with `dotnet restore` and `dotnet build`.

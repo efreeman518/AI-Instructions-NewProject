@@ -5,6 +5,7 @@
 | **File** | `{Host}.Api/Endpoints/{Entity}Endpoints.cs` |
 | **Depends on** | [service-template](service-template.md), [dto-template](dto-template.md) |
 | **Referenced by** | [api.md](../skills/api.md), [test-template-integration.md](test-template-integration.md) |
+| **Sampleapp** | `sampleapp/src/TaskFlow/TaskFlow.Api/Endpoints/TodoItemEndpoints.cs` |
 
 ## File: {Host}.Api/Endpoints/{Entity}Endpoints.cs
 

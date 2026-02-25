@@ -15,7 +15,7 @@ AI agents generate code. Engineers own environment and runtime setup.
 When an error appears:
 1. Classify it (code-generation vs infrastructure/tooling)
 2. Attempt **one** code-fix pass only when it is code-generation **in the new project**
-3. If still failing (or infrastructure-related), create `HANDOFF.md` if missing, log the issue, and continue with non-blocked work
+3. If still failing (or infrastructure-related), log in `HANDOFF.md` and continue with non-blocked work
 
 ---
 
@@ -50,11 +50,10 @@ When inputs are unclear, prefer pragmatic defaults and continue:
 
 ---
 
-## Session State Entry Format (`HANDOFF.md`)
+## Session State
 
-When blocked, create `HANDOFF.md` if needed, then append a short item:
-- Symptom
-- Classification (`code-generation` or `infrastructure`)
+When blocked, log in `HANDOFF.md` (see [template](HANDOFF.md)):
+- Symptom + classification (`code-generation` or `infrastructure`)
 - Current phase
 - Next engineer action (link to [engineer-checklist.md](engineer-checklist.md))
 

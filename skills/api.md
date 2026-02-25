@@ -94,9 +94,15 @@ Required endpoint rules:
 6. Add OpenAPI metadata (`Produces*`, summary/tags).
 7. Use POST for complex search filters.
 
-## Error Handling + Routes
+## Error Handling Strategy
 
-- Global `IExceptionHandler` maps known exceptions (`400/404/...`) and defaults to `500`.
+Two complementary layers — **Result pattern for expected outcomes, `DefaultExceptionHandler` for unexpected exceptions**:
+
+1. **Result flow (primary path):** Services return `Result<T>` / `DomainResult<T>`. Endpoints use `Result.Match()` to map success/failure/not-found to `TypedResults` + `ProblemDetails`. No exceptions thrown for validation, business rules, or not-found cases.
+2. **`DefaultExceptionHandler` (safety net):** A global `IExceptionHandler` registered via `AddExceptionHandler<DefaultExceptionHandler>()`. Catches only truly unexpected exceptions (null refs, timeouts, infra failures) and maps them to `ProblemDetails` with appropriate HTTP status codes. This is a last-resort handler, not a control-flow mechanism.
+
+Reference: `sampleapp/src/TaskFlow/TaskFlow.Api/ExceptionHandlers/DefaultExceptionHandler.cs`.
+
 - Include stack traces only outside production.
 - Conventions:
   - tenant CRUD: `v1/tenant/{tenantId}/{entity}/{id?}` + `TenantMatch`

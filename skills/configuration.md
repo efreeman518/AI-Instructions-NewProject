@@ -1,5 +1,7 @@
 # Configuration & Secrets Management
 
+Reference implementation: `sampleapp/src/TaskFlow/TaskFlow.Api/appsettings*.json`, `sampleapp/src/TaskFlow/TaskFlow.Gateway/appsettings*.json`.
+
 ## Prerequisites
 
 - [solution-structure.md](solution-structure.md)

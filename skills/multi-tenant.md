@@ -1,5 +1,7 @@
 # Multi-Tenant Architecture
 
+Reference implementation: `sampleapp/src/Infrastructure/TaskFlow.Infrastructure.Data/` (query filters), `sampleapp/src/Application/TaskFlow.Application.Services/` (tenant boundary validation).
+
 ## Purpose
 
 Enforce tenant isolation through data, service, and request-context layers with explicit global-admin escape paths only where intended.

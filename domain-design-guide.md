@@ -1,169 +1,129 @@
-# Domain Design Guide
+# Domain Design Guide (Phase 1 Reference)
 
-Design-time guidance for storage selection, relationship modeling, and workflow orchestration hints. This is primarily for domain discovery, not routine scaffolding turns.
+Guidance for domain discovery: relationship patterns, state modeling, workflow design. Use during Phase 1 to produce [domain-definition-schema.md](domain-definition-schema.md).
 
----
-
-## Data Store Selection
-
-Set `dataStore` per entity (`sql` default if omitted).
-
-| Signal | `sql` | `cosmosdb` | `table` | `blob` |
-|---|---|---|---|---|
-| Data shape | fixed relational schema | document/variable schema | flat key-value rows | unstructured file/object |
-| Relationships | rich joins/FKs | aggregate-local nesting | none | none |
-| Query style | complex filters/joins/reports | partition-aligned point/filtered reads | partition+row key lookups | get/put/list by name/prefix |
-| Transaction scope | cross-entity ACID | partition-local atomicity | single row ops | object-level + lease/etag |
-| Typical use | business source of truth | denormalized read/event docs | audit/config/counters | attachments/media/exports |
-
-### Quick Choice Rules
-
-- choose `sql` for core business entities, joins, and cross-entity transactions.
-- choose `cosmosdb` for self-contained document aggregates and partition-scale reads.
-- choose `table` for low-cost append/lookup data keyed by partition/row.
-- choose `blob` for large binary/text payloads.
-
-### Common Hybrid Patterns
-
-- SQL metadata + Blob content.
-- SQL source of truth + Cosmos read model.
-- SQL core + Table audit trail.
-
-### Simplified Decision Flow
-
-1. Binary/file content? -> `blob`.
-2. Relational constraints + complex query/reporting? -> `sql`.
-3. Simple partition/row key lookups? -> `table`.
-4. Otherwise document aggregate with strong partition strategy? -> `cosmosdb`.
-5. If uncertain, default to `sql`.
-
-If semantic/vector search is primary across sources, prefer dedicated search infrastructure; if secondary, in-store vector support may be sufficient.
+For data store selection, datatypes, and EF configuration → [resource-implementation-schema.md](resource-implementation-schema.md) (Phase 2).
 
 ---
 
 ## Relationship Modeling
 
-Provide enough input detail for deterministic EF configuration generation.
-
 ### One-to-many
-
+Parent owns children. Specify cascade behavior.
 ```yaml
 children:
-  - name: Comments
-    entity: Comment
-    relationship: one-to-many
-    cascadeDelete: true
+  - { name: Comments, entity: Comment, relationship: one-to-many, cascadeDelete: true }
 ```
 
-```csharp
-builder.HasMany(e => e.Comments)
-    .WithOne()
-    .HasForeignKey("TodoItemId")
-    .OnDelete(DeleteBehavior.Cascade);
-```
-
-### Reference navigation (restrict delete)
-
+### Reference navigation
+Entity references another without ownership.
 ```yaml
 navigation:
-  - name: Category
-    entity: Category
-    required: false
-    deleteRestrict: true
+  - { name: Category, entity: Category, required: false }
 ```
 
-```csharp
-builder.HasOne<Category>()
-    .WithMany(e => e.TodoItems)
-    .HasForeignKey(e => e.CategoryId)
-    .OnDelete(DeleteBehavior.Restrict);
-```
-
-### Many-to-many via explicit join
-
+### Many-to-many
+Peer association. Join entity details are a Phase 2 concern.
 ```yaml
 children:
-  - name: Tags
-    entity: Tag
-    relationship: many-to-many
-    joinEntity: TodoItemTag
-```
-
-```csharp
-builder.HasKey(e => new { e.TodoItemId, e.TagId });
+  - { name: Tags, entity: Tag, relationship: many-to-many }
 ```
 
 ### Self-referencing
-
+Hierarchical structures within the same entity.
 ```yaml
 children:
-  - name: Children
-    entity: TodoItem
-    relationship: self-referencing
-    selfReferenceKey: ParentId
-```
-
-```csharp
-builder.HasOne(e => e.Parent)
-    .WithMany(e => e.Children)
-    .HasForeignKey(e => e.ParentId)
-    .OnDelete(DeleteBehavior.Restrict);
+  - { name: Children, entity: TodoItem, relationship: self-referencing, selfReferenceKey: ParentId }
 ```
 
 ### Polymorphic join
-
+Shared attachment/comment pattern across multiple parent types.
 ```yaml
 children:
-  - name: Attachments
-    entity: Attachment
-    relationship: polymorphic-join
-    polymorphicEntityTypes: [TodoItem, Comment]
+  - { name: Attachments, entity: Attachment, relationship: polymorphic-join, polymorphicEntityTypes: [TodoItem, Comment] }
 ```
-
-```csharp
-builder.Property(e => e.EntityType).HasConversion<string>().HasMaxLength(50).IsRequired();
-builder.Property(e => e.EntityId).IsRequired();
-builder.HasIndex(e => new { e.EntityType, e.EntityId });
-```
-
-Polymorphic joins resolve parent type at runtime; they do not map as normal FK navigation to multiple parent entity types.
 
 ---
 
-## Workflow Hints (Guidance Only)
+## State Machine Design
 
-Complex workflows are not directly code-generated from schema primitives. Use:
+Define lifecycle states and valid transitions in business terms.
 
-- events,
-- state machines,
-- custom actions,
-- scheduled jobs,
-- rules,
+- **States** = named business conditions (not database values)
+- **Transitions** = allowed moves with named actions
+- **Guards** = business rules that must be true for a transition (expressed as rules)
 
-then compose orchestration in application code.
+```yaml
+stateMachine:
+  field: Status
+  initial: None
+  states: [None, InProgress, Completed, Cancelled]
+  transitions:
+    - { from: None, to: InProgress, action: Start }
+    - { from: InProgress, to: Completed, action: Complete }
+    - { from: InProgress, to: Cancelled, action: Cancel }
+    - { from: Cancelled, to: None, action: Reopen }
+```
 
-### Optional `workflows` hint block
+---
+
+## Business Rules
+
+Express rules in business language. Implementation conditions are Phase 3/4.
+
+- **Entity rules** — validated on the entity itself
+- **Domain rules** — cross-entity or require external dependencies
+- **Transition guards** — rules that gate state transitions
+
+---
+
+## Workflow Design
+
+Complex workflows go beyond CRUD + state transitions. Use when you need multi-entity coordination, retries/compensation, async wait states, or approval chains.
+
+### When to add workflows
+
+- Multiple entities must coordinate in sequence
+- Steps may fail and need compensation/rollback
+- Async waits (human approval, external callback)
+- Time-based escalation or retry logic
+
+### When workflows are NOT needed
+
+CRUD + state transitions fully express the behavior.
+
+### Workflow definition
 
 ```yaml
 workflows:
   - name: TodoItemEscalation
     pattern: orchestrator
-    involvedEntities: [TodoItem, Team, TeamMember, Reminder, TodoItemHistory]
+    involvedEntities: [TodoItem, Team, TeamMember, Reminder]
+    steps:
+      - "Check overdue items"
+      - "Notify assigned member"
+      - "Escalate to lead after threshold"
     compensationRequired: false
-    notes: "Escalation thresholds are configurable per tenant"
+    notes: "Thresholds configurable per tenant"
 ```
 
-### What AI scaffolding should produce
+### What scaffolding produces from workflows
 
-- orchestrator service shell,
-- step method stubs,
-- optional compensation stubs when requested,
-- DI registration.
-
-No API endpoints are required by default for workflow hints.
+- Orchestrator service shell + step method stubs
+- Optional compensation stubs
+- DI registration
+- No API endpoints by default
 
 ---
 
-## When Workflows Are Not Needed
+## Discovery Conversation Pattern
 
-Skip workflow orchestration when CRUD + state transitions fully express the behavior. Add workflows only for multi-entity coordination, retries/compensation, async wait states, or approval chains.
+Work through these in order during Phase 1:
+
+1. **Core entities** — what does the business call things?
+2. **Relationships** — who owns what? What references what?
+3. **Lifecycle** — what states does each entity go through?
+4. **Rules** — what must be true? What constraints exist?
+5. **Events** — what happens that other parts of the system care about?
+6. **Workflows** — what multi-step processes exist beyond CRUD?
+7. **Tenancy/auth** — who can see/do what?

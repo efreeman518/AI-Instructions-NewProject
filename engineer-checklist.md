@@ -9,8 +9,8 @@ Use this file as the **single execution path** for compile/run verification whil
 1. Run **Preflight** once per machine/repo.
 2. After every AI phase, run the **Phase Execution Loop**.
 3. Run only the optional sections that match enabled hosts/workloads.
-4. If a step fails, create `HANDOFF.md` if missing, log the issue, keep scope moving, and return later.
-5. Treat `sampleapp/` as code reference only; never build/compile/test inside `sampleapp/`.
+4. If a step fails, log in `HANDOFF.md`, keep scope moving, and return later.
+5. `sampleapp/` is reference-only (see [SKILL.md](SKILL.md) non-negotiables).
 
 ---
 
@@ -56,7 +56,7 @@ dotnet test --filter "TestCategory=Unit"
 - [ ] Restore succeeds
 - [ ] Build succeeds
 - [ ] Unit tests pass
-- [ ] Results recorded in `HANDOFF.md` (create if missing) if any step fails
+- [ ] Results logged in `HANDOFF.md` if any step fails
 
 If build/test fails after one AI code-fix pass, keep moving with non-blocked phases and return later.
 
@@ -135,29 +135,9 @@ dotnet ef migrations add InitialCreate `
 
 ---
 
-## Failure Session State Template (`HANDOFF.md`)
+## Failure Handling
 
-When a step fails, create `HANDOFF.md` if needed, then add this:
-
-```markdown
-### Execution Blocker
-- Step: <checklist step>
-- Command: <command run>
-- Symptom: <short error summary>
-- Classification: code-generation | infrastructure
-- Next action: <what engineer will do next>
-```
-
-Example:
-
-```markdown
-### Execution Blocker
-- Step: Phase Execution Loop -> `dotnet restore`
-- Command: dotnet restore src/TaskFlow.slnx
-- Symptom: NU1301 Unable to load the service index for source https://pkgs.dev.azure.com/<org>/<feed>/nuget/v3/index.json
-- Classification: infrastructure
-- Next action: Engineer validates feed credentials and `nuget.config`, then reruns restore before AI continues phase scaffolding
-```
+When a step fails, log the blocker in `HANDOFF.md` (see [HANDOFF.md template](HANDOFF.md)) and continue with non-blocked work.
 
 ---
 

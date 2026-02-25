@@ -14,7 +14,7 @@ After every build:
   - if it requires a private feed that is not restoring, classify as an infrastructure issue
 - **Infrastructure issue** (feed auth, env vars, Docker, certs, SQL/cloud access):
   - do not loop fixes
-  - document blocker in `HANDOFF.md` (create if missing)
+  - document blocker in `HANDOFF.md`
   - point engineer to [engineer-checklist.md](engineer-checklist.md)
 
 ## Missing-Inputs Protocol
@@ -22,25 +22,53 @@ After every build:
 When domain inputs are absent or ambiguous before scaffolding:
 
 - **Required** (`ProjectName`, `customNugetFeeds`, at least one entity): ask before proceeding
-- **Mode/profile defaults** (`scaffoldMode`, `testingProfile`): infer `full` / `balanced`; note the assumption inline and continue
-- **Optional feature flags** (`includeGateway`, `includeFunctionApp`, `includeUnoUI`, etc.): default to `false`; note and continue
+- **Defaults** (modes/profiles/flags): use [resource-implementation-schema.md](resource-implementation-schema.md) **Canonical Defaults**; note assumptions inline and continue
 - **Partial entity definitions**: scaffold what is defined; emit `// TODO` stubs for missing properties/rules and list them under Blockers in `HANDOFF.md`
+
+## Session Bootstrap
+
+For a new AI session, load [AI-START.md](AI-START.md) first, then load only the phase files required for the active step.
+
+## Strict On-Demand Files
+
+Do not preload these files:
+
+- [quick-reference.md](quick-reference.md)
+- [sampleapp-patterns.md](sampleapp-patterns.md)
+- [troubleshooting.md](troubleshooting.md)
+- [engineer-checklist.md](engineer-checklist.md)
 
 ## Prompt Patterns
 
-### Domain discovery
+### Domain discovery (Phase 1)
 
 ```text
-Before scaffolding, help me model the domain:
-- entities/lifecycle
-- relationships/boundaries
-- business rules
-- data store fit
-- tenancy/auth/events
-Then summarize and generate YAML inputs.
+Help me model this business domain.
+Define entities, relationships, lifecycle states, business rules, events, and workflows.
+Use business language — no databases, no datatypes, no implementation.
+Ask clarifying questions, summarize each iteration, then produce domain-definition YAML.
 ```
 
-### Initial scaffold
+### Resource definition (Phase 2)
+
+```text
+Review the domain definition and help me choose:
+- Data stores per entity (SQL, CosmosDB, Table, Blob)
+- Datatypes, lengths, precision for EF configuration
+- Messaging infrastructure
+- Hosting model
+Map domain constructs to Aspire/Azure resources.
+```
+
+### Implementation plan (Phase 3)
+
+```text
+Produce implementation-plan.md for this project.
+Use domain-definition + resource-implementation schemas.
+List ordered steps, open questions, decisions, risks.
+```
+
+### Initial scaffold (Phase 4)
 
 ```text
 Use .instructions/.
@@ -56,7 +84,7 @@ Constraints:
 - Never build or compile sampleapp/
 - Use templates + placeholder tokens
 - Build after generation
-- One code-fix pass max; infra blockers go to HANDOFF.md (create if missing)
+- One code-fix pass max; infra blockers go to HANDOFF.md
 ```
 
 ### Fix-only
@@ -66,7 +94,7 @@ Fix only current build/test failures.
 No unrelated refactors.
 Preserve public contracts unless required.
 Re-run same validation command.
-If still failing after one pass, log in HANDOFF.md (create if missing).
+If still failing after one pass, log in HANDOFF.md.
 ```
 
 ### Vertical slice
@@ -87,12 +115,29 @@ Report generated files + follow-ups.
 
 ## Phase Loading Manifest
 
-### Always available (small)
+### Session bootstrap
+- [AI-START.md](AI-START.md)
+
+### Phase 4 base set
 - [SKILL.md](SKILL.md)
 - [placeholder-tokens.md](placeholder-tokens.md)
 - [ai-build-optimization.md](ai-build-optimization.md)
 
-### Phase 1 — Foundation
+### Phase 1 — Domain Discovery
+- [domain-definition-schema.md](domain-definition-schema.md)
+- [domain-design-guide.md](domain-design-guide.md)
+
+### Phase 2 — Resource Definition
+- [resource-implementation-schema.md](resource-implementation-schema.md)
+- [domain-definition-schema.md](domain-definition-schema.md) *(read-only reference)*
+
+### Phase 3 — Implementation Plan
+- [implementation-plan.md](implementation-plan.md)
+- [domain-definition-schema.md](domain-definition-schema.md) *(read-only reference)*
+- [resource-implementation-schema.md](resource-implementation-schema.md) *(read-only reference)*
+- [domain-design-guide.md](domain-design-guide.md) *(optional, for relationship/workflow review)*
+
+### Phase 4a — Foundation
 - `skills/solution-structure.md`
 - `skills/domain-model.md`
 - `skills/data-access.md`
@@ -102,10 +147,10 @@ Report generated files + follow-ups.
 - `templates/repository-template.md`
 - `templates/domain-rules-template.md` *(if rules/state machine used)*
 - `templates/appsettings-template.md`
-- relevant sections of [domain-inputs.schema.md](domain-inputs.schema.md)
+- relevant sections of [resource-implementation-schema.md](resource-implementation-schema.md)
 - `skills/cosmosdb-data.md` / `skills/table-storage.md` / `skills/blob-storage.md` *(if non-SQL entities)*
 
-### Phase 2 — App Core
+### Phase 4b — App Core
 - `skills/application-layer.md`
 - `skills/bootstrapper.md`
 - `skills/api.md`
@@ -115,7 +160,7 @@ Report generated files + follow-ups.
 - `templates/endpoint-template.md`
 - `templates/message-handler-template.md` *(if events/handlers used)*
 
-### Phase 3 — Runtime/Edge
+### Phase 4c — Runtime/Edge
 Load only enabled concerns:
 - `skills/gateway.md`
 - `skills/aspire.md`
@@ -123,31 +168,25 @@ Load only enabled concerns:
 - `skills/multi-tenant.md`
 - `skills/caching.md`
 
-### Phase 4 — Optional Hosts
+### Phase 4d — Optional Hosts
 - `skills/background-services.md` (scheduler)
 - `skills/function-app.md` (functions)
 - `skills/uno-ui.md` (UI; dedicated session preferred)
 - `skills/notifications.md` (if enabled)
 - UI templates when `includeUnoUI: true`
 
-### Phase 5 — Quality + Delivery
+### Phase 4e — Quality + Delivery
 - `skills/testing.md`
 - relevant `templates/test-template-*.md`
 - `skills/identity-management.md`
 - `skills/iac.md`
 - `skills/cicd.md`
 
-## Session State (`HANDOFF.md`, create/update)
+## Session State (`HANDOFF.md`)
 
-Create this file in the target project root if it does not exist, then update it at phase boundaries or when context is high.
+Create in the target project root during Phase 4 execution when context is high or at natural session boundaries. Not needed during Phases 1-3 (design artifacts handle continuity). See [HANDOFF.md](HANDOFF.md) for template.
 
-Include:
-- completed phases
-- domain input summary
-- last build/test status
-- blockers + owner (AI vs engineer)
-- next phase + exact files to load
-- key decisions/deviations
+Include: current sub-phase, what was completed, build/test status, blockers + owner, files to load next, key decisions.
 
 ## Instruction Maintenance
 

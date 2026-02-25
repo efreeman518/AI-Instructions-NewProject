@@ -5,6 +5,7 @@
 | **File** | `Infrastructure.Data/Configuration/{Entity}Configuration.cs` |
 | **Depends on** | [entity-template](entity-template.md) |
 | **Referenced by** | [data-access.md](../skills/data-access.md), [repository-template](repository-template.md) |
+| **Sampleapp** | `sampleapp/src/Infrastructure/TaskFlow.Infrastructure.Data/EntityConfigurations/TodoItemConfiguration.cs` |
 
 ## File: Infrastructure/Data/Configuration/{Entity}Configuration.cs
 

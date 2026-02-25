@@ -226,7 +226,7 @@ All versions centrally managed in `Directory.Packages.props`.
 
 - **Skill files**: `skills/` (~20 markdown files)
 - **Templates**: `templates/` (~16 markdown files)
-- **Domain inputs schema**: `domain-inputs.schema.md`
+- **Domain definition schema**: `domain-definition-schema.md`
 - **Placeholder tokens**: `placeholder-tokens.md`
 - **Vertical slice checklist**: `vertical-slice-checklist.md`
 - **Troubleshooting guide**: `troubleshooting.md`

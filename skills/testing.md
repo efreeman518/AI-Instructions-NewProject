@@ -2,6 +2,8 @@
 
 Use this skill to scaffold tests by profile and phase.
 
+Reference implementation: `sampleapp/src/Test/` (7 test projects covering unit, integration, architecture, E2E, load, benchmarks).
+
 ## Profiles
 
 | Profile | Include by default |

@@ -5,6 +5,7 @@
 | **File** | `Infrastructure.Repositories/{Entity}RepositoryTrxn.cs`, `{Entity}RepositoryQuery.cs` |
 | **Depends on** | [entity-template](entity-template.md), [ef-configuration-template](ef-configuration-template.md) |
 | **Referenced by** | [service-template](service-template.md), [bootstrapper.md](../skills/bootstrapper.md) |
+| **Sampleapp** | `sampleapp/src/Infrastructure/TaskFlow.Infrastructure.Repositories/TodoItemRepositoryTrxn.cs` |
 
 ## File: Infrastructure/Repositories/{Entity}RepositoryTrxn.cs
 

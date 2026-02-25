@@ -28,6 +28,8 @@ Distilled cross-cutting patterns from `sampleapp/` that span multiple files/proj
 | Channel background queue | In-process async work dispatch | Bounded channel + scoped consumer service | [skills/background-services.md](skills/background-services.md) |
 | Aspire AppHost composition | Multi-host local orchestration | Add resources once, wire references per host, apply `WaitFor` | [skills/aspire.md](skills/aspire.md), [skills/solution-structure.md](skills/solution-structure.md) |
 | Docker multi-stage chiseled | Smaller runtime images + cached restore layers | Copy project files first, then publish to chiseled runtime | [skills/cicd.md](skills/cicd.md), [skills/package-dependencies.md](skills/package-dependencies.md) |
+| Result-through-layers | All CRUD flows — domain to endpoint | `DomainResult<T>` in entities/services, `Result.Match()` in endpoints; never throw for business errors | [skills/domain-model.md](skills/domain-model.md), [templates/service-template.md](templates/service-template.md), [templates/endpoint-template.md](templates/endpoint-template.md), [skills/api.md](skills/api.md) |
+| DefaultExceptionHandler | Unexpected/infrastructure exceptions only | `IExceptionHandler` maps exception types to `ProblemDetails`; last-resort safety net, not a control-flow mechanism | [skills/api.md](skills/api.md) |
 | Uno composition root | Client DI/auth/navigation bootstrap | Configure auth + HTTP/Kiota + route maps centrally | [skills/uno-ui.md](skills/uno-ui.md), [templates/mvux-model-template.md](templates/mvux-model-template.md) |
 
 ---
@@ -73,6 +75,25 @@ context.AddRequestTransform(async transformContext =>
 ```
 
 Always normalize inbound claims before forwarding.
+
+### 4) Result-Through-Layers Error Strategy
+
+Two complementary error paths — never mix them:
+
+```
+[Domain]  DomainResult<T>.Success / .Failure   — business validation, rules, state transitions
+              ↓
+[Service] Result<T>.Success / .Failure / .None  — orchestration, tenant boundary, structure validation
+              ↓
+[Endpoint] result.Match(ok => ..., errors => ProblemDetails, notFound => NotFound)
+              ↓
+[DefaultExceptionHandler] IExceptionHandler     — catches ONLY unexpected exceptions (infra, null ref, timeout)
+                          maps to ProblemDetails with appropriate HTTP status
+```
+
+**Rule:** Use `Result`/`DomainResult` for all expected outcomes. Throw exceptions only for truly unexpected failures. `DefaultExceptionHandler` is a safety net, not a control-flow mechanism.
+
+Reference: `sampleapp/src/TaskFlow/TaskFlow.Api/ExceptionHandlers/DefaultExceptionHandler.cs`.
 
 ---
 

@@ -1,0 +1,49 @@
+# AI Start (Minimal Entrypoint)
+
+Load this file first. Do not preload the full instruction set.
+
+## Initial Load Rule
+
+Start each new AI session with:
+
+1. `AI-START.md` (this file) only
+2. `HANDOFF.md` in target project root (if present)
+
+Then load only the phase files you need.
+
+## Phase Router
+
+- **Phase 1 (Domain Discovery)**
+  - `domain-definition-schema.md`
+  - `domain-design-guide.md`
+- **Phase 2 (Resource Definition)**
+  - `resource-implementation-schema.md`
+  - `domain-definition-schema.md` (reference)
+- **Phase 3 (Implementation Plan)**
+  - `implementation-plan.md`
+  - `domain-definition-schema.md` (reference)
+  - `resource-implementation-schema.md` (reference)
+- **Phase 4 (Implementation)**
+  - `SKILL.md`
+  - `placeholder-tokens.md`
+  - `ai-build-optimization.md`
+  - plus only the skill/template files required for the current sub-phase
+
+## Strict On-Demand Files
+
+Do not preload these files. Load only when needed:
+
+- `quick-reference.md` (naming/DI/config lookups)
+- `sampleapp-patterns.md` (cross-project pattern selection)
+- `troubleshooting.md` (only when failures occur)
+- `engineer-checklist.md` (execution/infra verification)
+
+## Defaults Source of Truth
+
+All defaults and profile values must come from `resource-implementation-schema.md` (**Canonical Defaults** section).
+
+## Guardrails
+
+- Never edit/build `sampleapp/`.
+- Generate code only in the target project.
+- Keep context minimal per phase and unload prior-phase docs.

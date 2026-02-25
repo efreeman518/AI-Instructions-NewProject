@@ -1,5 +1,7 @@
 # Caching
 
+Reference implementation: `sampleapp/src/TaskFlow/TaskFlow.Bootstrapper/` (FusionCache registration + named cache config).
+
 ## Purpose
 
 Use FusionCache as the application cache abstraction, with Redis as distributed layer and backplane for cross-instance invalidation.

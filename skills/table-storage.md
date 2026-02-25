@@ -1,5 +1,7 @@
 # Table Storage
 
+Base types (`ITableRepository`, `TableRepositoryBase`, `TableRepositorySettingsBase`) come from the `EF.Table` package — see [package-dependencies.md](package-dependencies.md) and the [EF.Packages repo](https://github.com/efreeman518/EF.Packages) for full API details.
+
 ## Prerequisites
 
 - [package-dependencies.md](package-dependencies.md)
