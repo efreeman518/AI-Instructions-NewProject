@@ -2,74 +2,55 @@
 
 ## Prerequisites
 
-- [package-dependencies.md](package-dependencies.md) — `EF.KeyVault` package types
-- [configuration.md](configuration.md) — appsettings, secrets management, and Options pattern
-- [identity-management.md](identity-management.md) — managed identity for Key Vault access
-- [bootstrapper.md](bootstrapper.md) — centralized DI registration
+- [package-dependencies.md](package-dependencies.md)
+- [configuration.md](configuration.md)
+- [identity-management.md](identity-management.md)
+- [bootstrapper.md](bootstrapper.md)
 
-## Overview
+## Purpose
 
-Key Vault access uses `EF.KeyVault` which provides abstractions over Azure Key Vault for **secrets**, **keys**, and **certificates** management, plus a **crypto utility** for encrypt/decrypt operations using vault-managed keys.
+Use Key Vault for:
 
-> **When to use Key Vault directly vs configuration:** Use the configuration provider (`Azure.Extensions.AspNetCore.Configuration.Secrets`) for secrets that map to app settings (connection strings, API keys). Use the `IKeyVaultManager` interface for runtime secret operations — dynamic secret creation, key rotation, certificate management, or when secrets need to be read/written programmatically by application logic.
+1. startup configuration secrets,
+2. runtime secret/key/certificate operations,
+3. cryptographic operations where private keys remain in Key Vault.
+
+## Non-Negotiables
+
+1. Use managed identity/`DefaultAzureCredential` in hosted environments.
+2. Keep Key Vault access behind project-specific abstractions.
+3. Never log secret values or return them in raw API payloads.
+4. Use RBAC least-privilege roles for secrets/keys/certs.
+5. Keep soft delete and purge protection enabled.
 
 ---
 
-## Key Vault Manager
+## Core Manager Contract
 
-### Interface
+`IKeyVaultManager` is the runtime abstraction for secret/key/certificate lifecycle actions.
 
 ```csharp
 public interface IKeyVaultManager
 {
-    // Secrets
-    Task<string?> GetSecretAsync(string name, string? version = null,
-        CancellationToken cancellationToken = default);
-    Task<string?> SaveSecretAsync(string name, string? value = null,
-        CancellationToken cancellationToken = default);
-    Task<DeletedSecret> StartDeleteSecretAsync(string name,
-        CancellationToken cancellationToken = default);
+    Task<string?> GetSecretAsync(string name, string? version = null, CancellationToken cancellationToken = default);
+    Task<string?> SaveSecretAsync(string name, string? value = null, CancellationToken cancellationToken = default);
+    Task<DeletedSecret> StartDeleteSecretAsync(string name, CancellationToken cancellationToken = default);
 
-    // Keys
-    Task<JsonWebKey?> GetKeyAsync(string name, string? version = null,
-        CancellationToken cancellationToken = default);
-    Task<JsonWebKey?> CreateKeyAsync(string name, KeyType keyType,
-        CreateKeyOptions? options = null, CancellationToken cancellationToken = default);
-    Task<KeyRotationPolicy> UpdateKeyRotationPolicyAsync(string name,
-        KeyRotationPolicy policy, CancellationToken cancellationToken = default);
-    Task<JsonWebKey?> RotateKeyAsync(string name,
-        CancellationToken cancellationToken = default);
-    Task<JsonWebKey?> DeleteKeyAsync(string name,
-        CancellationToken cancellationToken = default);
+    Task<JsonWebKey?> GetKeyAsync(string name, string? version = null, CancellationToken cancellationToken = default);
+    Task<JsonWebKey?> CreateKeyAsync(string name, KeyType keyType, CreateKeyOptions? options = null, CancellationToken cancellationToken = default);
+    Task<KeyRotationPolicy> UpdateKeyRotationPolicyAsync(string name, KeyRotationPolicy policy, CancellationToken cancellationToken = default);
+    Task<JsonWebKey?> RotateKeyAsync(string name, CancellationToken cancellationToken = default);
+    Task<JsonWebKey?> DeleteKeyAsync(string name, CancellationToken cancellationToken = default);
 
-    // Certificates
-    Task<byte[]?> GetCertAsync(string certificateName,
-        CancellationToken cancellationToken = default);
-    Task<byte[]?> ImportCertAsync(ImportCertificateOptions importCertificateOptions,
-        CancellationToken cancellationToken = default);
+    Task<byte[]?> GetCertAsync(string certificateName, CancellationToken cancellationToken = default);
+    Task<byte[]?> ImportCertAsync(ImportCertificateOptions importCertificateOptions, CancellationToken cancellationToken = default);
 }
 ```
 
-### Base Class
-
-`KeyVaultManagerBase` implements `IKeyVaultManager` using three named Azure clients via `IAzureClientFactory`:
-- `SecretClient` — for secrets
-- `KeyClient` — for keys
-- `CertificateClient` — for certificates
-
-### Settings
+### Project Wrapper Pattern
 
 ```csharp
-public class KeyVaultManagerSettingsBase
-{
-    public string KeyVaultClientName { get; set; } = null!;
-}
-```
-
-### Concrete Implementation
-
-```csharp
-namespace {Project}.Infrastructure.Security;
+public interface I{Project}KeyVaultManager : IKeyVaultManager { }
 
 public class {Project}KeyVaultManager : KeyVaultManagerBase, I{Project}KeyVaultManager
 {
@@ -79,22 +60,17 @@ public class {Project}KeyVaultManager : KeyVaultManagerBase, I{Project}KeyVaultM
         IAzureClientFactory<SecretClient> secretClientFactory,
         IAzureClientFactory<KeyClient> keyClientFactory,
         IAzureClientFactory<CertificateClient> certClientFactory)
-        : base(logger, settings, secretClientFactory, keyClientFactory, certClientFactory)
-    {
-    }
+        : base(logger, settings, secretClientFactory, keyClientFactory, certClientFactory) { }
 }
 
-public interface I{Project}KeyVaultManager : IKeyVaultManager { }
 public class {Project}KeyVaultManagerSettings : KeyVaultManagerSettingsBase { }
 ```
 
+`KeyVaultManagerSettingsBase` requires `KeyVaultClientName`.
+
 ---
 
-## Crypto Utility
-
-For encrypt/decrypt operations using Key Vault-managed RSA keys:
-
-### Interface
+## Crypto Utility Contract
 
 ```csharp
 public interface IKeyVaultCryptoUtility
@@ -104,35 +80,13 @@ public interface IKeyVaultCryptoUtility
 }
 ```
 
-### Implementation
-
-The package provides `KeyVaultCryptoUtility` which uses `CryptographyClient` with `EncryptionAlgorithm.RsaOaep`:
-
-```csharp
-public class KeyVaultCryptoUtility(CryptographyClient cryptoClient) : IKeyVaultCryptoUtility
-{
-    public async Task<byte[]> EncryptAsync(string plaintext)
-    {
-        byte[] plaintextBytes = Encoding.UTF8.GetBytes(plaintext);
-        var encryptResult = await cryptoClient.EncryptAsync(EncryptionAlgorithm.RsaOaep, plaintextBytes);
-        return encryptResult.Ciphertext;
-    }
-
-    public async Task<string> DecryptAsync(byte[] ciphertext)
-    {
-        var decryptResult = await cryptoClient.DecryptAsync(EncryptionAlgorithm.RsaOaep, ciphertext);
-        return Encoding.UTF8.GetString(decryptResult.Plaintext);
-    }
-}
-```
-
-> **Key advantage:** The private key never leaves Key Vault — encryption/decryption operations happen server-side. This is ideal for PII, tokens, or sensitive field-level encryption.
+Use `CryptographyClient` (typically RSA-OAEP). This keeps private key operations in Key Vault.
 
 ---
 
 ## Configuration
 
-### appsettings.json
+`appsettings.json`
 
 ```json
 {
@@ -145,7 +99,7 @@ public class KeyVaultCryptoUtility(CryptographyClient cryptoClient) : IKeyVaultC
 }
 ```
 
-### appsettings.Development.json
+`appsettings.Development.json`
 
 ```json
 {
@@ -157,182 +111,72 @@ public class KeyVaultCryptoUtility(CryptographyClient cryptoClient) : IKeyVaultC
 
 ---
 
-## DI Registration (in Bootstrapper)
+## DI Registration (Bootstrapper)
 
 ```csharp
 private static void AddKeyVaultServices(IServiceCollection services, IConfiguration config)
 {
     var vaultUri = new Uri(config["KeyVault:VaultUri"]!);
 
-    // Register named Azure clients via IAzureClientFactory
     services.AddAzureClients(builder =>
     {
-        builder.AddSecretClient(vaultUri)
-            .WithName("{Project}KVClient");
-
-        builder.AddKeyClient(vaultUri)
-            .WithName("{Project}KVClient");
-
-        builder.AddCertificateClient(vaultUri)
-            .WithName("{Project}KVClient");
-
-        // Use DefaultAzureCredential (managed identity in Azure, Visual Studio/CLI locally)
+        builder.AddSecretClient(vaultUri).WithName("{Project}KVClient");
+        builder.AddKeyClient(vaultUri).WithName("{Project}KVClient");
+        builder.AddCertificateClient(vaultUri).WithName("{Project}KVClient");
         builder.UseCredential(new DefaultAzureCredential());
     });
 
-    // Bind settings
     services.Configure<{Project}KeyVaultManagerSettings>(
         config.GetSection("{Project}KeyVaultManagerSettings"));
 
-    // Register KeyVault manager
     services.AddScoped<I{Project}KeyVaultManager, {Project}KeyVaultManager>();
 }
 ```
 
-### Crypto Utility Registration
+Crypto utility registration pattern:
 
 ```csharp
-private static void AddKeyVaultCryptoServices(IServiceCollection services, IConfiguration config)
+services.AddSingleton(sp =>
 {
-    var vaultUri = new Uri(config["KeyVault:VaultUri"]!);
-    var keyName = config["KeyVault:EncryptionKeyName"]!;
-
-    // CryptographyClient targets a specific key
-    services.AddSingleton(sp =>
-    {
-        var keyClient = new KeyClient(vaultUri, new DefaultAzureCredential());
-        return keyClient.GetCryptographyClient(keyName);
-    });
-
-    services.AddScoped<IKeyVaultCryptoUtility, KeyVaultCryptoUtility>();
-}
+    var keyClient = new KeyClient(new Uri(config["KeyVault:VaultUri"]!), new DefaultAzureCredential());
+    return keyClient.GetCryptographyClient(config["KeyVault:EncryptionKeyName"]!);
+});
+services.AddScoped<IKeyVaultCryptoUtility, KeyVaultCryptoUtility>();
 ```
 
 ---
 
-## Service Layer Usage
+## Usage Patterns
 
-### Runtime Secret Management
+- **Startup configuration secrets:** Key Vault configuration provider.
+- **Runtime secret management:** `I{Project}KeyVaultManager`.
+- **Field-level encryption:** `IKeyVaultCryptoUtility`.
+- **Key lifecycle:** create + policy + rotate through manager abstraction.
+- **Certificates:** retrieve/import via manager abstraction.
 
-```csharp
-public class ApiKeyService(
-    I{Project}KeyVaultManager kvManager,
-    ILogger<ApiKeyService> logger) : IApiKeyService
-{
-    public async Task<Result<string>> GetApiKeyAsync(
-        string keyName, CancellationToken ct = default)
-    {
-        var secret = await kvManager.GetSecretAsync(keyName, cancellationToken: ct);
-        return secret is not null
-            ? Result<string>.Success(secret)
-            : Result<string>.None();
-    }
-
-    public async Task<Result<string>> RotateApiKeyAsync(
-        string keyName, CancellationToken ct = default)
-    {
-        var newKey = Guid.NewGuid().ToString("N");
-        var saved = await kvManager.SaveSecretAsync(keyName, newKey, ct);
-        logger.LogInformation("API key rotated: {KeyName}", keyName);
-        return Result<string>.Success(saved!);
-    }
-}
-```
-
-### Field-Level Encryption
-
-```csharp
-public class SensitiveDataService(
-    IKeyVaultCryptoUtility cryptoUtility,
-    ILogger<SensitiveDataService> logger) : ISensitiveDataService
-{
-    public async Task<byte[]> EncryptSsnAsync(string ssn)
-    {
-        return await cryptoUtility.EncryptAsync(ssn);
-    }
-
-    public async Task<string> DecryptSsnAsync(byte[] encryptedSsn)
-    {
-        return await cryptoUtility.DecryptAsync(encryptedSsn);
-    }
-}
-```
-
-### Key Rotation with Policy
-
-```csharp
-public async Task SetupKeyRotationAsync(string keyName, CancellationToken ct = default)
-{
-    // Create RSA key
-    await kvManager.CreateKeyAsync(keyName, KeyType.Rsa, new CreateRsaKeyOptions(keyName)
-    {
-        KeySize = 2048,
-        ExpiresOn = DateTimeOffset.UtcNow.AddYears(1)
-    }, ct);
-
-    // Set rotation policy — rotate 30 days before expiry
-    await kvManager.UpdateKeyRotationPolicyAsync(keyName, new KeyRotationPolicy
-    {
-        LifetimeActions =
-        {
-            new KeyRotationLifetimeAction(KeyRotationPolicyAction.Rotate)
-            {
-                TimeBeforeExpiry = TimeSpan.FromDays(30)
-            }
-        },
-        ExpiresIn = "P365D"  // ISO 8601 duration
-    }, ct);
-}
-```
-
-### Certificate Management
-
-```csharp
-public async Task<X509Certificate2?> GetServiceCertAsync(
-    string certName, CancellationToken ct = default)
-{
-    var certBytes = await kvManager.GetCertAsync(certName, ct);
-    return certBytes is not null ? new X509Certificate2(certBytes) : null;
-}
-```
+Cache hot secrets appropriately; avoid per-request Key Vault round-trips unless required.
 
 ---
 
-## Key Vault Access Patterns
+## Security Rules
 
-| Pattern | Approach | When |
-|---------|----------|------|
-| **Config secrets** | `AzureKeyVaultConfigurationProvider` | Connection strings, API keys loaded at startup |
-| **Runtime secrets** | `IKeyVaultManager.GetSecretAsync` | Dynamic secret lookup, user-specific keys |
-| **Encryption** | `IKeyVaultCryptoUtility` | PII field encryption, token encryption |
-| **Key rotation** | `IKeyVaultManager.RotateKeyAsync` + policy | Automated key lifecycle management |
-| **Certificates** | `IKeyVaultManager.GetCertAsync` | mTLS, client certificates, signing |
-
----
-
-## Security Considerations
-
-1. **Managed identity** — Always use `DefaultAzureCredential` in production; never store Key Vault access keys in config
-2. **Least privilege** — Grant only the specific Key Vault RBAC roles needed:
-   - `Key Vault Secrets User` — read secrets
-   - `Key Vault Secrets Officer` — read/write secrets
-   - `Key Vault Crypto User` — encrypt/decrypt with keys
-   - `Key Vault Certificates User` — read certificates
-3. **Soft delete** — Always enable soft delete and purge protection on Key Vault
-4. **Caching** — Cache secret values in memory for the duration they're needed; don't call Key Vault on every request
-5. **Logging** — Never log secret values; the base class logs operation names only
+1. `DefaultAzureCredential` + managed identity for production.
+2. Minimal RBAC scope:
+   - Secrets User/Officer only when needed,
+   - Crypto User only for crypto operations,
+   - Certificates User only for cert retrieval.
+3. Keep diagnostic logs metadata-only (operation names, key names, status).
+4. Isolate dev/prod vault URIs by environment.
 
 ---
 
 ## Verification
 
-After generating Key Vault code, confirm:
-
-- [ ] Manager inherits `KeyVaultManagerBase` with project-specific settings
-- [ ] Settings class inherits `KeyVaultManagerSettingsBase` with `KeyVaultClientName`
-- [ ] DI registers named `SecretClient`, `KeyClient`, `CertificateClient` via `IAzureClientFactory`
-- [ ] `DefaultAzureCredential` used for authentication (not connection strings or access keys)
-- [ ] Vault URI configured per environment (dev vs prod Key Vaults)
-- [ ] Crypto utility registered with `CryptographyClient` targeting a specific key name
-- [ ] Secret values never logged or returned in API responses
-- [ ] Cross-references: [identity-management.md](identity-management.md) for managed identity setup; [iac.md](iac.md) for Key Vault provisioning with RBAC; [configuration.md](configuration.md) for startup config secrets
+- [ ] project manager derives from `KeyVaultManagerBase`
+- [ ] settings derive from `KeyVaultManagerSettingsBase`
+- [ ] named `SecretClient`/`KeyClient`/`CertificateClient` are registered
+- [ ] authentication uses `DefaultAzureCredential`
+- [ ] vault URI and client name come from configuration
+- [ ] crypto utility is bound to a specific key
+- [ ] secrets are not logged or exposed in API output
+- [ ] cross-check with [identity-management.md](identity-management.md), [iac.md](iac.md), and [configuration.md](configuration.md)

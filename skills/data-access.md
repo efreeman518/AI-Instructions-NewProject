@@ -1,20 +1,26 @@
 # Data Access
 
-## Overview
+## Purpose
 
-Data access uses Entity Framework Core with a **split DbContext** pattern (read/write separation), **configuration classes** per entity, a **generic + specific repository** approach, and the **Updater pattern** for consistent child collection syncing.
+Use EF Core with split read/write contexts, explicit entity configurations, repository abstractions, and updater helpers for aggregate child synchronization.
+
+## Non-Negotiables
+
+1. Keep separate transactional and query DbContexts.
+2. Keep shared schema/model conventions in a base DbContext.
+3. Use explicit `IEntityTypeConfiguration<T>` per entity.
+4. Separate write repositories from read/projection repositories.
+5. Use updater pattern for child collection sync (create/update/remove in one pass).
+
+Reference implementation: `sampleapp/src/Infrastructure/TaskFlow.Infrastructure.Data/` and `...Infrastructure.Repositories/`.
+
+---
 
 ## DbContext Split Pattern
 
-> **Reference implementation:** See `sampleapp/src/Infrastructure/TaskFlow.Infrastructure.Data/` — `TaskFlowDbContextBase.cs` (abstract base with schema, tenant filters, data type defaults), `TaskFlowDbContextTrxn.cs` (writes), `TaskFlowDbContextQuery.cs` (reads, NoTracking).
-
-### Base Context
-
-Abstract base holds all model configuration, query filters, and DbSet declarations:
-
 ```csharp
-// Compact pattern — see sampleapp for full implementation
-public abstract class {Project}DbContextBase(DbContextOptions options) : DbContextBase<string, Guid?>(options)
+public abstract class {Project}DbContextBase(DbContextOptions options)
+    : DbContextBase<string, Guid?>(options)
 {
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -22,30 +28,28 @@ public abstract class {Project}DbContextBase(DbContextOptions options) : DbConte
         modelBuilder.HasDefaultSchema("{project}");
         modelBuilder.ApplyConfigurationsFromAssembly(typeof({Project}DbContextBase).Assembly);
         ConfigureDefaultDataTypes(modelBuilder);
-        SetTableNames(modelBuilder);  // class name = table name, no pluralization
+        SetTableNames(modelBuilder);
         ConfigureTenantQueryFilters(modelBuilder);
     }
 }
-```
 
-### Transactional (Writes) & Query (Reads) Contexts
-
-```csharp
-public class {Project}DbContextTrxn(DbContextOptions<{Project}DbContextTrxn> options) 
+public class {Project}DbContextTrxn(DbContextOptions<{Project}DbContextTrxn> options)
     : {Project}DbContextBase(options) { }
 
-public class {Project}DbContextQuery(DbContextOptions<{Project}DbContextQuery> options) 
-    : {Project}DbContextBase(options) { }  // registered with NoTracking
+public class {Project}DbContextQuery(DbContextOptions<{Project}DbContextQuery> options)
+    : {Project}DbContextBase(options) { }
 ```
+
+Register query context with `NoTracking` behavior.
+
+---
 
 ## Entity Configuration Pattern
 
-> **Reference implementation:** See `sampleapp/src/Infrastructure/TaskFlow.Infrastructure.Data/Configurations/EntityConfigurations.cs` — consolidated configurations for all entities: TodoItem (rich entity with hierarchy, owned DateRange, composite indexes), Category (simple entity), TodoItemTag (junction with composite PK).
-
-### Base Configuration
+Base configuration:
 
 ```csharp
-public abstract class EntityBaseConfiguration<T>(bool pkClusteredIndex = false) 
+public abstract class EntityBaseConfiguration<T>(bool pkClusteredIndex = false)
     : IEntityTypeConfiguration<T> where T : EntityBase
 {
     public virtual void Configure(EntityTypeBuilder<T> builder)
@@ -57,118 +61,108 @@ public abstract class EntityBaseConfiguration<T>(bool pkClusteredIndex = false)
 }
 ```
 
-### Entity-Specific Configuration
+Entity-specific configuration:
 
 ```csharp
-// Compact pattern — see sampleapp for full implementations
-public class {Entity}Configuration() : EntityBaseConfiguration<{Entity}>(false)
+public class {Entity}Configuration : EntityBaseConfiguration<{Entity}>
 {
     public override void Configure(EntityTypeBuilder<{Entity}> builder)
     {
         base.Configure(builder);
         builder.Property(e => e.Name).HasMaxLength(100).IsRequired();
         builder.HasIndex(e => new { e.TenantId, e.Id })
-               .HasDatabaseName("CIX_{Entity}_TenantId_Id").IsUnique().IsClustered();
+            .HasDatabaseName("CIX_{Entity}_TenantId_Id")
+            .IsUnique()
+            .IsClustered();
     }
 }
 ```
 
 ### Configuration Rules
 
-1. **PK is NOT clustered** — Pass `false` to `EntityBaseConfiguration`. The clustered index goes on `(TenantId, Id)` for multi-tenant perf.
-2. **Explicit table names** — Use `ToTable("{Entity}")` matching the class name (no pluralization)
-3. **Restrict deletes** on parent references, **Cascade** on owned children
-4. **Named indexes** — Use `HasDatabaseName("IX_{Entity}_{Column}")` convention
-5. **MaxLength on all strings** — Always specify `HasMaxLength(N)` with a realistic length (e.g., Name→200, Email→254, Sku→50, Notes→2000). **Rarely** use `nvarchar(max)` — only for truly unbounded text like rich HTML or large JSON blobs.
-6. **Decimal precision** — All `decimal` properties default to `decimal(10,4)` via `ConfigureDefaultDataTypes`. Override per-property only when needed (e.g., exchange rates→`decimal(18,8)`).
-7. **DateTime → datetime2** — All `DateTime` and `DateTime?` properties map to SQL `datetime2`. The global convention in `ConfigureDefaultDataTypes` handles this. Never use the legacy `datetime` type.
-8. **Default values for enums** — `HasDefaultValue({Enum}.None)` stores as numeric (default). Add `.HasConversion<string>()` only when human-readable DB values are needed (e.g., debugging, reporting); avoid string conversion on `[Flags]` enums used in bitwise queries.
+1. Keep PK non-clustered when clustered multi-tenant access index is used.
+2. Use explicit table names (class-name aligned).
+3. Set delete behavior explicitly (`Restrict` for references, `Cascade` for owned children where appropriate).
+4. Name indexes predictably (`IX_...` / `CIX_...`).
+5. Set `HasMaxLength(N)` for strings (avoid unnecessary `nvarchar(max)`).
+6. Use default decimal precision and override only when domain requires it.
+7. Use `datetime2` for `DateTime` columns.
+
+---
 
 ## Repository Pattern
 
-> **Reference implementation:** See `sampleapp/src/Infrastructure/TaskFlow.Infrastructure.Repositories/` — `TransactionalRepositories.cs` (write repos with includes), `QueryRepositories.cs` (read repos with projections and cacheable queries).
-
-### Generic Repository
-
-Provides base CRUD inherited from `RepositoryBase<TContext, TAuditId, TTenantId>`:
+### Write Repository
 
 ```csharp
-public class GenericRepositoryTrxn({Project}DbContextTrxn dbContext) 
-    : RepositoryBase<{Project}DbContextTrxn, string, Guid?>(dbContext), IGenericRepositoryTrxn { }
-```
-
-### Entity-Specific Repository
-
-Create when entity needs custom queries or update logic:
-
-```csharp
-// Compact pattern — see sampleapp for full implementations
-public class {Entity}RepositoryTrxn({Project}DbContextTrxn dbContext) 
+public class {Entity}RepositoryTrxn({Project}DbContextTrxn dbContext)
     : RepositoryBase<{Project}DbContextTrxn, string, Guid?>(dbContext), I{Entity}RepositoryTrxn
 {
-    public async Task<{Entity}?> Get{Entity}Async(Guid id, bool includeChildren = false, CancellationToken ct = default)
+    public Task<{Entity}?> Get{Entity}Async(Guid id, bool includeChildren = false, CancellationToken ct = default)
     {
         var includes = includeChildren ? [q => q.Include(e => e.Children)] : [];
-        return await GetEntityAsync(true, filter: e => e.Id == id, includes: includes, cancellationToken: ct);
+        return GetEntityAsync(true, filter: e => e.Id == id, includes: includes, cancellationToken: ct);
     }
 }
 ```
 
-### Query Repository (Read-Only)
-
-Separate interface + implementation using the Query DbContext:
+### Query Repository
 
 ```csharp
-public class {Entity}RepositoryQuery({Project}DbContextQuery dbContext) 
+public class {Entity}RepositoryQuery({Project}DbContextQuery dbContext)
     : RepositoryBase<{Project}DbContextQuery, string, Guid?>(dbContext), I{Entity}RepositoryQuery
 {
-    public async Task<PagedResponse<{Entity}Dto>> Search{Entity}Async(
-        SearchRequest<{Entity}SearchFilter> request, CancellationToken ct = default)
+    public Task<PagedResponse<{Entity}Dto>> Search{Entity}Async(
+        SearchRequest<{Entity}SearchFilter> request,
+        CancellationToken ct = default)
     {
-        return await QueryPageProjectionAsync({Entity}Mapper.ProjectorSearch, ...);
+        return QueryPageProjectionAsync({Entity}Mapper.ProjectorSearch, ...);
     }
 }
 ```
 
-## Repository Updater Pattern
+Use EF-safe projector expressions for read models; avoid method calls that cannot translate server-side.
 
-Static extension methods on DbContext that handle child collection synchronization:
+---
 
-> **Reference implementation:** See `sampleapp/src/Infrastructure/TaskFlow.Infrastructure.Repositories/Updaters/TodoItemUpdater.cs`
+## Updater Pattern
+
+Use static DbContext extension updaters to synchronize child collections with domain results:
 
 ```csharp
-// Compact pattern — see sampleapp for full implementation
 internal static class {Entity}Updater
 {
     public static DomainResult<{Entity}> UpdateFromDto(
-        this {Project}DbContextTrxn db, {Entity} entity, {Entity}Dto dto,
+        this {Project}DbContextTrxn db,
+        {Entity} entity,
+        {Entity}Dto dto,
         RelatedDeleteBehavior relatedDeleteBehavior = RelatedDeleteBehavior.None)
     {
         return entity.Update(name: dto.Name)
             .Bind(updated => CollectionUtility.SyncCollectionWithResult(
-                updated.Children, dto.Children,
-                dbe => dbe.Id, dtoItem => dtoItem.Id,
+                updated.Children,
+                dto.Children,
+                dbe => dbe.Id,
+                dtoItem => dtoItem.Id,
                 createDto => createDto.ToEntity().Bind(c => updated.AddChild(c)),
                 (dbEntity, updateDto) => dbEntity.UpdateFromDto(updateDto),
-                toRemove => { db.Delete(toRemove); return updated.RemoveChild(toRemove); }
-            ).Map(updated));
+                toRemove => { db.Delete(toRemove); return updated.RemoveChild(toRemove); })
+            .Map(updated));
     }
 }
 ```
 
-### Updater Rules
+Updater rules:
 
-1. **Static extension on DbContext** — Needs DB access for delete operations
-2. **Chain with Bind** — Entity.Update() → collection syncs → return
-3. **CollectionUtility.SyncCollectionWithResult** — Handles create/update/remove in one pass
-4. **RelatedDeleteBehavior** — Controls whether removes delete the entity or just the relationship
-5. **Nested updaters** — Parent updater can delegate to child updaters (e.g., Team → TeamMember)
+- keep update chains in `Bind` flow,
+- centralize create/update/remove logic in one sync call,
+- use `RelatedDeleteBehavior` to control relationship vs hard delete semantics.
 
-## Design-Time Factory
+---
 
-Required for EF migrations when running from CLI:
+## Design-Time Factory and Migrations
 
-> **Reference implementation:** See `sampleapp/src/Infrastructure/TaskFlow.Infrastructure.Data/DesignTimeDbContextFactory.cs`
+Use `IDesignTimeDbContextFactory<{Project}DbContextTrxn>` for CLI migrations.
 
 ```csharp
 public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<{Project}DbContextTrxn>
@@ -177,6 +171,7 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<{Project}D
     {
         var connectionString = Environment.GetEnvironmentVariable("EFCORETOOLSDB")
             ?? throw new InvalidOperationException("Set EFCORETOOLSDB env var");
+
         var optionsBuilder = new DbContextOptionsBuilder<{Project}DbContextTrxn>();
         optionsBuilder.UseSqlServer(connectionString);
         return new {Project}DbContextTrxn(optionsBuilder.Options);
@@ -184,49 +179,35 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<{Project}D
 }
 ```
 
-## Migrations
-
-> **Reference implementation:** See `sampleapp/src/Infrastructure/TaskFlow.Infrastructure.Data/Migrations/` for InitialCreate migration (5 tables with non-clustered PK, clustered TenantId+Id, owned DateRange, self-ref FK, junction table).
->  
-> Also see `sampleapp/src/Infrastructure/TaskFlow.Infrastructure.Data/Scripts/` for seed data, index maintenance, and user creation SQL.
-
-## Migration Commands
+Common commands:
 
 ```bash
-# Set connection string
-$env:EFCORETOOLSDB = "Server=localhost,1433;Database={Project}Db;Integrated Security=True;TrustServerCertificate=True"
-
-# Add migration
+$env:EFCORETOOLSDB = "Server=..."
 dotnet ef migrations add {MigrationName} --context {Project}DbContextTrxn --project Infrastructure.Data
-
-# Generate idempotent script
 dotnet ef migrations script --idempotent --context {Project}DbContextTrxn --project Infrastructure.Data
-
-# Apply migrations
 dotnet ef database update --context {Project}DbContextTrxn --project Infrastructure.Data
 ```
 
-## Database Registration (in Bootstrapper)
+---
 
-See [bootstrapper.md](bootstrapper.md) for full DI setup including:
-- Pooled DbContext factory
-- Scoped wrapper for per-request contexts
-- Audit interceptor on Trxn context
-- NoTracking + read replica on Query context
-- Retry strategies
+## Bootstrapper Alignment
+
+Keep full registration details in [bootstrapper.md](bootstrapper.md):
+
+- pooled DbContext factories,
+- audit interceptor on transactional context,
+- no-tracking and read optimizations on query context,
+- retry and provider options.
 
 ---
 
 ## Verification
 
-After generating data access code, confirm:
-
-- [ ] Two DbContexts: `{App}DbContextTrxn` (write) and `{App}DbContextQuery` (read, `UseQueryTrackingBehavior(NoTracking)`)
-- [ ] Each entity has an `EntityTypeConfiguration` class implementing `IEntityTypeConfiguration<T>`
-- [ ] `EntityBaseConfiguration<T>` is applied to all entities (Guid PK `ValueGeneratedNever`, `RowVersion` concurrency)
-- [ ] Repository split: `I{Entity}RepositoryTrxn` for writes, `I{Entity}RepositoryQuery` for reads
-- [ ] Query repository uses projector expressions (not `.ToDto()` method calls) for EF-safe queries
-- [ ] Indexes defined in configuration match expected query patterns (unique constraints, composite indexes)
-- [ ] Relationship delete behaviors are explicit: `Cascade` for owned children, `Restrict` for references
-- [ ] Migration created after model changes with `dotnet ef migrations add {Name}`
-- [ ] Cross-references: EF configs match [entity-template.md](../templates/entity-template.md) properties, repository interfaces in [repository-template.md](../templates/repository-template.md)
+- [ ] both `{App}DbContextTrxn` and `{App}DbContextQuery` exist
+- [ ] query context is configured for no-tracking reads
+- [ ] each entity has explicit `IEntityTypeConfiguration<T>`
+- [ ] repositories are split for write and read concerns
+- [ ] read queries use projector expressions
+- [ ] update paths use updater sync pattern for child collections
+- [ ] migrations run through transactional context with design-time factory
+- [ ] mappings/repositories align with [entity-template.md](../templates/entity-template.md) and [repository-template.md](../templates/repository-template.md)

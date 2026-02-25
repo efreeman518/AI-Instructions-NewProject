@@ -1,123 +1,101 @@
 # Notifications
 
-## Overview
+## Purpose
 
-The notification system provides multi-channel message delivery (email, SMS, web push, app push) through a provider-based architecture. It can be deployed in two modes:
+Provide multi-channel outbound notifications (email, SMS, web push, app push) through a unified service with pluggable channel providers.
 
-1. **Integrated** — notification services are registered in the API host's DI container and invoked directly from application services or message handlers.
-2. **Standalone** — a separate ASP.NET Core Minimal API microservice (`{Host}.Notification`) with its own endpoints, independently deployable.
+## Deployment Modes
 
-> Choose **integrated** when notification volume is low and the API host can handle the load. Choose **standalone** when notifications require independent scaling, isolation, or their own retry/queue infrastructure.
+1. **Integrated**: notification infrastructure registered in API host.
+2. **Standalone**: separate `{Host}.Notification` host for independent scale/retry/isolation.
 
-## When to Use
+Use integrated for low/moderate throughput; standalone for high volume or operational isolation.
 
-- The domain inputs specify `notifications: true` or list notification channels.
-- The solution needs to send emails, SMS, web push, or mobile push notifications.
-- Event-driven flows (e.g., scheduled call reminders, user onboarding) trigger messages.
+## Non-Negotiables
 
-## Project Structure
+1. Keep channel-specific logic in channel providers, not in unified service.
+2. Register providers conditionally from config presence.
+3. Use resilience policies for external provider calls.
+4. Keep credentials in Key Vault/user-secrets, never inline in appsettings.
+5. `Infrastructure.Notification` must not depend on Domain/Application implementation projects.
 
-### Infrastructure Library (always created)
+---
 
-```
-src/Infrastructure/
-└── {Project}.Infrastructure.Notification/
-    ├── Infrastructure.Notification.csproj
-    ├── ServiceCollectionExtensions.cs      # DI registration
-    ├── INotificationService.cs             # Unified interface
-    ├── NotificationService.cs              # Orchestrator
-    ├── NotificationServiceSettings.cs      # Settings POCO
-    ├── Configuration/
-    │   └── NotificationOptions.cs          # Strongly-typed config
-    ├── Model/
-    │   ├── EmailMessage.cs
-    │   ├── SmsMessage.cs
-    │   ├── WebPushMessage.cs
-    │   └── AppPushMessage.cs
-    ├── Providers/
-    │   ├── IProviders.cs                   # Per-channel interfaces
-    │   ├── Email/
-    │   │   └── SmtpEmailProvider.cs
-    │   ├── Sms/
-    │   │   └── TwilioSmsProvider.cs        # or Azure Communication Services
-    │   ├── WebPush/
-    │   │   └── WebPushProvider.cs
-    │   └── AppPush/
-    │       └── AppPushProvider.cs
-    ├── Exceptions/
-    │   └── NotificationException.cs
-    └── Utilities/
-        └── BatchThrottlingOptions.cs
-```
+## Structure
 
-### Standalone Host (optional — separate deployable)
+### Infrastructure library (always)
 
 ```
-src/{Host}/
-└── {Host}.Notification/
-    ├── {Host}.Notification.csproj
-    ├── Program.cs
-    ├── RegisterNotificationServices.cs
-    ├── appsettings.json
-    ├── appsettings.Development.json
-    ├── Dockerfile
-    ├── Properties/
-    │   └── launchSettings.json
-    ├── Contracts/
-    │   └── NotificationRequest.cs
-    ├── Endpoints/
-    │   └── NotificationEndpoints.cs
-    ├── Services/
-    │   └── INotificationAppService.cs
-    │   └── NotificationAppService.cs
-    ├── Infrastructure/
-    │   └── ExceptionHandlerMiddleware.cs
-    └── Telemetry/
-        └── NotificationMetrics.cs
+src/Infrastructure/{Project}.Infrastructure.Notification/
+├── ServiceCollectionExtensions.cs
+├── INotificationService.cs
+├── NotificationService.cs
+├── NotificationServiceSettings.cs
+├── Configuration/NotificationOptions.cs
+├── Model/
+├── Providers/
+└── Exceptions/
 ```
 
-## NuGet Packages
+### Standalone host (optional)
 
-> **Reference implementation:** See `sampleapp/src/Infrastructure/TaskFlow.Infrastructure.Notification/TaskFlow.Infrastructure.Notification.csproj`
+```
+src/{Host}/{Host}.Notification/
+├── Program.cs
+├── RegisterNotificationServices.cs
+├── Endpoints/
+├── Services/
+└── Telemetry/
+```
 
-Key packages: `MailKit`, `Lib.Net.Http.WebPush`, `Microsoft.Extensions.Http.Resilience`, `Polly`. Standalone host also references the notification infrastructure project and Bootstrapper.
+---
 
-## Provider Interfaces
+## Core Contracts
 
-> **Reference implementation:** See `sampleapp/src/Infrastructure/TaskFlow.Infrastructure.Notification/Providers/IProviders.cs`
+Per-channel provider interfaces:
 
-Each channel (email, SMS, web push, app push) has its own interface: `IEmailProvider`, `ISmsProvider`, `IWebPushProvider`, `IAppPushProvider`. All return `Task<bool>` for single sends and `Task<IReadOnlyList<bool>>` for batch sends.
+- `IEmailProvider`
+- `ISmsProvider`
+- `IWebPushProvider`
+- `IAppPushProvider`
 
-## Unified Notification Service
+Unified contract:
 
-> **Reference implementation:** See `sampleapp/src/Infrastructure/TaskFlow.Infrastructure.Notification/NotificationService.cs`
+- `INotificationService`
 
-`INotificationService` provides a unified interface for all channels. The implementation takes optional provider dependencies — if a provider is null (not configured), it logs a warning and returns false (graceful degradation). Each method wraps the provider call in try/catch for fault isolation.
+Unified service coordinates optional provider dependencies. Missing provider => graceful degradation (warn + false/no-op result).
 
-## DI Registration
+---
 
-> **Reference implementation:** See `sampleapp/src/Infrastructure/TaskFlow.Infrastructure.Notification/ServiceCollectionExtensions.cs`
+## DI Registration Pattern
 
-Providers are registered conditionally based on configuration sections. If `Notification:Email` exists, `IEmailProvider` is registered; similarly for SMS, WebPush, AppPush. The unified `INotificationService` is always registered. Resilience is added via `AddStandardResilienceHandler()` on the HTTP client.
+```csharp
+public static IServiceCollection AddNotificationInfrastructure(
+    this IServiceCollection services,
+    IConfiguration config)
+{
+    // Conditionally register channel providers if config sections exist
+    // Register unified service
+    services.AddSingleton<INotificationService, NotificationService>();
 
-        // Register unified service
-        services.AddSingleton<INotificationService, NotificationService>();
+    services.AddHttpClient("NotificationClient")
+        .AddStandardResilienceHandler();
 
-        // Add resilience (Polly retry + circuit breaker)
-        services.AddHttpClient("NotificationClient")
-            .AddStandardResilienceHandler();
-
-        return services;
-    }
+    return services;
 }
 ```
 
-## Integrated Mode — Bootstrapper Registration
+Integrated mode: call from Bootstrapper.
 
-Register notification services in the Bootstrapper chain. Then invoke `INotificationService` from application services or message handlers:
+Standalone mode: register in notification host and expose minimal API endpoints.
+
+---
+
+## Usage Pattern
+
+Typical event-handler usage:
 
 ```csharp
-// Condensed pattern — see sampleapp message handler for full example
 public class CallReminderHandler(INotificationService notificationService) : IMessageHandler<CallReminderEvent>
 {
     public async Task HandleAsync(CallReminderEvent message, CancellationToken ct)
@@ -125,62 +103,55 @@ public class CallReminderHandler(INotificationService notificationService) : IMe
         await notificationService.SendSmsAsync(new SmsMessage
         {
             To = message.PhoneNumber,
-            Body = $"Reminder: Your call is scheduled for {message.ScheduledTime:g}"
+            Body = $"Reminder: your call is scheduled for {message.ScheduledTime:g}"
         }, ct);
     }
 }
 ```
 
-## Standalone Mode — Program.cs
+---
 
-The standalone notification microservice follows the standard host pattern: Aspire service defaults → notification infrastructure DI → app-level service → OpenAPI → endpoint mapping. See the API skill (`api.md`) for the general Program.cs pattern.
+## Configuration Surface
 
-## Standalone Mode — Endpoints
+`Notification` section should include channel-specific provider settings and optional batch throttling.
 
-Notification endpoints map to `api/notifications` with POST routes per channel (`/email`, `/email/batch`, `/sms`) and a GET `/status` for provider health. Follow the same Minimal API patterns described in `api.md`.
+Representative keys:
 
-## Configuration
+- `Notification:Email:Provider`
+- `Notification:Email:Smtp:*`
+- `Notification:Sms:Provider`
+- `Notification:Sms:Twilio:*`
+- `Notification:BatchThrottling:MaxConcurrency`
+- `Notification:BatchThrottling:DelayBetweenBatchesMs`
 
-> **Reference implementation:** See `sampleapp/src/Infrastructure/TaskFlow.Infrastructure.Notification/NotificationServiceSettings.cs` and `Configuration/NotificationOptions.cs`
-
-The `Notification` config section defines per-channel settings:
-
-| Key | Purpose |
-|-----|---------|
-| `Notification:Email:Provider` | Provider type (e.g., `Smtp`, `AzureCommunication`) |
-| `Notification:Email:Smtp:Host/Port/UseSsl/FromAddress` | SMTP connection details |
-| `Notification:Sms:Provider` | Provider type (e.g., `Twilio`) |
-| `Notification:Sms:Twilio:AccountSid/AuthToken/FromNumber` | Twilio credentials (from Key Vault) |
-| `Notification:BatchThrottling:MaxConcurrency` | Max concurrent sends per batch |
-| `Notification:BatchThrottling:DelayBetweenBatchesMs` | Throttle delay between batches |
-
-## Aspire Integration (Standalone Mode)
-
-In standalone mode, declare the notification microservice in the Aspire AppHost as a separate project with HTTP endpoints and optional Redis reference for template caching.
+---
 
 ## Lite Mode
 
-When scaffolding in lite mode:
-- Skip the notification system entirely unless explicitly requested.
-- If requested in lite mode, use integrated mode with email-only provider.
-- Skip batch endpoints, SMS, web push, and app push providers.
-- Skip telemetry classes and resilience configuration.
+For `scaffoldMode: lite`:
 
-## Rules
+- skip notifications unless explicitly requested,
+- if requested, use integrated + email-only,
+- skip batch endpoints/telemetry/extra channels by default.
 
-1. **Provider pattern** — each channel (email, SMS, push) has its own `I{Channel}Provider` interface. Never put channel-specific logic in the unified `NotificationService`.
-2. **Resilience** — use `Microsoft.Extensions.Http.Resilience` (Polly) for retry and circuit-breaker on all external calls. Configure per-provider via `IOptions<T>`.
-3. **Batch throttling** — batch sends must respect `MaxConcurrency` to avoid provider rate limits. Use `SemaphoreSlim` or `Parallel.ForEachAsync` with throttling.
-4. **No domain dependency** — `Infrastructure.Notification` must NOT reference Domain or Application projects. It receives plain message DTOs only.
-5. **Integrated vs standalone** — the infrastructure library is identical in both modes. Only the host project differs. Never duplicate provider implementations.
-6. **Configuration-driven providers** — only register providers that have configuration present. Missing config section = provider not available (graceful degradation).
-7. **Secrets** — credentials (API keys, SMTP passwords) must come from Key Vault or user secrets, never from `appsettings.json` directly.
-8. **Placeholder tokens** — see [placeholder-tokens.md](../placeholder-tokens.md) for all token definitions.
+---
+
+## Operational Rules
+
+1. Keep provider registration configuration-driven.
+2. Add retry/circuit-breaker resilience for outbound provider clients.
+3. Respect throttling limits for batch sends (provider rate limits).
+4. Keep infrastructure library reusable across integrated and standalone modes.
+5. Avoid duplicate provider implementations across hosts.
+
+---
 
 ## Verification
 
-1. `dotnet build src/Infrastructure/{Project}.Infrastructure.Notification/` — confirm clean build
-2. If standalone: `dotnet build src/{Host}/{Host}.Notification/` — confirm host builds
-3. Verify `INotificationService` is registered in DI (integrated: Bootstrapper, standalone: Program.cs)
-4. Verify provider interfaces are registered only when configuration section exists
-5. Confirm no references to Domain.Model or Application.Services from the notification project
+- [ ] infrastructure notification project builds cleanly
+- [ ] standalone host (if enabled) builds and starts
+- [ ] `INotificationService` is registered in DI
+- [ ] channel providers register only when config exists
+- [ ] no Domain/Application implementation dependencies in infrastructure notification project
+- [ ] secrets are sourced from secure providers (not plain appsettings)
+- [ ] resilience policies are enabled for external notification calls

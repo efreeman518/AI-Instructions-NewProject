@@ -1,0 +1,94 @@
+{
+  "version": "1.1",
+  "generatedAt": "2026-02-24",
+  "tokenEstimationMethod": "ceil(characters/4)",
+  "scope": {
+    "include": ["*.md", "_manifest.json"],
+    "exclude": ["sampleapp/**", ".git/**"]
+  },
+  "totalEstimatedTokens": 79337,
+  "files": [
+    { "path": "SKILL.md", "phase": "always", "estimatedTokens": 1550 },
+    { "path": "placeholder-tokens.md", "phase": "always", "estimatedTokens": 1723 },
+    { "path": "ai-build-optimization.md", "phase": "always", "estimatedTokens": 1152 },
+    { "path": "quick-reference.md", "phase": "always", "estimatedTokens": 1447 },
+    { "path": "troubleshooting.md", "phase": "always", "estimatedTokens": 586 },
+
+    { "path": "domain-design-guide.md", "phase": "domain-discovery", "estimatedTokens": 1173 },
+
+    { "path": "domain-inputs.schema.md", "phase": "foundation", "estimatedTokens": 1525 },
+    { "path": "skills/solution-structure.md", "phase": "foundation", "estimatedTokens": 1341 },
+    { "path": "skills/domain-model.md", "phase": "foundation", "estimatedTokens": 1733 },
+    { "path": "skills/data-access.md", "phase": "foundation", "estimatedTokens": 1846 },
+    { "path": "skills/package-dependencies.md", "phase": "foundation", "estimatedTokens": 1639 },
+    { "path": "templates/entity-template.md", "phase": "foundation", "estimatedTokens": 814 },
+    { "path": "templates/ef-configuration-template.md", "phase": "foundation", "estimatedTokens": 1522 },
+    { "path": "templates/repository-template.md", "phase": "foundation", "estimatedTokens": 1739 },
+    { "path": "templates/domain-rules-template.md", "phase": "foundation", "estimatedTokens": 1871 },
+    { "path": "templates/appsettings-template.md", "phase": "foundation", "estimatedTokens": 1152 },
+
+    { "path": "skills/application-layer.md", "phase": "app-core", "estimatedTokens": 1516 },
+    { "path": "skills/bootstrapper.md", "phase": "app-core", "estimatedTokens": 1493 },
+    { "path": "skills/api.md", "phase": "app-core", "estimatedTokens": 998 },
+    { "path": "templates/dto-template.md", "phase": "app-core", "estimatedTokens": 611 },
+    { "path": "templates/mapper-template.md", "phase": "app-core", "estimatedTokens": 926 },
+    { "path": "templates/service-template.md", "phase": "app-core", "estimatedTokens": 1879 },
+    { "path": "templates/endpoint-template.md", "phase": "app-core", "estimatedTokens": 1412 },
+    { "path": "templates/message-handler-template.md", "phase": "app-core", "estimatedTokens": 1158 },
+
+    { "path": "skills/gateway.md", "phase": "edge", "estimatedTokens": 1265 },
+    { "path": "skills/multi-tenant.md", "phase": "edge", "estimatedTokens": 1238 },
+    { "path": "skills/caching.md", "phase": "edge", "estimatedTokens": 1311 },
+    { "path": "skills/aspire.md", "phase": "edge", "estimatedTokens": 1119 },
+    { "path": "skills/configuration.md", "phase": "edge", "estimatedTokens": 1141 },
+
+    { "path": "skills/background-services.md", "phase": "optional", "estimatedTokens": 1341 },
+    { "path": "skills/function-app.md", "phase": "optional", "estimatedTokens": 1549 },
+    { "path": "skills/uno-ui.md", "phase": "optional", "estimatedTokens": 1676 },
+    { "path": "skills/notifications.md", "phase": "optional", "estimatedTokens": 1077 },
+    { "path": "skills/cosmosdb-data.md", "phase": "optional", "estimatedTokens": 1981 },
+    { "path": "skills/table-storage.md", "phase": "optional", "estimatedTokens": 1271 },
+    { "path": "skills/blob-storage.md", "phase": "optional", "estimatedTokens": 1549 },
+    { "path": "skills/messaging.md", "phase": "optional", "estimatedTokens": 1269 },
+    { "path": "skills/keyvault.md", "phase": "optional", "estimatedTokens": 1526 },
+    { "path": "skills/grpc.md", "phase": "optional", "estimatedTokens": 1636 },
+    { "path": "skills/external-api.md", "phase": "optional", "estimatedTokens": 1481 },
+    { "path": "templates/mvux-model-template.md", "phase": "optional", "estimatedTokens": 1509 },
+    { "path": "templates/ui-model-template.md", "phase": "optional", "estimatedTokens": 670 },
+    { "path": "templates/ui-service-template.md", "phase": "optional", "estimatedTokens": 1042 },
+    { "path": "templates/xaml-page-template.md", "phase": "optional", "estimatedTokens": 2203 },
+    { "path": "templates/updater-template.md", "phase": "optional", "estimatedTokens": 1262 },
+
+    { "path": "skills/testing.md", "phase": "testing", "estimatedTokens": 1124 },
+    { "path": "templates/test-template-unit.md", "phase": "testing", "estimatedTokens": 801 },
+    { "path": "templates/test-template-integration.md", "phase": "testing", "estimatedTokens": 800 },
+    { "path": "templates/test-template-e2e.md", "phase": "testing", "estimatedTokens": 439 },
+    { "path": "templates/test-template-quality.md", "phase": "testing", "estimatedTokens": 557 },
+
+    { "path": "skills/identity-management.md", "phase": "delivery", "estimatedTokens": 1328 },
+    { "path": "skills/iac.md", "phase": "delivery", "estimatedTokens": 1476 },
+    { "path": "skills/cicd.md", "phase": "delivery", "estimatedTokens": 1536 },
+
+    { "path": "sampleapp-patterns.md", "phase": "on-demand", "estimatedTokens": 1530 },
+    { "path": "vertical-slice-checklist.md", "phase": "on-demand", "estimatedTokens": 1575 },
+    { "path": "UPDATE-INSTRUCTIONS.md", "phase": "on-demand", "estimatedTokens": 1055 },
+    { "path": "engineer-checklist.md", "phase": "on-demand", "estimatedTokens": 1616 },
+    { "path": "HANDOFF.md", "phase": "on-demand", "estimatedTokens": 870 },
+
+    { "path": "GET-STARTED-human.md", "phase": "human-only", "estimatedTokens": 1129 },
+    { "path": "_manifest.json", "phase": "metadata", "estimatedTokens": 1579 }
+  ],
+  "phases": {
+    "always": "Load in every scaffolding session",
+    "domain-discovery": "Use during modeling/discovery conversation",
+    "foundation": "Phase 1 scaffolding",
+    "app-core": "Phase 2 scaffolding",
+    "edge": "Phase 3 runtime/edge configuration",
+    "optional": "Load only if feature is enabled",
+    "testing": "Quality/test scaffolding phase",
+    "delivery": "Identity/IaC/CI-CD phase",
+    "on-demand": "Load only when specific task requires it",
+    "human-only": "Reference for humans, not default AI load",
+    "metadata": "Manifest metadata"
+  }
+}

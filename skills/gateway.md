@@ -1,14 +1,22 @@
 # Gateway (YARP)
 
-## Overview
+## Purpose
 
-The Gateway project is a **YARP reverse proxy** that sits in front of the API. It handles user-facing authentication (Entra External/B2C), CORS, token relay (acquires service-to-service tokens for downstream calls), and forwards original user claims to the API.
+Gateway is a YARP reverse proxy in front of API/backends. It handles user-facing auth, CORS, downstream token relay, and forwarding original user claims.
 
-> **UI-Framework Agnostic:** The Gateway is a pure reverse proxy — it serves any front-end client (SPA, mobile app, desktop app) that can issue HTTP requests with a Bearer token. The planned UI framework is **Uno Platform** (see [uno-ui.md](uno-ui.md)), but the Gateway requires zero changes to support a different front-end technology.
+## Non-Negotiables
 
-## Project Structure
+1. Keep proxy routes/clusters in configuration and load through YARP.
+2. Relay service-to-service bearer token per cluster via `TokenService`.
+3. Forward original user claims metadata (`X-Orig-Request`) for downstream context.
+4. Keep pipeline order deterministic (security -> routing/auth -> endpoints -> proxy).
+5. Normalize path prefixes consistently between UI, gateway transforms, and backend routes.
 
-> **Reference implementation:** See `sampleapp/src/TaskFlow/TaskFlow.Gateway/`
+Reference implementation: `sampleapp/src/TaskFlow/TaskFlow.Gateway/`.
+
+---
+
+## Project Shape
 
 ```
 {Gateway}.Gateway/
@@ -17,22 +25,15 @@ The Gateway project is a **YARP reverse proxy** that sits in front of the API. I
 ├── WebApplicationBuilderExtensions.cs
 ├── TokenService.cs
 ├── Auth/
-│   ├── GatewayClaimsTransformer.cs
-│   ├── GatewayClaimsPayload.cs
-│   ├── GatewayClaimsTransformSettings.cs
-│   └── TenantMatchHandler.cs
-├── ExceptionHandlers/
 ├── HealthChecks/
-│   └── AggregateGatewayHealthCheck.cs
 ├── StartupTasks/
-│   └── WarmupDependencies.cs
 ├── appsettings.json
 └── Dockerfile
 ```
 
-## YARP Configuration (appsettings.json)
+---
 
-> **Reference implementation:** See `sampleapp/src/TaskFlow/TaskFlow.Gateway/appsettings.json`
+## YARP Configuration
 
 ```json
 {
@@ -55,180 +56,127 @@ The Gateway project is a **YARP reverse proxy** that sits in front of the API. I
 }
 ```
 
-With Aspire service discovery, destination addresses are resolved automatically at runtime.
+With Aspire, destination resolution can be service-discovery driven.
 
-## YARP Registration with Token Relay
+---
 
-> **Reference implementation:** See `sampleapp/src/TaskFlow/TaskFlow.Gateway/RegisterServices.cs` and `sampleapp/src/TaskFlow/TaskFlow.Gateway/TokenService.cs`
+## Service Registration Pattern
 
 ```csharp
-// Compact pattern — see sampleapp for full implementation
 private static void AddReverseProxy(IServiceCollection services, IConfiguration config)
 {
     services.AddSingleton<TokenService>();
+
     services.AddReverseProxy()
         .LoadFromConfig(config.GetSection("ReverseProxy"))
         .AddTransforms(ConfigureProxyTransforms)
         .AddServiceDiscoveryDestinationResolver();
 }
+```
 
-// Token relay: acquire service token + forward original user claims
+Transform pattern:
+
+```csharp
 private static void ConfigureProxyTransforms(TransformBuilderContext context)
 {
     context.AddRequestTransform(async ctx =>
     {
-        AddOriginalUserClaimsHeader(ctx);  // X-Orig-Request header
+        AddOriginalUserClaimsHeader(ctx);
         var token = await tokenService.GetAccessTokenAsync(clusterId);
         ctx.ProxyRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
     });
 }
 ```
 
-## TokenService
+---
 
-Acquires client credential tokens for service-to-service auth:
+## TokenService Contract
 
-> **Reference implementation:** See `sampleapp/src/TaskFlow/TaskFlow.Gateway/TokenService.cs`
+`TokenService` acquires and caches client-credential tokens per cluster with an expiry buffer.
 
 ```csharp
-// Compact pattern — caches tokens with expiry buffer
 public async Task<string> GetAccessTokenAsync(string clusterId)
 {
     if (_cache.TryGetValue(clusterId, out var cached) && cached.Expiry > DateTimeOffset.UtcNow.AddMinutes(5))
         return cached.Token;
-    var credential = new ClientSecretCredential(tenantId, clientId, clientSecret);
+
     var tokenResult = await credential.GetTokenAsync(new TokenRequestContext([scope]));
     _cache[clusterId] = (tokenResult.Token, tokenResult.ExpiresOn);
     return tokenResult.Token;
 }
 ```
 
-## Authentication (User-Facing)
+---
 
-The Gateway authenticates users (e.g., via Entra External/B2C), while the downstream API uses service-to-service Entra ID tokens:
+## Authentication Model
 
-```
-User → [B2C/Entra External Token] → Gateway → [Client Credential Token + X-Orig-Request] → API
-```
+Typical split:
 
-> **Reference implementation:** See `sampleapp/src/TaskFlow/TaskFlow.Gateway/RegisterServices.cs` (auth registration), `sampleapp/src/TaskFlow/TaskFlow.Gateway/Auth/GatewayClaimsTransformer.cs` (claims transformation), and `sampleapp/src/TaskFlow/TaskFlow.Api/Auth/GatewayClaimsTransformer.cs` (API-side claims deserialization).
+- Gateway authenticates user token (for example Entra External/B2C).
+- Gateway acquires service token for downstream API.
+- API receives gateway service token + forwarded user claims payload.
 
 ```csharp
-// Compact pattern — see sampleapp for full implementation
 private static void AddAuthentication(IServiceCollection services, IConfiguration config)
 {
-    services.AddAuthentication(options => { options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme; })
-        .AddMicrosoftIdentityWebApi(config.GetSection("Gateway_EntraExt"));
+    services.AddAuthentication(options =>
+    {
+        options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddMicrosoftIdentityWebApi(config.GetSection("Gateway_EntraExt"));
+
     services.AddSingleton<IAuthorizationHandler, TenantMatchHandler>();
     services.AddTransient<IClaimsTransformation, GatewayClaimsTransformer>();
 }
 ```
 
-## Pipeline Configuration
+---
 
-> **Reference implementation:** See `sampleapp/src/TaskFlow/TaskFlow.Gateway/WebApplicationBuilderExtensions.cs`
+## Pipeline Order
 
 ```csharp
-// Compact pattern — pipeline order matters
 public static WebApplication ConfigurePipeline(this WebApplication app)
 {
-    ConfigureSecurity(app);           // HTTPS redirect
-    ConfigureCors(app);               // CORS policy
-    ConfigureMiddleware(app);         // Routing → RateLimiter → Auth
-    ConfigureEndpoints(app);          // Health, liveness
-    ConfigureReverseProxy(app);       // YARP proxy with error logging
+    ConfigureSecurity(app);
+    ConfigureCors(app);
+    ConfigureMiddleware(app);   // routing, limiter, auth
+    ConfigureEndpoints(app);    // health/liveness
+    ConfigureReverseProxy(app);
     return app;
 }
 ```
 
-## Health Checks
-
-Gateway aggregates health from downstream services:
-
-> **Reference implementation:** See `sampleapp/src/TaskFlow/TaskFlow.Gateway/HealthChecks/AggregateGatewayHealthCheck.cs`
-
-## Startup Tasks
-
-Pre-warm YARP cluster tokens and downstream dependencies before accepting traffic:
-
-> **Reference implementation:** See `sampleapp/src/TaskFlow/TaskFlow.Gateway/StartupTasks/WarmupDependencies.cs`
-
-## Gateway vs. API Auth Summary
-
-| Concern | Gateway | API |
-|---------|---------|-----|
-| Auth scheme | Entra External / B2C | Entra ID (client credentials) |
-| Token source | User browser | Gateway's TokenService |
-| User identity | In JWT claims | In X-Orig-Request header |
-| Tenant check | TenantMatchPolicy | TenantBoundaryValidator (service layer) |
-| CORS | Configured here | Not needed (internal) |
+Order matters; proxy should execute after auth/routing middleware is ready.
 
 ---
 
-## Path Prefix Normalization for UI Clients
+## Path Prefix Normalization Rule
 
-When the Gateway uses YARP with a `PathRemovePrefix` transform, the effective request path seen by the backend differs from what the UI client sends. This is a common source of routing bugs.
+When using `PathRemovePrefix`, ensure UI base path + gateway transform + backend route prefix are aligned.
 
-### How YARP PathRemovePrefix Works
+If gateway strips `/api`:
 
-Given this YARP configuration:
+- client `/api/v1/todoitems` -> backend `/v1/todoitems`
 
-```json
-{
-  "Routes": {
-    "api-route": {
-      "Match": { "Path": "api/{**catch-all}" },
-      "Transforms": [{ "PathRemovePrefix": "/api" }]
-    }
-  }
-}
-```
+Pick one convention and keep it consistent. Avoid dual-prefix probing logic in production.
 
-The Gateway strips `/api` from the incoming path before forwarding to the backend:
+---
 
-| Client sends | Gateway strips | Backend receives |
-|-------------|---------------|-----------------|
-| `/api/v1/todoitems` | `/api` | `/v1/todoitems` |
-| `/api/todoitems` | `/api` | `/todoitems` |
+## Health and Startup Tasks
 
-### The Double-Prefix Problem
-
-If the UI client **also** prepends `/api` in its base path configuration, and the backend endpoints are routed at `/api/v1/...`, the resulting request path becomes:
-
-```
-UI sends:      /api/api/v1/todoitems
-Gateway strips: /api
-Backend sees:   /api/v1/todoitems  ✅ (works, but the client path looks wrong)
-```
-
-If the UI only sends `/api/v1/todoitems`:
-
-```
-UI sends:      /api/v1/todoitems
-Gateway strips: /api
-Backend sees:   /v1/todoitems  ❌ (404 — backend expects /api/v1/...)
-```
-
-### Recommendation
-
-Define **one** configurable UI setting for the Gateway API base path (e.g., `GatewayApiBasePath`). Keep a single normalized path in config rather than probing multiple prefixes at runtime.
-
-- If the backend expects requests at `/api/v1/...` and the Gateway strips `/api`, the UI should send requests to `/api/api/v1/...` — or adjust the backend route prefix so stripping `/api` produces the correct downstream path.
-- The cleanest pattern: backend routes at `/v1/{entity}` (no `/api` prefix), Gateway matches `api/{**catch-all}` and strips `/api`, UI sends `/api/v1/{entity}`.
-- Document the chosen path convention in `appsettings.json` and avoid dual-prefix probing logic in production code.
+- Add aggregated downstream health checks.
+- Add startup warmup tasks for token acquisition/dependency checks before live traffic.
 
 ---
 
 ## Verification
 
-After generating the Gateway project, confirm:
-
-- [ ] `RegisterServices.cs` registers YARP, auth, CORS, and health checks
-- [ ] `WebApplicationBuilderExtensions.cs` pipeline order: HTTPS → Config → CORS → Routing → RateLimiter → Auth → Endpoints → ReverseProxy
-- [ ] `TokenService` acquires client-credential tokens and caches them with expiry buffer
-- [ ] `ConfigureProxyTransforms` adds `X-Orig-Request` header with user claims for downstream API
-- [ ] `appsettings.json` has routes/clusters for API and Scheduler (addresses resolved by Aspire service discovery at runtime)
-- [ ] `AggregateGatewayHealthCheck` checks downstream `/alive` endpoints
-- [ ] CORS origins configured for the UI project's local and deployed URLs
-- [ ] Auth section name matches Entra External (`Gateway_EntraExt`) or Entra ID (`Gateway_EntraID`) config
-- [ ] Cross-references: [aspire.md](aspire.md) `WaitFor(api)` on gateway, [iac.md](iac.md) Container App for gateway
+- [ ] YARP routes/clusters load from config
+- [ ] transform adds original-user header + downstream bearer token
+- [ ] `TokenService` caches cluster tokens with expiry buffer
+- [ ] gateway auth section matches intended identity provider config
+- [ ] pipeline order is security -> middleware -> endpoints -> reverse proxy
+- [ ] CORS origins match UI local/deployed origins
+- [ ] path-prefix convention is documented and consistent across UI/gateway/API
+- [ ] health checks and startup warmup are registered
+- [ ] cross-check with [aspire.md](aspire.md) and [iac.md](iac.md)
