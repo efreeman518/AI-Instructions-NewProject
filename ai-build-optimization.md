@@ -27,7 +27,7 @@ When domain inputs are absent or ambiguous before scaffolding:
 
 ## Session Bootstrap
 
-For a new AI session, load [AI-START.md](AI-START.md) first, then load only the phase files required for the active step.
+For a new AI session, load [START-AI.md](START-AI.md) first, then load only the phase files required for the active step.
 
 ## Strict On-Demand Files
 
@@ -47,6 +47,7 @@ Help me model this business domain.
 Define entities, relationships, lifecycle states, business rules, events, and workflows.
 Use business language — no databases, no datatypes, no implementation.
 Ask clarifying questions, summarize each iteration, then produce domain-definition YAML.
+Write the artifact to `.instructions/domain-definition.yaml` unless another path is explicitly agreed.
 ```
 
 ### Resource definition (Phase 2)
@@ -58,6 +59,7 @@ Review the domain definition and help me choose:
 - Messaging infrastructure
 - Hosting model
 Map domain constructs to Aspire/Azure resources.
+Write the artifact to `.instructions/resource-implementation.yaml` unless another path is explicitly agreed.
 ```
 
 ### Implementation plan (Phase 3)
@@ -106,6 +108,16 @@ Build and run targeted tests.
 Report generated files + follow-ups.
 ```
 
+### Composite vertical slice
+
+```text
+Add a composite slice for <Feature> spanning entities <A, B, C>.
+Use vertical-slice-checklist in composite mode.
+Generate all required artifacts across participating entities,
+including cross-entity domain rules, handlers, and wiring.
+Run build + profile-required tests and report consistency checks.
+```
+
 ## Validation Cadence
 
 - Foundation/App Core: `dotnet build`
@@ -113,10 +125,18 @@ Report generated files + follow-ups.
 - Pre-merge baseline: full test run
 - IaC validation: run commands from [engineer-checklist.md](engineer-checklist.md)
 
+## Mixed-Store Slice Gate
+
+For any slice spanning SQL + Cosmos/Table/Blob + messaging, require:
+
+- explicit consistency boundary (authoritative store + projection store)
+- reconciliation handler/job with replay-safe correction logic
+- drift detection check in post-generation verification
+
 ## Phase Loading Manifest
 
 ### Session bootstrap
-- [AI-START.md](AI-START.md)
+- [START-AI.md](START-AI.md)
 
 ### Phase 4 base set
 - [SKILL.md](SKILL.md)

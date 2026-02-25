@@ -183,6 +183,7 @@ Apply `TickerQ_Deployment.sql` before scheduler rollout; this schema is not a st
 - Keep SQL Entra-only (`azureADOnlyAuthentication: true`).
 - Put secrets in Key Vault / secret refs, not plain Bicep values.
 - Prefer private endpoints in production.
+- Map compliance requirements (classification, retention, audit) to deployable controls (diagnostic settings, retention policies, encryption settings, access restrictions).
 
 ---
 

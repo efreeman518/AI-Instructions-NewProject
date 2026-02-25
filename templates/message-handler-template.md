@@ -142,6 +142,27 @@ public class RescheduleCallRequestHandler(
 }
 ```
 
+### Callback Validation Handler (for webhook-originated events)
+
+```csharp
+public class ProviderWebhookReceivedHandler(
+    ILogger<ProviderWebhookReceivedHandler> logger,
+    IWebhookValidator webhookValidator,
+    IEventDeduplicator deduplicator) : IMessageHandler<ProviderWebhookReceived>
+{
+    public async Task HandleAsync(ProviderWebhookReceived message, CancellationToken ct = default)
+    {
+        if (!webhookValidator.IsValid(message.Signature, message.Timestamp, message.RawPayload))
+            return;
+
+        if (!await deduplicator.TryBeginAsync(message.ProviderEventId, ct))
+            return;
+
+        // apply side effects only after validation + dedup
+    }
+}
+```
+
 ---
 
 ## Notes
@@ -151,3 +172,4 @@ public class RescheduleCallRequestHandler(
 - Handlers run **in-process** via `IInternalMessageBus`. For cross-service messaging, use Azure Service Bus (see [function-app.md](../skills/function-app.md) for Service Bus triggers).
 - Keep handlers **idempotent** — the same event may be delivered more than once in retry scenarios.
 - Use `CancellationToken` and honor cancellation in all async operations.
+- If workflow compensation metadata exists, keep rollback handlers explicit and ordered according to workflow policy.

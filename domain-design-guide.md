@@ -75,6 +75,17 @@ Express rules in business language. Implementation conditions are Phase 3/4.
 - **Domain rules** — cross-entity or require external dependencies
 - **Transition guards** — rules that gate state transitions
 
+### Policy Matrix Rules
+
+Use a policy matrix when decisions depend on multiple dimensions (for example actor role + entity status).
+
+```yaml
+policyMatrices:
+  - name: CancellationPolicy
+    dimensions: [RequestedByRole, CurrentStatus]
+    outputs: [Allowed, FeePolicy, RefundPolicy]
+```
+
 ---
 
 ## Workflow Design
@@ -104,8 +115,20 @@ workflows:
       - "Notify assigned member"
       - "Escalate to lead after threshold"
     compensationRequired: false
+    compensation:
+      rollbackOrder: reverse-step-order
+      rules:
+        - { onFailureOfStep: "Notify assigned member", compensationAction: "Cancel queued notification" }
     notes: "Thresholds configurable per tenant"
 ```
+
+### Event-Time Semantics (for ingest workflows)
+
+For event-driven or telemetry-heavy domains, define:
+
+- ordering expectations (global, per-entity, per-partition)
+- allowed lateness/window
+- out-of-order reconciliation behavior
 
 ### What scaffolding produces from workflows
 
@@ -113,6 +136,14 @@ workflows:
 - Optional compensation stubs
 - DI registration
 - No API endpoints by default
+
+### Content Composition / Publishing Guidance
+
+For playlist-driven pages:
+
+- model ordered blocks with explicit `Position`
+- use discriminator-style block typing (text/image/video)
+- define publish lifecycle (draft snapshot, published snapshot, rollback target)
 
 ---
 

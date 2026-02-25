@@ -4,6 +4,10 @@ Maps domain constructs from [domain-definition-schema.md](domain-definition-sche
 
 **Prerequisite:** Complete Phase 1 domain definition first.
 
+## Output Contract
+
+Write Phase 2 output to `.instructions/resource-implementation.yaml` by default. If another path is used, state it explicitly in handoff notes.
+
 ## Canonical Defaults (Single Source of Truth)
 
 All defaults used across this instruction set must reference this section. If another file disagrees, this section wins.
@@ -36,6 +40,26 @@ unoProfile: starter             # starter | full
 customNugetFeeds: []
 ```
 
+## Policy Inputs (Optional)
+
+```yaml
+moneyCalculationPolicy:
+  roundingMode: MidpointRounding.ToEven
+  currencyScaleMap:
+    USD: 2
+  operationOrder: [proration, discount, tax]
+
+timeBoundaryPolicy:
+  canonicalTimeZone: UTC
+  periodBoundaryMode: [start-inclusive, end-exclusive]
+  daylightSavingHandling: normalize-to-utc
+
+entitlementPolicy:
+  sourcePriority: [Tier, Purchase, Promo]
+  conflictResolution: highest-priority-wins
+  revokeBehavior: source-scoped-revocation
+```
+
 ### Profile Inputs
 
 | Input | Default | Values | Applies when |
@@ -49,11 +73,16 @@ customNugetFeeds: []
 
 Assign each entity a data store and define implementation-level property details.
 
+For `ReasonCode`-style fields, prefer enum for stable fixed sets and catalog entities for evolving/localized sets.
+
 ```yaml
 entities:
   - name: TodoItem
     dataStore: sql                          # sql | cosmosdb | table | blob
     partitionKeyProperty: TenantId          # cosmosdb/table only
+    throughputProfile: standard             # optional (e.g., low|standard|high|burst)
+    retentionPolicy: keep-forever           # optional (e.g., 30d|180d|archive-after-30d)
+    replayWindow: "PT24H"                  # optional for event-driven entities
     properties:
       - { name: Title, type: string, maxLength: 200, required: true }
       - { name: Description, type: string, maxLength: 2000, required: false }
@@ -69,6 +98,21 @@ entities:
       - name: Schedule
         properties:
           - { name: StartDate, type: DateTimeOffset? }
+```
+
+### Compliance Metadata (Optional)
+
+```yaml
+compliance:
+  defaultClassification: Internal
+  entities:
+    - name: PatientProfile
+      dataClassification: PHI
+      retention: "P7Y"
+      encryptionRequired: true
+      auditRequired: true
+      properties:
+        - { name: DateOfBirth, dataClassification: PII }
 ```
 
 ### Data Store Selection
@@ -148,6 +192,8 @@ messagingProviders:
   - { name: ServiceBus, type: AzureServiceBus }
 messagingChannels:
   - { name: DomainEvents, provider: ServiceBus, pattern: topic }
+messagingSemantics:
+  - { channel: DomainEvents, deliveryMode: at-least-once, outboxEnabled: true, idempotencyKey: MessageId, deduplicationWindow: "PT1H" }
 ```
 
 Options: Azure Service Bus, Event Grid, Event Hubs. See [skills/messaging.md](skills/messaging.md).
@@ -219,3 +265,20 @@ Options: Azure Service Bus, Event Grid, Event Hubs. See [skills/messaging.md](sk
 - `scheduledJobs` — background job definitions
 - `functionDefinitions` — Azure Function triggers/definitions
 - `seedData` — initial data seeding
+
+### High-Ingest Operational Controls (Optional)
+
+- `throughputProfile` — expected RU/TU profile and autoscale behavior per entity/channel
+- `retentionPolicy` — TTL/archival expectations for time-series or audit data
+- `replayWindow` — expected replay/backfill window for event-driven processing
+
+### Ingestion Semantics (Optional)
+
+```yaml
+ingestionSemantics:
+  eventTimePolicy: event-time
+  orderingExpectation: per-partition-ordered
+  allowedLateness: "PT10M"
+  watermarkStrategy: fixed-lag
+  outOfOrderHandling: reconcile-window
+```

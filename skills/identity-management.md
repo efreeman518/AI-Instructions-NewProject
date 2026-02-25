@@ -149,6 +149,7 @@ Rule: secrets come from Key Vault/User Secrets only.
 3. Register identity services as `Scoped`.
 4. Use `Microsoft.Graph` v5+ with `GraphServiceClient`.
 5. In lite mode, skip identity infrastructure and use a local/mock request context.
+6. For regulated/sensitive classifications, enforce least-privilege roles and trace access decisions with auditable correlation IDs.
 
 ## Verification
 

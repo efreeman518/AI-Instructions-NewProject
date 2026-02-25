@@ -106,6 +106,8 @@ public class ReminderJobs(...) : BaseTickerQJob(...)
 - Optional dashboard (secure credentials only).
 - Optional Redis coordination for multi-node deployments.
 
+If workflows are time-policy sensitive (billing windows, scheduled publish, SLA windows), bind a shared time-boundary policy and avoid hard-coded timezone math inside handlers.
+
 Key settings:
 
 | Section | Keys |
@@ -130,6 +132,8 @@ Key settings:
 - Cron jobs: use `ICronTickerManager<T>.AddOrUpdateCronTickerAsync(...)` and `RemoveCronTickerAsync(...)`.
 
 TickerQ cron format is six fields: seconds, minutes, hours, day-of-month, month, day-of-week.
+
+For ingestion/event-time workflows, define and apply allowed-lateness/watermark behavior before triggering reconciliation jobs.
 
 ---
 

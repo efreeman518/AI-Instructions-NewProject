@@ -15,7 +15,7 @@
   "totalEstimatedTokens": 79058,
   "files": [
     {
-      "path": "AI-START.md",
+      "path": "START-AI.md",
       "phase": "session-bootstrap",
       "estimatedTokens": 220
     },
@@ -320,7 +320,7 @@
       "estimatedTokens": 182
     },
     {
-      "path": "GET-STARTED-human.md",
+      "path": "START-HUMAN.md",
       "phase": "human-only",
       "estimatedTokens": 1129
     },

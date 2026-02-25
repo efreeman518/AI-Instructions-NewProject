@@ -65,6 +65,14 @@ public class {Entity}Configuration() : EntityBaseConfiguration<{Entity}>(false) 
 }
 ```
 
+## Compensation and Reason-Code Persistence (Optional)
+
+When workflows include compensations:
+
+- map compensation metadata as owned value objects where possible
+- persist machine-readable `ReasonCode` fields (use compact string/varchar or enum converters)
+- index `ReasonCode` on high-volume tables used by reconciliation and reporting
+
 ## File: Infrastructure/Data/Configuration/{ChildEntity}Configuration.cs
 
 ```csharp

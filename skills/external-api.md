@@ -180,6 +180,15 @@ services.Add{ServiceName}(config);
 - Integration tests replace Refit registration with mock service client.
 - Validate mapping, retries/fallback behavior, and sanitized error handling.
 
+### Webhook / Callback Contract (if provider pushes events)
+
+When an external provider posts callbacks into your system:
+
+- validate signature header(s) and timestamp tolerance
+- reject and audit invalid or replayed payloads
+- deduplicate by provider event ID before state transitions
+- publish internal events only after validation and dedup succeed
+
 ---
 
 ## Verification

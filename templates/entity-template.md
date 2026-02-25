@@ -97,3 +97,11 @@ public enum {Entity}Flags
     // Add domain-specific flags
 }
 ```
+
+## Polymorphic Ordered Block Note (Optional)
+
+For playlist-driven content entities, model ordered blocks with:
+
+- explicit `Position`
+- block discriminator/type
+- payload invariants enforced in `Valid()`/domain rules (for example text block requires text, image block requires image URL)

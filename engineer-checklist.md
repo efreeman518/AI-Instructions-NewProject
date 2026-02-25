@@ -39,7 +39,7 @@ Use this file as the **single execution path** for compile/run verification whil
 
 Configure these in your AI client (VS Code `settings.json` or Claude Desktop config) so the AI can look up current docs and interact with tools during scaffolding.
 
-- [ ] MCP servers configured per [GET-STARTED-human.md](GET-STARTED-human.md) (Essential + phase-relevant)
+- [ ] MCP servers configured per [START-HUMAN.md](START-HUMAN.md) (Essential + phase-relevant)
 
 ---
 

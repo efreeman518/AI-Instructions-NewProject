@@ -249,3 +249,4 @@ public async Task<Result> DeactivateAsync(Guid id, CancellationToken ct = defaul
 - Rules that require external data (e.g., uniqueness checks) belong in the **Application.Services** layer, not in domain rules.
 - Keep generated rule files in `src/Domain/{Project}.Domain.Rules/` for consistency with solution structure.
 - For simple validations (e.g., required fields, string length), use the inline `Valid()` method in the entity. Reserve the specification pattern for compound or cross-entity business rules.
+- For actor/state-dependent decisions, model policy matrices as explicit rule families (one rule per matrix row/group) instead of embedding large conditional blocks in services.

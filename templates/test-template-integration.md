@@ -66,6 +66,14 @@ public class {Entity}EndpointsTests : EndpointTestBase
 }
 ```
 
+## Contention/Concurrency Scenario (Optional)
+
+For inventory/reservation/financial flows, add an integration test that runs parallel operations against the same aggregate and asserts:
+
+- optimistic concurrency behavior is enforced
+- no duplicate side effects (`no-oversell`, `no-double-reserve`, `no-double-charge`)
+- retries/merge behavior is deterministic
+
 ## Test.Support Infrastructure
 
 ### File: `Test/Test.Support/UnitTestBase.cs`

@@ -194,6 +194,24 @@ Keep a `coverlet.runsettings` for stable include/exclude behavior across CI.
 | Team default | `balanced` |
 | Release hardening | `comprehensive` |
 
+## Slice Gate by Profile
+
+Use these minimum test gates for a completed vertical slice:
+
+- `minimal`: Unit + Endpoint
+- `balanced`: Unit + Endpoint + Integration + Architecture
+- `comprehensive`: Balanced + E2E/load/benchmark (when scenario is enabled)
+
+If a slice spans multiple entities or stores, run at least one integration path that exercises the full composite flow.
+
+## Contention / Concurrency Scenarios
+
+For high-contention domains (inventory, reservations, metering, financial posting):
+
+- add parallel-operation tests for critical commands
+- assert optimistic concurrency behavior and retry/merge outcome
+- verify no duplicate side effects (`no-oversell`, `no-double-reserve`, `no-double-charge` patterns)
+
 ## Verification
 
 - [ ] Unit tests run cleanly

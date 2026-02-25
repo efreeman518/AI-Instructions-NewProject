@@ -1,4 +1,4 @@
-# Get Started (Human Guide)
+# START-HUMAN
 
 Use this guide to run the instruction set with an AI coding assistant in VS Code.
 
@@ -55,7 +55,7 @@ Expected shape:
 ```text
 <YourApp>/
   .instructions/
-    AI-START.md
+    START-AI.md
     SKILL.md
     domain-definition-schema.md
     resource-implementation-schema.md
@@ -82,7 +82,7 @@ Add optional hosts after core backend slices stabilize.
 1. **Phase 1 — Domain Discovery:** model entities, relationships, events, workflows in business language → [domain-definition-schema.md](domain-definition-schema.md)
 2. **Phase 2 — Resource Definition:** map domain to Aspire/Azure resources, datatypes, messaging, hosting → [resource-implementation-schema.md](resource-implementation-schema.md)
 3. **Phase 3 — Implementation Plan:** ordered steps, resolve open questions → `implementation-plan.md` in project root
-4. **Phase 4 — Implementation:** start AI session with [AI-START.md](AI-START.md), then execute sub-phases (4a-4e) → [SKILL.md](SKILL.md) + [ai-build-optimization.md](ai-build-optimization.md)
+4. **Phase 4 — Implementation:** start AI session with [START-AI.md](START-AI.md), then execute sub-phases (4a-4e) → [SKILL.md](SKILL.md) + [ai-build-optimization.md](ai-build-optimization.md)
 5. During Phase 4, create/update `HANDOFF.md` at session boundaries when context is high
 
 ## Phase 1 — Domain Discovery Prompt
@@ -92,6 +92,7 @@ Help me model this business domain.
 Define entities, relationships, lifecycle states, business rules, events, and workflows.
 Use business language — no databases, no datatypes, no implementation.
 Ask clarifying questions, summarize each iteration, then produce domain-definition YAML.
+Write output to `.instructions/domain-definition.yaml` (or explicitly state a different agreed path).
 ```
 
 ## Phase 2 — Resource Definition Prompt
@@ -104,6 +105,7 @@ Review the domain definition and help me choose:
 - Hosting model (Container Apps, App Service)
 - UI hosting if applicable
 Map domain constructs to Aspire resources and Azure services.
+Write output to `.instructions/resource-implementation.yaml` (or explicitly state a different agreed path).
 ```
 
 ## Scaffolding Prompt Starter
@@ -122,7 +124,7 @@ See **Validation Cadence** in [ai-build-optimization.md](ai-build-optimization.m
 
 ## Core References
 
-- [AI-START.md](AI-START.md) *(AI session bootstrap; load first)*
+- [START-AI.md](START-AI.md) *(AI session bootstrap; load first)*
 - [SKILL.md](SKILL.md)
 - [domain-definition-schema.md](domain-definition-schema.md) *(Phase 1 output)*
 - [resource-implementation-schema.md](resource-implementation-schema.md) *(Phase 2 output)*
@@ -133,7 +135,7 @@ See **Validation Cadence** in [ai-build-optimization.md](ai-build-optimization.m
 - [engineer-checklist.md](engineer-checklist.md)
 - [troubleshooting.md](troubleshooting.md) *(on-demand when failures occur)*
 
-For default phase flow, start with [AI-START.md](AI-START.md) only, then load phase files incrementally.
+For default phase flow, start with [START-AI.md](START-AI.md) only, then load phase files incrementally.
 
 ## Important Guardrails
 

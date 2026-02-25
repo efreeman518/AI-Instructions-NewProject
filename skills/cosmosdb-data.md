@@ -20,6 +20,7 @@ Use Cosmos DB for document-first aggregates (nested JSON, high-throughput partit
 3. Data access goes through `ICosmosDbRepository` abstraction.
 4. DI wiring is centralized in Bootstrapper.
 5. No EF entity configuration classes and no migrations for Cosmos entities.
+6. For high-ingest entities, define throughput profile, TTL/retention, and replay window before implementation.
 
 ---
 
@@ -77,6 +78,12 @@ public class ChecklistItem
 - Category/group keys for high-volume grouped queries.
 - Composite keys (`$"{TenantId}:{Region}"`) only when both dimensions are common filters.
 - Avoid random keys that force cross-partition queries for normal reads.
+
+### Operational Controls
+
+- Throughput: document expected RU profile (`standard|high|burst`) and autoscale strategy.
+- Lifecycle: define TTL/retention/archival expectations per container or entity family.
+- Replay: define backfill/replay window and consistency expectations for out-of-order events.
 
 ---
 

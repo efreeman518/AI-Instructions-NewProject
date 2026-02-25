@@ -123,6 +123,18 @@ Flow pattern:
 - Update: validate -> load -> boundary -> apply updater -> persist.
 - Delete: load (optional) -> boundary -> delete/return success.
 
+## Policy-Driven Orchestration
+
+For policy-sensitive domains, keep logic centralized behind explicit policy services:
+
+- `IMoneyCalculationPolicy` for rounding/currency-scale/proration order
+- `ITimeBoundaryPolicy` for period boundaries/timezone handling
+- `IEntitlementResolutionPolicy` for tier vs purchase grant precedence
+- reason-code resolver (enum or catalog-backed)
+- UGC lifecycle policy (moderation/visibility/soft-delete transitions)
+
+Do not scatter these rules across endpoints/handlers.
+
 ---
 
 ## Validation Helpers

@@ -20,6 +20,7 @@ Use Table Storage for low-cost, high-volume key-value access where queries are p
 3. `RowKey` is unique within partition and supports required ordering.
 4. Access data through repository abstractions (`ITableRepository` wrappers).
 5. Use named `TableServiceClient` registration via `IAzureClientFactory`.
+6. For timeline/audit streams, define retention, archival, and replay expectations explicitly.
 
 ---
 
@@ -143,6 +144,8 @@ private static void AddTableStorageServices(IServiceCollection services, IConfig
 - **Audit/event log:** append records with inverse-tick `RowKey`.
 - **Lookup/config store:** `PartitionKey=category`, `RowKey=setting-key`.
 - **Large scans:** prefer continuation-token pagination or streaming APIs.
+
+If table entities participate in mixed-store workflows, include reconciliation checks against the authoritative source.
 
 Avoid relationship-heavy data models; denormalize where necessary.
 

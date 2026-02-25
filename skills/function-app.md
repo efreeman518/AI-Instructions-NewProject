@@ -100,6 +100,15 @@ public class FunctionTimerTrigger(ILogger<FunctionTimerTrigger> logger)
 }
 ```
 
+### Callback/Webhook Security (HTTP triggers)
+
+For provider callbacks, require all of:
+
+- signature verification before processing
+- replay window/timestamp validation
+- dedup check before side effects
+- auditable rejection path for invalid requests
+
 ### Trigger Matrix
 
 | Trigger | Binding Pattern | Notes |
@@ -189,6 +198,7 @@ For `scaffoldMode: lite`:
 7. Do not expose business handlers as `Anonymous`.
 8. If trigger dependencies are not ready, disable registration cleanly rather than shipping broken bindings.
 9. Token placeholders remain defined by [placeholder-tokens.md](../placeholder-tokens.md).
+10. For event-driven ingestion, align ordering/lateness behavior with `ingestionSemantics` from resource mapping.
 
 ---
 

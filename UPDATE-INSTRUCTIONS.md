@@ -62,4 +62,4 @@ Your job is to read the findings below and apply approved changes to the instruc
 - **Discovered during:** {phase name — e.g., "Phase 4 MCP discovery before Uno UI scaffolding"}
 -->
 
-*No findings yet. The scaffolding agent will append entries here as it encounters gaps or improvements during implementation.*
+<!-- No pending findings. -->

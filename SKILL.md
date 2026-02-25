@@ -21,7 +21,7 @@ Use for:
 - Use central package management (`Directory.Packages.props`).
 - After adding packages, update to latest stable and verify restore/build.
 - Record instruction gaps in [UPDATE-INSTRUCTIONS.md](UPDATE-INSTRUCTIONS.md) (do not hot-edit baseline instructions mid-scaffold).
-- Prefer latest stable .NET SDK and package releases. MCP server setup: see [GET-STARTED-human.md](GET-STARTED-human.md).
+- Prefer latest stable .NET SDK and package releases. MCP server setup: see [START-HUMAN.md](START-HUMAN.md).
 - All mode/profile/flag defaults come from [resource-implementation-schema.md](resource-implementation-schema.md) (**Canonical Defaults**).
 
 ## Context Budget Rules (Mandatory)
@@ -40,7 +40,7 @@ Use for:
 ## Session Start (Every AI Turn)
 
 Before any scaffolding work in a new AI session:
-1. Load [AI-START.md](AI-START.md) only.
+1. Load [START-AI.md](START-AI.md) only.
 2. Check target project root for an existing `HANDOFF.md` — if found: read **Current Phase** to determine where to resume; read **Next Load Set** for files to load; read **Blockers** to decide whether to continue or route to engineer first
 3. Determine current phase:
    - Phases 1-3 (discovery/resources/planning): load corresponding schema files

@@ -10,13 +10,13 @@ Pragmatic instruction set for AI-assisted scaffolding of C#/.NET business apps a
 
 ## Start Here
 
-1. Human setup and prerequisites: [GET-STARTED-human.md](GET-STARTED-human.md)
-2. AI session bootstrap (minimal load): [AI-START.md](AI-START.md)
+1. Human setup and prerequisites: [START-HUMAN.md](START-HUMAN.md)
+2. AI session bootstrap (minimal load): [START-AI.md](START-AI.md)
 3. Full implementation skill map: [SKILL.md](SKILL.md)
 
 ## Happy Path (6 Steps)
 
-1. Complete prerequisites and repository setup from [GET-STARTED-human.md](GET-STARTED-human.md)
+1. Complete prerequisites and repository setup from [START-HUMAN.md](START-HUMAN.md)
 2. Run Phase 1 and produce domain YAML via [domain-definition-schema.md](domain-definition-schema.md)
 3. Run Phase 2 and produce resource YAML via [resource-implementation-schema.md](resource-implementation-schema.md)
 4. Build Phase 3 plan via [implementation-plan.md](implementation-plan.md)
@@ -34,6 +34,6 @@ Default values and profiles are canonical in [resource-implementation-schema.md]
 
 ## Context Discipline
 
-- Start new AI sessions with [AI-START.md](AI-START.md) only
+- Start new AI sessions with [START-AI.md](START-AI.md) only
 - Keep [quick-reference.md](quick-reference.md) and [sampleapp-patterns.md](sampleapp-patterns.md) strictly on-demand
 - Treat `sampleapp/` as read-only reference

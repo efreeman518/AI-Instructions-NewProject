@@ -28,6 +28,17 @@ Implement messaging as provider-specific adapters with shared conventions:
 - correlation IDs + metadata propagation
 - scoped DI in background handlers
 
+### Delivery Semantics Contract
+
+For each channel/event family, define and implement:
+
+- delivery mode assumption (`at-least-once` by default)
+- idempotency key source (`MessageId`, business key, or composite)
+- outbox requirement for transactional producers
+- deduplication window and duplicate-handling behavior
+
+Keep these aligned with `messagingSemantics` in [resource-implementation-schema.md](../resource-implementation-schema.md).
+
 ### Service Bus (queue/topic workflows)
 
 ```csharp
@@ -102,6 +113,12 @@ public interface IEventHubProcessor
 }
 ```
 
+High-ingest guidance:
+
+- document expected throughput profile (`standard|high|burst`)
+- choose partitioning based on dominant ordering/read patterns
+- define replay window and checkpoint cadence before production rollout
+
 ```csharp
 services.AddAzureClients(builder =>
 {
@@ -139,6 +156,8 @@ builder.AddProject<Projects.{Project}_Api>("{project}-api")
 5. Event Hub processors checkpoint regularly (not every event unless required).
 6. Configure retries + dead-letter handling for Service Bus consumers.
 7. Keep message contracts versioned and backward-compatible.
+8. For webhook/callback-originated events, verify signature/timestamp and deduplicate before publishing domain events.
+9. For support/dispute-critical workflows, maintain an immutable timeline projection (append-only event log + query read model).
 
 ## Verification
 
@@ -147,3 +166,6 @@ builder.AddProject<Projects.{Project}_Api>("{project}-api")
 - [ ] Background processors are registered and startable
 - [ ] Batch sending handles message-size constraints
 - [ ] Aspire references match connection names used by services
+- [ ] Delivery semantics (idempotency/outbox/dedup window) are explicitly configured per channel
+- [ ] Mixed-store slices include a reconciliation path (drift detection + replay-safe correction)
+- [ ] Timeline projection exists for workflows requiring support/dispute traceability

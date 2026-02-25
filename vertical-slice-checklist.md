@@ -4,6 +4,13 @@ Use this checklist after generating a new entity slice to ensure no required fil
 
 Placeholder tokens: [placeholder-tokens.md](placeholder-tokens.md).
 
+## Slice Modes
+
+- **Single-entity slice**: one primary entity with local relationships.
+- **Composite slice**: one feature spanning multiple coupled entities/stores.
+
+Use composite mode when business behavior cannot be completed safely as one isolated entity (for example order + reservation + refund, entitlement + purchase + content visibility).
+
 ---
 
 ## Backend Slice (Required)
@@ -14,6 +21,8 @@ For entity `{Entity}`:
 |---|---|---|---|
 | Domain | `src/Domain/{Project}.Domain.Model/Entities/{Entity}.cs` | [entity-template.md](templates/entity-template.md) | yes |
 | Domain (optional) | `src/Domain/{Project}.Domain.Model/Enums/{Entity}Status.cs` | — | if flags/status enum used |
+| Domain (optional) | `src/Domain/{Project}.Domain.Rules/{Entity}Rules.cs` | [domain-rules-template.md](templates/domain-rules-template.md) | if rules/state machine/policy matrix used |
+| Domain (optional) | `src/Domain/{Project}.Domain.Rules/{Entity}*TransitionRule.cs` | [domain-rules-template.md](templates/domain-rules-template.md) | if state transitions are constrained |
 | Data | `src/Infrastructure/{Project}.Infrastructure.Data/EntityConfigurations/{Entity}Configuration.cs` | [ef-configuration-template.md](templates/ef-configuration-template.md) | yes |
 | Data | `src/Infrastructure/{Project}.Infrastructure.Repositories/{Entity}RepositoryTrxn.cs` | [repository-template.md](templates/repository-template.md) | yes |
 | Data | `src/Infrastructure/{Project}.Infrastructure.Repositories/{Entity}RepositoryQuery.cs` | [repository-template.md](templates/repository-template.md) | yes |
@@ -58,6 +67,14 @@ dotnet ef migrations add Add{Entity} --project src/Infrastructure/{Project}.Infr
 | `src/Test/Test.Unit/Mappers/{Entity}MapperTests.cs` | [test-template-unit.md](templates/test-template-unit.md) |
 | `src/Test/Test.Integration/Endpoints/{Entity}EndpointsTests.cs` | [test-template-integration.md](templates/test-template-integration.md) |
 | `src/Test/Test.Architecture/` updates | [test-template-quality.md](templates/test-template-quality.md) |
+
+### Required Test Gate by Profile
+
+- `minimal`: Unit + Endpoint
+- `balanced`: Unit + Endpoint + Integration + Architecture
+- `comprehensive`: Balanced + E2E + Load + Benchmark (where enabled)
+
+For composite slices, include at least one integration scenario that traverses all participating entities.
 
 ---
 
@@ -104,6 +121,28 @@ Templates: [ui-model-template.md](templates/ui-model-template.md), [ui-service-t
 - [ ] `dotnet build` passes
 - [ ] `dotnet test` passes
 - [ ] endpoint slice reachable in OpenAPI/Scalar when enabled
+
+### Domain Rules / Policy
+
+- [ ] Domain rule artifacts exist when Phase 1 rules/state machine/policy matrix are defined
+- [ ] Transition/guard rules are wired into service or domain operations
+
+### Mixed-Store / Reconciliation (if applicable)
+
+- [ ] Authoritative store vs projection store boundary is explicit
+- [ ] Reconciliation handler/job exists for drift detection and replay-safe correction
+- [ ] Replay window/late-arrival handling is validated in tests
+
+### Timeline / Support Trace (if applicable)
+
+- [ ] Immutable timeline/audit projection is emitted for support/dispute critical workflows
+- [ ] Timeline query/read endpoint (or equivalent query path) is available
+
+### Content Lifecycle (if applicable)
+
+- [ ] Draft and published snapshot semantics are modeled
+- [ ] Scheduled publish is idempotent
+- [ ] Rollback target/version policy is defined
 
 ### UI (if enabled)
 

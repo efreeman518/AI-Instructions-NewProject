@@ -1,4 +1,4 @@
-# AI Start (Minimal Entrypoint)
+# START-AI
 
 Load this file first. Do not preload the full instruction set.
 
@@ -6,7 +6,7 @@ Load this file first. Do not preload the full instruction set.
 
 Start each new AI session with:
 
-1. `AI-START.md` (this file) only
+1. `START-AI.md` (this file) only
 2. `HANDOFF.md` in target project root (if present)
 
 Then load only the phase files you need.
