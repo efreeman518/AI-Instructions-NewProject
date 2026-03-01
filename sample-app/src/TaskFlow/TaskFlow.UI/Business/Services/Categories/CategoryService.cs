@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Text.Json.Serialization;
 
 namespace TaskFlow.UI.Business.Services.Categories;
 
@@ -16,29 +17,29 @@ public partial class CategoryService : ICategoryService
 
     public async ValueTask<IImmutableList<CategorySummary>> GetAll(CancellationToken ct)
     {
-        var items = await _client.GetFromJsonAsync<List<CategoryApiDto>>("api/categories", ct);
+        var items = await _client.GetFromJsonAsync("api/categories", CategoryJsonContext.Default.ListCategoryApiDto, ct);
         return items?.Select(MapToSummary).ToImmutableList() ?? ImmutableList<CategorySummary>.Empty;
     }
 
     public async ValueTask<CategorySummary?> GetById(Guid id, CancellationToken ct)
     {
-        var item = await _client.GetFromJsonAsync<CategoryApiDto>($"api/categories/{id}", ct);
+        var item = await _client.GetFromJsonAsync($"api/categories/{id}", CategoryJsonContext.Default.CategoryApiDto, ct);
         return item is not null ? MapToSummary(item) : null;
     }
 
     public async ValueTask<CategorySummary?> Create(CategorySummary item, CancellationToken ct)
     {
-        var response = await _client.PostAsJsonAsync("api/categories", MapToApiDto(item), ct);
+        var response = await _client.PostAsJsonAsync("api/categories", MapToApiDto(item), CategoryJsonContext.Default.CategoryApiDto, ct);
         response.EnsureSuccessStatusCode();
-        var created = await response.Content.ReadFromJsonAsync<CategoryApiDto>(ct);
+        var created = await response.Content.ReadFromJsonAsync(CategoryJsonContext.Default.CategoryApiDto, ct);
         return created is not null ? MapToSummary(created) : null;
     }
 
     public async ValueTask<CategorySummary?> Update(CategorySummary item, CancellationToken ct)
     {
-        var response = await _client.PutAsJsonAsync($"api/categories/{item.Id}", MapToApiDto(item), ct);
+        var response = await _client.PutAsJsonAsync($"api/categories/{item.Id}", MapToApiDto(item), CategoryJsonContext.Default.CategoryApiDto, ct);
         response.EnsureSuccessStatusCode();
-        var updated = await response.Content.ReadFromJsonAsync<CategoryApiDto>(ct);
+        var updated = await response.Content.ReadFromJsonAsync(CategoryJsonContext.Default.CategoryApiDto, ct);
         return updated is not null ? MapToSummary(updated) : null;
     }
 
@@ -67,6 +68,11 @@ public partial class CategoryService : ICategoryService
         DisplayOrder = s.DisplayOrder,
         IsActive = s.IsActive,
     };
+
+    [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+    [JsonSerializable(typeof(CategoryApiDto))]
+    [JsonSerializable(typeof(List<CategoryApiDto>))]
+    private partial class CategoryJsonContext : JsonSerializerContext;
 
     private sealed class CategoryApiDto
     {

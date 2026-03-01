@@ -15,7 +15,9 @@ public sealed partial class TodoItemDetailPage : Page
         TodoItemSummary? item = null;
         try
         {
+#pragma warning disable IL2026 // Dynamic dispatch — suppressed as fallback DataContext access
             item = ((dynamic)DataContext!).Item as TodoItemSummary;
+#pragma warning restore IL2026
         }
         catch
         {

@@ -11,6 +11,7 @@ namespace TaskFlow.UI;
 /// </summary>
 public partial class App : Application
 {
+#pragma warning disable IL2026 // Uno Extensions APIs (UseLocalization, UseSerialization, UseNavigation, Section<T>) are not trim-safe
     private void ConfigureAppBuilder(IApplicationBuilder builder)
     {
         builder
@@ -114,6 +115,7 @@ public partial class App : Application
                 })
                 .UseNavigation(ReactiveViewModelMappings.ViewModelMappings, RegisterRoutes));
     }
+#pragma warning restore IL2026
 
     private void ConfigureSerialization(HostBuilderContext context, IServiceCollection services)
     {

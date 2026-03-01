@@ -7,6 +7,5 @@ public class SmokeTests
     public void Placeholder_Test()
     {
         // Integration tests will be added as infrastructure is configured
-        Assert.IsTrue(true);
     }
 }

@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Text.Json.Serialization;
 
 namespace TaskFlow.UI.Business.Services.TodoItems;
 
@@ -16,29 +17,29 @@ public partial class TodoItemService : ITodoItemService
 
     public async ValueTask<IImmutableList<TodoItemSummary>> GetAll(CancellationToken ct)
     {
-        var items = await _client.GetFromJsonAsync<List<TodoItemApiDto>>("api/todoitems", ct);
+        var items = await _client.GetFromJsonAsync("api/todoitems", TodoItemJsonContext.Default.ListTodoItemApiDto, ct);
         return items?.Select(MapToSummary).ToImmutableList() ?? ImmutableList<TodoItemSummary>.Empty;
     }
 
     public async ValueTask<TodoItemSummary?> GetById(Guid id, CancellationToken ct)
     {
-        var item = await _client.GetFromJsonAsync<TodoItemApiDto>($"api/todoitems/{id}", ct);
+        var item = await _client.GetFromJsonAsync($"api/todoitems/{id}", TodoItemJsonContext.Default.TodoItemApiDto, ct);
         return item is not null ? MapToSummary(item) : null;
     }
 
     public async ValueTask<TodoItemSummary?> Create(TodoItemSummary item, CancellationToken ct)
     {
-        var response = await _client.PostAsJsonAsync("api/todoitems", MapToApiDto(item), ct);
+        var response = await _client.PostAsJsonAsync("api/todoitems", MapToApiDto(item), TodoItemJsonContext.Default.TodoItemApiDto, ct);
         response.EnsureSuccessStatusCode();
-        var created = await response.Content.ReadFromJsonAsync<TodoItemApiDto>(ct);
+        var created = await response.Content.ReadFromJsonAsync(TodoItemJsonContext.Default.TodoItemApiDto, ct);
         return created is not null ? MapToSummary(created) : null;
     }
 
     public async ValueTask<TodoItemSummary?> Update(TodoItemSummary item, CancellationToken ct)
     {
-        var response = await _client.PutAsJsonAsync($"api/todoitems/{item.Id}", MapToApiDto(item), ct);
+        var response = await _client.PutAsJsonAsync($"api/todoitems/{item.Id}", MapToApiDto(item), TodoItemJsonContext.Default.TodoItemApiDto, ct);
         response.EnsureSuccessStatusCode();
-        var updated = await response.Content.ReadFromJsonAsync<TodoItemApiDto>(ct);
+        var updated = await response.Content.ReadFromJsonAsync(TodoItemJsonContext.Default.TodoItemApiDto, ct);
         return updated is not null ? MapToSummary(updated) : null;
     }
 
@@ -53,7 +54,7 @@ public partial class TodoItemService : ITodoItemService
         var url = string.IsNullOrWhiteSpace(searchTerm)
             ? "api/todoitems"
             : $"api/todoitems?searchTerm={Uri.EscapeDataString(searchTerm)}";
-        var items = await _client.GetFromJsonAsync<List<TodoItemApiDto>>(url, ct);
+        var items = await _client.GetFromJsonAsync(url, TodoItemJsonContext.Default.ListTodoItemApiDto, ct);
         return items?.Select(MapToSummary).ToImmutableList() ?? ImmutableList<TodoItemSummary>.Empty;
     }
 
@@ -79,7 +80,7 @@ public partial class TodoItemService : ITodoItemService
     {
         var response = await _client.PostAsync(url, null, ct);
         response.EnsureSuccessStatusCode();
-        var item = await response.Content.ReadFromJsonAsync<TodoItemApiDto>(ct);
+        var item = await response.Content.ReadFromJsonAsync(TodoItemJsonContext.Default.TodoItemApiDto, ct);
         return item is not null ? MapToSummary(item) : null;
     }
 
@@ -124,6 +125,11 @@ public partial class TodoItemService : ITodoItemService
     /// Lightweight API DTO — matches the shape returned by the Gateway/API.
     /// Keeps the UI decoupled from the backend Application.Models assembly.
     /// </summary>
+    [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+    [JsonSerializable(typeof(TodoItemApiDto))]
+    [JsonSerializable(typeof(List<TodoItemApiDto>))]
+    private partial class TodoItemJsonContext : JsonSerializerContext;
+
     private sealed class TodoItemApiDto
     {
         public Guid Id { get; set; }

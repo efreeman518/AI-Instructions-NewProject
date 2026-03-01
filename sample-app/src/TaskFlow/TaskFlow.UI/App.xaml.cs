@@ -17,7 +17,9 @@ public partial class App : Application
         ConfigureAppBuilder(builder);
         MainWindow = builder.Window;
 
+#pragma warning disable IL2026 // Uno Extensions NavigateAsync is not trim-safe
         Host = await builder.NavigateAsync<ShellControl>();
+#pragma warning restore IL2026
         Shell = MainWindow.Content as ShellControl;
     }
 

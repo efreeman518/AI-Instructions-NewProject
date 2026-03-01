@@ -49,7 +49,7 @@ public class SharedTestFactoryBase<TEntryPoint, TFactory>
     public static readonly Guid TestTenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
 
     private TFactory? _factory;
-    private readonly object _lock = new();
+    private readonly Lock _lock = new();
     private bool _envVarsSet;
     private string _dbConnectionString = null!;
 

@@ -5,6 +5,8 @@
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <!-- NU1902: MessagePack vulnerability is a transitive dep from NBomber — cannot update directly -->
+    <NoWarn>$(NoWarn);NU1902</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="appsettings.json" />

@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Text.Json.Serialization;
 using Domain.Shared;
 
 namespace TaskFlow.UI.Business.Services.Teams;
@@ -17,29 +18,29 @@ public partial class TeamService : ITeamService
 
     public async ValueTask<IImmutableList<TeamSummary>> GetAll(CancellationToken ct)
     {
-        var items = await _client.GetFromJsonAsync<List<TeamApiDto>>("api/teams", ct);
+        var items = await _client.GetFromJsonAsync("api/teams", TeamJsonContext.Default.ListTeamApiDto, ct);
         return items?.Select(MapToSummary).ToImmutableList() ?? ImmutableList<TeamSummary>.Empty;
     }
 
     public async ValueTask<TeamSummary?> GetById(Guid id, CancellationToken ct)
     {
-        var item = await _client.GetFromJsonAsync<TeamApiDto>($"api/teams/{id}", ct);
+        var item = await _client.GetFromJsonAsync($"api/teams/{id}", TeamJsonContext.Default.TeamApiDto, ct);
         return item is not null ? MapToSummary(item) : null;
     }
 
     public async ValueTask<TeamSummary?> Create(TeamSummary item, CancellationToken ct)
     {
-        var response = await _client.PostAsJsonAsync("api/teams", MapToApiDto(item), ct);
+        var response = await _client.PostAsJsonAsync("api/teams", MapToApiDto(item), TeamJsonContext.Default.TeamApiDto, ct);
         response.EnsureSuccessStatusCode();
-        var created = await response.Content.ReadFromJsonAsync<TeamApiDto>(ct);
+        var created = await response.Content.ReadFromJsonAsync(TeamJsonContext.Default.TeamApiDto, ct);
         return created is not null ? MapToSummary(created) : null;
     }
 
     public async ValueTask<TeamSummary?> Update(TeamSummary item, CancellationToken ct)
     {
-        var response = await _client.PutAsJsonAsync($"api/teams/{item.Id}", MapToApiDto(item), ct);
+        var response = await _client.PutAsJsonAsync($"api/teams/{item.Id}", MapToApiDto(item), TeamJsonContext.Default.TeamApiDto, ct);
         response.EnsureSuccessStatusCode();
-        var updated = await response.Content.ReadFromJsonAsync<TeamApiDto>(ct);
+        var updated = await response.Content.ReadFromJsonAsync(TeamJsonContext.Default.TeamApiDto, ct);
         return updated is not null ? MapToSummary(updated) : null;
     }
 
@@ -73,6 +74,11 @@ public partial class TeamService : ITeamService
         Description = s.Description,
         IsActive = s.IsActive,
     };
+
+    [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+    [JsonSerializable(typeof(TeamApiDto))]
+    [JsonSerializable(typeof(List<TeamApiDto>))]
+    private partial class TeamJsonContext : JsonSerializerContext;
 
     private sealed class TeamApiDto
     {

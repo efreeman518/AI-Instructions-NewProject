@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Domain.Shared;
 
 namespace TaskFlow.UI.Client.Mock;
@@ -88,7 +89,8 @@ public partial class MockHttpMessageHandler : HttpMessageHandler
 
             if (body is not null)
             {
-                responseData = JsonSerializer.Deserialize<JsonElement>(body);
+                using var doc = JsonDocument.Parse(body);
+                responseData = doc.RootElement.Clone();
                 statusCode = method == HttpMethod.Post ? HttpStatusCode.Created : HttpStatusCode.OK;
             }
             else
@@ -100,7 +102,9 @@ public partial class MockHttpMessageHandler : HttpMessageHandler
         {
             statusCode = HttpStatusCode.NoContent;
         }
+#pragma warning disable IL2026 // Mock handler serializes heterogeneous object? types — suppressed as mock-only code
         var json = responseData is not null ? JsonSerializer.Serialize(responseData, _jsonOptions) : "{}";
+#pragma warning restore IL2026
 
         var response = new HttpResponseMessage(statusCode)
         {

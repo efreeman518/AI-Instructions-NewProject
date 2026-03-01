@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Text.Json.Serialization;
 
 namespace TaskFlow.UI.Business.Services.Tags;
 
@@ -16,29 +17,29 @@ public partial class TagService : ITagService
 
     public async ValueTask<IImmutableList<TagSummary>> GetAll(CancellationToken ct)
     {
-        var items = await _client.GetFromJsonAsync<List<TagApiDto>>("api/tags", ct);
+        var items = await _client.GetFromJsonAsync("api/tags", TagJsonContext.Default.ListTagApiDto, ct);
         return items?.Select(MapToSummary).ToImmutableList() ?? ImmutableList<TagSummary>.Empty;
     }
 
     public async ValueTask<TagSummary?> GetById(Guid id, CancellationToken ct)
     {
-        var item = await _client.GetFromJsonAsync<TagApiDto>($"api/tags/{id}", ct);
+        var item = await _client.GetFromJsonAsync($"api/tags/{id}", TagJsonContext.Default.TagApiDto, ct);
         return item is not null ? MapToSummary(item) : null;
     }
 
     public async ValueTask<TagSummary?> Create(TagSummary item, CancellationToken ct)
     {
-        var response = await _client.PostAsJsonAsync("api/tags", MapToApiDto(item), ct);
+        var response = await _client.PostAsJsonAsync("api/tags", MapToApiDto(item), TagJsonContext.Default.TagApiDto, ct);
         response.EnsureSuccessStatusCode();
-        var created = await response.Content.ReadFromJsonAsync<TagApiDto>(ct);
+        var created = await response.Content.ReadFromJsonAsync(TagJsonContext.Default.TagApiDto, ct);
         return created is not null ? MapToSummary(created) : null;
     }
 
     public async ValueTask<TagSummary?> Update(TagSummary item, CancellationToken ct)
     {
-        var response = await _client.PutAsJsonAsync($"api/tags/{item.Id}", MapToApiDto(item), ct);
+        var response = await _client.PutAsJsonAsync($"api/tags/{item.Id}", MapToApiDto(item), TagJsonContext.Default.TagApiDto, ct);
         response.EnsureSuccessStatusCode();
-        var updated = await response.Content.ReadFromJsonAsync<TagApiDto>(ct);
+        var updated = await response.Content.ReadFromJsonAsync(TagJsonContext.Default.TagApiDto, ct);
         return updated is not null ? MapToSummary(updated) : null;
     }
 
@@ -61,6 +62,11 @@ public partial class TagService : ITagService
         Name = s.Name,
         Description = s.Description,
     };
+
+    [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+    [JsonSerializable(typeof(TagApiDto))]
+    [JsonSerializable(typeof(List<TagApiDto>))]
+    private partial class TagJsonContext : JsonSerializerContext;
 
     private sealed class TagApiDto
     {
