@@ -5,9 +5,15 @@
 | **File** | `Domain.Model/Entities/{Entity}.cs` |
 | **Depends on** | [domain-definition-schema.md](../domain-definition-schema.md), [resource-implementation-schema.md](../resource-implementation-schema.md) |
 | **Referenced by** | [dto-template](dto-template.md), [ef-configuration-template](ef-configuration-template.md), [mapper-template](mapper-template.md) |
-| **Sampleapp** | `sampleapp/src/Domain/TaskFlow.Domain.Model/Entities/TodoItem.cs` |
+| **Sampleapp** | `sample-app/src/Domain/TaskFlow.Domain.Model/Entities/TodoItem.cs` |
 
 ## File: Domain/Model/Entities/{Entity}.cs
+
+> **EntityBase properties (inherited, do NOT redefine):**
+> - `Guid Id { get; init; }` — auto-generated `Guid.CreateVersion7()`, init-only, rejects `Guid.Empty`
+> - `byte[]? RowVersion { get; set; }` — nullable, configured via `.IsRowVersion()` in EF config
+>
+> **Do NOT inherit `AuditableBase<T>`** unless audit fields must live on the entity itself. The default pattern uses `AuditInterceptor` on the `DbContext` to manage audit metadata externally.
 
 ```csharp
 using Domain.Shared;

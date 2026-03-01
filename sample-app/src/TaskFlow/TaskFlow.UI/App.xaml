@@ -1,0 +1,17 @@
+<Application x:Class="TaskFlow.UI.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:utu="using:Uno.Toolkit.UI">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+                <MaterialToolkitTheme xmlns="using:Uno.Toolkit.UI.Material"
+                                      ColorOverrideSource="ms-appx:///Styles/ColorPaletteOverride.xaml" />
+                <ResourceDictionary Source="ms-appx:///Converters/Converters.xaml" />
+                <ResourceDictionary Source="ms-appx:///Styles/FeedView.xaml" />
+                <ResourceDictionary Source="ms-appx:///Styles/Page.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

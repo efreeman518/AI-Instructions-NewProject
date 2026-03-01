@@ -2,7 +2,7 @@
 
 Use this skill when domain inputs enable `authProvider` and the solution needs authentication or identity-backed user management. **This skill is applied as the final phase (Phase 4f)** — earlier phases use auth stubs so the project compiles and runs without identity configuration.
 
-Reference implementation: `sampleapp/src/TaskFlow/TaskFlow.Api/Auth/`, `sampleapp/src/TaskFlow/TaskFlow.Gateway/Auth/`.
+Reference implementation: `sample-app/src/TaskFlow/TaskFlow.Api/Auth/`, `sample-app/src/TaskFlow/TaskFlow.Gateway/Auth/`.
 
 ## Identity Provider Scenarios
 
@@ -36,6 +36,57 @@ public static class AuthStub
 - Register `builder.Services.AddAuthStub()` in the host's `Program.cs`
 - Do **not** add `[Authorize]` attributes or `RequireAuthorization()` until real auth is wired
 - All endpoints should work without authentication during development
+
+## Dev-Mode Auth Patterns
+
+### UI: Custom Auth Provider (dev) to MSAL (production)
+
+Scaffold with `.AddCustom()` in `App.xaml.host.cs` — no external identity provider required:
+
+```csharp
+.UseAuthentication(auth => auth
+    .AddCustom(custom => custom
+        .Login(async (sp, dispatcher, credentials, ct) =>
+        {
+            credentials["AccessToken"] = "dev-token";
+            return true;
+        }), name: "CustomAuth"))
+```
+
+Upgrade to production: replace `.AddCustom(...)` with `.AddMsal()`, change csproj `<UnoFeatures>` from `AuthenticationCustom` to `AuthenticationMsal`, and populate `EntraExternal` config with real tenant values. `AuthTokenHandler` reads from `ITokenCache` and works identically with either provider.
+
+### Gateway: Config-Driven Auth Toggle
+
+Gateway's `AddAuthentication` checks for a config section (e.g., `TaskFlowGateway_EntraID`). If the section is **absent or empty**, auth is registered as a no-op passthrough. When real values are provided, JWT Bearer validation activates:
+
+```csharp
+public static void AddAuthentication(this IServiceCollection services, IConfiguration config)
+{
+    var entraSection = config.GetSection("TaskFlowGateway_EntraID");
+    if (!entraSection.Exists())
+    {
+        // Dev mode: register empty auth so middleware doesn't reject requests
+        services.AddAuthentication().AddJwtBearer();
+        return;
+    }
+    // Production: wire real JWT validation
+    services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(options => { /* bind from config */ });
+}
+```
+
+Config shape when enabled:
+
+```json
+{
+  "TaskFlowGateway_EntraID": {
+    "Instance": "https://YOUR-TENANT.ciamlogin.com/",
+    "TenantId": "YOUR-TENANT-ID",
+    "ClientId": "YOUR-CLIENT-ID",
+    "Audience": "api://YOUR-CLIENT-ID"
+  }
+}
+```
 
 ## Projects
 

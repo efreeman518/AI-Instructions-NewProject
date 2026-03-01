@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="EntityFrameworkCore.Exceptions.SqlServer" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" />
+    <PackageReference Include="Microsoft.Azure.StackExchangeRedis" />
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.AzureAppConfiguration" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+    <PackageReference Include="EF.BackgroundServices" />
+    <PackageReference Include="EF.Cache" />
+    <PackageReference Include="ZiggyCreatures.FusionCache" />
+    <PackageReference Include="ZiggyCreatures.FusionCache.Backplane.StackExchangeRedis" />
+    <PackageReference Include="ZiggyCreatures.FusionCache.Serialization.SystemTextJson" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Application\Application.Contracts\Application.Contracts.csproj" />
+    <ProjectReference Include="..\..\Application\Application.MessageHandlers\Application.MessageHandlers.csproj" />
+    <ProjectReference Include="..\..\Application\Application.Services\Application.Services.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\Infrastructure.Notification\Infrastructure.Notification.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\Infrastructure.Repositories\Infrastructure.Repositories.csproj" />
+    <ProjectReference Include="..\TaskFlow.BackgroundServices\TaskFlow.BackgroundServices.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="HealthChecks\" />
+  </ItemGroup>
+</Project>

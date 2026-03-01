@@ -1,0 +1,9 @@
+global using Application.Contracts.Repositories;
+global using Application.Contracts.Services;
+global using Application.Mappers;
+global using Application.Models;
+global using Domain.Model;
+global using Domain.Shared;
+global using Microsoft.Extensions.Logging;
+global using EF.Common.Contracts;
+global using EF.Data.Contracts;

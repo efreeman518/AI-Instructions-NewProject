@@ -4,7 +4,7 @@
 
 Use ASP.NET Core Minimal APIs with endpoint classes (no controllers), API versioning, `ProblemDetails`, and deterministic middleware ordering.
 
-Reference implementation: `sampleapp/src/TaskFlow/TaskFlow.Api/`.
+Reference implementation: `sample-app/src/TaskFlow/TaskFlow.Api/`.
 
 ## Required Layout
 
@@ -101,7 +101,7 @@ Two complementary layers — **Result pattern for expected outcomes, `DefaultExc
 1. **Result flow (primary path):** Services return `Result<T>` / `DomainResult<T>`. Endpoints use `Result.Match()` to map success/failure/not-found to `TypedResults` + `ProblemDetails`. No exceptions thrown for validation, business rules, or not-found cases.
 2. **`DefaultExceptionHandler` (safety net):** A global `IExceptionHandler` registered via `AddExceptionHandler<DefaultExceptionHandler>()`. Catches only truly unexpected exceptions (null refs, timeouts, infra failures) and maps them to `ProblemDetails` with appropriate HTTP status codes. This is a last-resort handler, not a control-flow mechanism.
 
-Reference: `sampleapp/src/TaskFlow/TaskFlow.Api/ExceptionHandlers/DefaultExceptionHandler.cs`.
+Reference: `sample-app/src/TaskFlow/TaskFlow.Api/ExceptionHandlers/DefaultExceptionHandler.cs`.
 
 - Include stack traces only outside production.
 - Conventions:

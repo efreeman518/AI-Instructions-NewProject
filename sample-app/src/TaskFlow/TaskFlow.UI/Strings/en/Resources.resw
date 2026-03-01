@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="0" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <!-- App -->
+  <data name="AppName" xml:space="preserve">
+    <value>TaskFlow</value>
+  </data>
+
+  <!-- Navigation -->
+  <data name="Nav_Home" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="Nav_Tasks" xml:space="preserve">
+    <value>Tasks</value>
+  </data>
+  <data name="Nav_Categories" xml:space="preserve">
+    <value>Categories</value>
+  </data>
+  <data name="Nav_Teams" xml:space="preserve">
+    <value>Teams</value>
+  </data>
+  <data name="Nav_Settings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+
+  <!-- Common -->
+  <data name="Common_Search" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="Common_Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="Common_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Common_Delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="Common_Edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="Common_Back" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="Common_Loading" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
+  <data name="Common_NoData" xml:space="preserve">
+    <value>No data available</value>
+  </data>
+  <data name="Common_Error" xml:space="preserve">
+    <value>Something went wrong</value>
+  </data>
+
+  <!-- Login -->
+  <data name="Login_Title" xml:space="preserve">
+    <value>Sign in to continue</value>
+  </data>
+  <data name="Login_Username" xml:space="preserve">
+    <value>Username</value>
+  </data>
+  <data name="Login_Password" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="Login_SignIn" xml:space="preserve">
+    <value>Sign In</value>
+  </data>
+
+  <!-- TodoItem -->
+  <data name="Todo_SearchPlaceholder" xml:space="preserve">
+    <value>Search tasks...</value>
+  </data>
+  <data name="Todo_NoTasks" xml:space="preserve">
+    <value>No tasks found</value>
+  </data>
+  <data name="Todo_CreateFirst" xml:space="preserve">
+    <value>No tasks yet. Create your first task!</value>
+  </data>
+
+  <!-- Status -->
+  <data name="Status_NotStarted" xml:space="preserve">
+    <value>Not Started</value>
+  </data>
+  <data name="Status_InProgress" xml:space="preserve">
+    <value>In Progress</value>
+  </data>
+  <data name="Status_Completed" xml:space="preserve">
+    <value>Completed</value>
+  </data>
+  <data name="Status_Blocked" xml:space="preserve">
+    <value>Blocked</value>
+  </data>
+  <data name="Status_Cancelled" xml:space="preserve">
+    <value>Cancelled</value>
+  </data>
+  <data name="Status_Archived" xml:space="preserve">
+    <value>Archived</value>
+  </data>
+
+  <!-- Priority -->
+  <data name="Priority_Critical" xml:space="preserve">
+    <value>Critical</value>
+  </data>
+  <data name="Priority_High" xml:space="preserve">
+    <value>High</value>
+  </data>
+  <data name="Priority_Medium" xml:space="preserve">
+    <value>Medium</value>
+  </data>
+  <data name="Priority_Low" xml:space="preserve">
+    <value>Low</value>
+  </data>
+  <data name="Priority_Minimal" xml:space="preserve">
+    <value>Minimal</value>
+  </data>
+
+  <!-- Actions -->
+  <data name="Action_Start" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="Action_Complete" xml:space="preserve">
+    <value>Complete</value>
+  </data>
+  <data name="Action_Block" xml:space="preserve">
+    <value>Block</value>
+  </data>
+  <data name="Action_Unblock" xml:space="preserve">
+    <value>Unblock</value>
+  </data>
+
+  <!-- Settings -->
+  <data name="Settings_About" xml:space="preserve">
+    <value>About</value>
+  </data>
+  <data name="Settings_Preferences" xml:space="preserve">
+    <value>Preferences</value>
+  </data>
+  <data name="Settings_Version" xml:space="preserve">
+    <value>Version</value>
+  </data>
+
+</root>

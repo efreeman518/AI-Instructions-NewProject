@@ -42,7 +42,7 @@ Use `{Host}.Scheduler` for cron/time-based orchestration with persisted scheduli
 └── appsettings*.json
 ```
 
-Reference: `sampleapp/src/TaskFlow/TaskFlow.Scheduler/`.
+Reference: `sample-app/src/TaskFlow/TaskFlow.Scheduler/`.
 
 ---
 

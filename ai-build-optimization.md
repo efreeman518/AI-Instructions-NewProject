@@ -91,8 +91,8 @@ Inputs:
 - customNugetFeeds
 - entities
 Constraints:
-- Never modify sampleapp/
-- Never build or compile sampleapp/
+- Never modify sample-app/
+- Never build or compile sample-app/
 - Use templates + placeholder tokens
 - Build after generation
 - One code-fix pass max; infra blockers go to HANDOFF.md

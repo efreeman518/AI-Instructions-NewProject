@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="EF.Common" />
+    <PackageReference Include="EF.Common.Contracts" />
+    <PackageReference Include="EF.Data.Contracts" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Domain\Domain.Model\Domain.Model.csproj" />
+    <ProjectReference Include="..\Application.Models\Application.Models.csproj" />
+  </ItemGroup>
+</Project>

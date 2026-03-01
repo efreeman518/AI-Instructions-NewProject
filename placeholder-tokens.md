@@ -75,7 +75,7 @@ entities:
 
 ## Sampleapp Token Mapping
 
-The reference implementation (`sampleapp/`) demonstrates all tokens with these resolved values:
+The reference implementation (`sample-app/`) demonstrates all tokens with these resolved values:
 
 ```yaml
 Org: Sample

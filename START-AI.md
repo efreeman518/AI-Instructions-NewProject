@@ -45,6 +45,6 @@ All defaults and profile values must come from `resource-implementation-schema.m
 
 ## Guardrails
 
-- Never edit/build `sampleapp/`.
+- Never edit/build `sample-app/`.
 - Generate code only in the target project.
 - Keep context minimal per phase and unload prior-phase docs.

@@ -1,6 +1,6 @@
 # Sampleapp Pattern Catalog
 
-Distilled cross-cutting patterns from `sampleapp/` that span multiple files/projects. Use this catalog before opening raw reference source.
+Distilled cross-cutting patterns from `sample-app/` that span multiple files/projects. Use this catalog before opening raw reference source.
 
 ## How to Use This File
 
@@ -95,7 +95,7 @@ Two complementary error paths — never mix them:
 
 **Rule:** Use `Result`/`DomainResult` for all expected outcomes. Throw exceptions only for truly unexpected failures. `DefaultExceptionHandler` is a safety net, not a control-flow mechanism.
 
-Reference: `sampleapp/src/TaskFlow/TaskFlow.Api/ExceptionHandlers/DefaultExceptionHandler.cs`.
+Reference: `sample-app/src/TaskFlow/TaskFlow.Api/ExceptionHandlers/DefaultExceptionHandler.cs`.
 
 ---
 

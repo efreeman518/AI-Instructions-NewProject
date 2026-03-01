@@ -1,6 +1,6 @@
 # Configuration & Secrets Management
 
-Reference implementation: `sampleapp/src/TaskFlow/TaskFlow.Api/appsettings*.json`, `sampleapp/src/TaskFlow/TaskFlow.Gateway/appsettings*.json`.
+Reference implementation: `sample-app/src/TaskFlow/TaskFlow.Api/appsettings*.json`, `sample-app/src/TaskFlow/TaskFlow.Gateway/appsettings*.json`.
 
 ## Prerequisites
 

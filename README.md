@@ -36,4 +36,4 @@ Default values and profiles are canonical in [resource-implementation-schema.md]
 
 - Start new AI sessions with [START-AI.md](START-AI.md) only
 - Keep [quick-reference.md](quick-reference.md) and [sampleapp-patterns.md](sampleapp-patterns.md) strictly on-demand
-- Treat `sampleapp/` as read-only reference
+- Treat `sample-app/` as read-only reference

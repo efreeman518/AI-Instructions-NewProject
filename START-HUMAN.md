@@ -139,8 +139,8 @@ For default phase flow, start with [START-AI.md](START-AI.md) only, then load ph
 
 ## Important Guardrails
 
-- `sampleapp/` is reference-only.
-- Never build or compile `sampleapp/`; build/test only the new project being scaffolded.
+- `sample-app/` is reference-only.
+- Never build or compile `sample-app/`; build/test only the new project being scaffolded.
 - Do not over-scaffold optional workloads on first pass.
 - Keep context small; load only files needed for the current phase.
 - Capture instruction improvements in [UPDATE-INSTRUCTIONS.md](UPDATE-INSTRUCTIONS.md).

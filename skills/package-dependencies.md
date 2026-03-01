@@ -5,7 +5,7 @@ Use this file as a compact contract map for private/shared packages.
 ## Sources
 
 - Internal packages source: <https://github.com/efreeman518/EF.Packages>
-- Reference usage: `sampleapp/src/Directory.Packages.props`, `sampleapp/src/nuget.config`
+- Reference usage: `sample-app/src/Directory.Packages.props`, `sample-app/src/nuget.config`
 
 > **AI lookup rule:** This file provides a compact contract map. When you need full API signatures, constructor parameters, or method overloads for any `EF.*` base type (e.g., `TableRepositoryBase`, `IBlobRepository`, `ICosmosDbRepository`, `IKeyVaultManager`), use the GitHub MCP server to read the source from the [EF.Packages repo](https://github.com/efreeman518/EF.Packages).
 

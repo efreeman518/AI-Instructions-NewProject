@@ -2,7 +2,7 @@
 
 Use this skill to scaffold tests by profile and phase.
 
-Reference implementation: `sampleapp/src/Test/` (7 test projects covering unit, integration, architecture, E2E, load, benchmarks).
+Reference implementation: `sample-app/src/Test/` (7 test projects covering unit, integration, architecture, E2E, load, benchmarks).
 
 ## Profiles
 
@@ -212,7 +212,58 @@ For high-contention domains (inventory, reservations, metering, financial postin
 - assert optimistic concurrency behavior and retry/merge outcome
 - verify no duplicate side effects (`no-oversell`, `no-double-reserve`, `no-double-charge` patterns)
 
-## Verification
+## TestContainer / WebApplicationFactory Gotchas
+
+Hard-won patterns from real test failures. Apply these when using `WebApplicationFactory` with TestContainers (Docker SQL).
+
+### 1) Tenant Query Filter
+The DbContext applies global query filters on `ITenantEntity<Guid>`. In tests, `IRequestContext.TenantId` defaults to null — all tenant-scoped queries return empty. **Fix:** Override `IRequestContext<string, Guid?>` in `ConfigureTestServices` with a fixed `TestTenantId`, and use that same ID in all test entity creation.
+
+```csharp
+services.AddScoped<IRequestContext<string, Guid?>>(provider =>
+    new EF.Common.Contracts.RequestContext<string, Guid?>(
+        Guid.NewGuid().ToString(), "Test.Endpoints", TestTenantId, []));
+```
+
+### 2) SearchRequest Defaults
+`SearchRequest<T>` from `EF.Common.Contracts` has `PageSize = 0` and `PageIndex = 0` by default. Sending `new { }` returns zero results. `PageIndex = 0` with nonzero `PageSize` generates a negative SQL OFFSET. **Always send `{ PageSize = 100, PageIndex = 1 }` in search tests.**
+
+### 3) Rate Limiting
+If the API registers a global rate limiter, long test sequences (e.g., full state machine walkthroughs with 7+ requests) will hit 429. **Fix:** Override with `GetNoLimiter` in the test factory. Requires `FrameworkReference Include="Microsoft.AspNetCore.App"` in the test `.csproj`.
+
+```csharp
+services.AddRateLimiter(options =>
+{
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(
+        _ => RateLimitPartition.GetNoLimiter("test"));
+});
+```
+
+### 4) Schema Rebuild
+When entity configurations change (e.g., adding `EntityBaseConfiguration`), call `EnsureDeletedAsync()` before `EnsureCreatedAsync()` in test initialization to force schema rebuild.
+
+### 5) SaveChangesAsync Overload
+`DbContextBase.SaveChangesAsync(CancellationToken)` throws `NotImplementedException` by design. Always use `SaveChangesAsync(OptimisticConcurrencyWinner.ClientWins, ct)` in services. InMemory test mode without the full audit pipeline will fail all writes.
+
+### 6) FK Test Data
+Tests that reference related entities (e.g., assigning a TodoItem to a TeamMember) must create real related records first. Using `Guid.NewGuid()` for FK values causes SQL FK violations.
+
+### 7) Namespace Ambiguity
+`Test.Support` may define its own `RequestContext<,>` — causes CS0104 ambiguity with `EF.Common.Contracts.RequestContext<,>`. Use fully qualified names: `new EF.Common.Contracts.RequestContext<string, Guid?>(...)`.
+
+### 8) ProblemDetails Diagnostic Leak
+Test factories often add `AddProblemDetails` with `ex.ToStringDemystified()` for easier debugging. This leaks full stack traces in non-debug builds. Wrap the block in `#if DEBUG` / `#endif` so CI/release builds don't expose internals:
+
+```csharp
+#if DEBUG
+builder.Services.AddProblemDetails(options =>
+    options.CustomizeProblemDetails = ctx =>
+    {
+        // Expose exception detail only in DEBUG builds
+    });
+#endif
+```
+
 
 - [ ] Unit tests run cleanly
 - [ ] Endpoint tests run against in-memory host via `WebApplicationFactory`
@@ -220,3 +271,6 @@ For high-contention domains (inventory, reservations, metering, financial postin
 - [ ] Architecture tests enforce layering rules
 - [ ] Optional suites (E2E/load/benchmarks) only enabled when needed
 - [ ] Test projects and categories align with selected profile
+- [ ] TestContainer tests override `IRequestContext` with a fixed `TestTenantId`
+- [ ] Search tests specify `PageSize` and `PageIndex` (never send empty `{}`)
+- [ ] Rate limiter is disabled in test factory if API uses rate limiting

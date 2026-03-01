@@ -1,6 +1,6 @@
 # Notifications
 
-Reference implementation: `sampleapp/src/Infrastructure/TaskFlow.Infrastructure.Notification/`.
+Reference implementation: `sample-app/src/Infrastructure/TaskFlow.Infrastructure.Notification/`.
 
 ## Purpose
 

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="EF.BackgroundServices" />
+    <PackageReference Include="EF.Common.Contracts" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Infrastructure\Infrastructure.Notification\Infrastructure.Notification.csproj" />
+    <ProjectReference Include="..\Application.Contracts\Application.Contracts.csproj" />
+  </ItemGroup>
+</Project>

@@ -10,7 +10,7 @@ Use this file as the **single execution path** for compile/run verification whil
 2. After every AI phase, run the **Phase Execution Loop**.
 3. Run only the optional sections that match enabled hosts/workloads.
 4. If a step fails, log in `HANDOFF.md`, keep scope moving, and return later.
-5. `sampleapp/` is reference-only (see [SKILL.md](SKILL.md) non-negotiables).
+5. `sample-app/` is reference-only (see [SKILL.md](SKILL.md) non-negotiables).
 
 ---
 

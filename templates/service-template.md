@@ -5,7 +5,7 @@
 | **File** | `Application.Services/{Entity}Service.cs` |
 | **Depends on** | [repository-template](repository-template.md), [mapper-template](mapper-template.md), [dto-template](dto-template.md) |
 | **Referenced by** | [endpoint-template](endpoint-template.md), [bootstrapper.md](../skills/bootstrapper.md) |
-| **Sampleapp** | `sampleapp/src/Application/TaskFlow.Application.Services/Services/TodoItemService.cs` |
+| **Sampleapp** | `sample-app/src/Application/TaskFlow.Application.Services/Services/TodoItemService.cs` |
 
 ## File: Application/Services/{Entity}Service.cs
 
@@ -17,6 +17,7 @@ internal class {Entity}Service(
     IRequestContext<string, Guid?> requestContext,
     I{Entity}RepositoryTrxn repoTrxn,
     I{Entity}RepositoryQuery repoQuery,
+    IInternalMessageBus messageBus,
     IEntityCacheProvider cache,
     IFusionCacheProvider fusionCacheProvider,
     ITenantBoundaryValidator tenantBoundaryValidator) : I{Entity}Service
@@ -77,7 +78,15 @@ internal class {Entity}Service(
 
         var entity = entityResult.Value!;
         repoTrxn.Create(ref entity);
-        await repoTrxn.SaveChangesAsync(ct);
+
+        try
+        {
+            await repoTrxn.SaveChangesAsync(OptimisticConcurrencyWinner.ClientWins, ct);
+        }
+        catch (Exception ex)
+        {
+            return Result<DefaultResponse<{Entity}Dto>>.Failure(ex.GetBaseException().Message);
+        }
 
         await _cache.SetAsync($"{Entity}:{entity.Id}", entity.ToDto(), token: ct);
 
@@ -114,7 +123,14 @@ internal class {Entity}Service(
         if (updateResult.IsFailure)
             return Result<DefaultResponse<{Entity}Dto>>.Failure(updateResult.ErrorMessage);
 
-        await repoTrxn.SaveChangesAsync(ct);
+        try
+        {
+            await repoTrxn.SaveChangesAsync(OptimisticConcurrencyWinner.ClientWins, ct);
+        }
+        catch (Exception ex)
+        {
+            return Result<DefaultResponse<{Entity}Dto>>.Failure(ex.GetBaseException().Message);
+        }
 
         await _cache.SetAsync($"{Entity}:{entity.Id}", entity.ToDto(), token: ct);
 
@@ -133,7 +149,15 @@ internal class {Entity}Service(
         if (boundary.IsFailure) return Result.Failure(boundary.ErrorMessage!);
 
         repoTrxn.Delete(entity);
-        await repoTrxn.SaveChangesAsync(ct);
+
+        try
+        {
+            await repoTrxn.SaveChangesAsync(OptimisticConcurrencyWinner.ClientWins, ct);
+        }
+        catch (Exception ex)
+        {
+            return Result.Failure(ex.GetBaseException().Message);
+        }
 
         await _cache.RemoveAsync($"{Entity}:{entity.Id}", token: ct);
 
@@ -166,6 +190,12 @@ public interface I{Entity}Service
     Task<StaticList<StaticItem<Guid, Guid?>>> LookupAsync(Guid? tenantId, string? search, CancellationToken ct = default);
 }
 ```
+
+## Common Mistakes (Verified via Test Failures)
+
+1. **Delete no-op** — Forgetting `repoTrxn.Delete(entity)` before `SaveChangesAsync`. The entity is loaded but never marked for deletion. Save commits nothing.
+2. **CreateAsync incomplete** — `Entity.Create()` only accepts factory constructor args. Additional DTO properties (e.g., `EstimatedHours`, `ActualHours`, `Description`) must be applied via `entity.Update(...)` after creation. If omitted, domain validation that depends on those fields won't trigger.
+3. **Wrong SaveChangesAsync** — `DbContextBase.SaveChangesAsync(CancellationToken)` throws `NotImplementedException` by design. Must use `SaveChangesAsync(OptimisticConcurrencyWinner.ClientWins, ct)`.
 
 ## Policy Notes
 

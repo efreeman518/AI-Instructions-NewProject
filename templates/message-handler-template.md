@@ -35,10 +35,12 @@ public record {EventName}(
 // File: src/Application/{Project}.Application.MessageHandlers/{EventName}Handler.cs
 using Application.Contracts.Events;
 using Microsoft.Extensions.Logging;
+using EF.BackgroundServices.Attributes;
 using EF.BackgroundServices.InternalMessageBus;
 
 namespace Application.MessageHandlers;
 
+[ScopedMessageHandler]
 public class {EventName}Handler(
     ILogger<{EventName}Handler> logger) : IMessageHandler<{EventName}>
 {
@@ -63,7 +65,9 @@ public class {EventName}Handler(
 
 ## Publishing Events
 
-Events are published through `IInternalMessageBus` from service methods:
+Events are published through `IInternalMessageBus` from service methods.
+
+> **CRITICAL:** `IInternalMessageBus.Publish()` is **synchronous** — it takes `(InternalMessageBusProcessMode, IMessage[])`. There is NO `PublishAsync` method.
 
 ```csharp
 // In a service class (e.g., {Entity}Service.cs)
@@ -77,14 +81,11 @@ public class {Entity}Service(
     {
         // ... create entity logic ...
 
-        await repoTrxn.SaveChangesAsync(ct);
+        await repoTrxn.SaveChangesAsync(OptimisticConcurrencyWinner.ClientWins, ct);
 
-        // Publish event after successful save
-        await messageBus.PublishAsync(new {EventName}(
-            newEntity.Id,
-            newEntity.TenantId,
-            "Entity created"
-        ), ct);
+        // Publish event after successful save (synchronous call)
+        messageBus.Publish(InternalMessageBusProcessMode.FireAndForget,
+            new {EventName}(newEntity.Id, newEntity.TenantId, "Entity created"));
 
         return Result<DefaultResponse<{Entity}Dto>>.Success(
             new() { Item = newEntity.ToDto() });
@@ -137,7 +138,7 @@ public class RescheduleCallRequestHandler(
 
         // Apply side effect
         entity.Update(/* ... */);
-        await repo.SaveChangesAsync(ct);
+        await repo.SaveChangesAsync(OptimisticConcurrencyWinner.ClientWins, ct);
     }
 }
 ```

@@ -11,17 +11,19 @@ All entities inherit from `EntityBase` (from a shared infrastructure package). P
 - `byte[] RowVersion` — optimistic concurrency
 
 ```csharp
-// From EF.Domain
+// From EF.Domain (verified from EF.Packages source)
 public abstract class EntityBase
 {
-    public Guid Id { get; protected set; } = Guid.CreateVersion7();
-    public byte[] RowVersion { get; set; } = [];
+    public Guid Id { get; init; } = Guid.CreateVersion7(); // init-only, rejects Guid.Empty
+    public byte[]? RowVersion { get; set; }                 // nullable, configured via .IsRowVersion() in EF config
 }
 ```
 
+> **CRITICAL:** `Id` is `init`-only — it cannot be set after construction. `RowVersion` is `byte[]?` (nullable), not `byte[]`. These are verified from the [EF.Packages source](https://github.com/efreeman518/EF.Packages).
+
 ## Entity Pattern
 
-> **Reference implementation:** See `sampleapp/src/Domain/TaskFlow.Domain.Model/Entities/TodoItem.cs` (rich tenant entity with hierarchy, flags, owned value object, child collections) and `sampleapp/src/Domain/TaskFlow.Domain.Model/Entities/Category.cs` (simple tenant entity with cacheable static data).
+> **Reference implementation:** See `sample-app/src/Domain/TaskFlow.Domain.Model/Entities/TodoItem.cs` (rich tenant entity with hierarchy, flags, owned value object, child collections) and `sample-app/src/Domain/TaskFlow.Domain.Model/Entities/Category.cs` (simple tenant entity with cacheable static data).
 >
 > Additional entity patterns: `Team.cs` (parent with children), `Comment.cs` (append-only), `Attachment.cs` (polymorphic), `Tag.cs` (non-tenant global), `TodoItemTag.cs` (junction entity).
 
@@ -64,7 +66,7 @@ public class {Entity} : EntityBase, ITenantEntity<Guid>
 
 Use `[Flags]` enums for entity status/features. Always start with `None = 0` and use bit shifting:
 
-> **Reference implementation:** See `sampleapp/src/Domain/TaskFlow.Domain.Model/Enums/TodoItemStatus.cs`
+> **Reference implementation:** See `sample-app/src/Domain/TaskFlow.Domain.Model/Enums/TodoItemStatus.cs`
 
 ```csharp
 [Flags]
@@ -81,13 +83,13 @@ public enum {Entity}Flags
 
 Standard enums for fixed classifications:
 
-> **Reference implementation:** See `sampleapp/src/Domain/TaskFlow.Domain.Model/Enums/MemberRole.cs`, `EntityType.cs`, `ReminderType.cs`
+> **Reference implementation:** See `sample-app/src/Domain/TaskFlow.Domain.Model/Enums/MemberRole.cs`, `EntityType.cs`, `ReminderType.cs`
 
 ## Value Objects / Shared Entities
 
 For owned types (value objects stored as columns) and entities shared across aggregates, use the appropriate pattern:
 
-> **Reference implementation:** See `sampleapp/src/Domain/TaskFlow.Domain.Model/ValueObjects/DateRange.cs` (owned type) and `sampleapp/src/Domain/TaskFlow.Domain.Model/Entities/Attachment.cs` (polymorphic entity with `EntityType` discriminator + `EntityId`).
+> **Reference implementation:** See `sample-app/src/Domain/TaskFlow.Domain.Model/ValueObjects/DateRange.cs` (owned type) and `sample-app/src/Domain/TaskFlow.Domain.Model/Entities/Attachment.cs` (polymorphic entity with `EntityType` discriminator + `EntityId`).
 
 **Owned type pattern** — stored as columns in the parent table:
 ```csharp
@@ -116,7 +118,7 @@ The **default** pattern for many-to-many join entities is to **inherit from `Ent
 
 **Only use a pure composite-key join entity (no `EntityBase`) when there is high confidence the join will remain a pure association with no additional properties.**
 
-> **Reference implementation:** Update `sampleapp/src/Domain/TaskFlow.Domain.Model/Entities/TodoItemTag.cs` to follow this pattern.
+> **Reference implementation:** Update `sample-app/src/Domain/TaskFlow.Domain.Model/Entities/TodoItemTag.cs` to follow this pattern.
 
 ```csharp
 // Default join entity pattern — inherits EntityBase
@@ -165,6 +167,22 @@ builder.HasOne(e => e.{Related})
     .OnDelete(DeleteBehavior.Restrict);
 ```
 
+## AuditableBase (Available but Rarely Used)
+
+`AuditableBase<TAuditIdType>` exists in `EF.Domain` and adds audit properties to `EntityBase`:
+
+```csharp
+public abstract class AuditableBase<TAuditIdType> : EntityBase, IAuditable<TAuditIdType>
+{
+    public DateTime? CreatedDate { get; set; }
+    public TAuditIdType? CreatedBy { get; set; }
+    public DateTime? UpdatedDate { get; set; }
+    public TAuditIdType? UpdatedBy { get; set; }
+}
+```
+
+> **When NOT to use:** If audit properties are managed by `AuditInterceptor` on the `DbContext` (the default pattern), entities should inherit `EntityBase` directly, NOT `AuditableBase`. The interceptor handles audit metadata externally. Only use `AuditableBase` when audit fields must live on the entity itself.
+
 ## Tenant Entity Interface
 
 ```csharp
@@ -176,6 +194,20 @@ public interface ITenantEntity<TTenantId>
 ```
 
 Entities implementing this get automatic query filters (see multi-tenant skill).
+
+## IRequestContext (EF.Utility)
+
+```csharp
+public interface IRequestContext
+{
+    Guid? TenantId { get; }
+    IReadOnlyCollection<string> Roles { get; }
+    string CorrelationId { get; }
+    string AuditId { get; } // Used by AuditInterceptor for user identification
+}
+```
+
+> **WARNING:** There is NO `.UserId` property — use `AuditId` for user identification.
 
 ## Domain.Shared Exceptions
 
@@ -211,7 +243,7 @@ Domain rules use the specification pattern for reusable business validation:
 
 After generating domain entities, confirm:
 
-- [ ] Entity inherits from `EntityBase` (or `TenantEntityBase` for multi-tenant)
+- [ ] Entity inherits from `EntityBase` (+ `ITenantEntity<Guid>` for multi-tenant — NOT `AuditableBase`)
 - [ ] Private/protected constructor + static `Create()` factory method returning `DomainResult<T>`
 - [ ] All setters are `private set` — mutations go through named methods
 - [ ] Flags enum is defined with `[Flags]` attribute and `None = 0` value

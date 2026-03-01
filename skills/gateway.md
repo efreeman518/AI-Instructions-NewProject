@@ -12,7 +12,7 @@ Gateway is a YARP reverse proxy in front of API/backends. It handles user-facing
 4. Keep pipeline order deterministic (security -> routing/auth -> endpoints -> proxy).
 5. Normalize path prefixes consistently between UI, gateway transforms, and backend routes.
 
-Reference implementation: `sampleapp/src/TaskFlow/TaskFlow.Gateway/`.
+Reference implementation: `sample-app/src/TaskFlow/TaskFlow.Gateway/`.
 
 ---
 

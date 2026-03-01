@@ -5,7 +5,7 @@
 | **File** | `Infrastructure.Repositories/{Entity}RepositoryTrxn.cs`, `{Entity}RepositoryQuery.cs` |
 | **Depends on** | [entity-template](entity-template.md), [ef-configuration-template](ef-configuration-template.md) |
 | **Referenced by** | [service-template](service-template.md), [bootstrapper.md](../skills/bootstrapper.md) |
-| **Sampleapp** | `sampleapp/src/Infrastructure/TaskFlow.Infrastructure.Repositories/TodoItemRepositoryTrxn.cs` |
+| **Sampleapp** | `sample-app/src/Infrastructure/TaskFlow.Infrastructure.Repositories/TodoItemRepositoryTrxn.cs` |
 
 ## File: Infrastructure/Repositories/{Entity}RepositoryTrxn.cs
 
@@ -18,6 +18,11 @@ using EF.Domain;
 
 namespace Infrastructure.Repositories;
 
+/// <summary>
+/// RepositoryBase generic args: <TDbContext, TAuditId, TTenantId>
+///   TAuditId = string (matches IRequestContext.AuditId type)
+///   TTenantId = Guid? (matches ITenantEntity<Guid> — nullable for non-tenant scenarios)
+/// </summary>
 public class {Entity}RepositoryTrxn({Project}DbContextTrxn dbContext)
     : RepositoryBase<{Project}DbContextTrxn, string, Guid?>(dbContext), I{Entity}RepositoryTrxn
 {
@@ -160,12 +165,43 @@ public interface I{Entity}RepositoryQuery
 }
 ```
 
+## Critical: Delete Pattern (MUST call `Delete(entity)`)
+
+The `Delete` method is inherited from `RepositoryBase`. It marks the entity for deletion in the change tracker. **You MUST call it before `SaveChangesAsync`** — simply loading an entity and saving will NOT delete it.
+
+```csharp
+// In service layer (not repository):
+var entity = await repoTrxn.GetAsync(id, false, ct);
+if (entity == null) return Result.Success(); // idempotent — not-found returns success
+repoTrxn.Delete(entity);                     // marks for deletion
+await repoTrxn.SaveChangesAsync(OptimisticConcurrencyWinner.ClientWins, ct);
+return Result.Success();
+```
+
+> **BUG PATTERN:** Omitting `repoTrxn.Delete(entity)` causes delete operations to silently no-op. This was found and fixed in all 4 services during sample app TestContainer testing.
+
+## Critical: SaveChangesAsync — NEVER Use 1-Param Overload
+
+`DbContextBase.SaveChangesAsync(CancellationToken)` **ALWAYS throws `NotImplementedException`** by design. Always use the 2-param overload:
+
+```csharp
+// ✅ CORRECT — always use this
+await repoTrxn.SaveChangesAsync(OptimisticConcurrencyWinner.ClientWins, ct);
+
+// ❌ WRONG — throws NotImplementedException at runtime
+await repoTrxn.SaveChangesAsync(ct);
+```
+
+The 2-param overload retries on `DbUpdateConcurrencyException` using the specified winner strategy.
+
 ## Notes
 
-- **Repositories inherit `RepositoryBase<TContext, TAuditId, TTenantId>`** — provides `GetEntityAsync`, `Create(ref)`, `UpdateFull(ref)`, `DeleteAsync`, `SaveChangesAsync(OptimisticConcurrencyWinner)`, `QueryPageProjectionAsync`, `QueryPageAsync`
+- **Repositories inherit `RepositoryBase<TContext, TAuditId, TTenantId>`** — provides `GetEntityAsync`, `Create(ref)`, `UpdateFull(ref)`, `Delete(entity)`, `DeleteAsync(predicate)`, `SaveChangesAsync(OptimisticConcurrencyWinner, CancellationToken)`, `QueryPageProjectionAsync`, `QueryPageAsync`
+- **Generic args:** `TAuditId = string` (matches `IRequestContext.AuditId`), `TTenantId = Guid?` (matches `ITenantEntity<Guid>` — nullable for non-tenant scenarios)
 - **Trxn repository**: Uses `{Project}DbContextTrxn` (tracking, audit interceptor, read-write)
 - **Query repository**: Uses `{Project}DbContextQuery` (NoTracking, read-only replica)
 - **UpdateFromDto** delegates to the static Updater extension method on the DbContext (see updater-template.md)
 - Projectors (`{Entity}Mapper.ProjectorSearch`) used in query repo for efficient SQL translation
 - No `SaveChangesAsync` override on query repo — read-only by design
 - Entity-specific repositories for complex queries; `GenericRepositoryTrxn/Query` for simple CRUD
+- Use `ConfigureAwait(ConfigureAwaitOptions.None)` in repository methods (library code)

@@ -1,6 +1,6 @@
 # CI/CD — GitHub Actions
 
-Reference implementation: `sampleapp/src/TaskFlow/TaskFlow.Api/Dockerfile`, `sampleapp/src/Infrastructure/TaskFlow.Infrastructure.Data/Scripts/`.
+Reference implementation: `sample-app/src/TaskFlow/TaskFlow.Api/Dockerfile`, `sample-app/src/Infrastructure/TaskFlow.Infrastructure.Data/Scripts/`.
 
 ## Prerequisites
 

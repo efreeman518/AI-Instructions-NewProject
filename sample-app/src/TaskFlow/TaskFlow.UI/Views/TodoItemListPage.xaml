@@ -1,0 +1,131 @@
+<Page x:Class="TaskFlow.UI.Views.TodoItemListPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:utu="using:Uno.Toolkit.UI"
+      xmlns:uer="using:Uno.Extensions.Reactive.UI"
+      xmlns:uen="using:Uno.Extensions.Navigation.UI"
+      xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
+      Style="{StaticResource TaskFlowPageStyle}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Navigation bar with create button -->
+        <utu:NavigationBar Grid.Row="0"
+                           Content="Tasks">
+            <utu:NavigationBar.PrimaryCommands>
+                <AppBarButton Label="New"
+                              Command="{Binding CreateItem}">
+                    <AppBarButton.Icon>
+                        <SymbolIcon Symbol="Add" />
+                    </AppBarButton.Icon>
+                </AppBarButton>
+            </utu:NavigationBar.PrimaryCommands>
+        </utu:NavigationBar>
+
+        <!-- Search bar -->
+        <AutoSuggestBox Grid.Row="1"
+                        PlaceholderText="Search tasks..."
+                        QueryIcon="Find"
+                        Text="{Binding SearchTerm, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        Margin="16,8" />
+
+        <!-- Task list -->
+        <RefreshContainer Grid.Row="2"
+                          RefreshRequested="OnRefreshRequested">
+        <uer:FeedView Source="{Binding Items}">
+            <uer:FeedView.ValueTemplate>
+                <DataTemplate>
+                    <muxc:ItemsRepeater ItemsSource="{Binding Data}"
+                                        Margin="16,0">
+                        <muxc:ItemsRepeater.Layout>
+                            <muxc:StackLayout Spacing="8" />
+                        </muxc:ItemsRepeater.Layout>
+                        <muxc:ItemsRepeater.ItemTemplate>
+                            <DataTemplate>
+                                <utu:Card Padding="16"
+                                          uen:Navigation.Request="TodoItemDetail"
+                                          uen:Navigation.Data="{Binding}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Grid.Column="0" Spacing="4">
+                                            <TextBlock Text="{Binding Title}"
+                                                       FontSize="16"
+                                                       FontWeight="SemiBold"
+                                                       TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Text="{Binding Description}"
+                                                       FontSize="13"
+                                                       Opacity="0.6"
+                                                       MaxLines="2"
+                                                       TextTrimming="CharacterEllipsis" />
+                                            <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,4,0,0">
+                                                <TextBlock Text="{Binding StatusDisplay}"
+                                                           FontSize="12"
+                                                           Opacity="0.7" />
+                                                <TextBlock Text="{Binding PriorityDisplay}"
+                                                           FontSize="12"
+                                                           Opacity="0.7" />
+                                                <TextBlock Text="{Binding CategoryName}"
+                                                           FontSize="12"
+                                                           Opacity="0.5" />
+                                            </StackPanel>
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="1"
+                                                    VerticalAlignment="Center"
+                                                    HorizontalAlignment="Right"
+                                                    Spacing="4">
+                                            <TextBlock Text="{Binding CommentCount}"
+                                                       FontSize="11"
+                                                       Opacity="0.5"
+                                                       HorizontalAlignment="Right" />
+                                        </StackPanel>
+
+                                        <!-- Delete button -->
+                                        <Button Grid.Column="2"
+                                                Click="OnDeleteClick"
+                                                VerticalAlignment="Center"
+                                                Style="{StaticResource TextButtonStyle}"
+                                                Padding="8">
+                                            <SymbolIcon Symbol="Delete" />
+                                        </Button>
+                                    </Grid>
+                                </utu:Card>
+                            </DataTemplate>
+                        </muxc:ItemsRepeater.ItemTemplate>
+                    </muxc:ItemsRepeater>
+                </DataTemplate>
+            </uer:FeedView.ValueTemplate>
+            <uer:FeedView.ProgressTemplate>
+                <DataTemplate>
+                    <ProgressRing IsActive="True"
+                                  HorizontalAlignment="Center"
+                                  Margin="0,48" />
+                </DataTemplate>
+            </uer:FeedView.ProgressTemplate>
+            <uer:FeedView.NoneTemplate>
+                <DataTemplate>
+                    <StackPanel HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Spacing="8"
+                                Margin="0,48">
+                        <SymbolIcon Symbol="List" Opacity="0.3" />
+                        <TextBlock Text="No tasks found"
+                                   HorizontalAlignment="Center"
+                                   Opacity="0.5" />
+                    </StackPanel>
+                </DataTemplate>
+            </uer:FeedView.NoneTemplate>
+        </uer:FeedView>
+        </RefreshContainer>
+    </Grid>
+</Page>

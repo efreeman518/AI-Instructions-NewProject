@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="MSTest" />
+    <PackageReference Include="NetArchTest.Rules" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Domain\Domain.Model\Domain.Model.csproj" />
+    <ProjectReference Include="..\..\Domain\Domain.Shared\Domain.Shared.csproj" />
+    <ProjectReference Include="..\..\Application\Application.Contracts\Application.Contracts.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\Infrastructure.Data\Infrastructure.Data.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\Infrastructure.Repositories\Infrastructure.Repositories.csproj" />
+    <ProjectReference Include="..\..\TaskFlow\TaskFlow.Api\TaskFlow.Api.csproj" />
+  </ItemGroup>
+
+</Project>

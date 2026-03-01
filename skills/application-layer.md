@@ -12,7 +12,7 @@ The application layer owns DTOs, contracts, static mappers, orchestration servic
 4. Services enforce validation + tenant boundary checks before writes.
 5. Internal event DTOs and handlers stay in contracts/message-handler projects.
 
-Reference implementation: `sampleapp/src/Application/`.
+Reference implementation: `sample-app/src/Application/`.
 
 ---
 
@@ -23,9 +23,9 @@ Application/
 ├── Application.Contracts/
 │   ├── Services/
 │   ├── Repositories/
-│   ├── Mappers/
 │   ├── Events/
 │   └── Constants/
+├── Application.Mappers/         # Separate project — NOT inside Contracts
 ├── Application.Models/
 ├── Application.Services/
 │   └── Rules/
@@ -78,7 +78,7 @@ Mapper rules:
 1. Keep mappers static (no DI registration).
 2. `ToEntity()` delegates construction to domain factories.
 3. Projectors must be EF-translatable (no non-translatable method calls).
-4. Use multiple projectors when needed (`Search`, `Root`, `StaticItems`).
+4. Use multiple projectors when needed (`Basic`, `Search`, `Full`, `StaticItems`).
 
 ---
 
@@ -90,8 +90,12 @@ public class {Entity}Service(
     IRequestContext<string, Guid?> requestContext,
     I{Entity}RepositoryTrxn repoTrxn,
     I{Entity}RepositoryQuery repoQuery,
+    IEntityCacheProvider entityCache,
+    IFusionCacheProvider fusionCacheProvider,
     ITenantBoundaryValidator tenantBoundaryValidator) : I{Entity}Service
 {
+    private readonly IFusionCache _cache = fusionCacheProvider.GetCache(AppConstants.DEFAULT_CACHE);
+
     public async Task<Result<DefaultResponse<{Entity}Dto>>> GetAsync(Guid id, CancellationToken ct = default)
     {
         var entity = await repoTrxn.Get{Entity}Async(id, includeChildren: true, ct);
@@ -115,7 +119,9 @@ Service rules:
 2. Validate request structure before domain operations.
 3. Enforce tenant boundary on each operation.
 4. Use transactional repo for writes, query repo for read/projection.
-5. Keep delete idempotent.
+5. Keep delete idempotent — for **hard delete**, call `repoTrxn.Delete(entity)` before `SaveChangesAsync`. For **soft delete** (main entities), flip flags: `entity.Update(flags: entity.Flags | {Entity}Flags.IsInactive)` then save. Both patterns wrap `SaveChangesAsync` in try/catch returning `Result.Failure(ex.GetBaseException().Message)`.
+6. **CreateAsync must apply ALL DTO properties** — `Entity.Create()` only takes factory args. Call `entity.Update(...)` afterward to apply remaining DTO fields (e.g., EstimatedHours, ActualHours). If `Update()` triggers `Valid()`, propagate failures.
+7. **SaveChangesAsync overload** — Always use `SaveChangesAsync(OptimisticConcurrencyWinner.ClientWins, ct)`. The parameterless `SaveChangesAsync(ct)` throws `NotImplementedException`.
 
 Flow pattern:
 
@@ -181,12 +187,15 @@ public interface I{Entity}Service
 ```csharp
 public record UserCreatedEvent(Guid UserId, Guid TenantId, string Email);
 
+[ScopedMessageHandler]  // Required when handler has scoped DI dependencies (repos, services)
 public class UserCreatedEventHandler(ILogger<UserCreatedEventHandler> logger)
     : IMessageHandler<UserCreatedEvent>
 {
     public Task HandleAsync(UserCreatedEvent message, CancellationToken ct = default) => Task.CompletedTask;
 }
 ```
+
+> **Note:** `[ScopedMessageHandler]` attribute (from `EF.BackgroundServices.Attributes`) is required on handlers that inject scoped services (repositories, DbContext). Handlers with only singleton dependencies (like `ILogger`) don't require it, but adding it is harmless.
 
 Handlers are auto-registered through the internal message bus at startup.
 

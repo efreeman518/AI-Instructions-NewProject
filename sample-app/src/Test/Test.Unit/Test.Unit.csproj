@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Moq" />
+    <PackageReference Include="MSTest" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Application\Application.Contracts\Application.Contracts.csproj" />
+    <ProjectReference Include="..\..\Application\Application.Mappers\Application.Mappers.csproj" />
+    <ProjectReference Include="..\..\Application\Application.Services\Application.Services.csproj" />
+    <ProjectReference Include="..\..\Application\Application.MessageHandlers\Application.MessageHandlers.csproj" />
+    <ProjectReference Include="..\..\Domain\Domain.Model\Domain.Model.csproj" />
+    <ProjectReference Include="..\Test.Support\Test.Support.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
+  </ItemGroup>
+</Project>

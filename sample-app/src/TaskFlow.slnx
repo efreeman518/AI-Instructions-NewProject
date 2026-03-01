@@ -1,0 +1,58 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/Application/">
+    <Project Path="Application/Application.Contracts/Application.Contracts.csproj" />
+    <Project Path="Application/Application.Mappers/Application.Mappers.csproj" />
+    <Project Path="Application/Application.MessageHandlers/Application.MessageHandlers.csproj" />
+    <Project Path="Application/Application.Models/Application.Models.csproj" />
+    <Project Path="Application/Application.Services/Application.Services.csproj" />
+  </Folder>
+  <Folder Name="/Aspire/">
+    <Project Path="Aspire/AppHost/Aspire.AppHost.csproj" />
+    <Project Path="Aspire/ServiceDefaults/Aspire.ServiceDefaults.csproj" />
+  </Folder>
+  <Folder Name="/Domain/">
+    <Project Path="Domain/Domain.Model/Domain.Model.csproj" />
+    <Project Path="Domain/Domain.Shared/Domain.Shared.csproj" />
+  </Folder>
+  <Folder Name="/Functions/">
+    <Project Path="Functions/FunctionApp/FunctionApp.csproj" />
+  </Folder>
+  <Folder Name="/Infrastructure/">
+    <Project Path="Infrastructure/Infrastructure.Data/Infrastructure.Data.csproj" />
+    <Project Path="Infrastructure/Infrastructure.EntraExt/Infrastructure.EntraExt.csproj" />
+    <Project Path="Infrastructure/Infrastructure.Notification/Infrastructure.Notification.csproj" />
+    <Project Path="Infrastructure/Infrastructure.Repositories/Infrastructure.Repositories.csproj" />
+    <Project Path="Infrastructure/Infrastructure.Utility/Infrastructure.Utility.csproj" />
+  </Folder>
+  <Folder Name="/TaskFlow/">
+    <Project Path="TaskFlow/TaskFlow.Api/TaskFlow.Api.csproj" />
+    <Project Path="TaskFlow/TaskFlow.BackgroundServices/TaskFlow.BackgroundServices.csproj" />
+    <Project Path="TaskFlow/TaskFlow.Bootstrapper/TaskFlow.Bootstrapper.csproj" />
+    <Project Path="TaskFlow/TaskFlow.Gateway/TaskFlow.Gateway.csproj" />
+    <Project Path="TaskFlow/TaskFlow.Scheduler/TaskFlow.Scheduler.csproj" />
+    <Project Path="TaskFlow/TaskFlow.UI/TaskFlow.UI.csproj" />
+  </Folder>
+  <Folder Name="/Solution/">
+    <File Path="Directory.Packages.props" />
+    <File Path="global.json" />
+    <File Path="nuget.config" />
+  </Folder>
+  <Folder Name="/Support/">
+    <File Path="Support/assign-managed-identity-to-app-role.ps1" />
+  </Folder>
+  <Folder Name="/Test/">
+    <Project Path="Test/Test.Architecture/Test.Architecture.csproj" />
+    <Project Path="Test/Test.Benchmarks/Test.Benchmarks.csproj" />
+    <Project Path="Test/Test.Endpoints/Test.Endpoints.csproj" />
+    <Project Path="Test/Test.Integration/Test.Integration.csproj" />
+    <Project Path="Test/Test.Load/Test.Load.csproj" />
+    <Project Path="Test/Test.PlaywrightUI/Test.PlaywrightUI.csproj" />
+    <Project Path="Test/Test.Support/Test.Support.csproj" />
+    <Project Path="Test/Test.Unit/Test.Unit.csproj" />
+  </Folder>
+</Solution>

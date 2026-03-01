@@ -14,8 +14,8 @@ Use for:
 
 ## Non-Negotiables
 
-- `sampleapp/` is **read-only reference**; never edit/build/delete files there.
-- Load [sampleapp-patterns.md](sampleapp-patterns.md) only when selecting cross-project patterns or before opening raw `sampleapp/src/` files. Do not preload it for routine scaffolding.
+- `sample-app/` is **read-only reference**; never edit/build/delete files there.
+- Load [sampleapp-patterns.md](sampleapp-patterns.md) only when selecting cross-project patterns or before opening raw `sample-app/src/` files. Do not preload it for routine scaffolding.
 - Generate code only in the user's new project directory.
 - Use `.slnx` (not legacy `.sln`).
 - Use central package management (`Directory.Packages.props`).

@@ -1,0 +1,104 @@
+<Page x:Class="TaskFlow.UI.Views.TodoItemEditPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:utu="using:Uno.Toolkit.UI"
+      xmlns:uer="using:Uno.Extensions.Reactive.UI"
+      xmlns:uen="using:Uno.Extensions.Navigation.UI"
+      Style="{StaticResource TaskFlowPageStyle}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Navigation bar with back and save -->
+        <utu:NavigationBar Grid.Row="0"
+                           Content="{Binding PageTitle}">
+            <utu:NavigationBar.MainCommand>
+                <AppBarButton Command="{Binding Cancel}">
+                    <AppBarButton.Icon>
+                        <SymbolIcon Symbol="Back" />
+                    </AppBarButton.Icon>
+                </AppBarButton>
+            </utu:NavigationBar.MainCommand>
+            <utu:NavigationBar.PrimaryCommands>
+                <AppBarButton Label="Save"
+                              Command="{Binding Save}">
+                    <AppBarButton.Icon>
+                        <SymbolIcon Symbol="Save" />
+                    </AppBarButton.Icon>
+                </AppBarButton>
+            </utu:NavigationBar.PrimaryCommands>
+        </utu:NavigationBar>
+
+        <!-- Edit form -->
+        <ScrollViewer Grid.Row="1"
+                      Padding="16">
+            <StackPanel Spacing="20"
+                        MaxWidth="600"
+                        HorizontalAlignment="Stretch">
+
+                <!-- Title -->
+                <TextBox Header="Title"
+                         PlaceholderText="Enter task title"
+                         Text="{Binding Item.Title, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                <!-- Description -->
+                <TextBox Header="Description"
+                         PlaceholderText="Enter task description (optional)"
+                         Text="{Binding Item.Description, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         MinHeight="100" />
+
+                <!-- Priority display -->
+                <TextBlock Text="{Binding Item.PriorityDisplay}"
+                           FontSize="14"
+                           Opacity="0.7" />
+
+                <!-- Category picker -->
+                <uer:FeedView Source="{Binding Categories}">
+                    <uer:FeedView.ValueTemplate>
+                        <DataTemplate>
+                            <ComboBox Header="Category"
+                                      ItemsSource="{Binding Data}"
+                                      DisplayMemberPath="Name"
+                                      HorizontalAlignment="Stretch"
+                                      PlaceholderText="Select a category (optional)" />
+                        </DataTemplate>
+                    </uer:FeedView.ValueTemplate>
+                    <uer:FeedView.ProgressTemplate>
+                        <DataTemplate>
+                            <ProgressRing IsActive="True"
+                                          Width="24"
+                                          Height="24" />
+                        </DataTemplate>
+                    </uer:FeedView.ProgressTemplate>
+                </uer:FeedView>
+
+                <!-- Action buttons -->
+                <Grid ColumnSpacing="12"
+                      Margin="0,16,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Button Grid.Column="0"
+                            Content="Cancel"
+                            Command="{Binding Cancel}"
+                            HorizontalAlignment="Stretch"
+                            Style="{StaticResource OutlinedButtonStyle}" />
+
+                    <Button Grid.Column="1"
+                            Content="Save"
+                            Command="{Binding Save}"
+                            HorizontalAlignment="Stretch"
+                            Style="{StaticResource FilledButtonStyle}" />
+                </Grid>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>

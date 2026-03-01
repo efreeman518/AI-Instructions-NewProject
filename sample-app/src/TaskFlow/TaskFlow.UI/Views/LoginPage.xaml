@@ -1,0 +1,41 @@
+<Page x:Class="TaskFlow.UI.Views.LoginPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:utu="using:Uno.Toolkit.UI"
+      xmlns:uen="using:Uno.Extensions.Navigation.UI"
+      Style="{StaticResource TaskFlowPageStyle}">
+
+    <Grid HorizontalAlignment="Center"
+          VerticalAlignment="Center"
+          MaxWidth="400"
+          Padding="24">
+        <StackPanel Spacing="24">
+
+            <TextBlock Text="TaskFlow"
+                       FontSize="32"
+                       FontWeight="Bold"
+                       HorizontalAlignment="Center" />
+
+            <TextBlock Text="Sign in to continue"
+                       FontSize="16"
+                       HorizontalAlignment="Center"
+                       Opacity="0.7" />
+
+            <TextBox x:Name="UsernameBox"
+                     Header="Username"
+                     PlaceholderText="Enter your username"
+                     Text="{Binding UserCredentials.Username, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+            <PasswordBox x:Name="PasswordBox"
+                         Header="Password"
+                         PlaceholderText="Enter your password"
+                         Password="{Binding UserCredentials.Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+            <Button Content="Sign In"
+                    Command="{Binding Login}"
+                    HorizontalAlignment="Stretch"
+                    Style="{StaticResource FilledButtonStyle}" />
+
+        </StackPanel>
+    </Grid>
+</Page>
