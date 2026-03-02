@@ -93,7 +93,7 @@ internal sealed class {Agent}AgentService : I{Agent}Agent
             // Domain operation tool — delegates to application service
             AIFunctionFactory.Create(
                 async ([Description("The {entity} ID")] string id, CancellationToken ct) =>
-                    await entityService.GetByIdAsync(Guid.Parse(id), ct),
+                    await entityService.GetAsync(Guid.Parse(id), ct),
                 "Get{Entity}",
                 "Get a {entity} by its ID"),
 
@@ -267,7 +267,7 @@ internal static class {Agent}Tools
         I{Entity}Service entityService,
         CancellationToken ct)
     {
-        return await entityService.GetByIdAsync(Guid.Parse(id), ct);
+        return await entityService.GetAsync(Guid.Parse(id), ct);
     }
 
     // Register tools with an agent:

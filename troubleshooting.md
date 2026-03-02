@@ -10,7 +10,7 @@ This file is intentionally lightweight. Use it to decide **what the AI should do
 
 AI agents generate code. Engineers own environment and runtime setup.
 
-> **⛔ NEVER fix, modify, or build sampleapp codeunless explicitly instructed to do so.** The `sample-app/` directory is read-only reference. All code generation and fixes apply to the **new project** only. If an error points to a sampleapp file, document the issue and fix only in UPDATE_INSTRUCTIONS.md — it is not your code to fix directly.
+> **⛔ NEVER fix, modify, or build sampleapp code unless explicitly instructed to do so.** The `sample-app/` directory is read-only reference. All code generation and fixes apply to the **new project** only. If an error points to a sampleapp file, document the issue and fix only in `UPDATE-INSTRUCTIONS.md` — it is not your code to fix directly.
 
 When an error appears:
 1. Classify it (code-generation vs infrastructure/tooling)

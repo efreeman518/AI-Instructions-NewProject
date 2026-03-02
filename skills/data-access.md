@@ -150,7 +150,7 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<{Project}D
 
 Common commands:
 
-```bash
+```powershell
 $env:EFCORETOOLSDB = "Server=..."
 dotnet ef migrations add {MigrationName} --context {Project}DbContextTrxn --project Infrastructure.Data
 dotnet ef migrations script --idempotent --context {Project}DbContextTrxn --project Infrastructure.Data
