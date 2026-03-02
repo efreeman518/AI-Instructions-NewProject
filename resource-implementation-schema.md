@@ -28,6 +28,7 @@ includeUnoUI: false
 includeIaC: true
 includeGitHubActions: false
 includeAzd: false
+includeAiServices: false
 ```
 
 ## Scaffold Configuration
@@ -238,14 +239,89 @@ Options: Azure Service Bus, Event Grid, Event Hubs. See [skills/messaging.md](sk
 | `includeAzd` | `false` |
 | `usePrivateEndpoints` | `false` |
 
-### AI Services (if applicable)
+### AI Services
 
-| Input | Default |
-|---|---|
-| `includeAiServices` | `false` |
-| `aiSearchProvider` | `none` |
-| `aiAgentFramework` | `none` |
-| `includeMultiAgent` | `false` |
+Define AI integration resources when `includeAiServices: true`. Maps Phase 1 `aiCapabilities` to concrete Azure resources and code frameworks.
+
+```yaml
+aiServices:
+  includeAiServices: true
+
+  # --- Microsoft Foundry ---
+  foundry:
+    projectName: ""                    # Microsoft Foundry project name
+    models:
+      - name: gpt-4o
+        purpose: agent-reasoning       # agent-reasoning | embedding | completion
+        deploymentName: gpt-4o-deploy
+      - name: text-embedding-3-small
+        purpose: embedding
+        deploymentName: embedding-deploy
+    useFoundryAgentService: false      # true = hosted agents in Foundry Agent Service
+
+  # --- Semantic Search ---
+  search:
+    provider: AzureAISearch            # AzureAISearch | None
+    indexes:
+      - name: products-index
+        sourceEntity: Product
+        fields:
+          - { name: Name, type: searchable, analyzer: standard }
+          - { name: Description, type: searchable, analyzer: standard }
+          - { name: DescriptionVector, type: vector, dimensions: 1536, algorithm: hnsw }
+        searchMode: hybrid             # keyword | vector | hybrid
+        semanticConfig: true
+    embeddingModel: text-embedding-3-small
+    embeddingDimensions: 1536
+    vectorizationStrategy: on-write    # on-write | batch | change-feed
+
+  # --- Agent Framework ---
+  agents:
+    framework: AgentFramework          # AgentFramework (Microsoft Agent Framework)
+    agents:
+      - name: SupportTriageAgent
+        type: ChatClientAgent          # ChatClientAgent | FoundryAgent | CustomAgent
+        model: gpt-4o
+        systemPrompt: "You are a support triage agent..."
+        tools: [SearchKnowledgeBase, GetTicketHistory, ClassifyUrgency]
+        groundingSource: products-index  # optional: search index for RAG
+        humanInLoop: false
+      - name: ContentSummaryAgent
+        type: ChatClientAgent
+        model: gpt-4o
+        tools: [SummarizeText]
+
+    # --- Multi-Agent Workflow (if needed) ---
+    workflow:
+      enabled: false
+      pattern: sequential              # sequential | concurrent | supervisory | handoff
+      agents: [SupportTriageAgent, EscalationAgent]
+      checkpointing: false             # persist workflow state for long-running processes
+```
+
+#### AI Services Selection Guide
+
+| Signal | Azure AI Search | None (EF full-text) |
+|---|---|---|
+| Scale | Production semantic/vector search | Dev/PoC, small datasets |
+| Data shape | Dedicated search indexes | Existing SQL tables |
+| Query style | Hybrid (keyword + vector + semantic) | SQL `LIKE` / `CONTAINS` |
+| Use when | Primary search experience | Simple keyword filters suffice |
+
+#### Agent Framework Concepts
+
+| Concept | Description | Use when |
+|---|---|---|
+| `ChatClientAgent` | Wraps any `IChatClient` (Azure OpenAI, Foundry Models) | Most agent scenarios — tool calling, completions |
+| `FoundryAgent` | Uses Foundry Agent Service as hosted backend | Hosted memory, knowledge (Foundry IQ), tool catalog |
+| `CustomAgent` | Subclass `AIAgent` for full control | Non-LLM agents, custom inference |
+| Function tools | C# methods via `AIFunctionFactory.Create()` | Domain operations exposed to agents |
+| Agent-as-tool | `.AsAIFunction()` on an agent | Agent composition / delegation |
+| Workflows | Graph-based executors + edges | Multi-agent orchestration, sequential/parallel/branching |
+| Sessions | `AgentSession` for multi-turn state | Conversational agents, stateful interactions |
+| Middleware | Run/function-calling/IChatClient interception | Logging, auth, content safety, error handling |
+
+> **Note:** Microsoft Agent Framework is the successor to both Semantic Kernel and AutoGen. It combines AutoGen's simple agent abstractions with Semantic Kernel's enterprise features (session state, type safety, middleware, telemetry) and adds graph-based workflows for multi-agent orchestration. See [Agent Framework docs](https://learn.microsoft.com/en-us/agent-framework/overview/) and [Microsoft Foundry docs](https://learn.microsoft.com/en-us/azure/ai-foundry/what-is-foundry).
 
 ### Testing
 
@@ -343,3 +419,4 @@ Before moving to Phase 3 (Implementation Plan), verify all of the following:
 - [ ] If `many-to-many` relationship exists, `joinEntity` is specified
 - [ ] `testingProfile` is set (`minimal`, `balanced`, or `comprehensive`)
 - [ ] `customNugetFeeds` is defined (empty array if none)
+- [ ] If `includeAiServices: true`: Foundry project name set, at least one model defined, each agent references a defined model, search indexes reference defined entities

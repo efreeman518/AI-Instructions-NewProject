@@ -176,6 +176,11 @@ Load only enabled concerns: `skills/gateway.md`, `skills/aspire.md`, `skills/con
 ### Phase 4f — Authentication (Final)
 - `skills/identity-management.md`
 
+### Phase 4g — AI Integration (if `includeAiServices: true`)
+- `skills/ai-integration.md`
+- `templates/ai-search-template.md` *(if search configured)*
+- `templates/agent-template.md` *(if agents configured)*
+
 ### On-Demand (Load When Debugging)
 - `skills/error-handling.md` — cross-cutting error pipeline reference (load when debugging error flows)
 - `skills/migrations.md` — EF migration strategy (load when adding/running migrations)
@@ -224,6 +229,9 @@ Load only enabled concerns: `skills/gateway.md`, `skills/aspire.md`, `skills/con
 ### 4f — Authentication (Final)
 21. [skills/identity-management.md](skills/identity-management.md) *(defer to end; use stubs in earlier phases)*
 
+### 4g — AI Integration (if `includeAiServices: true`)
+22. [skills/ai-integration.md](skills/ai-integration.md) *(search + agents + workflows)*
+
 ## Template Usage
 
 Use templates for generated artifacts and keep naming aligned with [placeholder-tokens.md](placeholder-tokens.md).
@@ -270,6 +278,7 @@ Commit after each successful sub-phase to enable safe rollback:
 3. **After Phase 4c (Runtime/Edge):** `git add -A && git commit -m "scaffold: runtime — gateway, aspire, config, caching"`
 4. **After Phase 4d (Optional Hosts):** `git add -A && git commit -m "scaffold: optional hosts — scheduler, functions, UI"`
 5. **After Phase 4e (Quality):** `git add -A && git commit -m "scaffold: quality — tests, IaC, CI/CD"`
+6. **After Phase 4g (AI Integration):** `git add -A && git commit -m "scaffold: AI integration — search, agents, workflows"`
 
 If a sub-phase fails after the one-pass fix attempt:
 - `git stash` the broken changes.

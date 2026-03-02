@@ -69,6 +69,20 @@ Produced after Phase 1 (domain definition) and Phase 2 (resource mapping) are co
 - **External / consumer users:** Microsoft Entra External ID, Google, Facebook, Apple, OAuth2/OIDC
 - **Hybrid:** Entra ID for internal + Entra External ID or social providers for external users
 
+### Phase 4g — AI Integration (if `includeAiServices: true`)
+- [ ] `Infrastructure.AI` project with search/agent service interfaces
+- [ ] Azure AI Search index definitions + client wiring (if search configured)
+- [ ] Embedding pipeline: on-write handler (domain event → vectorize → index) or batch job
+- [ ] Agent service scaffolding (Microsoft Agent Framework `ChatClientAgent` / `FoundryAgent`)
+- [ ] Agent function tools wrapping existing `I{Entity}Service` domain operations
+- [ ] Agent middleware (logging, auth context propagation, content safety)
+- [ ] Multi-agent workflow with executors + edges (if `workflow.enabled: true`)
+- [ ] Aspire resource wiring (`AddAzureAISearch()`, `AddAzureOpenAI()`)
+- [ ] Bootstrapper DI registration for AI services
+- [ ] API endpoints for search + agent interactions
+- [ ] Configuration: Foundry endpoint, model deployment names, search index names in appsettings
+- [ ] **Checkpoint:** search returns results, agent responds to test prompt
+
 ## Open Questions
 
 Resolve before Phase 4 starts:

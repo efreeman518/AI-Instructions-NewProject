@@ -24,6 +24,10 @@ When generating code from templates and skill files, substitute these placeholde
 | `{SolutionName}` | PascalCase | Derived — `{Org}.{Project}` or `{Project}` | `TaskFlow` | Solution file name (`.slnx`). Matches the full qualified project prefix. |
 | `{entra-tenant-id}` | GUID | From domain inputs `authProvider` config | `00000000-...` | Azure Entra ID tenant GUID. |
 | `{api-client-id}` | GUID | From domain inputs `authProvider` config | `11111111-...` | API app registration client ID. |
+| `{Agent}` | PascalCase | Agent `name` from AI capabilities | `SupportTriage` | Agent class name prefix. Used in `{Agent}AgentService`, `I{Agent}Agent`. |
+| `{agent-route}` | kebab-case | Agent name kebab-cased | `support-triage` | URL-safe route segment for agent endpoints. |
+| `{Tool}` | PascalCase | Tool/function name from agent config | `SearchKnowledgeBase` | Function tool name. Used in tool classes and `AIFunctionFactory.Create()`. |
+| `{SearchIndex}` | kebab-case | Index `name` from search config | `products-index` | Azure AI Search index name. |
 
 ## Casing Conventions
 

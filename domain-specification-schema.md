@@ -243,6 +243,64 @@ ugcLifecyclePolicy:
   authorRedactionSupported: true
 ```
 
+## AI Capabilities (Optional)
+
+Capture business-level intent for AI-powered features. No implementation details — those are Phase 2 concerns.
+
+### Semantic Search
+
+Identify entities where users should find results by meaning, not just exact keywords.
+
+```yaml
+aiCapabilities:
+  search:
+    - entity: Product
+      searchableFields: [Name, Description, Tags]
+      intent: "Users find products by describing what they need, not exact keywords"
+    - entity: KnowledgeArticle
+      searchableFields: [Title, Body, Summary]
+      intent: "Support agents find relevant articles from customer problem descriptions"
+```
+
+### Agent Workflows
+
+Identify decisions or processes where an AI agent could assist. Focus on what the agent should accomplish, not how.
+
+```yaml
+  agentWorkflows:
+    - name: CustomerSupportTriage
+      description: "Classify incoming support requests and route to the right team"
+      involvedEntities: [SupportTicket, Team, KnowledgeArticle]
+      humanInLoop: true
+      decisions:
+        - "Determine urgency and category"
+        - "Find relevant knowledge articles"
+        - "Suggest resolution or escalation path"
+    - name: ContentSummarizer
+      description: "Generate summaries of long-form content for preview cards"
+      involvedEntities: [Article]
+      humanInLoop: false
+      decisions:
+        - "Extract key points from article body"
+```
+
+### When to Add AI Capabilities
+
+- Search should be "smart" (meaning-based, not just keyword filters)
+- Decisions involve classification, ranking, or natural-language reasoning
+- Content generation or summarization is needed
+- Multi-step processes could benefit from autonomous planning
+
+### What Scaffolding Produces from AI Capabilities
+
+- Agent service shells + tool/function stubs
+- Search index definitions (mapped to concrete stores in Phase 2)
+- Workflow executor stubs (if multi-agent)
+- DI registration stubs
+- No model deployment or prompt engineering — those are Phase 2/4 concerns
+
+---
+
 ## Tenancy & Auth Model
 
 ```yaml
@@ -272,7 +330,8 @@ Work through these in order during Phase 1:
 4. **Rules** — what must be true? What constraints exist?
 5. **Events** — what happens that other parts of the system care about?
 6. **Workflows** — what multi-step processes exist beyond CRUD?
-7. **Tenancy/auth** — who can see/do what?
+7. **AI capabilities** — what searches should be "smart"? What decisions could an agent help with? What content should be generated or summarized?
+8. **Tenancy/auth** — who can see/do what?
 
 ---
 
@@ -287,3 +346,4 @@ Before moving to Phase 2 (Resource Definition), verify all of the following:
 - [ ] Every event `raisedBy` references a defined entity
 - [ ] `ProjectName` is set and valid (PascalCase, no spaces)
 - [ ] At least one entity is defined
+- [ ] If `aiCapabilities` is defined: every referenced entity exists, every `agentWorkflow` references defined entities, and `searchableFields` reference defined properties
