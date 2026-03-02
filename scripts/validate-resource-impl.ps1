@@ -79,10 +79,22 @@ foreach ($match in $storeMatches) {
 # -------------------------------------------------------------------------
 if ($DomainSpecPath -and (Test-Path $DomainSpecPath)) {
     $domainContent = Get-Content $DomainSpecPath -Raw -Encoding UTF8
-    $domainEntities = [regex]::Matches($domainContent, '(?m)^\s+-?\s*name:\s*(\w+)') | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique
+    # Scope to ## Entities section only (skip Business Rules, Events, State Machines)
+    $domainEntitiesSection = ''
+    $domainSectionMatch = [regex]::Match($domainContent, '(?ms)^## Entities\s*\r?\n(.*?)(?=\r?\n## |\z)')
+    if ($domainSectionMatch.Success) {
+        $domainEntitiesSection = $domainSectionMatch.Groups[1].Value
+    }
+    $domainEntities = [regex]::Matches($domainEntitiesSection, '(?m)^\s+-?\s*name:\s*(\w+)') | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique
 
+    # Scope to ## Entity-to-Store Mapping section only (skip Aspire, API endpoints, services)
+    $storeMapSection = ''
+    $storeMapMatch = [regex]::Match($content, '(?ms)^## Entity-to-Store Mapping\s*\r?\n(.*?)(?=\r?\n## |\z)')
+    if ($storeMapMatch.Success) {
+        $storeMapSection = $storeMapMatch.Groups[1].Value
+    }
     $resourceEntities = @()
-    $reEntityMatches = [regex]::Matches($content, '(?m)^\s+-?\s*name:\s*(\w+)')
+    $reEntityMatches = [regex]::Matches($storeMapSection, '(?m)^  -\s*name:\s*(\w+)')
     foreach ($match in $reEntityMatches) {
         $resourceEntities += $match.Groups[1].Value
     }

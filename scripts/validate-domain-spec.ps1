@@ -30,6 +30,15 @@ $content = Get-Content $FilePath -Raw -Encoding UTF8
 $lines = Get-Content $FilePath -Encoding UTF8
 
 # -------------------------------------------------------------------------
+# 0) Extract the Entities section only (avoid Business Rules, Events, etc.)
+# -------------------------------------------------------------------------
+$entitiesSection = ''
+$sectionMatch = [regex]::Match($content, '(?ms)^## Entities\s*\r?\n(.*?)(?=\r?\n## |\z)')
+if ($sectionMatch.Success) {
+    $entitiesSection = $sectionMatch.Groups[1].Value
+}
+
+# -------------------------------------------------------------------------
 # 1) Required top-level keys
 # -------------------------------------------------------------------------
 $requiredKeys = @('projectName', 'entities')
@@ -43,7 +52,7 @@ foreach ($key in $requiredKeys) {
 # 2) Entity name conflict check (C# reserved type names)
 # -------------------------------------------------------------------------
 $reservedNames = @('Task', 'Thread', 'Timer', 'Type', 'String', 'Object', 'Action', 'Attribute', 'File', 'Path', 'Event', 'Delegate')
-$entityMatches = [regex]::Matches($content, '(?m)^\s+-?\s*name:\s*(\w+)')
+$entityMatches = [regex]::Matches($entitiesSection, '(?m)^\s+-?\s*name:\s*(\w+)')
 foreach ($match in $entityMatches) {
     $entityName = $match.Groups[1].Value
     if ($entityName -in $reservedNames) {
@@ -55,13 +64,13 @@ foreach ($match in $entityMatches) {
 # 3) Entity must have at least one property defined
 # -------------------------------------------------------------------------
 $entityBlockPattern = '(?m)^\s+-?\s*name:\s*\w+'
-$entityBlocks = [regex]::Matches($content, $entityBlockPattern)
+$entityBlocks = [regex]::Matches($entitiesSection, $entityBlockPattern)
 foreach ($match in $entityBlocks) {
     $startIndex = $match.Index + $match.Length
     # Check if properties: appears before next entity or end
-    $nextEntityMatch = [regex]::Match($content.Substring($startIndex), '(?m)^\s+-?\s*name:\s*\w+')
-    $blockEnd = if ($nextEntityMatch.Success) { $startIndex + $nextEntityMatch.Index } else { $content.Length }
-    $block = $content.Substring($startIndex, $blockEnd - $startIndex)
+    $nextEntityMatch = [regex]::Match($entitiesSection.Substring($startIndex), '(?m)^\s+-?\s*name:\s*\w+')
+    $blockEnd = if ($nextEntityMatch.Success) { $startIndex + $nextEntityMatch.Index } else { $entitiesSection.Length }
+    $block = $entitiesSection.Substring($startIndex, $blockEnd - $startIndex)
     if ($block -notmatch 'properties:') {
         $entityName = [regex]::Match($match.Value, 'name:\s*(\w+)').Groups[1].Value
         $issues += Add-Issue -Category 'IncompleteEntity' -Message "Entity '$entityName' has no properties defined."
@@ -76,7 +85,7 @@ foreach ($match in $entityMatches) {
     $allEntityNames += $match.Groups[1].Value
 }
 
-$relationshipTargets = [regex]::Matches($content, '(?m)(?:target|entity):\s*(\w+)')
+$relationshipTargets = [regex]::Matches($entitiesSection, '(?m)(?:target|entity):\s*(\w+)')
 foreach ($match in $relationshipTargets) {
     $target = $match.Groups[1].Value
     if ($target -notin $allEntityNames -and $target -ne 'self') {

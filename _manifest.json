@@ -12,7 +12,7 @@
                                   ".git/**"
                               ]
               },
-    "totalEstimatedTokens":  128617,
+    "totalEstimatedTokens":  131887,
     "contextBudget":  {
                           "default":  30000,
                           "extended":  60000,
@@ -542,7 +542,7 @@
                   {
                       "path":  "_manifest.json",
                       "phase":  "metadata",
-                      "estimatedTokens":  4101
+                      "estimatedTokens":  7371
                   },
                   {
                       "path":  "skills/observability.md",
