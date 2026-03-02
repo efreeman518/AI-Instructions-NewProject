@@ -12,7 +12,7 @@
       ".git/**"
     ]
   },
-  "totalEstimatedTokens": 79058,
+  "totalEstimatedTokens": 73500,
   "files": [
     {
       "path": "START-AI.md",
@@ -22,17 +22,12 @@
     {
       "path": "SKILL.md",
       "phase": "phase-4-base",
-      "estimatedTokens": 2119
+      "estimatedTokens": 3100
     },
     {
       "path": "placeholder-tokens.md",
       "phase": "phase-4-base",
       "estimatedTokens": 1723
-    },
-    {
-      "path": "ai-build-optimization.md",
-      "phase": "phase-4-base",
-      "estimatedTokens": 1067
     },
     {
       "path": "quick-reference.md",
@@ -45,14 +40,9 @@
       "estimatedTokens": 586
     },
     {
-      "path": "domain-design-guide.md",
-      "phase": "phase-1",
-      "estimatedTokens": 1000
-    },
-    {
       "path": "domain-specification-schema.md",
       "phase": "phase-1",
-      "estimatedTokens": 900
+      "estimatedTokens": 1700
     },
     {
       "path": "resource-implementation-schema.md",
@@ -72,12 +62,12 @@
     {
       "path": "skills/domain-model.md",
       "phase": "phase-4a",
-      "estimatedTokens": 1716
+      "estimatedTokens": 1100
     },
     {
       "path": "skills/data-access.md",
       "phase": "phase-4a",
-      "estimatedTokens": 1846
+      "estimatedTokens": 1300
     },
     {
       "path": "skills/package-dependencies.md",
@@ -112,7 +102,7 @@
     {
       "path": "skills/application-layer.md",
       "phase": "phase-4b",
-      "estimatedTokens": 1516
+      "estimatedTokens": 950
     },
     {
       "path": "skills/bootstrapper.md",

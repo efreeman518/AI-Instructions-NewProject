@@ -36,14 +36,7 @@ Application/
 
 ## DTO Pattern
 
-```csharp
-public record {Entity}Dto : EntityBaseDto, ITenantEntityDto
-{
-    [Required] public Guid TenantId { get; set; }
-    [Required] public string Name { get; set; } = null!;
-    public List<{Child}Dto> Children { get; set; } = [];
-}
-```
+Entity-specific DTOs and filters go under `Application.Models/{Entity}/`. See [dto-template.md](../templates/dto-template.md) for record patterns.
 
 Shared DTO infrastructure (do not duplicate per entity):
 
@@ -54,24 +47,11 @@ Shared DTO infrastructure (do not duplicate per entity):
 - `DefaultSearchFilter`
 - `SecurityRoleDto`
 
-Entity-specific DTOs and filters go under `Application.Models/{Entity}/`.
-
 ---
 
 ## Static Mapper Pattern
 
-```csharp
-public static class {Entity}Mapper
-{
-    public static {Entity}Dto ToDto(this {Entity} entity) => new() { Id = entity.Id, Name = entity.Name };
-
-    public static DomainResult<{Entity}> ToEntity(this {Entity}Dto dto, Guid tenantId)
-        => {Entity}.Create(tenantId, dto.Name);
-
-    public static readonly Expression<Func<{Entity}, {Entity}Dto>> ProjectorSearch =
-        entity => new {Entity}Dto { Id = entity.Id, Name = entity.Name };
-}
-```
+See [mapper-template.md](../templates/mapper-template.md) for full implementation.
 
 Mapper rules:
 
@@ -84,34 +64,7 @@ Mapper rules:
 
 ## Service Pattern
 
-```csharp
-public class {Entity}Service(
-    ILogger<{Entity}Service> logger,
-    IRequestContext<string, Guid?> requestContext,
-    I{Entity}RepositoryTrxn repoTrxn,
-    I{Entity}RepositoryQuery repoQuery,
-    IEntityCacheProvider entityCache,
-    IFusionCacheProvider fusionCacheProvider,
-    ITenantBoundaryValidator tenantBoundaryValidator) : I{Entity}Service
-{
-    private readonly IFusionCache _cache = fusionCacheProvider.GetCache(AppConstants.DEFAULT_CACHE);
-
-    public async Task<Result<DefaultResponse<{Entity}Dto>>> GetAsync(Guid id, CancellationToken ct = default)
-    {
-        var entity = await repoTrxn.Get{Entity}Async(id, includeChildren: true, ct);
-        if (entity is null) return Result<DefaultResponse<{Entity}Dto>>.None();
-
-        var boundary = tenantBoundaryValidator.EnsureTenantBoundary(
-            logger, requestContext.TenantId, requestContext.Roles, entity.TenantId,
-            "{Entity}:Get", nameof({Entity}), entity.Id);
-
-        if (boundary.IsFailure)
-            return Result<DefaultResponse<{Entity}Dto>>.Failure(boundary.ErrorMessage!);
-
-        return Result<DefaultResponse<{Entity}Dto>>.Success(new() { Item = entity.ToDto() });
-    }
-}
-```
+See [service-template.md](../templates/service-template.md) for full implementation.
 
 Service rules:
 
@@ -169,35 +122,15 @@ public static class StructureValidators
 
 ## Service Interface Pattern
 
-```csharp
-public interface I{Entity}Service
-{
-    Task<PagedResponse<{Entity}Dto>> SearchAsync(SearchRequest<{Entity}SearchFilter> request, CancellationToken ct = default);
-    Task<Result<DefaultResponse<{Entity}Dto>>> GetAsync(Guid id, CancellationToken ct = default);
-    Task<Result<DefaultResponse<{Entity}Dto>>> CreateAsync(DefaultRequest<{Entity}Dto> request, CancellationToken ct = default);
-    Task<Result<DefaultResponse<{Entity}Dto>>> UpdateAsync(DefaultRequest<{Entity}Dto> request, CancellationToken ct = default);
-    Task<Result> DeleteAsync(Guid id, CancellationToken ct = default);
-}
-```
+See [service-template.md](../templates/service-template.md) for interface and implementation.
 
 ---
 
 ## Internal Events and Handlers
 
-```csharp
-public record UserCreatedEvent(Guid UserId, Guid TenantId, string Email);
+See [message-handler-template.md](../templates/message-handler-template.md) for full implementation.
 
-[ScopedMessageHandler]  // Required when handler has scoped DI dependencies (repos, services)
-public class UserCreatedEventHandler(ILogger<UserCreatedEventHandler> logger)
-    : IMessageHandler<UserCreatedEvent>
-{
-    public Task HandleAsync(UserCreatedEvent message, CancellationToken ct = default) => Task.CompletedTask;
-}
-```
-
-> **Note:** `[ScopedMessageHandler]` attribute (from `EF.BackgroundServices.Attributes`) is required on handlers that inject scoped services (repositories, DbContext). Handlers with only singleton dependencies (like `ILogger`) don't require it, but adding it is harmless.
-
-Handlers are auto-registered through the internal message bus at startup.
+> **Note:** `[ScopedMessageHandler]` attribute (from `EF.BackgroundServices.Attributes`) is required on handlers that inject scoped services (repositories, DbContext). Handlers are auto-registered through the internal message bus at startup.
 
 ---
 

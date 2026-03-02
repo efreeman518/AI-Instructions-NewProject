@@ -57,12 +57,31 @@ entities:
 
 ### Relationship Types
 
-- `one-to-many` — parent owns children
-- `many-to-many` — peer association
-- `self-referencing` — hierarchical
-- `polymorphic-join` — shared attachment pattern
-
-Design guidance + YAML examples: [domain-design-guide.md](domain-design-guide.md).
+- `one-to-many` — parent owns children. Specify cascade behavior.
+  ```yaml
+  children:
+    - { name: Comments, entity: Comment, relationship: one-to-many, cascadeDelete: true }
+  ```
+- `many-to-many` — peer association. Join entity details are Phase 2.
+  ```yaml
+  children:
+    - { name: Tags, entity: Tag, relationship: many-to-many }
+  ```
+- `self-referencing` — hierarchical structures within the same entity.
+  ```yaml
+  children:
+    - { name: Children, entity: TodoItem, relationship: self-referencing, selfReferenceKey: ParentId }
+  ```
+- `polymorphic-join` — shared attachment pattern across parent types.
+  ```yaml
+  children:
+    - { name: Attachments, entity: Attachment, relationship: polymorphic-join, polymorphicEntityTypes: [TodoItem, Comment] }
+  ```
+- Reference navigation (no ownership):
+  ```yaml
+  navigation:
+    - { name: Category, entity: Category, required: false }
+  ```
 
 ## Business Rules
 
@@ -95,6 +114,8 @@ policyMatrices:
 
 ## State Machines
 
+Define lifecycle states and valid transitions in business terms. States = named business conditions. Transitions = allowed moves with named actions. Guards = business rules that gate transitions.
+
 ```yaml
 entities:
   - name: TodoItem
@@ -107,8 +128,6 @@ entities:
     customActions:
       - { name: Reschedule, params: [{ name: NewDueDate }] }
 ```
-
-Design guidance: [domain-design-guide.md](domain-design-guide.md#state-machine-design).
 
 ## Events
 
@@ -163,7 +182,19 @@ workflows:
     notes: "Thresholds configurable per tenant"
 ```
 
-Skip workflows when CRUD + state transitions suffice. Design guidance: [domain-design-guide.md](domain-design-guide.md#workflow-design).
+Skip workflows when CRUD + state transitions suffice.
+
+### When to add workflows
+- Multiple entities must coordinate in sequence
+- Steps may fail and need compensation/rollback
+- Async waits (human approval, external callback)
+- Time-based escalation or retry logic
+
+### What scaffolding produces from workflows
+- Orchestrator service shell + step method stubs
+- Compensation stubs (if `compensationRequired`)
+- DI registration
+- No API endpoints by default
 
 ### Ingestion Semantics (Optional)
 
@@ -228,3 +259,17 @@ Auth provider options:
 - **Hybrid:** combine `EntraID` for internal with `EntraExternal` or social providers for external users
 
 > **Note:** Authentication is configured in the final phase (Phase 4f). During earlier phases, auth is stubbed. See [skills/identity-management.md](skills/identity-management.md).
+
+---
+
+## Discovery Conversation Pattern
+
+Work through these in order during Phase 1:
+
+1. **Core entities** — what does the business call things?
+2. **Relationships** — who owns what? What references what?
+3. **Lifecycle** — what states does each entity go through?
+4. **Rules** — what must be true? What constraints exist?
+5. **Events** — what happens that other parts of the system care about?
+6. **Workflows** — what multi-step processes exist beyond CRUD?
+7. **Tenancy/auth** — who can see/do what?

@@ -15,7 +15,6 @@ Then load only the phase files you need.
 
 - **Phase 1 (Domain Discovery)**
   - `domain-specification-schema.md`
-  - `domain-design-guide.md`
 - **Phase 2 (Resource Definition)**
   - `resource-implementation-schema.md`
   - `domain-specification-schema.md` (reference)
@@ -27,8 +26,7 @@ Then load only the phase files you need.
 - **Phase 4 (Implementation)**
   - `SKILL.md`
   - `placeholder-tokens.md`
-  - `ai-build-optimization.md`
-  - plus only the skill/template files required for the current sub-phase
+  - plus only the skill/template files required for the current sub-phase (see Phase Loading Manifest in `SKILL.md`)
 
 ## Strict On-Demand Files
 

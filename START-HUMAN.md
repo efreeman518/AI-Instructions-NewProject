@@ -82,7 +82,7 @@ Add optional hosts after core backend slices stabilize.
 1. **Phase 1 — Domain Discovery:** model entities, relationships, events, workflows in business language → [domain-specification-schema.md](domain-specification-schema.md)
 2. **Phase 2 — Resource Definition:** map domain to Aspire/Azure resources, datatypes, messaging, hosting → [resource-implementation-schema.md](resource-implementation-schema.md)
 3. **Phase 3 — Implementation Plan:** ordered steps, resolve open questions → `implementation-plan.md` in project root
-4. **Phase 4 — Implementation:** start AI session with [START-AI.md](START-AI.md), then execute sub-phases (4a-4e) → [SKILL.md](SKILL.md) + [ai-build-optimization.md](ai-build-optimization.md)
+4. **Phase 4 — Implementation:** start AI session with [START-AI.md](START-AI.md), then execute sub-phases (4a-4e) → [SKILL.md](SKILL.md)
 5. During Phase 4, create/update `HANDOFF.md` at session boundaries when context is high
 
 ## Phase 1 — Domain Discovery Prompt
@@ -110,11 +110,11 @@ Write output to `.instructions/resource-implementation.yaml` (or explicitly stat
 
 ## Scaffolding Prompt Starter
 
-See **Prompt Patterns** in [ai-build-optimization.md](ai-build-optimization.md).
+See **Prompt Patterns** in [SKILL.md](SKILL.md).
 
 ## Validation Cadence
 
-See **Validation Cadence** in [ai-build-optimization.md](ai-build-optimization.md). IaC checks: [engineer-checklist.md](engineer-checklist.md).
+See **Validation Cadence** in [SKILL.md](SKILL.md). IaC checks: [engineer-checklist.md](engineer-checklist.md).
 
 ## Troubleshooting Model
 
@@ -129,7 +129,6 @@ See **Validation Cadence** in [ai-build-optimization.md](ai-build-optimization.m
 - [domain-specification-schema.md](domain-specification-schema.md) *(Phase 1 output)*
 - [resource-implementation-schema.md](resource-implementation-schema.md) *(Phase 2 output)*
 - [implementation-plan.md](implementation-plan.md) *(Phase 3 template)*
-- [ai-build-optimization.md](ai-build-optimization.md)
 - [sampleapp-patterns.md](sampleapp-patterns.md) *(strictly on-demand for cross-project pattern selection)*
 - [quick-reference.md](quick-reference.md) *(strictly on-demand for naming/DI/config lookups)*
 - [engineer-checklist.md](engineer-checklist.md)

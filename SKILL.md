@@ -28,7 +28,7 @@ Use for:
 
 1. Load at most **4 skills + 5 templates** per turn.
 2. Keep instruction context around **≤30K tokens per phase**.
-3. Use [ai-build-optimization.md](ai-build-optimization.md) Phase Loading Manifest.
+3. Use the **Phase Loading Manifest** (below) for per-phase file lists.
 4. Unload prior phase docs when transitioning.
 5. Do not preload [quick-reference.md](quick-reference.md) or [sampleapp-patterns.md](sampleapp-patterns.md); load only when needed.
 6. Use [sampleapp-patterns.md](sampleapp-patterns.md) before opening any raw sampleapp source.
@@ -44,8 +44,8 @@ Before any scaffolding work in a new AI session:
 2. Check target project root for an existing `HANDOFF.md` — if found: read **Current Phase** to determine where to resume; read **Next Load Set** for files to load; read **Blockers** to decide whether to continue or route to engineer first
 3. Determine current phase:
    - Phases 1-3 (discovery/resources/planning): load corresponding schema files
-    - Phase 4 (implementation): load `SKILL.md` + `placeholder-tokens.md` + `ai-build-optimization.md`, then check `resource-implementation-schema.md` for `scaffoldMode`, `testingProfile`, host profiles, and enabled flags before loading sub-phase files
-4. If required inputs are missing or ambiguous, apply the **Missing-Inputs Protocol** in [ai-build-optimization.md](ai-build-optimization.md) before proceeding
+   - Phase 4 (implementation): load `SKILL.md` + `placeholder-tokens.md`, then check `resource-implementation-schema.md` for `scaffoldMode`, `testingProfile`, host profiles, and enabled flags before loading sub-phase files
+4. If required inputs are missing or ambiguous, apply the **Missing-Inputs Protocol** (below) before proceeding
 
 ---
 
@@ -77,8 +77,7 @@ Set mode in [resource-implementation-schema.md](resource-implementation-schema.m
 
 ### Phase 1 — Domain Discovery
 Define entities, relationships, events, workflows, rules in business language. No implementation details.
-- Guide: [domain-design-guide.md](domain-design-guide.md)
-- Output: YAML per [domain-specification-schema.md](domain-specification-schema.md)
+- Output: YAML per [domain-specification-schema.md](domain-specification-schema.md) (includes design guidance)
 
 ### Phase 2 — Resource Definition
 Map domain constructs to Aspire/Azure resources: data stores, datatypes/precision, messaging, hosting.
@@ -93,9 +92,52 @@ Layout ordered steps, resolve open questions, confirm approach before coding.
 Code, compile, test. Execute skills in sub-phases below. Ask questions as needed.
 - Validate after each sub-phase (`dotnet build`, then targeted tests)
 
-## Phase File Router
+## Phase Loading Manifest
 
-Per-phase file load lists are in the **Phase Loading Manifest** in [ai-build-optimization.md](ai-build-optimization.md). Load the minimum set for the current phase only.
+Load the minimum set for the current phase only.
+
+### Session bootstrap
+- [START-AI.md](START-AI.md)
+
+### Phase 1 — Domain Discovery
+- [domain-specification-schema.md](domain-specification-schema.md)
+
+### Phase 2 — Resource Definition
+- [resource-implementation-schema.md](resource-implementation-schema.md)
+- [domain-specification-schema.md](domain-specification-schema.md) *(read-only reference)*
+
+### Phase 3 — Implementation Plan
+- [implementation-plan.md](implementation-plan.md)
+- [domain-specification-schema.md](domain-specification-schema.md) *(read-only reference)*
+- [resource-implementation-schema.md](resource-implementation-schema.md) *(read-only reference)*
+
+### Phase 4 base set
+- `SKILL.md` (this file)
+- [placeholder-tokens.md](placeholder-tokens.md)
+
+### Phase 4a — Foundation
+- `skills/solution-structure.md`, `skills/domain-model.md`, `skills/data-access.md`, `skills/package-dependencies.md`
+- `templates/entity-template.md`, `templates/ef-configuration-template.md`, `templates/repository-template.md`, `templates/appsettings-template.md`
+- `skills/cosmosdb-data.md` / `skills/table-storage.md` / `skills/blob-storage.md` *(if non-SQL entities)*
+
+### Phase 4b — App Core
+- `skills/application-layer.md`, `skills/bootstrapper.md`, `skills/api.md`
+- `templates/dto-template.md`, `templates/mapper-template.md`, `templates/service-template.md`, `templates/endpoint-template.md`
+- `templates/message-handler-template.md` *(if events/handlers)*
+
+### Phase 4c — Runtime/Edge
+Load only enabled concerns: `skills/gateway.md`, `skills/aspire.md`, `skills/configuration.md`, `skills/multi-tenant.md`, `skills/caching.md`
+
+### Phase 4d — Optional Hosts
+- `skills/background-services.md` (scheduler), `skills/function-app.md`, `skills/uno-ui.md` (dedicated session preferred), `skills/notifications.md`
+- UI templates when `includeUnoUI: true`
+
+### Phase 4e — Quality + Delivery
+- `skills/testing.md` + relevant `templates/test-template-*.md`
+- `skills/iac.md`, `skills/cicd.md`
+
+### Phase 4f — Authentication (Final)
+- `skills/identity-management.md`
 
 ## Phase 4 Skills (Recommended Order)
 
@@ -152,7 +194,6 @@ Use templates for generated artifacts and keep naming aligned with [placeholder-
 For an existing solution, use:
 - [vertical-slice-checklist.md](vertical-slice-checklist.md)
 - Relevant `templates/`
-- [ai-build-optimization.md](ai-build-optimization.md)
 
 Generate one complete slice, validate, then move to next slice.
 
@@ -167,4 +208,42 @@ Generate one complete slice, validate, then move to next slice.
 - Stub external dependencies for local compile/run — generate compilable no-op implementations with `// TODO: [CONFIGURE]` comments at every integration point (stub class, DI registration, appsettings section)
 - Keep Aspire config and IaC names aligned
 - Start with minimal viable profiles, promote later
+
+---
+
+## Fail-Fast Protocol
+
+After every build:
+- **Code-generation issue** (usings/references/DI/wiring/packages): attempt one focused fix pass, rebuild.
+- **Missing package in `Directory.Packages.props`**: add at latest stable version, restore, rebuild.
+- **Infrastructure issue** (feed auth, env vars, Docker, certs, SQL/cloud access): do not loop fixes. Document blocker in `HANDOFF.md`, point engineer to [engineer-checklist.md](engineer-checklist.md).
+
+## Missing-Inputs Protocol
+
+When domain inputs are absent or ambiguous:
+- **Required** (`ProjectName`, `customNugetFeeds`, at least one entity): ask before proceeding.
+- **Defaults** (modes/profiles/flags): use [resource-implementation-schema.md](resource-implementation-schema.md) **Canonical Defaults**; note assumptions inline.
+- **Partial entity definitions**: scaffold what is defined; emit `// TODO` stubs for missing properties/rules.
+
+### Phase 3 Pre-Flight: Custom NuGet Feeds
+
+At Phase 3 start: ask for custom/private NuGet feed URLs and auth method. Update `nuget.config`, run `dotnet restore` — must exit 0 before Phase 4.
+
+## Validation Cadence
+
+- Foundation/App Core: `dotnet build`
+- Feature slice: build + targeted unit, endpoint, and integration tests
+- Pre-merge baseline: full test run
+- IaC: run commands from [engineer-checklist.md](engineer-checklist.md)
+
+## Mixed-Store Slice Gate
+
+For slices spanning SQL + Cosmos/Table/Blob + messaging:
+- Explicit consistency boundary (authoritative store + projection store)
+- Reconciliation handler/job with replay-safe correction logic
+- Drift detection check in post-generation verification
+
+## Session State (`HANDOFF.md`)
+
+Create in target project root during Phase 4 when context is high or at session boundaries. Not needed during Phases 1-3. See [HANDOFF.md](HANDOFF.md) for template.
 

@@ -23,25 +23,9 @@ public abstract class EntityBase
 
 ## Entity Pattern
 
-> **Reference implementation:** See `sample-app/src/Domain/TaskFlow.Domain.Model/Entities/TodoItem.cs` (rich tenant entity with hierarchy, flags, owned value object, child collections) and `sample-app/src/Domain/TaskFlow.Domain.Model/Entities/Category.cs` (simple tenant entity with cacheable static data).
->
-> Additional entity patterns: `Team.cs` (parent with children), `Comment.cs` (append-only), `Attachment.cs` (polymorphic), `Tag.cs` (non-tenant global), `TodoItemTag.cs` (junction entity).
+See [entity-template.md](../templates/entity-template.md) for full implementation patterns including factory creation, child collections, flags enums, and join entities.
 
-```csharp
-// Compact pattern signature — see sampleapp for full implementations
-public class {Entity} : EntityBase, ITenantEntity<Guid>
-{
-    public static DomainResult<{Entity}> Create(Guid tenantId, string name) { /* factory */ }
-    private {Entity}(Guid tenantId, string name) { /* private ctor */ }
-    private {Entity}() { }  // EF Core
-
-    public Guid TenantId { get; init; }
-    public string Name { get; private set; } = null!;
-
-    public DomainResult<{Entity}> Update(string? name = null) { /* validation + mutation */ }
-    private DomainResult<{Entity}> Valid() { /* domain invariants */ }
-}
-```
+Reference implementation: `sample-app/src/Domain/TaskFlow.Domain.Model/Entities/`.
 
 ## Key Design Rules
 
@@ -64,32 +48,13 @@ public class {Entity} : EntityBase, ITenantEntity<Guid>
 
 ## Flags Enum Pattern (Domain.Shared)
 
-Use `[Flags]` enums for entity status/features. Always start with `None = 0` and use bit shifting:
-
-> **Reference implementation:** See `sample-app/src/Domain/TaskFlow.Domain.Model/Enums/TodoItemStatus.cs`
-
-```csharp
-[Flags]
-public enum {Entity}Flags
-{
-    None = 0,
-    IsInactive = 1 << 0,
-    IsArchived = 1 << 1,
-    IsSuspended = 1 << 2,
-}
-```
+Use `[Flags]` enums for entity status/features. Always start with `None = 0` and use bit shifting. See [entity-template.md](../templates/entity-template.md) for examples.
 
 ## Non-Flags Enums (Domain.Shared)
 
-Standard enums for fixed classifications:
-
-> **Reference implementation:** See `sample-app/src/Domain/TaskFlow.Domain.Model/Enums/MemberRole.cs`, `EntityType.cs`, `ReminderType.cs`
+Standard enums for fixed classifications.
 
 ## Value Objects / Shared Entities
-
-For owned types (value objects stored as columns) and entities shared across aggregates, use the appropriate pattern:
-
-> **Reference implementation:** See `sample-app/src/Domain/TaskFlow.Domain.Model/ValueObjects/DateRange.cs` (owned type) and `sample-app/src/Domain/TaskFlow.Domain.Model/Entities/Attachment.cs` (polymorphic entity with `EntityType` discriminator + `EntityId`).
 
 **Owned type pattern** — stored as columns in the parent table:
 ```csharp
@@ -100,88 +65,15 @@ public class DateRange  // Value object, no EntityBase
 }
 ```
 
-**Polymorphic join pattern** — links any entity to a shared entity:
-```csharp
-public class Attachment : EntityBase, ITenantEntity<Guid>
-{
-    public Guid TenantId { get; init; }
-    public Guid EntityId { get; init; }           // FK to owning entity (TodoItem or Comment)
-    public EntityType EntityType { get; init; }    // discriminator enum
-    public string FileName { get; private set; } = string.Empty;
-    public string BlobUri { get; private set; } = string.Empty;
-}
-```
+**Polymorphic join pattern** — links any entity to a shared entity via `{EntityType, EntityId}` discriminator. See [entity-template.md](../templates/entity-template.md).
 
 ## Join Entity Pattern (Many-to-Many)
 
-The **default** pattern for many-to-many join entities is to **inherit from `EntityBase`** with FK properties on both sides. This gives the join entity its own `Id` and `RowVersion`, and allows adding properties later (e.g., `AssignedDate`, `SortOrder`, `CreatedBy`).
-
-**Only use a pure composite-key join entity (no `EntityBase`) when there is high confidence the join will remain a pure association with no additional properties.**
-
-> **Reference implementation:** Update `sample-app/src/Domain/TaskFlow.Domain.Model/Entities/TodoItemTag.cs` to follow this pattern.
-
-```csharp
-// Default join entity pattern — inherits EntityBase
-public class {Parent}{Related} : EntityBase
-{
-    public static DomainResult<{Parent}{Related}> Create(Guid parentId, Guid relatedId)
-    {
-        var entity = new {Parent}{Related}(parentId, relatedId);
-        return DomainResult<{Parent}{Related}>.Success(entity);
-    }
-
-    private {Parent}{Related}(Guid parentId, Guid relatedId)
-    {
-        {Parent}Id = parentId;
-        {Related}Id = relatedId;
-    }
-
-    private {Parent}{Related}() { }  // EF Core
-
-    public Guid {Parent}Id { get; init; }
-    public Guid {Related}Id { get; init; }
-
-    // Navigation properties
-    public {Parent} {Parent} { get; private set; } = null!;
-    public {Related} {Related} { get; private set; } = null!;
-
-    // Additional properties can be added later without PK migration
-    // public DateTimeOffset AssignedDate { get; private set; }
-    // public int SortOrder { get; private set; }
-}
-```
-
-**EF Configuration for join entity with `EntityBase`:**
-```csharp
-// Unique constraint on the FK pair (not composite PK — PK is Id from EntityBase)
-builder.HasIndex(e => new { e.{Parent}Id, e.{Related}Id }).IsUnique();
-
-builder.HasOne(e => e.{Parent})
-    .WithMany(e => e.{Parent}{Related}s)
-    .HasForeignKey(e => e.{Parent}Id)
-    .OnDelete(DeleteBehavior.Cascade);
-
-builder.HasOne(e => e.{Related})
-    .WithMany()
-    .HasForeignKey(e => e.{Related}Id)
-    .OnDelete(DeleteBehavior.Restrict);
-```
+Default: inherit from `EntityBase` with FK properties on both sides (allows adding properties later). Only use pure composite-key join when confident no additional properties will be needed. See [entity-template.md](../templates/entity-template.md) for full pattern and EF configuration.
 
 ## AuditableBase (Available but Rarely Used)
 
-`AuditableBase<TAuditIdType>` exists in `EF.Domain` and adds audit properties to `EntityBase`:
-
-```csharp
-public abstract class AuditableBase<TAuditIdType> : EntityBase, IAuditable<TAuditIdType>
-{
-    public DateTime? CreatedDate { get; set; }
-    public TAuditIdType? CreatedBy { get; set; }
-    public DateTime? UpdatedDate { get; set; }
-    public TAuditIdType? UpdatedBy { get; set; }
-}
-```
-
-> **When NOT to use:** If audit properties are managed by `AuditInterceptor` on the `DbContext` (the default pattern), entities should inherit `EntityBase` directly, NOT `AuditableBase`. The interceptor handles audit metadata externally. Only use `AuditableBase` when audit fields must live on the entity itself.
+`AuditableBase<TAuditIdType>` adds `CreatedDate`, `CreatedBy`, `UpdatedDate`, `UpdatedBy` to `EntityBase`. Only use when audit fields must live ON the entity itself. If `AuditInterceptor` handles audit metadata externally (the default), inherit `EntityBase` directly.
 
 ## Tenant Entity Interface
 
@@ -211,20 +103,11 @@ public interface IRequestContext
 
 ## Domain.Shared Exceptions
 
-```csharp
-namespace Domain.Shared.Exceptions;
-
-public class NotFoundException(string message) : Exception(message);
-public class BusinessRuleException(string message) : Exception(message);
-```
+`NotFoundException` and `BusinessRuleException` in `Domain.Shared.Exceptions`.
 
 ## Domain Rules
 
-Domain rules use the specification pattern for reusable business validation:
-
-> **Canonical placement:** `src/Domain/{Project}.Domain.Model/Rules/`.
->
-> Co-locate rules with the domain model. A separate `Domain.Rules` project is not required.
+Use the specification pattern for reusable business validation. Canonical placement: `src/Domain/{Project}.Domain.Model/Rules/`. Co-locate with the domain model. See [domain-rules-template.md](../templates/domain-rules-template.md) for full implementation.
 
 ## DomainResult Pattern
 
