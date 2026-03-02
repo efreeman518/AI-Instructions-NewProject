@@ -55,8 +55,8 @@ Do not preload these files:
 Help me model this business domain.
 Define entities, relationships, lifecycle states, business rules, events, and workflows.
 Use business language — no databases, no datatypes, no implementation.
-Ask clarifying questions, summarize each iteration, then produce domain-definition YAML.
-Write the artifact to `.instructions/domain-definition.yaml` unless another path is explicitly agreed.
+Ask clarifying questions, summarize each iteration, then produce domain-specification YAML.
+Write the artifact to `.instructions/domain-specification.yaml` unless another path is explicitly agreed.
 ```
 
 ### Resource definition (Phase 2)
@@ -75,7 +75,7 @@ Write the artifact to `.instructions/resource-implementation.yaml` unless anothe
 
 ```text
 Produce implementation-plan.md for this project.
-Use domain-definition + resource-implementation schemas.
+Use domain-specification + resource-implementation schemas.
 List ordered steps, open questions, decisions, risks.
 ```
 
@@ -153,16 +153,16 @@ For any slice spanning SQL + Cosmos/Table/Blob + messaging, require:
 - [ai-build-optimization.md](ai-build-optimization.md)
 
 ### Phase 1 — Domain Discovery
-- [domain-definition-schema.md](domain-definition-schema.md)
+- [domain-specification-schema.md](domain-specification-schema.md)
 - [domain-design-guide.md](domain-design-guide.md)
 
 ### Phase 2 — Resource Definition
 - [resource-implementation-schema.md](resource-implementation-schema.md)
-- [domain-definition-schema.md](domain-definition-schema.md) *(read-only reference)*
+- [domain-specification-schema.md](domain-specification-schema.md) *(read-only reference)*
 
 ### Phase 3 — Implementation Plan
 - [implementation-plan.md](implementation-plan.md)
-- [domain-definition-schema.md](domain-definition-schema.md) *(read-only reference)*
+- [domain-specification-schema.md](domain-specification-schema.md) *(read-only reference)*
 - [resource-implementation-schema.md](resource-implementation-schema.md) *(read-only reference)*
 - [domain-design-guide.md](domain-design-guide.md) *(optional, for relationship/workflow review)*
 

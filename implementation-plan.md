@@ -11,7 +11,7 @@ Produced after Phase 1 (domain definition) and Phase 2 (resource mapping) are co
 
 ## Inputs Summary
 
-- Domain definition: `.instructions/domain-definition.yaml` (or inline reference)
+- Domain specification: `.instructions/domain-specification.yaml` (or inline reference)
 - Resource mapping: `.instructions/resource-implementation.yaml` (or inline reference)
 - Mode: {{scaffoldMode}} | Testing: {{testingProfile}}
 - Enabled hosts: {{list}}

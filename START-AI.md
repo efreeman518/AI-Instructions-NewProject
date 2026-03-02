@@ -14,14 +14,14 @@ Then load only the phase files you need.
 ## Phase Router
 
 - **Phase 1 (Domain Discovery)**
-  - `domain-definition-schema.md`
+  - `domain-specification-schema.md`
   - `domain-design-guide.md`
 - **Phase 2 (Resource Definition)**
   - `resource-implementation-schema.md`
-  - `domain-definition-schema.md` (reference)
+  - `domain-specification-schema.md` (reference)
 - **Phase 3 (Implementation Plan)**
   - `implementation-plan.md`
-  - `domain-definition-schema.md` (reference)
+  - `domain-specification-schema.md` (reference)
   - `resource-implementation-schema.md` (reference)
   - **Pre-flight:** Prompt user for any custom/private NuGet feed URLs and auth method before proceeding. Update `nuget.config` and verify `dotnet restore` exits 0.
 - **Phase 4 (Implementation)**

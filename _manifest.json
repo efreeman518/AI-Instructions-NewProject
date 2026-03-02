@@ -50,7 +50,7 @@
       "estimatedTokens": 1000
     },
     {
-      "path": "domain-definition-schema.md",
+      "path": "domain-specification-schema.md",
       "phase": "phase-1",
       "estimatedTokens": 900
     },

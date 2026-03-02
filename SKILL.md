@@ -78,7 +78,7 @@ Set mode in [resource-implementation-schema.md](resource-implementation-schema.m
 ### Phase 1 — Domain Discovery
 Define entities, relationships, events, workflows, rules in business language. No implementation details.
 - Guide: [domain-design-guide.md](domain-design-guide.md)
-- Output: YAML per [domain-definition-schema.md](domain-definition-schema.md)
+- Output: YAML per [domain-specification-schema.md](domain-specification-schema.md)
 
 ### Phase 2 — Resource Definition
 Map domain constructs to Aspire/Azure resources: data stores, datatypes/precision, messaging, hosting.

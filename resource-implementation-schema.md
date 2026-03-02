@@ -1,6 +1,6 @@
 # Resource Implementation Schema (Phase 2 Output)
 
-Maps domain constructs from [domain-definition-schema.md](domain-definition-schema.md) to concrete Aspire/Azure resources, datatypes, and infrastructure.
+Maps domain constructs from [domain-specification-schema.md](domain-specification-schema.md) to concrete Aspire/Azure resources, datatypes, and infrastructure.
 
 **Prerequisite:** Complete Phase 1 domain definition first.
 

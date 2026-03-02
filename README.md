@@ -17,7 +17,7 @@ Pragmatic instruction set for AI-assisted scaffolding of C#/.NET business apps a
 ## Happy Path (6 Steps)
 
 1. Complete prerequisites and repository setup from [START-HUMAN.md](START-HUMAN.md)
-2. Run Phase 1 and produce domain YAML via [domain-definition-schema.md](domain-definition-schema.md)
+2. Run Phase 1 and produce domain YAML via [domain-specification-schema.md](domain-specification-schema.md)
 3. Run Phase 2 and produce resource YAML via [resource-implementation-schema.md](resource-implementation-schema.md)
 4. Build Phase 3 plan via [implementation-plan.md](implementation-plan.md)
 5. Execute Phase 4 implementation using [SKILL.md](SKILL.md) and [ai-build-optimization.md](ai-build-optimization.md)

@@ -57,7 +57,7 @@ Expected shape:
   .instructions/
     START-AI.md
     SKILL.md
-    domain-definition-schema.md
+    domain-specification-schema.md
     resource-implementation-schema.md
     skills/
     templates/
@@ -79,7 +79,7 @@ Add optional hosts after core backend slices stabilize.
 
 ## Workflow
 
-1. **Phase 1 — Domain Discovery:** model entities, relationships, events, workflows in business language → [domain-definition-schema.md](domain-definition-schema.md)
+1. **Phase 1 — Domain Discovery:** model entities, relationships, events, workflows in business language → [domain-specification-schema.md](domain-specification-schema.md)
 2. **Phase 2 — Resource Definition:** map domain to Aspire/Azure resources, datatypes, messaging, hosting → [resource-implementation-schema.md](resource-implementation-schema.md)
 3. **Phase 3 — Implementation Plan:** ordered steps, resolve open questions → `implementation-plan.md` in project root
 4. **Phase 4 — Implementation:** start AI session with [START-AI.md](START-AI.md), then execute sub-phases (4a-4e) → [SKILL.md](SKILL.md) + [ai-build-optimization.md](ai-build-optimization.md)
@@ -91,8 +91,8 @@ Add optional hosts after core backend slices stabilize.
 Help me model this business domain.
 Define entities, relationships, lifecycle states, business rules, events, and workflows.
 Use business language — no databases, no datatypes, no implementation.
-Ask clarifying questions, summarize each iteration, then produce domain-definition YAML.
-Write output to `.instructions/domain-definition.yaml` (or explicitly state a different agreed path).
+Ask clarifying questions, summarize each iteration, then produce domain-specification YAML.
+Write output to `.instructions/domain-specification.yaml` (or explicitly state a different agreed path).
 ```
 
 ## Phase 2 — Resource Definition Prompt
@@ -126,7 +126,7 @@ See **Validation Cadence** in [ai-build-optimization.md](ai-build-optimization.m
 
 - [START-AI.md](START-AI.md) *(AI session bootstrap; load first)*
 - [SKILL.md](SKILL.md)
-- [domain-definition-schema.md](domain-definition-schema.md) *(Phase 1 output)*
+- [domain-specification-schema.md](domain-specification-schema.md) *(Phase 1 output)*
 - [resource-implementation-schema.md](resource-implementation-schema.md) *(Phase 2 output)*
 - [implementation-plan.md](implementation-plan.md) *(Phase 3 template)*
 - [ai-build-optimization.md](ai-build-optimization.md)

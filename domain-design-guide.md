@@ -1,6 +1,6 @@
 # Domain Design Guide (Phase 1 Reference)
 
-Guidance for domain discovery: relationship patterns, state modeling, workflow design. Use during Phase 1 to produce [domain-definition-schema.md](domain-definition-schema.md).
+Guidance for domain discovery: relationship patterns, state modeling, workflow design. Use during Phase 1 to produce [domain-specification-schema.md](domain-specification-schema.md).
 
 For data store selection, datatypes, and EF configuration → [resource-implementation-schema.md](resource-implementation-schema.md) (Phase 2).
 

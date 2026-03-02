@@ -1,10 +1,10 @@
-# Domain Definition Schema (Phase 1 Output)
+# Domain Specification Schema (Phase 1 Output)
 
 Pure business domain model — no implementation details, no datatypes, no databases.
 
 ## Output Contract
 
-Write Phase 1 output to `.instructions/domain-definition.yaml` by default. If another path is used, state it explicitly in handoff notes.
+Write Phase 1 output to `.instructions/domain-specification.yaml` by default. If another path is used, state it explicitly in handoff notes.
 
 ## Project Identity
 
