@@ -128,7 +128,6 @@ $litePack = Get-ModePack -Base $grouped -ExcludedSkills $excludedLite
 $apiOnlyPack = Get-ModePack -Base $grouped -ExcludedSkills $excludedApiOnly
 
 $output = [ordered]@{
-    generatedAt = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
     source = [ordered]@{
         manifest = '_manifest.json'
         skill = 'SKILL.md'

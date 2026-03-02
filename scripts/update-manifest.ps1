@@ -96,10 +96,7 @@ foreach ($entry in $manifest.files) {
 $manifest.totalEstimatedTokens = $total
 
 # Serialize and write back
-$outputJson = ($manifest | ConvertTo-Json -Depth 10) -replace "`r`n", "`n"
-# Ensure trailing newline for POSIX compliance
-if (-not $outputJson.EndsWith("`n")) { $outputJson += "`n" }
-# Ensure UTF-8 without BOM
+$outputJson = $manifest | ConvertTo-Json -Depth 10
 [System.IO.File]::WriteAllText($manifestPath, $outputJson, [System.Text.UTF8Encoding]::new($false))
 
 Write-Host "Updated $updated files, added $added new entries, total tokens: $total"
