@@ -28,9 +28,32 @@ public class {Entity}CrudTests : PageTest
     [DataRow("item2", "suffix2")]
     public async Task AddEditDelete_Success(string baseName, string appendName)
     {
-        // create row
-        // edit row
-        // delete row and assert not found
+        // Arrange
+        var pageObject = new {Entity}PageObject(Page);
+        await pageObject.NavigateAsync(BaseUrl);
+
+        // Act — Create
+        await Page.ClickAsync("#btn-add");
+        await pageObject.FillNameAsync(baseName);
+        await pageObject.ClickSaveAsync();
+
+        // Assert — row appears in list
+        Assert.IsTrue(await pageObject.ItemExistsInGridAsync(baseName));
+
+        // Act — Edit
+        await Page.Locator($"tr:has-text('{baseName}')").ClickAsync();
+        await pageObject.FillNameAsync(baseName + appendName);
+        await pageObject.ClickSaveAsync();
+
+        // Assert — updated name in list
+        Assert.IsTrue(await pageObject.ItemExistsInGridAsync(baseName + appendName));
+        Assert.IsTrue(await pageObject.ItemNotInGridAsync(baseName));
+
+        // Act — Delete
+        await pageObject.ClickDeleteAsync(baseName + appendName);
+
+        // Assert — removed from list
+        Assert.IsTrue(await pageObject.ItemNotInGridAsync(baseName + appendName));
     }
 }
 ```

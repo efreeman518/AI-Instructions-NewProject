@@ -127,6 +127,7 @@ namespace Domain.Model.Rules;
 /// </summary>
 public class AllRule<T>(params IRule<T>[] rules) : IRule<T>
 {
+    // WARNING: ErrorMessage evaluates against default(T) — override if T is a reference type that requires non-null input
     public string ErrorMessage =>
         string.Join("; ", rules.Where(r => !r.IsSatisfiedBy(default!)).Select(r => r.ErrorMessage));
 

@@ -27,7 +27,7 @@ Use for:
 ## Context Budget Rules (Mandatory)
 
 1. Load at most **4 skills + 5 templates** per turn.
-2. Keep instruction context around **≤30K tokens per phase**.
+2. Keep instruction context around **≤30K tokens per phase** (see `_manifest.json` `contextBudget` for model-specific overrides).
 3. Use the **Phase Loading Manifest** (below) for per-phase file lists.
 4. Unload prior phase docs when transitioning.
 5. Do not preload [quick-reference.md](quick-reference.md) or [sampleapp-patterns.md](sampleapp-patterns.md); load only when needed.
@@ -72,6 +72,42 @@ Minimal clean architecture for internal tools/PoCs/services.
 In `lite` mode, load only: Foundation + App Core + Configuration + Identity + Testing. Add optional hosts only after core stabilizes.
 
 Set mode in [resource-implementation-schema.md](resource-implementation-schema.md) (`scaffoldMode`).
+
+### `api-only`
+
+Single API host, no gateway/UI/scheduler/functions. Aspire optional (for local SQL/Redis).
+
+| Excluded in `api-only` | Skill / Phase |
+|---|---|
+| API Gateway (YARP) | `skills/gateway.md` |
+| Multi-tenancy | `skills/multi-tenant.md` |
+| Distributed caching | `skills/caching.md` |
+| Scheduler/background services | `skills/background-services.md` |
+| Function App | `skills/function-app.md` |
+| Uno UI | `skills/uno-ui.md` |
+| Notifications | `skills/notifications.md` |
+| IaC + CI/CD pipeline | `skills/iac.md`, `skills/cicd.md` |
+
+In `api-only` mode, load only: Foundation + App Core + Configuration + Identity + Testing. Aspire is optional (include when local dev needs SQL/Redis orchestration). Follows the same manifest as `lite` but keeps Aspire as optional.
+
+### Lite Mode — What to Reference from Sample App
+
+The sample app (`sample-app/`) is a `full` mode implementation. When scaffolding in `lite` mode, reference only these portions:
+
+| Layer | Sample App Files to Reference | Skip |
+|---|---|---|
+| Domain Model | `Domain.Model/` entities, rules, value objects | — |
+| Data Access | `Infrastructure.Repositories/` (Trxn + Query repos, EF configs) | CosmosDb/Table/Blob repos |
+| Application | `Application.Services/`, `Application.Mappers/`, `Application.Models/` | Message handlers (unless internal events needed) |
+| Bootstrapper | `TaskFlow.Bootstrapper/RegisterServices.cs` — use as DI pattern | Skip scheduler/gateway/notification registrations |
+| API | `TaskFlow.Api/` — endpoints, startup, middleware | YARP, auth relay |
+| Testing | `Test/Test.Unit/`, `Test.Support/` | E2E, Load, Benchmark, Architecture |
+
+**Lite mode entity count guidance:** 1-5 entities. Beyond 5, evaluate whether `full` mode features (gateway, caching, background jobs) would add value.
+
+**Lite mode Aspire:** Optional. If local dev needs SQL + Redis, include Aspire AppHost with just those resources. Skip multi-host orchestration.
+
+**Lite mode identity:** Same stub-first approach. Often `api-only` + lite is the right combo for internal tools — auth may be a simple API key or shared managed identity rather than full Entra flows.
 
 ## Workflow — Four Phases
 
@@ -124,9 +160,10 @@ Load the minimum set for the current phase only.
 - `skills/application-layer.md`, `skills/bootstrapper.md`, `skills/api.md`
 - `templates/dto-template.md`, `templates/mapper-template.md`, `templates/service-template.md`, `templates/endpoint-template.md`
 - `templates/message-handler-template.md` *(if events/handlers)*
+- `templates/structure-validator-template.md`, `templates/exception-handler-template.md`
 
 ### Phase 4c — Runtime/Edge
-Load only enabled concerns: `skills/gateway.md`, `skills/aspire.md`, `skills/configuration.md`, `skills/multi-tenant.md`, `skills/caching.md`
+Load only enabled concerns: `skills/gateway.md`, `skills/aspire.md`, `skills/configuration.md`, `skills/multi-tenant.md`, `skills/caching.md`, `skills/observability.md`, `skills/security.md`
 
 ### Phase 4d — Optional Hosts
 - `skills/background-services.md` (scheduler), `skills/function-app.md`, `skills/uno-ui.md` (dedicated session preferred), `skills/notifications.md`
@@ -138,6 +175,10 @@ Load only enabled concerns: `skills/gateway.md`, `skills/aspire.md`, `skills/con
 
 ### Phase 4f — Authentication (Final)
 - `skills/identity-management.md`
+
+### On-Demand (Load When Debugging)
+- `skills/error-handling.md` — cross-cutting error pipeline reference (load when debugging error flows)
+- `skills/migrations.md` — EF migration strategy (load when adding/running migrations)
 
 ## Phase 4 Skills (Recommended Order)
 
@@ -158,18 +199,20 @@ Load only enabled concerns: `skills/gateway.md`, `skills/aspire.md`, `skills/con
 10. [skills/caching.md](skills/caching.md) *(if enabled)*
 11. [skills/aspire.md](skills/aspire.md) *(if enabled)*
 12. [skills/configuration.md](skills/configuration.md)
+13. [skills/observability.md](skills/observability.md)
+14. [skills/security.md](skills/security.md)
 
 ### 4d — Optional Hosts
-13. [skills/background-services.md](skills/background-services.md) *(if scheduler enabled)*
-14. [skills/function-app.md](skills/function-app.md) *(if enabled)*
-15. [skills/uno-ui.md](skills/uno-ui.md) *(if enabled)*
-16. [skills/notifications.md](skills/notifications.md) *(if enabled)*
+15. [skills/background-services.md](skills/background-services.md) *(if scheduler enabled)*
+16. [skills/function-app.md](skills/function-app.md) *(if enabled)*
+17. [skills/uno-ui.md](skills/uno-ui.md) *(if enabled)*
+18. [skills/notifications.md](skills/notifications.md) *(if enabled)*
 ### 4e — Quality + Delivery
-17. Testing + delivery:
+19. Testing + delivery:
     - [skills/testing.md](skills/testing.md)
     - [skills/iac.md](skills/iac.md)
     - [skills/cicd.md](skills/cicd.md)
-18. Optional infra/data integrations as needed:
+20. Optional infra/data integrations as needed:
     - [skills/cosmosdb-data.md](skills/cosmosdb-data.md)
     - [skills/table-storage.md](skills/table-storage.md)
     - [skills/blob-storage.md](skills/blob-storage.md)
@@ -179,13 +222,13 @@ Load only enabled concerns: `skills/gateway.md`, `skills/aspire.md`, `skills/con
     - [skills/external-api.md](skills/external-api.md)
 
 ### 4f — Authentication (Final)
-19. [skills/identity-management.md](skills/identity-management.md) *(defer to end; use stubs in earlier phases)*
+21. [skills/identity-management.md](skills/identity-management.md) *(defer to end; use stubs in earlier phases)*
 
 ## Template Usage
 
 Use templates for generated artifacts and keep naming aligned with [placeholder-tokens.md](placeholder-tokens.md).
 
-- Backend templates: entity/config/repository/dto/mapper/service/endpoint/rules/message-handler
+- Backend templates: entity/config/repository/dto/mapper/service/endpoint/rules/message-handler/structure-validator/exception-handler
 - UI templates: MVUX model/XAML page/UI model/UI service
 - Tests: load only needed file from `templates/test-template-*.md`
 
@@ -217,6 +260,22 @@ After every build:
 - **Code-generation issue** (usings/references/DI/wiring/packages): attempt one focused fix pass, rebuild.
 - **Missing package in `Directory.Packages.props`**: add at latest stable version, restore, rebuild.
 - **Infrastructure issue** (feed auth, env vars, Docker, certs, SQL/cloud access): do not loop fixes. Document blocker in `HANDOFF.md`, point engineer to [engineer-checklist.md](engineer-checklist.md).
+
+## Git Checkpoint Protocol
+
+Commit after each successful sub-phase to enable safe rollback:
+
+1. **After Phase 4a (Foundation):** `git add -A && git commit -m "scaffold: foundation — entities, data access, domain rules"`
+2. **After Phase 4b (App Core):** `git add -A && git commit -m "scaffold: app core — services, DTOs, mappers, endpoints"`
+3. **After Phase 4c (Runtime/Edge):** `git add -A && git commit -m "scaffold: runtime — gateway, aspire, config, caching"`
+4. **After Phase 4d (Optional Hosts):** `git add -A && git commit -m "scaffold: optional hosts — scheduler, functions, UI"`
+5. **After Phase 4e (Quality):** `git add -A && git commit -m "scaffold: quality — tests, IaC, CI/CD"`
+
+If a sub-phase fails after the one-pass fix attempt:
+- `git stash` the broken changes.
+- Log blocker in `HANDOFF.md`.
+- Continue with non-blocked sub-phases from the last clean commit.
+- Return to stashed changes when the blocker is resolved.
 
 ## Missing-Inputs Protocol
 

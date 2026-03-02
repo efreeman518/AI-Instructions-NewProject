@@ -4,6 +4,65 @@ Use this checklist after generating a new entity slice to ensure no required fil
 
 Placeholder tokens: [placeholder-tokens.md](placeholder-tokens.md).
 
+---
+
+## Add Entity to Existing Project — Fast Path
+
+Use this when adding a new entity to an **already-scaffolded** solution. Skip full phase loading — load only what the slice needs.
+
+### Pre-Flight
+
+- [ ] Solution builds clean: `dotnet build`
+- [ ] Identify existing: `RegisterServices.cs`, `{App}DbContextTrxn`, `{App}DbContextQuery`, `WebApplicationBuilderExtensions.cs`
+- [ ] Confirm `scaffoldMode` and `testingProfile` from `resource-implementation.yaml`
+
+### Load Set for Slice
+
+1. `SKILL.md` (base reference)
+2. `placeholder-tokens.md`
+3. Backend templates: `entity-template.md`, `ef-configuration-template.md`, `repository-template.md`, `dto-template.md`, `mapper-template.md`, `service-template.md`, `endpoint-template.md`, `structure-validator-template.md`
+4. If domain rules needed: `domain-rules-template.md`
+5. If child collections: `updater-template.md`
+6. If UI enabled: `mvux-model-template.md`, `xaml-page-template.md`, `ui-model-template.md`, `ui-service-template.md`
+
+### Slice Execution Order
+
+1. Create entity + enum/flags in `Domain.Model`
+2. Create EF configuration in `Infrastructure.Repositories`
+3. Add `DbSet<{Entity}>` to both DbContexts
+4. Create repository interface + implementations (Trxn + Query)
+5. Create DTO + SearchFilter in `Application.Models`
+6. Create mapper in `Application.Mappers`
+7. Create StructureValidator in `Application.Services/Rules`
+8. Create service + interface
+9. Create endpoint
+10. Wire DI in `RegisterServices.cs` (repos + service)
+11. Map endpoints in `WebApplicationBuilderExtensions.cs`
+12. Run migration: `dotnet ef migrations add Add{Entity} ...`
+
+### Wiring Checklist
+
+- [ ] `DbSet<{Entity}>` added to `{App}DbContextTrxn` and `{App}DbContextQuery`
+- [ ] Repos + service registered in `RegisterServices.cs`
+- [ ] `Map{Entity}Endpoints()` called in `WebApplicationBuilderExtensions.cs`
+- [ ] Aspire AppHost updated (only if new project added to solution)
+
+### Validation
+
+```powershell
+dotnet build
+dotnet test --filter "TestCategory={Entity}"
+```
+
+### Prompt Pattern
+
+```
+Add a new {Entity} vertical slice to the existing {Project} solution.
+Follow vertical-slice-checklist.md fast-path.
+```
+
+---
+
 ## Slice Modes
 
 - **Single-entity slice**: one primary entity with local relationships.

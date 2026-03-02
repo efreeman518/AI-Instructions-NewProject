@@ -66,6 +66,8 @@ When inputs are unclear, prefer pragmatic defaults and continue:
 | Schema changes not reflected in TestContainer | Old schema cached from previous run | Add `EnsureDeletedAsync()` before `EnsureCreatedAsync()` |
 | WASM build `DirectoryNotFoundException` on `unoresizetizer\` | Resizetizer 1.12.1 sets `WasmPWAManifestFile` to a directory path when `UnoSplashScreen` is absent | Add `_FixWasmPwaManifestPath` MSBuild target (see `skills/uno-ui.md` Known Build Issues) |
 | ProblemDetails leaks stack traces in CI/release | `AddProblemDetails` with `ex.ToStringDemystified()` runs in all configurations | Wrap diagnostic ProblemDetails block in `#if DEBUG` / `#endif` |
+| Rate limiter returns 429 in tests | Rate limiting middleware active in test host | Disable rate limiter in `CustomApiFactory`: `services.Configure<RateLimiterOptions>(o => o.GlobalLimiter = PartitionedRateLimiter.CreateChained<HttpContext>())` |
+| StructureValidator not found | Missing `using` for the static validator class | `StructureValidator` is static — no DI registration needed. Verify `using {Namespace}.Application.Services.Validation;` |
 
 ---
 

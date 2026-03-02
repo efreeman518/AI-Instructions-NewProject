@@ -86,7 +86,7 @@
                         </muxc:ItemsRepeater.Layout>
                     </muxc:ItemsRepeater>
                 </DataTemplate>
-            </uer:FeedView>
+            </utu:FeedView>
         </ScrollViewer>
     </utu:AutoLayout>
 </Page>
@@ -153,7 +153,7 @@
                             </muxc:ItemsRepeater.ItemTemplate>
                         </muxc:ItemsRepeater>
                     </DataTemplate>
-                </uer:FeedView>
+                </utu:FeedView>
             </utu:AutoLayout>
         </ScrollViewer>
     </utu:AutoLayout>

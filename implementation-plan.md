@@ -96,3 +96,16 @@ Resolve before Phase 4 starts:
 2. Human reviews, resolves open questions, confirms decisions
 3. Phase 4 implementation follows the step order above
 4. Check off items as completed during implementation
+
+---
+
+## Phase 3 → 4 Pre-Flight
+
+Before starting Phase 4 implementation, verify all of the following:
+
+- [ ] `nuget.config` validated (`dotnet restore` exits 0)
+- [ ] All open questions resolved or explicitly deferred with TODO
+- [ ] `scaffoldMode`, `testingProfile`, and all host flags confirmed
+- [ ] Custom NuGet feed URLs and auth configured (if any)
+- [ ] Domain specification and resource implementation YAML files are complete
+- [ ] Implementation plan reviewed and approved by human

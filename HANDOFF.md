@@ -23,6 +23,14 @@ Create this file in the target project root during Phase 4 execution when AI con
 - Symptom: <short error summary>
 - Next action: <exact next step + owner>
 
+## Session Metrics (Optional)
+Track per sub-phase to identify which skills/templates need instruction improvements. Feed back into UPDATE-INSTRUCTIONS.md.
+
+| Sub-Phase | First-Pass Build | Fix Passes | Blocking Skill | Notes |
+|-----------|-----------------|------------|----------------|-------|
+| 4a-foundation | pass | 0 | — | — |
+| 4b-app-core | fail | 2 | service-template | SaveChangesAsync overload |
+
 ## Next Load Set (for next AI turn)
 Load only these files:
 - <file 1>

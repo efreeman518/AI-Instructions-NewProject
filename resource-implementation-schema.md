@@ -33,7 +33,7 @@ includeAzd: false
 ## Scaffold Configuration
 
 ```yaml
-scaffoldMode: full              # full | lite
+scaffoldMode: full              # full | lite | api-only
 testingProfile: balanced        # minimal | balanced | comprehensive
 functionProfile: starter        # starter | full
 unoProfile: starter             # starter | full
@@ -64,7 +64,7 @@ entitlementPolicy:
 
 | Input | Default | Values | Applies when |
 |---|---|---|---|
-| `scaffoldMode` | `full` | `full`, `lite` | always |
+| `scaffoldMode` | `full` | `full`, `lite`, `api-only` | always |
 | `testingProfile` | `balanced` | `minimal`, `balanced`, `comprehensive` | always |
 | `functionProfile` | `starter` | `starter`, `full` | `includeFunctionApp: true` |
 | `unoProfile` | `starter` | `starter`, `full` | `includeUnoUI: true` |
@@ -328,3 +328,18 @@ ingestionSemantics:
   watermarkStrategy: fixed-lag
   outOfOrderHandling: reconcile-window
 ```
+
+---
+
+## Phase 2 → 3 Transition Gate
+
+Before moving to Phase 3 (Implementation Plan), verify all of the following:
+
+- [ ] Every Phase 1 entity has a `dataStore` assignment (`sql`, `cosmosdb`, `table`, `blob`)
+- [ ] Every `string` property has `maxLength` defined
+- [ ] Every `decimal`/`money` property has `precision` and `scale`
+- [ ] `scaffoldMode` is set (`full`, `lite`, or `api-only`)
+- [ ] At least one host is enabled (`includeApi`, `includeGateway`, etc.)
+- [ ] If `many-to-many` relationship exists, `joinEntity` is specified
+- [ ] `testingProfile` is set (`minimal`, `balanced`, or `comprehensive`)
+- [ ] `customNugetFeeds` is defined (empty array if none)

@@ -46,6 +46,65 @@ public class {Entity}EndpointsTests : EndpointTestBase
     [TestCategory("Endpoint")]
     [TestCategory("Integration")]
     [TestMethod]
+    public async Task Search_ReturnsFilteredResults()
+    {
+        // Arrange
+        using var client = await GetHttpClient();
+        var tenantId = Guid.NewGuid();
+
+        // Seed — create two entities
+        var createDto1 = new DefaultRequest<{Entity}Dto>
+        {
+            Item = new {Entity}Dto { Name = "SearchTarget", TenantId = tenantId }
+        };
+        var createDto2 = new DefaultRequest<{Entity}Dto>
+        {
+            Item = new {Entity}Dto { Name = "OtherItem", TenantId = tenantId }
+        };
+        await client.PostAsJsonAsync($"v1/tenant/{tenantId}/{entities}", createDto1);
+        await client.PostAsJsonAsync($"v1/tenant/{tenantId}/{entities}", createDto2);
+
+        // Act — search with filter
+        var searchRequest = new SearchRequest<{Entity}SearchFilter>
+        {
+            Page = 1,
+            PageSize = 10,
+            Filter = new {Entity}SearchFilter { SearchTerm = "SearchTarget" }
+        };
+        var response = await client.PostAsJsonAsync(
+            $"v1/tenant/{tenantId}/{entities}/search", searchRequest);
+
+        // Assert — 200 with filtered results
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+        var page = await response.Content.ReadFromJsonAsync<PagedResponse<{Entity}Dto>>();
+        Assert.IsNotNull(page);
+        Assert.AreEqual(1, page.TotalCount);
+        Assert.AreEqual("SearchTarget", page.Items.First().Name);
+    }
+
+    [TestCategory("Endpoint")]
+    [TestCategory("Integration")]
+    [TestMethod]
+    public async Task GetById_NotFound_Returns404()
+    {
+        // Arrange
+        using var client = await GetHttpClient();
+        var tenantId = Guid.NewGuid();
+        var nonExistentId = Guid.NewGuid();
+
+        // Act
+        var response = await client.GetAsync($"v1/tenant/{tenantId}/{entities}/{nonExistentId}");
+
+        // Assert
+        Assert.AreEqual(HttpStatusCode.NotFound, response.StatusCode);
+        var problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        Assert.IsNotNull(problemDetails);
+        Assert.AreEqual(404, problemDetails.Status);
+    }
+
+    [TestCategory("Endpoint")]
+    [TestCategory("Integration")]
+    [TestMethod]
     public async Task CRUD_Pass() { /* POST/GET/PUT/DELETE + 404 */ }
 
     [TestCategory("Endpoint")]

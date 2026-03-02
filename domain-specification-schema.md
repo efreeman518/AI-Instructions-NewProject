@@ -273,3 +273,17 @@ Work through these in order during Phase 1:
 5. **Events** — what happens that other parts of the system care about?
 6. **Workflows** — what multi-step processes exist beyond CRUD?
 7. **Tenancy/auth** — who can see/do what?
+
+---
+
+## Phase 1 → 2 Transition Gate
+
+Before moving to Phase 2 (Resource Definition), verify all of the following:
+
+- [ ] Every entity has `name`, at least one `property`, and `isTenantEntity` set
+- [ ] Every relationship references an entity defined in this file
+- [ ] No entity names collide with C# reserved types (`Task`, `Thread`, `Timer`, `Type`, `String`, `Object`, `Action`, `Attribute`, `File`, `Path`)
+- [ ] State machine `states` list matches `transitions` from/to values (no orphaned states or transitions)
+- [ ] Every event `raisedBy` references a defined entity
+- [ ] `ProjectName` is set and valid (PascalCase, no spaces)
+- [ ] At least one entity is defined
