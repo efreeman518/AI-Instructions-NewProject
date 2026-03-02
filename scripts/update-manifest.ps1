@@ -49,6 +49,8 @@ $added = 0
 foreach ($file in $mdFiles) {
     $relativePath = $file.FullName.Substring($Root.Length + 1).Replace('\', '/')
     $content = Get-Content $file.FullName -Raw -Encoding UTF8
+    # Normalize line endings to LF so token counts are consistent across Windows/Linux
+    $content = $content -replace "`r`n", "`n"
     $chars = $content.Length
     $tokens = [int][Math]::Ceiling($chars / 4)
 
@@ -76,6 +78,7 @@ foreach ($file in $mdFiles) {
 $manifestRelative = '_manifest.json'
 if ($fileEntries.ContainsKey($manifestRelative)) {
     $manifestContent = Get-Content $manifestPath -Raw -Encoding UTF8
+    $manifestContent = $manifestContent -replace "`r`n", "`n"
     $manifestTokens = [int][Math]::Ceiling($manifestContent.Length / 4)
     $entry = $fileEntries[$manifestRelative]
     if ($entry.estimatedTokens -ne $manifestTokens) {
@@ -93,7 +96,9 @@ foreach ($entry in $manifest.files) {
 $manifest.totalEstimatedTokens = $total
 
 # Serialize and write back
-$outputJson = $manifest | ConvertTo-Json -Depth 10
+$outputJson = ($manifest | ConvertTo-Json -Depth 10) -replace "`r`n", "`n"
+# Ensure trailing newline for POSIX compliance
+if (-not $outputJson.EndsWith("`n")) { $outputJson += "`n" }
 # Ensure UTF-8 without BOM
 [System.IO.File]::WriteAllText($manifestPath, $outputJson, [System.Text.UTF8Encoding]::new($false))
 

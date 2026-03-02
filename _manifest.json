@@ -12,7 +12,7 @@
                                   ".git/**"
                               ]
               },
-    "totalEstimatedTokens":  131887,
+    "totalEstimatedTokens":  128325,
     "contextBudget":  {
                           "default":  30000,
                           "extended":  60000,
@@ -23,67 +23,67 @@
                   {
                       "path":  "START-AI.md",
                       "phase":  "session-bootstrap",
-                      "estimatedTokens":  724
+                      "estimatedTokens":  707
                   },
                   {
                       "path":  "SKILL.md",
                       "phase":  "phase-4-base",
-                      "estimatedTokens":  4362
+                      "estimatedTokens":  4273
                   },
                   {
                       "path":  "placeholder-tokens.md",
                       "phase":  "phase-4-base",
-                      "estimatedTokens":  2215
+                      "estimatedTokens":  2182
                   },
                   {
                       "path":  "quick-reference.md",
                       "phase":  "on-demand",
-                      "estimatedTokens":  1218
+                      "estimatedTokens":  1184
                   },
                   {
                       "path":  "troubleshooting.md",
                       "phase":  "on-demand",
-                      "estimatedTokens":  1387
+                      "estimatedTokens":  1352
                   },
                   {
                       "path":  "domain-specification-schema.md",
                       "phase":  "phase-1",
-                      "estimatedTokens":  3207
+                      "estimatedTokens":  3120
                   },
                   {
                       "path":  "resource-implementation-schema.md",
                       "phase":  "phase-2",
-                      "estimatedTokens":  3875
+                      "estimatedTokens":  3769
                   },
                   {
                       "path":  "implementation-plan.md",
                       "phase":  "phase-3",
-                      "estimatedTokens":  1270
+                      "estimatedTokens":  1238
                   },
                   {
                       "path":  "skills/solution-structure.md",
                       "phase":  "phase-4a",
-                      "estimatedTokens":  1727
+                      "estimatedTokens":  1681
                   },
                   {
                       "path":  "skills/domain-model.md",
                       "phase":  "phase-4a",
-                      "estimatedTokens":  1544
+                      "estimatedTokens":  1510
                   },
                   {
                       "path":  "skills/data-access.md",
                       "phase":  "phase-4a",
-                      "estimatedTokens":  2380
+                      "estimatedTokens":  2322
                   },
                   {
                       "path":  "skills/package-dependencies.md",
                       "phase":  "phase-4a",
-                      "estimatedTokens":  1739
+                      "estimatedTokens":  1681
                   },
                   {
                       "path":  "templates/entity-template.md",
                       "phase":  "phase-4a",
-                      "estimatedTokens":  1479,
+                      "estimatedTokens":  1437,
                       "generates":  [
                                         "{Entity}.cs"
                                     ],
@@ -94,7 +94,7 @@
                   {
                       "path":  "templates/ef-configuration-template.md",
                       "phase":  "phase-4a",
-                      "estimatedTokens":  1998,
+                      "estimatedTokens":  1955,
                       "generates":  [
                                         "{Entity}Configuration.cs"
                                     ],
@@ -106,7 +106,7 @@
                   {
                       "path":  "templates/repository-template.md",
                       "phase":  "phase-4a",
-                      "estimatedTokens":  2250,
+                      "estimatedTokens":  2198,
                       "generates":  [
                                         "{Entity}RepositoryTrxn.cs",
                                         "{Entity}RepositoryQuery.cs",
@@ -122,7 +122,7 @@
                   {
                       "path":  "templates/domain-rules-template.md",
                       "phase":  "phase-4a",
-                      "estimatedTokens":  1939,
+                      "estimatedTokens":  1875,
                       "generates":  [
                                         "Rules/{RuleName}Rule.cs"
                                     ],
@@ -134,7 +134,7 @@
                   {
                       "path":  "templates/appsettings-template.md",
                       "phase":  "phase-4a",
-                      "estimatedTokens":  1152,
+                      "estimatedTokens":  1113,
                       "generates":  [
                                         "appsettings.json",
                                         "appsettings.Development.json"
@@ -146,17 +146,17 @@
                   {
                       "path":  "skills/application-layer.md",
                       "phase":  "phase-4b",
-                      "estimatedTokens":  1328
+                      "estimatedTokens":  1292
                   },
                   {
                       "path":  "skills/bootstrapper.md",
                       "phase":  "phase-4b",
-                      "estimatedTokens":  1503
+                      "estimatedTokens":  1465
                   },
                   {
                       "path":  "skills/api.md",
                       "phase":  "phase-4b",
-                      "estimatedTokens":  2319,
+                      "estimatedTokens":  2258,
                       "dependencies":  [
                                            "skills/application-layer.md",
                                            "skills/bootstrapper.md"
@@ -165,7 +165,7 @@
                   {
                       "path":  "templates/dto-template.md",
                       "phase":  "phase-4b",
-                      "estimatedTokens":  611,
+                      "estimatedTokens":  590,
                       "generates":  [
                                         "{Entity}Dto.cs",
                                         "{Entity}SearchFilter.cs"
@@ -177,7 +177,7 @@
                   {
                       "path":  "templates/mapper-template.md",
                       "phase":  "phase-4b",
-                      "estimatedTokens":  946,
+                      "estimatedTokens":  920,
                       "generates":  [
                                         "{Entity}Mapper.cs"
                                     ],
@@ -189,7 +189,7 @@
                   {
                       "path":  "templates/service-template.md",
                       "phase":  "phase-4b",
-                      "estimatedTokens":  2338,
+                      "estimatedTokens":  2287,
                       "generates":  [
                                         "{Entity}Service.cs",
                                         "I{Entity}Service.cs"
@@ -203,7 +203,7 @@
                   {
                       "path":  "templates/endpoint-template.md",
                       "phase":  "phase-4b",
-                      "estimatedTokens":  1457,
+                      "estimatedTokens":  1421,
                       "generates":  [
                                         "{Entity}Endpoints.cs"
                                     ],
@@ -215,7 +215,7 @@
                   {
                       "path":  "templates/message-handler-template.md",
                       "phase":  "phase-4b",
-                      "estimatedTokens":  1445,
+                      "estimatedTokens":  1401,
                       "generates":  [
                                         "{Event}Handler.cs"
                                     ],
@@ -226,7 +226,7 @@
                   {
                       "path":  "skills/gateway.md",
                       "phase":  "phase-4c",
-                      "estimatedTokens":  1265,
+                      "estimatedTokens":  1220,
                       "dependencies":  [
                                            "skills/api.md",
                                            "skills/aspire.md",
@@ -236,12 +236,12 @@
                   {
                       "path":  "skills/multi-tenant.md",
                       "phase":  "phase-4c",
-                      "estimatedTokens":  1288
+                      "estimatedTokens":  1243
                   },
                   {
                       "path":  "skills/caching.md",
                       "phase":  "phase-4c",
-                      "estimatedTokens":  1342,
+                      "estimatedTokens":  1299,
                       "dependencies":  [
                                            "skills/bootstrapper.md",
                                            "skills/configuration.md"
@@ -250,17 +250,17 @@
                   {
                       "path":  "skills/aspire.md",
                       "phase":  "phase-4c",
-                      "estimatedTokens":  1145
+                      "estimatedTokens":  1105
                   },
                   {
                       "path":  "skills/configuration.md",
                       "phase":  "phase-4c",
-                      "estimatedTokens":  1216
+                      "estimatedTokens":  1172
                   },
                   {
                       "path":  "skills/background-services.md",
                       "phase":  "phase-4d",
-                      "estimatedTokens":  1419,
+                      "estimatedTokens":  1375,
                       "dependencies":  [
                                            "skills/solution-structure.md",
                                            "skills/bootstrapper.md",
@@ -271,7 +271,7 @@
                   {
                       "path":  "skills/function-app.md",
                       "phase":  "phase-4d",
-                      "estimatedTokens":  1668,
+                      "estimatedTokens":  1615,
                       "dependencies":  [
                                            "skills/solution-structure.md",
                                            "skills/bootstrapper.md",
@@ -281,7 +281,7 @@
                   {
                       "path":  "skills/uno-ui.md",
                       "phase":  "phase-4d",
-                      "estimatedTokens":  2458,
+                      "estimatedTokens":  2398,
                       "dependencies":  [
                                            "skills/solution-structure.md",
                                            "skills/gateway.md",
@@ -293,12 +293,12 @@
                   {
                       "path":  "skills/notifications.md",
                       "phase":  "phase-4d",
-                      "estimatedTokens":  2753
+                      "estimatedTokens":  2668
                   },
                   {
                       "path":  "skills/cosmosdb-data.md",
                       "phase":  "phase-4a-optional",
-                      "estimatedTokens":  2146,
+                      "estimatedTokens":  2086,
                       "dependencies":  [
                                            "skills/domain-model.md",
                                            "skills/bootstrapper.md",
@@ -308,17 +308,17 @@
                   {
                       "path":  "skills/table-storage.md",
                       "phase":  "phase-4a-optional",
-                      "estimatedTokens":  1393
+                      "estimatedTokens":  1348
                   },
                   {
                       "path":  "skills/blob-storage.md",
                       "phase":  "phase-4a-optional",
-                      "estimatedTokens":  1603
+                      "estimatedTokens":  1551
                   },
                   {
                       "path":  "skills/messaging.md",
                       "phase":  "phase-4e-optional",
-                      "estimatedTokens":  1639,
+                      "estimatedTokens":  1596,
                       "dependencies":  [
                                            "skills/bootstrapper.md",
                                            "skills/configuration.md",
@@ -328,22 +328,22 @@
                   {
                       "path":  "skills/keyvault.md",
                       "phase":  "phase-4e-optional",
-                      "estimatedTokens":  1588
+                      "estimatedTokens":  1542
                   },
                   {
                       "path":  "skills/grpc.md",
                       "phase":  "phase-4e-optional",
-                      "estimatedTokens":  1695
+                      "estimatedTokens":  1638
                   },
                   {
                       "path":  "skills/external-api.md",
                       "phase":  "phase-4e-optional",
-                      "estimatedTokens":  1884
+                      "estimatedTokens":  1828
                   },
                   {
                       "path":  "templates/mvux-model-template.md",
                       "phase":  "phase-4d-optional",
-                      "estimatedTokens":  1509,
+                      "estimatedTokens":  1464,
                       "generates":  [
                                         "{Entity}Model.cs"
                                     ],
@@ -355,7 +355,7 @@
                   {
                       "path":  "templates/ui-model-template.md",
                       "phase":  "phase-4d-optional",
-                      "estimatedTokens":  670,
+                      "estimatedTokens":  647,
                       "generates":  [
                                         "{Entity}UiModel.cs"
                                     ],
@@ -366,7 +366,7 @@
                   {
                       "path":  "templates/ui-service-template.md",
                       "phase":  "phase-4d-optional",
-                      "estimatedTokens":  1042,
+                      "estimatedTokens":  1014,
                       "generates":  [
                                         "I{Feature}Service.cs",
                                         "{Feature}Service.cs"
@@ -379,7 +379,7 @@
                   {
                       "path":  "templates/xaml-page-template.md",
                       "phase":  "phase-4d-optional",
-                      "estimatedTokens":  2203,
+                      "estimatedTokens":  2152,
                       "generates":  [
                                         "{Entity}Page.xaml",
                                         "{Entity}Page.xaml.cs"
@@ -393,7 +393,7 @@
                   {
                       "path":  "templates/updater-template.md",
                       "phase":  "phase-4a-optional",
-                      "estimatedTokens":  1262,
+                      "estimatedTokens":  1228,
                       "generates":  [
                                         "{Entity}Updater.cs"
                                     ],
@@ -405,12 +405,12 @@
                   {
                       "path":  "skills/testing.md",
                       "phase":  "phase-4e",
-                      "estimatedTokens":  2253
+                      "estimatedTokens":  2176
                   },
                   {
                       "path":  "templates/test-template-unit.md",
                       "phase":  "phase-4e",
-                      "estimatedTokens":  2395,
+                      "estimatedTokens":  2319,
                       "generates":  [
                                         "{Entity}UnitTests.cs"
                                     ],
@@ -423,7 +423,7 @@
                   {
                       "path":  "templates/test-template-integration.md",
                       "phase":  "phase-4e",
-                      "estimatedTokens":  2045,
+                      "estimatedTokens":  1986,
                       "generates":  [
                                         "{Entity}EndpointTests.cs"
                                     ],
@@ -435,7 +435,7 @@
                   {
                       "path":  "templates/test-template-e2e.md",
                       "phase":  "phase-4e",
-                      "estimatedTokens":  787,
+                      "estimatedTokens":  764,
                       "generates":  [
                                         "{Entity}E2ETests.cs",
                                         "{Entity}Page.cs"
@@ -448,7 +448,7 @@
                   {
                       "path":  "templates/test-template-quality.md",
                       "phase":  "phase-4e",
-                      "estimatedTokens":  552,
+                      "estimatedTokens":  535,
                       "generates":  [
                                         "ArchitectureTests.cs",
                                         "BaseTest.cs"
@@ -460,12 +460,12 @@
                   {
                       "path":  "skills/identity-management.md",
                       "phase":  "phase-4e",
-                      "estimatedTokens":  2189
+                      "estimatedTokens":  2130
                   },
                   {
                       "path":  "skills/ai-integration.md",
                       "phase":  "phase-4g",
-                      "estimatedTokens":  4037,
+                      "estimatedTokens":  3929,
                       "dependencies":  [
                                            "skills/solution-structure.md",
                                            "skills/bootstrapper.md",
@@ -477,7 +477,7 @@
                   {
                       "path":  "templates/ai-search-template.md",
                       "phase":  "phase-4g",
-                      "estimatedTokens":  2495,
+                      "estimatedTokens":  2421,
                       "generates":  [
                                         "I{SearchIndex}SearchService.cs",
                                         "{SearchIndex}SearchService.cs"
@@ -489,7 +489,7 @@
                   {
                       "path":  "templates/agent-template.md",
                       "phase":  "phase-4g",
-                      "estimatedTokens":  3012,
+                      "estimatedTokens":  2926,
                       "generates":  [
                                         "{Agent}AgentService.cs",
                                         "I{Agent}Agent.cs"
@@ -502,52 +502,52 @@
                   {
                       "path":  "skills/iac.md",
                       "phase":  "phase-4e",
-                      "estimatedTokens":  1519
+                      "estimatedTokens":  1457
                   },
                   {
                       "path":  "skills/cicd.md",
                       "phase":  "phase-4e",
-                      "estimatedTokens":  1707
+                      "estimatedTokens":  1647
                   },
                   {
                       "path":  "sampleapp-patterns.md",
                       "phase":  "on-demand",
-                      "estimatedTokens":  2667
+                      "estimatedTokens":  2624
                   },
                   {
                       "path":  "vertical-slice-checklist.md",
                       "phase":  "on-demand",
-                      "estimatedTokens":  3075
+                      "estimatedTokens":  3010
                   },
                   {
                       "path":  "UPDATE-INSTRUCTIONS.md",
                       "phase":  "on-demand",
-                      "estimatedTokens":  1052
+                      "estimatedTokens":  1035
                   },
                   {
                       "path":  "engineer-checklist.md",
                       "phase":  "on-demand",
-                      "estimatedTokens":  1206
+                      "estimatedTokens":  1171
                   },
                   {
                       "path":  "HANDOFF.md",
                       "phase":  "on-demand",
-                      "estimatedTokens":  587
+                      "estimatedTokens":  572
                   },
                   {
                       "path":  "START-HUMAN.md",
                       "phase":  "human-only",
-                      "estimatedTokens":  1529
+                      "estimatedTokens":  1494
                   },
                   {
                       "path":  "_manifest.json",
                       "phase":  "metadata",
-                      "estimatedTokens":  7371
+                      "estimatedTokens":  7209
                   },
                   {
                       "path":  "skills/observability.md",
                       "phase":  "phase-4c",
-                      "estimatedTokens":  1659,
+                      "estimatedTokens":  1611,
                       "dependencies":  [
                                            "skills/aspire.md",
                                            "skills/configuration.md",
@@ -557,12 +557,12 @@
                   {
                       "path":  "skills/migrations.md",
                       "phase":  "phase-4a-optional",
-                      "estimatedTokens":  1317
+                      "estimatedTokens":  1277
                   },
                   {
                       "path":  "skills/security.md",
                       "phase":  "phase-4c",
-                      "estimatedTokens":  1490,
+                      "estimatedTokens":  1439,
                       "dependencies":  [
                                            "skills/gateway.md",
                                            "skills/identity-management.md",
@@ -572,7 +572,7 @@
                   {
                       "path":  "templates/structure-validator-template.md",
                       "phase":  "phase-4b",
-                      "estimatedTokens":  1144,
+                      "estimatedTokens":  1119,
                       "generates":  [
                                         "{Entity}StructureValidator.cs"
                                     ],
@@ -584,7 +584,7 @@
                   {
                       "path":  "templates/exception-handler-template.md",
                       "phase":  "phase-4b",
-                      "estimatedTokens":  1081,
+                      "estimatedTokens":  1054,
                       "generates":  [
                                         "DefaultExceptionHandler.cs"
                                     ],
@@ -595,7 +595,7 @@
                   {
                       "path":  "templates/dockerfile-template.md",
                       "phase":  "phase-4e",
-                      "estimatedTokens":  1088,
+                      "estimatedTokens":  1065,
                       "generates":  [
                                         "Dockerfile"
                                     ],
@@ -612,17 +612,17 @@
                   {
                       "path":  "CHANGELOG.md",
                       "phase":  "metadata",
-                      "estimatedTokens":  951
+                      "estimatedTokens":  934
                   },
                   {
                       "path":  "README.md",
                       "phase":  "human-only",
-                      "estimatedTokens":  1547
+                      "estimatedTokens":  1531
                   },
                   {
                       "path":  "execution-gates.md",
                       "phase":  "on-demand",
-                      "estimatedTokens":  1531
+                      "estimatedTokens":  1470
                   }
               ],
     "phases":  {
