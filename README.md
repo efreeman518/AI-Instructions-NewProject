@@ -15,7 +15,8 @@ Pragmatic instruction set for AI-assisted scaffolding of C#/.NET business apps a
 3. Phase 2: Resource YAML → [resource-implementation-schema.md](resource-implementation-schema.md)
 4. Phase 3: Implementation plan → [implementation-plan.md](implementation-plan.md)
 5. Phase 4: Build → [SKILL.md](SKILL.md)
-6. Validate → [engineer-checklist.md](engineer-checklist.md)
+6. Validate gates → [execution-gates.md](execution-gates.md)
+7. Troubleshoot test failures → [test-gotchas.md](test-gotchas.md)
 
 ## Mode Selection
 

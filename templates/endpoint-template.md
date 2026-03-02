@@ -138,3 +138,5 @@ app.MapGroup("v{apiVersion:apiVersion}/tenant/{tenantId}/{entity}")
     .RequireAuthorization("TenantMatch")
     .Map{Entity}Endpoints(includeErrorDetails);
 ```
+
+For kebab-case route segments, use `{entity-route}` in route definitions.

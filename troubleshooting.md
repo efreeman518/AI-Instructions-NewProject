@@ -50,24 +50,9 @@ When inputs are unclear, prefer pragmatic defaults and continue:
 
 ---
 
-## Common Test Failures (Quick Reference)
+## Common Test Failures
 
-| Symptom | Root Cause | Fix |
-|---|---|---|
-| Search returns empty/0 results | `SearchRequest.PageSize` defaults to 0 | Send `{ PageSize = 100, PageIndex = 1 }` |
-| Search returns 500 / negative OFFSET | `PageIndex = 0` with nonzero `PageSize` | Set `PageIndex = 1` (1-based) |
-| All writes return 500 `NotImplementedException` | Using `SaveChangesAsync(ct)` instead of overload | Use `SaveChangesAsync(OptimisticConcurrencyWinner.ClientWins, ct)` |
-| Tenant-scoped queries return empty | `IRequestContext.TenantId` is null in test host | Override `IRequestContext` in `ConfigureTestServices` with fixed `TestTenantId` |
-| Delete tests pass but entity still exists | Service loads entity but never calls `Delete()` | Add `repoTrxn.Delete(entity)` before save |
-| FK violation on assign/reference tests | Test uses `Guid.NewGuid()` for FK values | Create real related entities first |
-| 429 TooManyRequests in long test sequences | API rate limiter (100 req/min default) | Override with `GetNoLimiter` in test factory |
-| `CS0104` RequestContext ambiguity | `Test.Support.RequestContext` vs `EF.Common.Contracts.RequestContext` | Use fully qualified `new EF.Common.Contracts.RequestContext<...>(...)` |
-| Create returns 201 but validation test expects 400 | `CreateAsync` doesn't apply DTO field to entity | Add `entity.Update(field: dto.Field)` after `Create()` |
-| Schema changes not reflected in TestContainer | Old schema cached from previous run | Add `EnsureDeletedAsync()` before `EnsureCreatedAsync()` |
-| WASM build `DirectoryNotFoundException` on `unoresizetizer\` | Resizetizer 1.12.1 sets `WasmPWAManifestFile` to a directory path when `UnoSplashScreen` is absent | Add `_FixWasmPwaManifestPath` MSBuild target (see `skills/uno-ui.md` Known Build Issues) |
-| ProblemDetails leaks stack traces in CI/release | `AddProblemDetails` with `ex.ToStringDemystified()` runs in all configurations | Wrap diagnostic ProblemDetails block in `#if DEBUG` / `#endif` |
-| Rate limiter returns 429 in tests | Rate limiting middleware active in test host | Disable rate limiter in `CustomApiFactory`: `services.Configure<RateLimiterOptions>(o => o.GlobalLimiter = PartitionedRateLimiter.CreateChained<HttpContext>())` |
-| StructureValidator not found | Missing `using` for the static validator class | `StructureValidator` is static — no DI registration needed. Verify `using {Namespace}.Application.Services.Validation;` |
+Use [test-gotchas.md](test-gotchas.md) for the canonical test failure catalog and fixes.
 
 ---
 

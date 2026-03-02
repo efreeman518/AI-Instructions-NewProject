@@ -11,6 +11,16 @@ Start each new AI session with:
 
 Then load only the phase files you need.
 
+## Phase Load Automation
+
+Prefer generated load packs instead of manual file picking:
+
+1. `./scripts/generate-phase-load-packs.ps1`
+2. `./scripts/get-phase-load-set.ps1 -Phase <phase> -Mode <full|lite|api-only> [feature flags]`
+3. Load only the returned files.
+
+Canonical generated output: `phase-load-packs.json`.
+
 ## Phase Router
 
 - **Phase 1 (Domain Discovery)**
@@ -26,7 +36,7 @@ Then load only the phase files you need.
 - **Phase 4 (Implementation)**
   - `SKILL.md`
   - `placeholder-tokens.md`
-  - plus only the skill/template files required for the current sub-phase (see Phase Loading Manifest in `SKILL.md`)
+  - plus only the skill/template files required for the current sub-phase (prefer generated load sets over manual selection)
 
 ## Strict On-Demand Files
 
@@ -36,6 +46,8 @@ Do not preload these files. Load only when needed:
 - `sampleapp-patterns.md` (cross-project pattern selection)
 - `troubleshooting.md` (only when failures occur)
 - `engineer-checklist.md` (execution/infra verification)
+- `execution-gates.md` (canonical phase checkpoints and commands)
+- `test-gotchas.md` (canonical recurring test failures and fixes)
 
 ## Defaults Source of Truth
 

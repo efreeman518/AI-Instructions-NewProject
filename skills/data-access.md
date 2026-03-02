@@ -172,11 +172,7 @@ Keep full registration details in [bootstrapper.md](bootstrapper.md):
 
 ## SearchRequest Defaults (Critical)
 
-`SearchRequest<T>` (from `EF.Common.Contracts`) has **`PageSize = 0` and `PageIndex = 0`** by default. This causes:
-- `PageSize = 0` → zero results returned
-- `PageIndex = 0` with nonzero `PageSize` → negative SQL OFFSET → `SqlException`
-
-Always provide both values when constructing search requests. Minimum valid: `PageSize = 10, PageIndex = 1`.
+See [test-gotchas.md](../test-gotchas.md) for the canonical paging defaults guidance and test/runtime failure patterns.
 
 ---
 

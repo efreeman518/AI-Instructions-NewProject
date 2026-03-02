@@ -49,6 +49,8 @@ Use this when adding a new entity to an **already-scaffolded** solution. Skip fu
 
 ### Validation
 
+Use [execution-gates.md](execution-gates.md) for canonical gate commands and [test-gotchas.md](test-gotchas.md) for recurring test failures.
+
 ```powershell
 dotnet build
 dotnet test --filter "TestCategory={Entity}"

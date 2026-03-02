@@ -66,14 +66,7 @@ Expected shape:
 
 ## Choose Mode + Profiles
 
-Set these early in domain inputs:
-
-- `scaffoldMode`: `full` or `lite`
-- `testingProfile`: `minimal|balanced|comprehensive`
-- `functionProfile`: `starter|full` (if Functions enabled)
-- `unoProfile`: `starter|full` (if Uno UI enabled)
-
-Defaults are defined once in [resource-implementation-schema.md](resource-implementation-schema.md) under **Canonical Defaults**. Prefer those values unless a project requirement explicitly overrides them.
+Set mode/profile fields early in domain inputs. Allowed values and defaults are canonical in [resource-implementation-schema.md](resource-implementation-schema.md) under **Canonical Defaults**.
 
 Add optional hosts after core backend slices stabilize.
 
@@ -84,6 +77,8 @@ Add optional hosts after core backend slices stabilize.
 3. **Phase 3 — Implementation Plan:** ordered steps, resolve open questions → `implementation-plan.md` in project root
 4. **Phase 4 — Implementation:** start AI session with [START-AI.md](START-AI.md), then execute sub-phases (4a-4e) → [SKILL.md](SKILL.md)
 5. During Phase 4, create/update `HANDOFF.md` at session boundaries when context is high
+6. Run instruction preflight: `./scripts/preflight-instructions.ps1` (refreshes `_manifest.json`, regenerates `phase-load-packs.json`, runs lint)
+7. Resolve phase load sets as needed with `./scripts/get-phase-load-set.ps1`
 
 ## Phase 1 — Domain Discovery Prompt
 
@@ -114,7 +109,8 @@ See **Prompt Patterns** in [SKILL.md](SKILL.md).
 
 ## Validation Cadence
 
-See **Validation Cadence** in [SKILL.md](SKILL.md). IaC checks: [engineer-checklist.md](engineer-checklist.md).
+See [execution-gates.md](execution-gates.md) for the canonical phase gates and commands. IaC checks: [engineer-checklist.md](engineer-checklist.md).
+Run `./scripts/preflight-instructions.ps1` before Phase 4 execution and before opening validation PRs.
 
 ## Troubleshooting Model
 
@@ -129,6 +125,9 @@ See **Validation Cadence** in [SKILL.md](SKILL.md). IaC checks: [engineer-checkl
 - [domain-specification-schema.md](domain-specification-schema.md) *(Phase 1 output)*
 - [resource-implementation-schema.md](resource-implementation-schema.md) *(Phase 2 output)*
 - [implementation-plan.md](implementation-plan.md) *(Phase 3 template)*
+- [execution-gates.md](execution-gates.md) *(canonical phase checkpoints and validation commands)*
+- [test-gotchas.md](test-gotchas.md) *(canonical recurring test failures and fixes)*
+- `phase-load-packs.json` *(generated phase load sets)*
 - [sampleapp-patterns.md](sampleapp-patterns.md) *(strictly on-demand for cross-project pattern selection)*
 - [quick-reference.md](quick-reference.md) *(strictly on-demand for naming/DI/config lookups)*
 - [engineer-checklist.md](engineer-checklist.md)

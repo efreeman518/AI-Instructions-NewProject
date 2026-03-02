@@ -132,6 +132,16 @@ Code, compile, test. Execute skills in sub-phases below. Ask questions as needed
 
 Load the minimum set for the current phase only.
 
+Primary path (recommended):
+
+1. Run `./scripts/generate-phase-load-packs.ps1` when `_manifest.json` or `SKILL.md` changes.
+2. Resolve current load set with `./scripts/get-phase-load-set.ps1 -Phase <phase> -Mode <full|lite|api-only> [feature flags]`.
+3. Load only files returned by the script.
+
+Generated source of truth: `phase-load-packs.json`.
+
+Manual list below is reference-only fallback when scripts are unavailable.
+
 ### Session bootstrap
 - [START-AI.md](START-AI.md)
 
@@ -184,6 +194,8 @@ Load only enabled concerns: `skills/gateway.md`, `skills/aspire.md`, `skills/con
 ### On-Demand (Load When Debugging)
 - `skills/error-handling.md` — cross-cutting error pipeline reference (load when debugging error flows)
 - `skills/migrations.md` — EF migration strategy (load when adding/running migrations)
+- `execution-gates.md` — canonical phase checkpoints and validation commands
+- `test-gotchas.md` — canonical recurring test failure catalog and fixes
 
 ## Phase 4 Skills (Recommended Order)
 
@@ -299,10 +311,7 @@ At Phase 3 start: ask for custom/private NuGet feed URLs and auth method. Update
 
 ## Validation Cadence
 
-- Foundation/App Core: `dotnet build`
-- Feature slice: build + targeted unit, endpoint, and integration tests
-- Pre-merge baseline: full test run
-- IaC: run commands from [engineer-checklist.md](engineer-checklist.md)
+Canonical validation gates and commands are defined in [execution-gates.md](execution-gates.md).
 
 ## Mixed-Store Slice Gate
 

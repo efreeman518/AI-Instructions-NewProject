@@ -1,0 +1,61 @@
+name: Instruction Preflight
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "**/*.md"
+      - "scripts/preflight-instructions.ps1"
+      - "scripts/lint-instructions.ps1"
+      - "scripts/update-manifest.ps1"
+      - "scripts/generate-phase-load-packs.ps1"
+      - "scripts/get-phase-load-set.ps1"
+      - "phase-load-packs.json"
+      - ".github/workflows/instruction-preflight.yml"
+  push:
+    branches: [main]
+    paths:
+      - "**/*.md"
+      - "scripts/preflight-instructions.ps1"
+      - "scripts/lint-instructions.ps1"
+      - "scripts/update-manifest.ps1"
+      - "scripts/generate-phase-load-packs.ps1"
+      - "scripts/get-phase-load-set.ps1"
+      - "phase-load-packs.json"
+      - ".github/workflows/instruction-preflight.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  instruction-preflight:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run instruction preflight
+        shell: pwsh
+        run: ./scripts/preflight-instructions.ps1
+
+      - name: Verify manifest freshness
+        shell: pwsh
+        run: |
+          $status = git status --porcelain -- _manifest.json
+          if (-not [string]::IsNullOrWhiteSpace($status)) {
+            Write-Error "_manifest.json is stale. Run ./scripts/update-manifest.ps1 and commit the result."
+            git diff -- _manifest.json
+            exit 1
+          }
+
+      - name: Verify phase load packs freshness
+        shell: pwsh
+        run: |
+          $status = git status --porcelain -- phase-load-packs.json
+          if (-not [string]::IsNullOrWhiteSpace($status)) {
+            Write-Error "phase-load-packs.json is stale. Run ./scripts/generate-phase-load-packs.ps1 and commit the result."
+            git diff -- phase-load-packs.json
+            exit 1
+          }

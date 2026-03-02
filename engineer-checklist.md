@@ -7,7 +7,7 @@ Use this file as the **single execution path** for compile/run verification whil
 ## How to Use This Checklist
 
 1. Run **Preflight** once per machine/repo.
-2. After every AI phase, run the **Phase Execution Loop**.
+2. After every AI phase, run the canonical gates in [execution-gates.md](execution-gates.md).
 3. Run only the optional sections that match enabled hosts/workloads.
 4. If a step fails, log in `HANDOFF.md`, keep scope moving, and return later.
 5. `sample-app/` is reference-only (see [SKILL.md](SKILL.md) non-negotiables).
@@ -45,20 +45,7 @@ Configure these in your AI client (VS Code `settings.json` or Claude Desktop con
 
 ## Phase Execution Loop (Run After Each Scaffolding Phase)
 
-Run from solution root:
-
-```powershell
-dotnet restore
-dotnet build
-dotnet test --filter "TestCategory=Unit"
-```
-
-- [ ] Restore succeeds
-- [ ] Build succeeds
-- [ ] Unit tests pass
-- [ ] Results logged in `HANDOFF.md` if any step fails
-
-If build/test fails after one AI code-fix pass, keep moving with non-blocked phases and return later.
+Use [execution-gates.md](execution-gates.md) as the source of truth for loop commands and per-phase pass criteria.
 
 ---
 

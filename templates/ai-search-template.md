@@ -293,4 +293,6 @@ var index = new SearchIndex("{entity}-index")
 
 await indexClient.CreateOrUpdateIndexAsync(index);
 ```
+
+When index naming is provided by resource mapping, use `{SearchIndex}` as the index name token.
 ````

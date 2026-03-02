@@ -112,6 +112,8 @@ For playlist-driven content entities, model ordered blocks with:
 - block discriminator/type
 - payload invariants enforced in `Valid()`/domain rules (for example text block requires text, image block requires image URL)
 
+When the child collection property name differs from `{ChildEntity}s`, use the explicit `{Children}` token from [placeholder-tokens.md](../placeholder-tokens.md).
+
 ## File: Domain/Model/Entities/{Parent}{Related}.cs (Join Entity)
 
 Default many-to-many join entity pattern — inherits `EntityBase` with FK on both sides. Only use a pure composite-key join (no `EntityBase`) when confident the join will remain a pure association.

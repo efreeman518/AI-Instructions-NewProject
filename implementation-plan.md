@@ -4,6 +4,8 @@ Produced after Phase 1 (domain definition) and Phase 2 (resource mapping) are co
 
 **Create this file in the target project root as `implementation-plan.md`.**
 
+Checkpoint commands and pass criteria are canonical in [execution-gates.md](execution-gates.md).
+
 ## Template
 
 ```markdown
