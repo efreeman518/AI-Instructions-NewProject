@@ -19,7 +19,7 @@ When generating code from templates and skill files, substitute these placeholde
 | `{childEntity}` | camelCase | Child entity name (lowered first char) | `comment` | Child entity in camelCase for parameters and variables. |
 | `{ChildEntity}s` | PascalCase + s | Child entity name pluralized | `Comments` | Child collection property name on parent entity. |
 | `{Children}` | PascalCase plural | Child collection property name | `Comments` | Short-form collection name when different from `{ChildEntity}s`. Matches the `children.name` field in domain inputs. |
-| `{Feature}` | PascalCase | Feature area — typically same as `{Entity}` | `TodoItem` | UI service namespace grouping. Maps to feature folders in the Uno UI project. |
+| `{Feature}` | PascalCase plural | Feature area — defaults to `{Entities}` (plural entity name) | `TodoItems` | UI service namespace/folder grouping. Maps to feature folders in the Uno UI project (e.g., `Services/TodoItems/`). |
 | `{Gateway}` | PascalCase | Derived — same as `{Host}` | `TaskFlow` | Gateway host prefix. Use `{Gateway}.Gateway` for the gateway project name/path. |
 | `{SolutionName}` | PascalCase | Derived — `{Org}.{Project}` or `{Project}` | `TaskFlow` | Solution file name (`.slnx`). Matches the full qualified project prefix. |
 | `{entra-tenant-id}` | GUID | From domain inputs `authProvider` config | `00000000-...` | Azure Entra ID tenant GUID. |
@@ -45,7 +45,7 @@ When generating code from templates and skill files, substitute these placeholde
 1. **`{App}` = `{Project}`** — always identical. Use `{App}` when the context is the application namespace (e.g., `{App}DbContextTrxn`). Use `{Project}` when the context is the project/solution name.
 2. **`{Host}`** — if `OrganizationName` is provided: `{Org}.{Project}`. Otherwise: `{Project}`.
 3. **`{Gateway}`** — same as `{Host}`. Compose the gateway project name as `{Gateway}.Gateway`.
-4. **`{Feature}`** — defaults to `{Entity}` unless explicitly provided. Groups UI services and models.
+4. **`{Feature}`** — defaults to `{Entities}` (plural entity name) unless explicitly provided. Groups UI services and models into feature folders (e.g., `Services/TodoItems/`).
 5. **Pluralization** — use standard English pluralization rules. `TodoItem` → `TodoItems`, `Category` → `Categories`, `Reminder` → `Reminders`.
 6. **Route segments** — for URL paths, use the lowercase/kebab-case form. Multi-word entities: `TodoItem` → `todo-item`, `TeamMember` → `team-member`.
 7. **Aspire project references** — In `AppHost/AppHost.cs`, `builder.AddProject<Projects.X>()` uses the C# identifier form of the `.csproj` path, where dots and hyphens become underscores. For example: project `TaskFlow.Api` → `Projects.TaskFlow_Api`. This is automatic — just be aware when reading or writing AppHost code.
@@ -73,7 +73,7 @@ entities:
 | `{entity-route}` | `todo-item` |
 | `{ChildEntity}` | `Comment` |
 | `{Children}` | `Comments` |
-| `{Feature}` | `TodoItem` |
+| `{Feature}` | `TodoItems` |
 | `{Gateway}` | `TaskFlow` |
 | `{SolutionName}` | `TaskFlow` |
 
@@ -103,3 +103,30 @@ Project: TaskFlow
 | `{Gateway}` | `TaskFlow` | `TaskFlow.Gateway/` project (`{Gateway}.Gateway`) |
 
 > **Naming note:** Library projects use `{Org}.{Project}` prefix (e.g., `TaskFlow.Domain.Model`). Host/deployable projects use just `{Project}` prefix (e.g., `TaskFlow.Api`). This keeps host project names shorter while library names stay fully qualified.
+
+---
+
+## File Naming Conventions
+
+Canonical file name patterns for generated artifacts. Use these consistently across all generated code.
+
+| Artifact | Pattern |
+|---|---|
+| Entity | `{Entity}.cs` |
+| EF config | `{Entity}Configuration.cs` |
+| Write repo | `{Entity}RepositoryTrxn.cs` |
+| Read repo | `{Entity}RepositoryQuery.cs` |
+| Repo interface | `I{Entity}RepositoryTrxn.cs` / `I{Entity}RepositoryQuery.cs` |
+| Updater | `{Entity}Updater.cs` |
+| DTO | `{Entity}Dto.cs` |
+| Search filter | `{Entity}SearchFilter.cs` |
+| Mapper | `{Entity}Mapper.cs` |
+| Service | `{Entity}Service.cs` |
+| Service interface | `I{Entity}Service.cs` |
+| Endpoint | `{Entity}Endpoints.cs` |
+| Message handler | `{Event}Handler.cs` |
+| Health check | `{Target}HealthCheck.cs` |
+| Settings POCO | `{Entity}ServiceSettings.cs` |
+| Structure validator | `{Entity}StructureValidator.cs` |
+| Domain rules | `Rules/{RuleName}Rule.cs` |
+| Dockerfile | `Dockerfile` |

@@ -172,7 +172,54 @@ Keep full registration details in [bootstrapper.md](bootstrapper.md):
 
 ## SearchRequest Defaults (Critical)
 
-See [test-gotchas.md](../test-gotchas.md) for the canonical paging defaults guidance and test/runtime failure patterns.
+See [troubleshooting.md](../troubleshooting.md) for the canonical paging defaults guidance and test/runtime failure patterns.
+
+---
+
+## Database Seeding / Reference Data
+
+Use the `IStartupTask` pattern for idempotent seed data. Seeding runs after `app.Build()` and before `app.RunAsync()`:
+
+```csharp
+public class SeedReferenceDataTask : IStartupTask
+{
+    private readonly IDbContextFactory<{App}DbContextTrxn> _factory;
+
+    public SeedReferenceDataTask(IDbContextFactory<{App}DbContextTrxn> factory)
+        => _factory = factory;
+
+    public async Task ExecuteAsync(CancellationToken ct)
+    {
+        await using var db = await _factory.CreateDbContextAsync(ct);
+
+        var existing = (await db.Set<{Entity}>()
+            .Where(e => e.IsSystem)
+            .Select(e => e.Id)
+            .ToListAsync(ct)).ToHashSet();
+
+        var seeds = {Entity}Seeds.All
+            .Where(s => !existing.Contains(s.Id));
+
+        foreach (var seed in seeds)
+        {
+            db.Set<{Entity}>().Add(seed);
+        }
+
+        // Seed tasks bypass the concurrency guard — use the bool overload
+        await db.SaveChangesAsync(true, ct);
+    }
+}
+```
+
+### Rules
+
+- **Idempotent upserts:** Always check existence before inserting. Use `ToListAsync().ToHashSet()` + filter pattern above.
+- **Seeding SaveChanges:** Seed tasks run at startup with no contention, so call `SaveChangesAsync(true, ct)` (the `bool acceptAllChangesOnSuccess` overload) to bypass the concurrency guard that `DbContextBase.SaveChangesAsync(CancellationToken)` enforces.
+- **Static seed definitions:** Define seed data in a static class (e.g., `{Entity}Seeds.All`) — never generate random IDs at runtime.
+- **Use deterministic GUIDs:** Seed entities must use fixed `Guid` values so they are stable across environments.
+- **System flag:** Mark seeded rows with `IsSystem = true` to prevent user deletion.
+- **Registration:** Register in bootstrapper: `services.AddTransient<IStartupTask, SeedReferenceDataTask>();`
+- **Order:** If multiple seed tasks exist, register them in dependency order (parent entities before children).
 
 ---
 

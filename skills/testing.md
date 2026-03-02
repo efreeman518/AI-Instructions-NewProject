@@ -214,8 +214,87 @@ For high-contention domains (inventory, reservations, metering, financial postin
 
 ## TestContainer / WebApplicationFactory Gotchas
 
-Use [test-gotchas.md](../test-gotchas.md) for the canonical gotcha catalog and fixes.
+Use [troubleshooting.md](../troubleshooting.md) for the canonical test failure catalog and fixes.
 
+---
+
+## Test Data Builders
+
+Use fluent builder helpers in `Test.Support` to construct valid domain entities and DTOs with minimal boilerplate. Builders set all required fields to valid defaults — tests override only what matters for that scenario.
+
+### Entity Builder
+
+```csharp
+public class {Entity}Builder
+{
+    private Guid _id = Guid.NewGuid();
+    private Guid _tenantId = TestConstants.DefaultTenantId;
+    private string _name = "Test {Entity}";
+    // add more property defaults as needed
+
+    public {Entity}Builder WithId(Guid id) { _id = id; return this; }
+    public {Entity}Builder WithTenantId(Guid tenantId) { _tenantId = tenantId; return this; }
+    public {Entity}Builder WithName(string name) { _name = name; return this; }
+
+    public {Entity} Build()
+    {
+        var result = {Entity}.Create(_tenantId, _name);
+        // If Create returns DomainResult, unwrap:
+        // var entity = result.Value;
+        // Override Id if needed via reflection or internal setter
+        return result.Value;
+    }
+}
+```
+
+### DTO Builder
+
+```csharp
+public class {Entity}DtoBuilder
+{
+    private Guid _id = Guid.NewGuid();
+    private string _name = "Test {Entity}";
+
+    public {Entity}DtoBuilder WithId(Guid id) { _id = id; return this; }
+    public {Entity}DtoBuilder WithName(string name) { _name = name; return this; }
+
+    public {Entity}Dto Build() => new()
+    {
+        Id = _id,
+        Name = _name
+    };
+}
+```
+
+### Usage in Tests
+
+```csharp
+// Default valid entity — no ceremony
+var entity = new {Entity}Builder().Build();
+
+// Override only the scenario-relevant field
+var entity = new {Entity}Builder()
+    .WithName("")   // empty name → triggers validation failure
+    .Build();
+
+// DTO for integration test payloads
+var dto = new {Entity}DtoBuilder()
+    .WithName("Updated Name")
+    .Build();
+```
+
+### Rules
+
+- Place builders in `Test.Support/Builders/`.
+- One builder per entity + one per DTO.
+- Default values must pass all domain validation (valid entity out of the box).
+- Tests should only call `.With*()` for the property under test — keep test intent clear.
+- For child collections, add `.WithChild(child)` / `.WithChildren(list)` methods.
+- Reuse `TestConstants` for shared values (`DefaultTenantId`, `SystemUserId`).
+
+---
+
+## Verification Checklist
 
 - [ ] Unit tests run cleanly
 - [ ] Endpoint tests run against in-memory host via `WebApplicationFactory`

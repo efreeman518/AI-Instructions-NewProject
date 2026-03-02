@@ -1,6 +1,8 @@
 # Quick Reference — Cheat Sheet
 
-High-signal lookup for naming, structure, dependencies, DI patterns, and common routes/config keys during scaffolding.
+High-signal lookup for structure, dependencies, DI patterns, and common routes/config keys during scaffolding.
+
+> **File naming conventions** are in [placeholder-tokens.md](placeholder-tokens.md#file-naming-conventions).
 
 ---
 
@@ -20,29 +22,6 @@ High-signal lookup for naming, structure, dependencies, DI patterns, and common 
 | `Infrastructure.*` | `Infrastructure.*` | `src/Infrastructure/` |
 | `Aspire.*` | `Aspire.*` | `src/Aspire/` |
 | `Test.*` | `Test.*` | `src/Test/` |
-
----
-
-## File Naming Conventions
-
-| Artifact | Pattern |
-|---|---|
-| Entity | `{Entity}.cs` |
-| EF config | `{Entity}Configuration.cs` |
-| Write repo | `{Entity}RepositoryTrxn.cs` |
-| Read repo | `{Entity}RepositoryQuery.cs` |
-| Repo interface | `I{Entity}RepositoryTrxn.cs` / `I{Entity}RepositoryQuery.cs` |
-| Updater | `{Entity}Updater.cs` |
-| DTO | `{Entity}Dto.cs` |
-| Search filter | `{Entity}SearchFilter.cs` |
-| Mapper | `{Entity}Mapper.cs` |
-| Service | `{Entity}Service.cs` |
-| Service interface | `I{Entity}Service.cs` |
-| Endpoint | `{Entity}Endpoints.cs` |
-| Message handler | `{Event}Handler.cs` |
-| Health check | `{Target}HealthCheck.cs` |
-| Settings POCO | `{Entity}ServiceSettings.cs` |
-| Dockerfile | `Dockerfile` |
 
 ---
 

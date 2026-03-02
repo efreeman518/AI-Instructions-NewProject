@@ -89,6 +89,8 @@ internal static class {Entity}StructureValidator
 - Provide separate `ValidateCreate` and `ValidateUpdate` methods — update requires `Id`, create may have different required fields.
 - Return all errors at once (don't short-circuit on first failure) so the caller gets a complete validation report.
 - Uncomment enum/child constraints as needed per entity.
+- **Contextual tokens:** `{NameMaxLength}`, `{DescriptionMaxLength}`, and `{MaxChildren}` are entity-specific — derive from the `maxLength` values in `resource-implementation.yaml`. These are NOT global placeholder tokens; replace with the literal integer for each entity (e.g., `200`, `2000`).
+- Add or remove validated properties to match the entity's DTO — `dto.Description` is shown as an example; adjust to your entity's actual fields.
 
 ## Verification Checklist
 

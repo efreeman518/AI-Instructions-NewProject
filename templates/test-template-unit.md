@@ -42,7 +42,7 @@ public class {Entity}ServiceTests : UnitTestBase
         };
         var request = new DefaultRequest<{Entity}Dto> { Item = dto };
 
-        var createdEntity = {Entity}.Create(dto.Name, dto.TenantId).Value!;
+        var createdEntity = {Entity}.Create(dto.TenantId, dto.Name).Value!;
         _repoTrxnMock.Setup(r => r.Create(ref It.Ref<{Entity}>.IsAny));
         _repoTrxnMock.Setup(r => r.UpdateFromDto(It.IsAny<{Entity}>(), It.IsAny<{Entity}Dto>()))
             .Returns(DomainResult<{Entity}>.Success(createdEntity));
@@ -65,13 +65,44 @@ public class {Entity}ServiceTests : UnitTestBase
     }
 
     [TestMethod]
-    public async Task Update_NotFound_ReturnsNone() { /* arrange/act/assert */ }
+    public async Task Update_NotFound_ReturnsNone()
+    {
+        // Arrange
+        _repoTrxnMock.Setup(r => r.Get{Entity}Async(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(({Entity}?)null);
+        var service = CreateService();
+        var request = new DefaultRequest<{Entity}Dto> { Item = new {Entity}Dto { Id = Guid.NewGuid(), Name = "Test" } };
+
+        // Act
+        var result = await service.UpdateAsync(request);
+
+        // Assert
+        Assert.IsTrue(result.IsNone);
+    }
 
     [TestMethod]
-    public async Task CRUD_InMemory_Pass() { /* create/get/update/delete path */ }
+    public async Task Delete_ExistingEntity_ReturnsSuccess()
+    {
+        // Arrange
+        var entityId = Guid.NewGuid();
+        var entity = {Entity}.Create(_testTenantId, "ToDelete").Value!;
+        _repoTrxnMock.Setup(r => r.Get{Entity}Async(entityId, false, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(entity);
+        _repoTrxnMock.Setup(r => r.SaveChangesAsync(It.IsAny<OptimisticConcurrencyWinner>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        _tenantBoundaryMock.Setup(t => t.EnsureTenantBoundary(
+                It.IsAny<ILogger>(), It.IsAny<Guid?>(), It.IsAny<IReadOnlyCollection<string>>(),
+                It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>()))
+            .Returns(Result.Success());
+        var service = CreateService();
 
-    [TestMethod]
-    public async Task Search_ReturnsResults() { /* page assertions */ }
+        // Act
+        var result = await service.DeleteAsync(entityId);
+
+        // Assert
+        Assert.IsTrue(result.IsSuccess);
+        _repoTrxnMock.Verify(r => r.Delete(entity), Times.Once);
+    }
 }
 ```
 
@@ -84,7 +115,16 @@ public class {Entity}ServiceTests : UnitTestBase
 public class {Entity}Tests
 {
     [TestMethod]
-    public void Create_ValidInput_ReturnsSuccess() { }
+    public void Create_ValidInput_ReturnsSuccess()
+    {
+        // Arrange & Act
+        var result = {Entity}.Create(Guid.NewGuid(), "Valid Name");
+
+        // Assert
+        Assert.IsTrue(result.IsSuccess);
+        Assert.IsNotNull(result.Value);
+        Assert.AreEqual("Valid Name", result.Value.Name);
+    }
 
     [TestMethod]
     [DataRow(null)]
@@ -92,7 +132,7 @@ public class {Entity}Tests
     public void Create_WithEmptyName_ReturnsDomainFailure(string? name)
     {
         // Arrange & Act
-        var result = {Entity}.Create(name!, Guid.NewGuid());
+        var result = {Entity}.Create(Guid.NewGuid(), name!);
 
         // Assert
         Assert.IsTrue(result.IsFailure);
@@ -100,10 +140,34 @@ public class {Entity}Tests
     }
 
     [TestMethod]
-    public void Update_ValidInput_ReturnsSuccess() { }
+    public void Update_ValidInput_ReturnsSuccess()
+    {
+        // Arrange
+        var entity = {Entity}.Create(Guid.NewGuid(), "Original").Value!;
+
+        // Act
+        var result = entity.Update(name: "Updated");
+
+        // Assert
+        Assert.IsTrue(result.IsSuccess);
+        Assert.AreEqual("Updated", result.Value!.Name);
+    }
 
     [TestMethod]
-    public void AddChild_Duplicate_ReturnsExisting() { }
+    public void AddChild_Duplicate_ReturnsExisting()
+    {
+        // Arrange
+        var entity = {Entity}.Create(Guid.NewGuid(), "Parent").Value!;
+        var child = {ChildEntity}.Create(Guid.NewGuid(), "Child").Value!;
+        entity.Add{ChildEntity}(child);
+
+        // Act — add same child again
+        var result = entity.Add{ChildEntity}(child);
+
+        // Assert — idempotent, returns existing
+        Assert.IsTrue(result.IsSuccess);
+        Assert.AreEqual(1, entity.{ChildEntity}s.Count);
+    }
 }
 ```
 
@@ -120,7 +184,7 @@ public class {Entity}RulesTests
     {
         // Arrange
         var rule = new {Entity}NameRequiredRule();
-        var entity = {Entity}.Create("", Guid.NewGuid()).Value!;
+        var entity = {Entity}.Create(Guid.NewGuid(), "").Value!;
 
         // Act
         var satisfied = rule.IsSatisfiedBy(entity);
@@ -131,7 +195,23 @@ public class {Entity}RulesTests
     }
 
     [TestMethod]
-    public void CompositeRule_ReturnsExpected() { }
+    public void CompositeRule_AllRules_WhenOneFails_ReturnsFalse()
+    {
+        // Arrange
+        var rules = new IRule<{Entity}>[]
+        {
+            new {Entity}NameRequiredRule(),
+            new {Entity}CannotDeactivateWithActiveChildrenRule()
+        };
+        var entity = {Entity}.Create(Guid.NewGuid(), "").Value!; // empty name
+
+        // Act
+        var result = rules.EvaluateAll(entity);
+
+        // Assert
+        Assert.IsTrue(result.IsFailure);
+        Assert.IsTrue(result.ErrorMessage!.Contains("name", StringComparison.OrdinalIgnoreCase));
+    }
 }
 ```
 
@@ -158,9 +238,9 @@ public async Task SearchAsync_WithFilter_ReturnsMatchingEntities()
         .UseEntityData(ctx =>
         {
             var tenantId = Guid.NewGuid();
-            ctx.Set<{Entity}>().Add({Entity}.Create("Alpha", tenantId).Value!);
-            ctx.Set<{Entity}>().Add({Entity}.Create("Beta", tenantId).Value!);
-            ctx.Set<{Entity}>().Add({Entity}.Create("AlphaTwo", tenantId).Value!);
+            ctx.Set<{Entity}>().Add({Entity}.Create(tenantId, "Alpha").Value!);
+            ctx.Set<{Entity}>().Add({Entity}.Create(tenantId, "Beta").Value!);
+            ctx.Set<{Entity}>().Add({Entity}.Create(tenantId, "AlphaTwo").Value!);
             ctx.SaveChanges();
         })
         .BuildInMemory<{App}DbContextQuery>();
@@ -194,7 +274,7 @@ public class {Entity}MapperTests
     {
         // Arrange
         var tenantId = Guid.NewGuid();
-        var entity = {Entity}.Create("Test Name", tenantId).Value!;
+        var entity = {Entity}.Create(tenantId, "Test Name").Value!;
 
         // Act
         var dto = entity.ToDto();
@@ -203,11 +283,23 @@ public class {Entity}MapperTests
         Assert.AreEqual(entity.Id, dto.Id);
         Assert.AreEqual(entity.Name, dto.Name);
         Assert.AreEqual(entity.TenantId, dto.TenantId);
-        Assert.AreEqual(entity.CreatedDate, dto.CreatedDate);
+        Assert.AreEqual(entity.Flags, dto.Flags);
         // Add assertions for each additional mapped property
+        // Note: Audit fields (CreatedDate, etc.) are NOT mapped — managed by AuditInterceptor
     }
 
     [TestMethod]
-    public void ToEntity_ReturnsValidDomainResult() { }
+    public void ToEntity_ReturnsValidDomainResult()
+    {
+        // Arrange
+        var dto = new {Entity}Dto { Name = "From DTO", TenantId = Guid.NewGuid() };
+
+        // Act
+        var result = dto.ToEntity(dto.TenantId);
+
+        // Assert
+        Assert.IsTrue(result.IsSuccess);
+        Assert.AreEqual(dto.Name, result.Value!.Name);
+    }
 }
 ```

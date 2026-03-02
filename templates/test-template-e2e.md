@@ -67,7 +67,24 @@ public class {Entity}PageObject(IPage page)
     public Task FillNameAsync(string name) => page.FillAsync("#edit-name", name);
     public Task ClickSaveAsync() => page.ClickAsync("#btn-save");
     public Task ClickDeleteAsync(string itemName) => page.Locator($"tr:has-text('{itemName}') >> button.delete").ClickAsync();
-    public async Task<bool> ItemExistsInGridAsync(string itemName) { /* selector wait */ }
-    public async Task<bool> ItemNotInGridAsync(string itemName) { /* selector timeout */ }
+    public async Task<bool> ItemExistsInGridAsync(string itemName)
+    {
+        try
+        {
+            await page.Locator($"tr:has-text('{itemName}')").WaitForAsync(new() { Timeout = 5000 });
+            return true;
+        }
+        catch (TimeoutException) { return false; }
+    }
+
+    public async Task<bool> ItemNotInGridAsync(string itemName)
+    {
+        try
+        {
+            await page.Locator($"tr:has-text('{itemName}')").WaitForAsync(new() { State = WaitForSelectorState.Hidden, Timeout = 5000 });
+            return true;
+        }
+        catch (TimeoutException) { return false; }
+    }
 }
 ```

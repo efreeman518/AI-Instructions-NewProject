@@ -49,7 +49,7 @@ Use this when adding a new entity to an **already-scaffolded** solution. Skip fu
 
 ### Validation
 
-Use [execution-gates.md](execution-gates.md) for canonical gate commands and [test-gotchas.md](test-gotchas.md) for recurring test failures.
+Use [execution-gates.md](execution-gates.md) for canonical gate commands and [troubleshooting.md](troubleshooting.md) for recurring test failures.
 
 ```powershell
 dotnet build
@@ -190,9 +190,42 @@ Templates: [ui-model-template.md](templates/ui-model-template.md), [ui-service-t
 
 ### Mixed-Store / Reconciliation (if applicable)
 
+When a slice spans multiple data stores (e.g., SQL as authoritative + Cosmos DB for read projections, or SQL + Blob for document attachments):
+
+**Architecture rules:**
+- Designate one store as **authoritative** (source of truth for writes) and others as **projection/secondary** stores.
+- Writes always go to the authoritative store first. Projections are updated asynchronously via domain events or a sync handler.
+- Never read from the authoritative store and projection store in the same service call — pick one per query path.
+
+**Example: SQL + Cosmos DB composite slice**
+
+| Concern | SQL (Authoritative) | Cosmos DB (Projection) |
+|---|---|---|
+| Write path | `{Entity}RepositoryTrxn` via EF | `{Entity}ProjectionWriter` via Cosmos SDK |
+| Read path | `{Entity}RepositoryQuery` (complex joins/reports) | `{Entity}ProjectionReader` (fast point reads, search) |
+| Sync trigger | Domain event: `{Entity}ChangedEvent` | Handler: `{Entity}ProjectionSyncHandler` |
+| Partition key | N/A | `TenantId` (or domain-appropriate key) |
+
+**Reconciliation pattern:**
+```csharp
+public class {Entity}ReconciliationJob : ITickerJob
+{
+    public async Task ExecuteAsync(CancellationToken ct)
+    {
+        // 1. Query authoritative store for entities changed since last reconciliation
+        // 2. Query projection store for matching documents
+        // 3. Compare and upsert any drifted projections
+        // 4. Log reconciliation metrics (matched, corrected, missing)
+    }
+}
+```
+
+**Checklist:**
 - [ ] Authoritative store vs projection store boundary is explicit
-- [ ] Reconciliation handler/job exists for drift detection and replay-safe correction
+- [ ] Domain event triggers projection sync (not direct dual-write)
+- [ ] Reconciliation job exists for drift detection and replay-safe correction
 - [ ] Replay window/late-arrival handling is validated in tests
+- [ ] Projection reads never serve stale data for consistency-critical operations (read from authoritative instead)
 
 ### Timeline / Support Trace (if applicable)
 

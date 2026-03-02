@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-02T03:39:10Z",
+  "generatedAt": "2026-03-02T16:35:57Z",
   "source": {
     "manifest": "_manifest.json",
     "skill": "SKILL.md"
@@ -55,44 +55,17 @@
   },
   "packs": {
     "full": {
-      "phase-4d": [
-        "skills/background-services.md",
-        "skills/function-app.md",
-        "skills/uno-ui.md",
-        "skills/notifications.md"
-      ],
-      "phase-4e": [
-        "skills/testing.md",
-        "templates/test-template-unit.md",
-        "templates/test-template-integration.md",
-        "templates/test-template-e2e.md",
-        "templates/test-template-quality.md",
-        "skills/identity-management.md",
-        "skills/iac.md",
-        "skills/cicd.md"
-      ],
-      "phase-4f": [],
-      "phase-2": [
-        "resource-implementation-schema.md"
-      ],
-      "phase-3": [
-        "implementation-plan.md"
-      ],
-      "phase-4d-optional": [
-        "templates/mvux-model-template.md",
-        "templates/ui-model-template.md",
-        "templates/ui-service-template.md",
-        "templates/xaml-page-template.md"
-      ],
-      "phase-4-base": [
-        "SKILL.md",
-        "placeholder-tokens.md"
-      ],
-      "phase-4e-optional": [
-        "skills/messaging.md",
-        "skills/keyvault.md",
-        "skills/grpc.md",
-        "skills/external-api.md"
+      "phase-4b": [
+        "skills/application-layer.md",
+        "skills/bootstrapper.md",
+        "skills/api.md",
+        "templates/dto-template.md",
+        "templates/mapper-template.md",
+        "templates/service-template.md",
+        "templates/endpoint-template.md",
+        "templates/message-handler-template.md",
+        "templates/structure-validator-template.md",
+        "templates/exception-handler-template.md"
       ],
       "phase-4c": [
         "skills/gateway.md",
@@ -103,25 +76,25 @@
         "skills/observability.md",
         "skills/security.md"
       ],
-      "phase-4b": [
-        "skills/application-layer.md",
-        "skills/bootstrapper.md",
-        "skills/api.md",
-        "templates/dto-template.md",
-        "templates/mapper-template.md",
-        "templates/service-template.md",
-        "templates/endpoint-template.md",
-        "templates/message-handler-template.md",
-        "templates/structure-validator-template.md",
-        "templates/exception-handler-template.md"
+      "phase-4e-optional": [
+        "skills/messaging.md",
+        "skills/keyvault.md",
+        "skills/grpc.md",
+        "skills/external-api.md"
       ],
-      "phase-1": [
-        "domain-specification-schema.md"
+      "phase-3": [
+        "implementation-plan.md"
       ],
-      "phase-4g": [
-        "skills/ai-integration.md",
-        "templates/ai-search-template.md",
-        "templates/agent-template.md"
+      "session-bootstrap": [
+        "START-AI.md"
+      ],
+      "phase-4f": [],
+      "phase-4a-optional": [
+        "skills/cosmosdb-data.md",
+        "skills/table-storage.md",
+        "skills/blob-storage.md",
+        "templates/updater-template.md",
+        "skills/migrations.md"
       ],
       "on-demand": [
         "quick-reference.md",
@@ -131,9 +104,10 @@
         "UPDATE-INSTRUCTIONS.md",
         "engineer-checklist.md",
         "HANDOFF.md",
-        "skills/error-handling.md",
-        "execution-gates.md",
-        "test-gotchas.md"
+        "execution-gates.md"
+      ],
+      "phase-2": [
+        "resource-implementation-schema.md"
       ],
       "phase-4a": [
         "skills/solution-structure.md",
@@ -146,20 +120,45 @@
         "templates/domain-rules-template.md",
         "templates/appsettings-template.md"
       ],
-      "phase-4a-optional": [
-        "skills/cosmosdb-data.md",
-        "skills/table-storage.md",
-        "skills/blob-storage.md",
-        "templates/updater-template.md",
-        "skills/migrations.md"
+      "phase-4d": [
+        "skills/background-services.md",
+        "skills/function-app.md",
+        "skills/uno-ui.md",
+        "skills/notifications.md"
+      ],
+      "phase-1": [
+        "domain-specification-schema.md"
+      ],
+      "phase-4-base": [
+        "SKILL.md",
+        "placeholder-tokens.md"
+      ],
+      "phase-4e": [
+        "skills/testing.md",
+        "templates/test-template-unit.md",
+        "templates/test-template-integration.md",
+        "templates/test-template-e2e.md",
+        "templates/test-template-quality.md",
+        "skills/identity-management.md",
+        "skills/iac.md",
+        "skills/cicd.md",
+        "templates/dockerfile-template.md"
+      ],
+      "phase-4g": [
+        "skills/ai-integration.md",
+        "templates/ai-search-template.md",
+        "templates/agent-template.md"
+      ],
+      "phase-4d-optional": [
+        "templates/mvux-model-template.md",
+        "templates/ui-model-template.md",
+        "templates/ui-service-template.md",
+        "templates/xaml-page-template.md"
       ],
       "metadata": [
         "_manifest.json",
         "scripts/update-manifest.ps1",
         "CHANGELOG.md"
-      ],
-      "session-bootstrap": [
-        "START-AI.md"
       ],
       "human-only": [
         "START-HUMAN.md",
@@ -167,43 +166,6 @@
       ]
     },
     "lite": {
-      "phase-4d": [],
-      "phase-4e": [
-        "skills/testing.md",
-        "templates/test-template-unit.md",
-        "templates/test-template-integration.md",
-        "templates/test-template-e2e.md",
-        "templates/test-template-quality.md",
-        "skills/identity-management.md"
-      ],
-      "phase-4f": [],
-      "phase-2": [
-        "resource-implementation-schema.md"
-      ],
-      "phase-3": [
-        "implementation-plan.md"
-      ],
-      "phase-4d-optional": [
-        "templates/mvux-model-template.md",
-        "templates/ui-model-template.md",
-        "templates/ui-service-template.md",
-        "templates/xaml-page-template.md"
-      ],
-      "phase-4-base": [
-        "SKILL.md",
-        "placeholder-tokens.md"
-      ],
-      "phase-4e-optional": [
-        "skills/messaging.md",
-        "skills/keyvault.md",
-        "skills/grpc.md",
-        "skills/external-api.md"
-      ],
-      "phase-4c": [
-        "skills/configuration.md",
-        "skills/observability.md",
-        "skills/security.md"
-      ],
       "phase-4b": [
         "skills/application-layer.md",
         "skills/bootstrapper.md",
@@ -216,13 +178,30 @@
         "templates/structure-validator-template.md",
         "templates/exception-handler-template.md"
       ],
-      "phase-1": [
-        "domain-specification-schema.md"
+      "phase-4c": [
+        "skills/configuration.md",
+        "skills/observability.md",
+        "skills/security.md"
       ],
-      "phase-4g": [
-        "skills/ai-integration.md",
-        "templates/ai-search-template.md",
-        "templates/agent-template.md"
+      "phase-4e-optional": [
+        "skills/messaging.md",
+        "skills/keyvault.md",
+        "skills/grpc.md",
+        "skills/external-api.md"
+      ],
+      "phase-3": [
+        "implementation-plan.md"
+      ],
+      "session-bootstrap": [
+        "START-AI.md"
+      ],
+      "phase-4f": [],
+      "phase-4a-optional": [
+        "skills/cosmosdb-data.md",
+        "skills/table-storage.md",
+        "skills/blob-storage.md",
+        "templates/updater-template.md",
+        "skills/migrations.md"
       ],
       "on-demand": [
         "quick-reference.md",
@@ -232,9 +211,10 @@
         "UPDATE-INSTRUCTIONS.md",
         "engineer-checklist.md",
         "HANDOFF.md",
-        "skills/error-handling.md",
-        "execution-gates.md",
-        "test-gotchas.md"
+        "execution-gates.md"
+      ],
+      "phase-2": [
+        "resource-implementation-schema.md"
       ],
       "phase-4a": [
         "skills/solution-structure.md",
@@ -247,20 +227,38 @@
         "templates/domain-rules-template.md",
         "templates/appsettings-template.md"
       ],
-      "phase-4a-optional": [
-        "skills/cosmosdb-data.md",
-        "skills/table-storage.md",
-        "skills/blob-storage.md",
-        "templates/updater-template.md",
-        "skills/migrations.md"
+      "phase-4d": [],
+      "phase-1": [
+        "domain-specification-schema.md"
+      ],
+      "phase-4-base": [
+        "SKILL.md",
+        "placeholder-tokens.md"
+      ],
+      "phase-4e": [
+        "skills/testing.md",
+        "templates/test-template-unit.md",
+        "templates/test-template-integration.md",
+        "templates/test-template-e2e.md",
+        "templates/test-template-quality.md",
+        "skills/identity-management.md",
+        "templates/dockerfile-template.md"
+      ],
+      "phase-4g": [
+        "skills/ai-integration.md",
+        "templates/ai-search-template.md",
+        "templates/agent-template.md"
+      ],
+      "phase-4d-optional": [
+        "templates/mvux-model-template.md",
+        "templates/ui-model-template.md",
+        "templates/ui-service-template.md",
+        "templates/xaml-page-template.md"
       ],
       "metadata": [
         "_manifest.json",
         "scripts/update-manifest.ps1",
         "CHANGELOG.md"
-      ],
-      "session-bootstrap": [
-        "START-AI.md"
       ],
       "human-only": [
         "START-HUMAN.md",
@@ -268,44 +266,6 @@
       ]
     },
     "api-only": {
-      "phase-4d": [],
-      "phase-4e": [
-        "skills/testing.md",
-        "templates/test-template-unit.md",
-        "templates/test-template-integration.md",
-        "templates/test-template-e2e.md",
-        "templates/test-template-quality.md",
-        "skills/identity-management.md"
-      ],
-      "phase-4f": [],
-      "phase-2": [
-        "resource-implementation-schema.md"
-      ],
-      "phase-3": [
-        "implementation-plan.md"
-      ],
-      "phase-4d-optional": [
-        "templates/mvux-model-template.md",
-        "templates/ui-model-template.md",
-        "templates/ui-service-template.md",
-        "templates/xaml-page-template.md"
-      ],
-      "phase-4-base": [
-        "SKILL.md",
-        "placeholder-tokens.md"
-      ],
-      "phase-4e-optional": [
-        "skills/messaging.md",
-        "skills/keyvault.md",
-        "skills/grpc.md",
-        "skills/external-api.md"
-      ],
-      "phase-4c": [
-        "skills/aspire.md",
-        "skills/configuration.md",
-        "skills/observability.md",
-        "skills/security.md"
-      ],
       "phase-4b": [
         "skills/application-layer.md",
         "skills/bootstrapper.md",
@@ -318,13 +278,31 @@
         "templates/structure-validator-template.md",
         "templates/exception-handler-template.md"
       ],
-      "phase-1": [
-        "domain-specification-schema.md"
+      "phase-4c": [
+        "skills/aspire.md",
+        "skills/configuration.md",
+        "skills/observability.md",
+        "skills/security.md"
       ],
-      "phase-4g": [
-        "skills/ai-integration.md",
-        "templates/ai-search-template.md",
-        "templates/agent-template.md"
+      "phase-4e-optional": [
+        "skills/messaging.md",
+        "skills/keyvault.md",
+        "skills/grpc.md",
+        "skills/external-api.md"
+      ],
+      "phase-3": [
+        "implementation-plan.md"
+      ],
+      "session-bootstrap": [
+        "START-AI.md"
+      ],
+      "phase-4f": [],
+      "phase-4a-optional": [
+        "skills/cosmosdb-data.md",
+        "skills/table-storage.md",
+        "skills/blob-storage.md",
+        "templates/updater-template.md",
+        "skills/migrations.md"
       ],
       "on-demand": [
         "quick-reference.md",
@@ -334,9 +312,10 @@
         "UPDATE-INSTRUCTIONS.md",
         "engineer-checklist.md",
         "HANDOFF.md",
-        "skills/error-handling.md",
-        "execution-gates.md",
-        "test-gotchas.md"
+        "execution-gates.md"
+      ],
+      "phase-2": [
+        "resource-implementation-schema.md"
       ],
       "phase-4a": [
         "skills/solution-structure.md",
@@ -349,20 +328,38 @@
         "templates/domain-rules-template.md",
         "templates/appsettings-template.md"
       ],
-      "phase-4a-optional": [
-        "skills/cosmosdb-data.md",
-        "skills/table-storage.md",
-        "skills/blob-storage.md",
-        "templates/updater-template.md",
-        "skills/migrations.md"
+      "phase-4d": [],
+      "phase-1": [
+        "domain-specification-schema.md"
+      ],
+      "phase-4-base": [
+        "SKILL.md",
+        "placeholder-tokens.md"
+      ],
+      "phase-4e": [
+        "skills/testing.md",
+        "templates/test-template-unit.md",
+        "templates/test-template-integration.md",
+        "templates/test-template-e2e.md",
+        "templates/test-template-quality.md",
+        "skills/identity-management.md",
+        "templates/dockerfile-template.md"
+      ],
+      "phase-4g": [
+        "skills/ai-integration.md",
+        "templates/ai-search-template.md",
+        "templates/agent-template.md"
+      ],
+      "phase-4d-optional": [
+        "templates/mvux-model-template.md",
+        "templates/ui-model-template.md",
+        "templates/ui-service-template.md",
+        "templates/xaml-page-template.md"
       ],
       "metadata": [
         "_manifest.json",
         "scripts/update-manifest.ps1",
         "CHANGELOG.md"
-      ],
-      "session-bootstrap": [
-        "START-AI.md"
       ],
       "human-only": [
         "START-HUMAN.md",

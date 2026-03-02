@@ -63,7 +63,7 @@ var apiVersionSet = app.NewApiVersionSet()
 app.MapGroup("v{apiVersion:apiVersion}/tenant/{tenantId}/{entity}")
     .WithApiVersionSet(apiVersionSet)
     .RequireAuthorization("TenantMatch")
-    .Map{Entity}Endpoints(includeErrorDetails);
+    .Map{Entity}Endpoints(problemDetailsIncludeStackTrace);
 ```
 
 ## Endpoint Contract
@@ -73,7 +73,7 @@ Each entity exposes one static mapper: `Map{Entity}Endpoints(this IEndpointRoute
 ```csharp
 public static class {Entity}Endpoints
 {
-    public static void Map{Entity}Endpoints(this IEndpointRouteBuilder group, bool includeStack)
+    public static void Map{Entity}Endpoints(this IEndpointRouteBuilder group, bool problemDetailsIncludeStackTrace)
     {
         group.MapPost("/search", Search);
         group.MapGet("/{id:guid}", GetById);
@@ -101,7 +101,42 @@ Two complementary layers — **Result pattern for expected outcomes, `DefaultExc
 1. **Result flow (primary path):** Services return `Result<T>` / `DomainResult<T>`. Endpoints use `Result.Match()` to map success/failure/not-found to `TypedResults` + `ProblemDetails`. No exceptions thrown for validation, business rules, or not-found cases.
 2. **`DefaultExceptionHandler` (safety net):** A global `IExceptionHandler` registered via `AddExceptionHandler<DefaultExceptionHandler>()`. Catches only truly unexpected exceptions (null refs, timeouts, infra failures) and maps them to `ProblemDetails` with appropriate HTTP status codes. This is a last-resort handler, not a control-flow mechanism. See [exception-handler-template](../templates/exception-handler-template.md) for implementation.
 
-Reference: `sample-app/src/TaskFlow/TaskFlow.Api/ExceptionHandlers/DefaultExceptionHandler.cs`.
+Reference: See [exception-handler-template](../templates/exception-handler-template.md) for the implementation pattern.
+
+### Error Pipeline Overview
+
+```
+[Domain]   DomainResult<T>.Success / .Failure     — business validation, rules, state transitions
+               ↓
+[Service]  Result<T>.Success / .Failure / .None    — orchestration, tenant boundary, structure validation
+               ↓
+[Endpoint] result.Match(ok → TypedResults, errors → ProblemDetails, notFound → NotFound)
+               ↓
+[Global]   DefaultExceptionHandler (IExceptionHandler)  — unexpected exceptions only → ProblemDetails
+```
+
+### Error Type Mapping
+
+| Source | Error | HTTP Status |
+|---|---|---|
+| Domain | `DomainError.Validation` | 400 Bad Request |
+| Domain | `DomainError.NotFound` | 404 Not Found |
+| Domain | `DomainError.Conflict` | 409 Conflict |
+| Domain | `DomainError.Unauthorized` | 403 Forbidden |
+| Service | `Result.Failure` (generic) | 422 Unprocessable Entity |
+| Service | `Result.None` | 404 Not Found |
+| Service | `StructureValidator` failure | 400 Bad Request |
+| Global | `DbUpdateConcurrencyException` | 409 Conflict |
+| Global | `UnauthorizedAccessException` | 403 Forbidden |
+| Global | `OperationCanceledException` | 499 Client Closed (non-standard; log only — response may not be written) |
+| Global | Unhandled exception | 500 Internal Server Error |
+
+### Anti-Patterns
+
+- **Throwing exceptions for business logic** — Use `DomainResult.Failure()` / `Result.Failure()` instead.
+- **Swallowing errors silently** — Every failure must propagate through the Result chain or be logged explicitly.
+- **Returning raw error strings** — Always wrap in `ProblemDetails` at the API boundary.
+- **Catching generic `Exception` in services** — Catch only specific exceptions (e.g., `DbUpdateConcurrencyException`). Let `DefaultExceptionHandler` handle the rest.
 
 - Include stack traces only outside production.
 - Conventions:
@@ -109,6 +144,89 @@ Reference: `sample-app/src/TaskFlow/TaskFlow.Api/ExceptionHandlers/DefaultExcept
   - global admin endpoints: admin role
   - diagnostics: `/health`, `/alive`
   - OpenAPI/Scalar: enabled only when `OpenApiSettings:Enable` is `true`
+
+## OpenAPI / Scalar Configuration
+
+Gate OpenAPI and Scalar behind `OpenApiSettings:Enable` in appsettings:
+
+```csharp
+if (config.GetValue<bool>("OpenApiSettings:Enable"))
+{
+    services.AddOpenApi(options =>
+    {
+        options.AddDocumentTransformer((document, context, ct) =>
+        {
+            document.Info = new()
+            {
+                Title = "{App} API",
+                Version = "v1",
+                Description = "Multi-tenant {App} API"
+            };
+            return Task.CompletedTask;
+        });
+    });
+}
+```
+
+In `ConfigurePipeline()`:
+
+```csharp
+if (app.Configuration.GetValue<bool>("OpenApiSettings:Enable"))
+{
+    app.MapOpenApi();           // serves /openapi/v1.json
+    app.MapScalarApiReference(options =>
+    {
+        options.WithTitle("{App} API");
+        options.WithTheme(ScalarTheme.BluePlanet);
+    });
+}
+```
+
+Endpoint OpenAPI metadata — add to every endpoint:
+
+```csharp
+group.MapGet("/{id:guid}", GetById)
+    .WithName("Get{Entity}ById")
+    .WithSummary("Get a single {Entity} by ID")
+    .WithTags("{Entity}")
+    .Produces<{Entity}Dto>(200)
+    .ProducesProblem(404)
+    .ProducesProblem(401);
+```
+
+- Enable XML comments in the `.csproj`: `<GenerateDocumentationFile>true</GenerateDocumentationFile>`.
+- Add `/// <summary>` to handler methods for auto-generated descriptions.
+- Never expose OpenAPI/Scalar in production unless explicitly required.
+
+---
+
+## End-to-End Error Flow Example
+
+This traces a single validation error from endpoint to client, showing how Result pattern + `ProblemDetails` work together:
+
+```
+1. Client POSTs invalid payload → Endpoint handler
+2. Handler calls service.CreateAsync(dto) → Service
+3. Service maps DTO → Domain.Create(...)
+4. Domain.Create runs StructureValidator → fails (name too long)
+5. Domain.Create returns DomainResult<T>.Failure(errors) → Service
+6. Service maps DomainResult.Failure → Result<T>.Failure(errors)
+7. Service returns Result<T>.Failure → Endpoint handler
+8. Handler calls result.Match(
+       success: entity => TypedResults.Created(...),
+       failure: errors => TypedResults.Problem(errors.ToProblemDetails()),
+       notFound: () => TypedResults.NotFound())
+9. Client receives 400 + ProblemDetails JSON:
+   {
+     "status": 400,
+     "title": "Validation Error",
+     "errors": { "Name": ["Name must not exceed 200 characters"] }
+   }
+```
+
+The `DefaultExceptionHandler` is **never invoked** here — it only catches unhandled exceptions (null refs, timeouts, infra failures) that escape the Result pattern.
+
+---
 
 ## Verification
 

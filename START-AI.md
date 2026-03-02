@@ -11,6 +11,17 @@ Start each new AI session with:
 
 Then load only the phase files you need.
 
+## Version Assertion
+
+Before starting any phase, verify instruction set compatibility:
+
+1. Read `_manifest.json` → extract `"version"`.
+2. If the target project contains a `.instruction-version` file, compare its content with the manifest version.
+   - **Match** → proceed normally.
+   - **Mismatch** → warn the user: *"Target project was scaffolded with instruction set v{old}; current instructions are v{new}. Review CHANGELOG.md for breaking changes before continuing."*
+   - **Missing** → first-time scaffold. After Phase 4a completes, create `.instruction-version` in the target project root containing the current manifest version.
+3. If `HANDOFF.md` exists and contains a `instructionVersion` field, cross-check that it matches the manifest as well.
+
 ## Phase Load Automation
 
 Prefer generated load packs instead of manual file picking:
@@ -47,7 +58,7 @@ Do not preload these files. Load only when needed:
 - `troubleshooting.md` (only when failures occur)
 - `engineer-checklist.md` (execution/infra verification)
 - `execution-gates.md` (canonical phase checkpoints and commands)
-- `test-gotchas.md` (canonical recurring test failures and fixes)
+- `troubleshooting.md` (triage rules + canonical recurring test failures and fixes)
 
 ## Defaults Source of Truth
 

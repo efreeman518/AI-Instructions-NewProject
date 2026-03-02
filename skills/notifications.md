@@ -76,8 +76,40 @@ public static IServiceCollection AddNotificationInfrastructure(
     this IServiceCollection services,
     IConfiguration config)
 {
-    // Conditionally register channel providers if config sections exist
-    // Register unified service
+    var notificationSection = config.GetSection("Notification");
+
+    // Email provider — register only when config exists
+    var emailSection = notificationSection.GetSection("Email");
+    if (emailSection.Exists())
+    {
+        var provider = emailSection.GetValue<string>("Provider") ?? "Smtp";
+        services.Configure<EmailProviderOptions>(emailSection.GetSection(provider));
+
+        _ = provider switch
+        {
+            "Smtp" => services.AddSingleton<IEmailProvider, SmtpEmailProvider>(),
+            "SendGrid" => services.AddSingleton<IEmailProvider, SendGridEmailProvider>(),
+            "AzureCommunication" => services.AddSingleton<IEmailProvider, AzureCommunicationEmailProvider>(),
+            _ => throw new NotSupportedException($"Email provider '{provider}' is not supported.")
+        };
+    }
+
+    // SMS provider — register only when config exists
+    var smsSection = notificationSection.GetSection("Sms");
+    if (smsSection.Exists())
+    {
+        var provider = smsSection.GetValue<string>("Provider") ?? "AzureCommunication";
+        services.Configure<SmsProviderOptions>(smsSection.GetSection(provider));
+
+        _ = provider switch
+        {
+            "Twilio" => services.AddSingleton<ISmsProvider, TwilioSmsProvider>(),
+            "AzureCommunication" => services.AddSingleton<ISmsProvider, AzureCommunicationSmsProvider>(),
+            _ => throw new NotSupportedException($"SMS provider '{provider}' is not supported.")
+        };
+    }
+
+    // Unified service — always registered; graceful no-op when providers are absent
     services.AddSingleton<INotificationService, NotificationService>();
 
     services.AddHttpClient("NotificationClient")
@@ -90,6 +122,118 @@ public static IServiceCollection AddNotificationInfrastructure(
 Integrated mode: call from Bootstrapper.
 
 Standalone mode: register in notification host and expose minimal API endpoints.
+
+---
+
+## Provider Implementation Pattern
+
+Each channel provider implements a single interface and encapsulates all vendor-specific logic.
+
+```csharp
+public class SmtpEmailProvider(
+    IOptions<EmailProviderOptions> options,
+    ILogger<SmtpEmailProvider> logger) : IEmailProvider
+{
+    public async Task<NotificationResult> SendAsync(EmailMessage message, CancellationToken ct)
+    {
+        try
+        {
+            using var client = new SmtpClient();
+            await client.ConnectAsync(options.Value.Host, options.Value.Port, SecureSocketOptions.StartTls, ct);
+            await client.AuthenticateAsync(options.Value.Username, options.Value.Password, ct);
+
+            var mimeMessage = BuildMimeMessage(message);
+            await client.SendAsync(mimeMessage, ct);
+            await client.DisconnectAsync(quit: true, ct);
+
+            return NotificationResult.Success(channel: "Email");
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "SMTP send failed for {Recipient}", message.To);
+            return NotificationResult.Failed(channel: "Email", reason: ex.Message);
+        }
+    }
+}
+```
+
+**Rules for provider implementations:**
+1. Catch and wrap vendor exceptions — never let them propagate to `NotificationService`.
+2. Return `NotificationResult` (success/failed) — let the caller decide whether to retry.
+3. Log at `Warning` for transient failures, `Error` for permanent failures (invalid address, auth failure).
+4. Accept cancellation tokens throughout.
+
+---
+
+## Stub Provider for Local Development
+
+Register a stub provider that writes to the console/log instead of calling external services:
+
+```csharp
+public class StubEmailProvider(ILogger<StubEmailProvider> logger) : IEmailProvider
+{
+    public Task<NotificationResult> SendAsync(EmailMessage message, CancellationToken ct)
+    {
+        logger.LogInformation("[StubEmail] To={To} Subject={Subject} Body={BodyPreview}",
+            message.To, message.Subject, message.Body?[..Math.Min(100, message.Body.Length)]);
+
+        return Task.FromResult(NotificationResult.Success(channel: "Email-Stub"));
+    }
+}
+```
+
+Register stubs via a `"Stub"` provider value in configuration:
+```json
+{
+  "Notification": {
+    "Email": { "Provider": "Stub" },
+    "Sms": { "Provider": "Stub" }
+  }
+}
+```
+
+This eliminates external dependencies during development while preserving the full notification pipeline.
+
+---
+
+## Message-Driven Notifications (Service Bus Integration)
+
+For high-volume or latency-tolerant notifications, decouple with messaging:
+
+```
+[API / Event Handler] → publishes NotifyCommand → [Service Bus Queue] → [Notification Handler] → [Provider]
+```
+
+**NotifyCommand message:**
+```csharp
+public record NotifyCommand(
+    string Channel,         // "Email", "Sms", "Push"
+    string Recipient,
+    string TemplateId,
+    Dictionary<string, string> TemplateData);
+```
+
+**Service Bus handler (standalone notification host):**
+```csharp
+public class NotifyCommandHandler(INotificationService notificationService) : IMessageHandler<NotifyCommand>
+{
+    public async Task HandleAsync(NotifyCommand command, CancellationToken ct)
+    {
+        // Route to correct channel via unified service
+        await notificationService.SendAsync(command, ct);
+    }
+}
+```
+
+**When to use message-driven notifications:**
+- Sends triggered by domain events (order confirmed, user registered).
+- Batch/bulk sends where throttling matters.
+- Standalone notification host deployment mode.
+
+**When to use direct (in-process) notifications:**
+- User-initiated sends (password reset, verification code).
+- Low volume, latency-sensitive notifications.
+- Integrated deployment mode.
 
 ---
 
@@ -145,6 +289,47 @@ For `scaffoldMode: lite`:
 3. Respect throttling limits for batch sends (provider rate limits).
 4. Keep infrastructure library reusable across integrated and standalone modes.
 5. Avoid duplicate provider implementations across hosts.
+
+---
+
+## Testing Patterns
+
+### Unit tests (provider logic)
+
+Mock the vendor HTTP client / SDK and verify:
+- Correct message mapping (recipient, body, subject).
+- `NotificationResult.Success` on 2xx response.
+- `NotificationResult.Failed` (not exception) on vendor error.
+- Cancellation token is forwarded.
+
+```csharp
+[Fact]
+public async Task SendAsync_VendorReturns200_ReturnsSuccess()
+{
+    // Arrange: configure MockHttpMessageHandler to return 200
+    var provider = new SendGridEmailProvider(options, httpClientFactory, logger);
+
+    // Act
+    var result = await provider.SendAsync(testMessage, CancellationToken.None);
+
+    // Assert
+    result.IsSuccess.Should().BeTrue();
+    result.Channel.Should().Be("Email");
+}
+```
+
+### Integration tests (unified service)
+
+Register real `NotificationService` with stub providers. Verify:
+- Missing provider ⇒ graceful no-op, warning logged, no exception.
+- Present provider ⇒ delegated correctly.
+- Multiple channels in single notification ⇒ all providers called.
+
+### Message-driven tests (if using Service Bus)
+
+Use the standard `IMessageHandler<T>` test patterns from the messaging skill:
+- Handler deserialises `NotifyCommand` and calls `INotificationService.SendAsync`.
+- Failed send ⇒ message is not completed (dead-lettered for retry).
 
 ---
 

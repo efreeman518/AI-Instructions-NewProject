@@ -136,7 +136,7 @@ In `WebApplicationBuilderExtensions.cs`, add to `SetupApiVersionedEndpoints`:
 app.MapGroup("v{apiVersion:apiVersion}/tenant/{tenantId}/{entity}")
     .WithApiVersionSet(apiVersionSet)
     .RequireAuthorization("TenantMatch")
-    .Map{Entity}Endpoints(includeErrorDetails);
+    .Map{Entity}Endpoints(problemDetailsIncludeStackTrace);
 ```
 
 For kebab-case route segments, use `{entity-route}` in route definitions.

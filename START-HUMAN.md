@@ -126,7 +126,7 @@ Run `./scripts/preflight-instructions.ps1` before Phase 4 execution and before o
 - [resource-implementation-schema.md](resource-implementation-schema.md) *(Phase 2 output)*
 - [implementation-plan.md](implementation-plan.md) *(Phase 3 template)*
 - [execution-gates.md](execution-gates.md) *(canonical phase checkpoints and validation commands)*
-- [test-gotchas.md](test-gotchas.md) *(canonical recurring test failures and fixes)*
+- [troubleshooting.md](troubleshooting.md) *(triage rules + canonical recurring test failures and fixes)*
 - `phase-load-packs.json` *(generated phase load sets)*
 - [sampleapp-patterns.md](sampleapp-patterns.md) *(strictly on-demand for cross-project pattern selection)*
 - [quick-reference.md](quick-reference.md) *(strictly on-demand for naming/DI/config lookups)*

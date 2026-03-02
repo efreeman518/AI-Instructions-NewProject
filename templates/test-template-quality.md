@@ -9,9 +9,9 @@ See [skills/testing.md](../skills/testing.md) for testing strategy and profile s
 ```csharp
 public abstract class BaseTest
 {
-    protected static readonly Assembly DomainModelAssembly = typeof({App}.Domain.Model.{Entity}).Assembly;
-    protected static readonly Assembly DomainSharedAssembly = typeof({App}.Domain.Shared.Constants).Assembly;
-    protected static readonly Assembly ApplicationServicesAssembly = typeof({App}.Application.Services.{Entity}Service).Assembly;
+    protected static readonly Assembly DomainModelAssembly = typeof(Domain.Model.{Entity}).Assembly;
+    protected static readonly Assembly DomainSharedAssembly = typeof(Domain.Shared.Constants).Assembly;
+    protected static readonly Assembly ApplicationServicesAssembly = typeof(Application.Services.{Entity}Service).Assembly;
     protected static readonly Assembly ApiAssembly = typeof(Program).Assembly;
 }
 ```

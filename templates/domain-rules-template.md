@@ -127,9 +127,10 @@ namespace Domain.Model.Rules;
 /// </summary>
 public class AllRule<T>(params IRule<T>[] rules) : IRule<T>
 {
-    // WARNING: ErrorMessage evaluates against default(T) — override if T is a reference type that requires non-null input
-    public string ErrorMessage =>
-        string.Join("; ", rules.Where(r => !r.IsSatisfiedBy(default!)).Select(r => r.ErrorMessage));
+    private readonly string _errorMessage =
+        string.Join("; ", rules.Select(r => r.ErrorMessage));
+
+    public string ErrorMessage => _errorMessage;
 
     public bool IsSatisfiedBy(T subject) =>
         rules.All(r => r.IsSatisfiedBy(subject));
@@ -236,7 +237,7 @@ public async Task<Result> DeactivateAsync(Guid id, CancellationToken ct = defaul
     var result = entity.Deactivate();
     if (result.IsFailure) return Result.Failure(result.ErrorMessage);
 
-    await repoTrxn.SaveChangesAsync(ct);
+    await repoTrxn.SaveChangesAsync(OptimisticConcurrencyWinner.ClientWins, ct);
     return Result.Success();
 }
 ```

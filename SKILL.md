@@ -57,38 +57,26 @@ Production-grade architecture with optional workloads and broader quality gates.
 ### `lite`
 Minimal clean architecture for internal tools/PoCs/services.
 
-| Excluded in `lite` | Skill / Phase |
-|---|---|
-| API Gateway (YARP) | `skills/gateway.md` |
-| Multi-tenancy | `skills/multi-tenant.md` |
-| Distributed caching | `skills/caching.md` |
-| Aspire orchestration | `skills/aspire.md` |
-| Scheduler/background services | `skills/background-services.md` |
-| Function App | `skills/function-app.md` |
-| Uno UI | `skills/uno-ui.md` |
-| Notifications | `skills/notifications.md` |
-| IaC + CI/CD pipeline | `skills/iac.md`, `skills/cicd.md` |
-
-In `lite` mode, load only: Foundation + App Core + Configuration + Identity + Testing. Add optional hosts only after core stabilizes.
-
-Set mode in [resource-implementation-schema.md](resource-implementation-schema.md) (`scaffoldMode`).
-
 ### `api-only`
-
 Single API host, no gateway/UI/scheduler/functions. Aspire optional (for local SQL/Redis).
 
-| Excluded in `api-only` | Skill / Phase |
-|---|---|
-| API Gateway (YARP) | `skills/gateway.md` |
-| Multi-tenancy | `skills/multi-tenant.md` |
-| Distributed caching | `skills/caching.md` |
-| Scheduler/background services | `skills/background-services.md` |
-| Function App | `skills/function-app.md` |
-| Uno UI | `skills/uno-ui.md` |
-| Notifications | `skills/notifications.md` |
-| IaC + CI/CD pipeline | `skills/iac.md`, `skills/cicd.md` |
+### Mode Exclusion Table
 
-In `api-only` mode, load only: Foundation + App Core + Configuration + Identity + Testing. Aspire is optional (include when local dev needs SQL/Redis orchestration). Follows the same manifest as `lite` but keeps Aspire as optional.
+| Capability | Excluded in `lite` | Excluded in `api-only` |
+|---|---|---|
+| API Gateway (YARP) | yes | yes |
+| Multi-tenancy | yes | yes |
+| Distributed caching | yes | yes |
+| Scheduler/background services | yes | yes |
+| Function App | yes | yes |
+| Uno UI | yes | yes |
+| Notifications | yes | yes |
+| IaC + CI/CD pipeline | yes | yes |
+| Aspire orchestration | yes | optional (include for local SQL/Redis) |
+
+Both `lite` and `api-only`: load only Foundation + App Core + Configuration + Identity + Testing. Add optional hosts only after core stabilizes.
+
+Set mode in [resource-implementation-schema.md](resource-implementation-schema.md) (`scaffoldMode`).
 
 ### Lite Mode — What to Reference from Sample App
 
@@ -102,8 +90,6 @@ The sample app (`sample-app/`) is a `full` mode implementation. When scaffolding
 | Bootstrapper | `TaskFlow.Bootstrapper/RegisterServices.cs` — use as DI pattern | Skip scheduler/gateway/notification registrations |
 | API | `TaskFlow.Api/` — endpoints, startup, middleware | YARP, auth relay |
 | Testing | `Test/Test.Unit/`, `Test.Support/` | E2E, Load, Benchmark, Architecture |
-
-**Lite mode entity count guidance:** 1-5 entities. Beyond 5, evaluate whether `full` mode features (gateway, caching, background jobs) would add value.
 
 **Lite mode Aspire:** Optional. If local dev needs SQL + Redis, include Aspire AppHost with just those resources. Skip multi-host orchestration.
 
@@ -139,8 +125,6 @@ Primary path (recommended):
 3. Load only files returned by the script.
 
 Generated source of truth: `phase-load-packs.json`.
-
-Manual list below is reference-only fallback when scripts are unavailable.
 
 ### Session bootstrap
 - [START-AI.md](START-AI.md)
@@ -192,10 +176,9 @@ Load only enabled concerns: `skills/gateway.md`, `skills/aspire.md`, `skills/con
 - `templates/agent-template.md` *(if agents configured)*
 
 ### On-Demand (Load When Debugging)
-- `skills/error-handling.md` — cross-cutting error pipeline reference (load when debugging error flows)
 - `skills/migrations.md` — EF migration strategy (load when adding/running migrations)
 - `execution-gates.md` — canonical phase checkpoints and validation commands
-- `test-gotchas.md` — canonical recurring test failure catalog and fixes
+- `troubleshooting.md` — triage rules + canonical recurring test failure catalog and fixes
 
 ## Phase 4 Skills (Recommended Order)
 
@@ -290,7 +273,8 @@ Commit after each successful sub-phase to enable safe rollback:
 3. **After Phase 4c (Runtime/Edge):** `git add -A && git commit -m "scaffold: runtime — gateway, aspire, config, caching"`
 4. **After Phase 4d (Optional Hosts):** `git add -A && git commit -m "scaffold: optional hosts — scheduler, functions, UI"`
 5. **After Phase 4e (Quality):** `git add -A && git commit -m "scaffold: quality — tests, IaC, CI/CD"`
-6. **After Phase 4g (AI Integration):** `git add -A && git commit -m "scaffold: AI integration — search, agents, workflows"`
+6. **After Phase 4f (Auth):** `git add -A && git commit -m "scaffold: auth — identity management, Entra ID"`
+7. **After Phase 4g (AI Integration):** `git add -A && git commit -m "scaffold: AI integration — search, agents, workflows"`
 
 If a sub-phase fails after the one-pass fix attempt:
 - `git stash` the broken changes.
@@ -323,4 +307,51 @@ For slices spanning SQL + Cosmos/Table/Blob + messaging:
 ## Session State (`HANDOFF.md`)
 
 Create in target project root during Phase 4 when context is high or at session boundaries. Not needed during Phases 1-3. See [HANDOFF.md](HANDOFF.md) for template.
+
+---
+
+## Prompt Patterns
+
+Copy-paste these prompts to drive each phase. Replace `{...}` with actual values.
+
+### Phase 1 — Domain Discovery
+```
+I need to define the domain for a new application called {ProjectName}.
+The business is: {one-sentence business description}.
+Key entities: {entity list}.
+Please generate a domain-specification YAML following domain-specification-schema.md.
+```
+
+### Phase 2 — Resource Definition
+```
+Using the domain specification in domain-specification.md, generate the resource
+implementation YAML per resource-implementation-schema.md.
+Mode: {full|lite|api-only}. Testing profile: {minimal|balanced|comprehensive}.
+Data store: {sqlServer|cosmosDb|etc}. Include: {gateway/functions/uno-ui/scheduler as needed}.
+```
+
+### Phase 3 — Implementation Plan
+```
+Using the domain spec and resource implementation, generate an implementation plan
+per implementation-plan.md template. Flag any open questions before proceeding.
+```
+
+### Phase 4 — Vertical Slice
+```
+Scaffold a complete vertical slice for entity {Entity}:
+domain model → EF config → repositories → DTOs → mappers → service → endpoints → tests.
+Follow SKILL.md sub-phase order. Validate with 'dotnet build' after each sub-phase.
+```
+
+### Resume from HANDOFF
+```
+Read HANDOFF.md in the project root. Resume from the documented phase.
+Load the files listed in Next Load Set. Check Blockers before proceeding.
+```
+
+### Add New Entity (Existing Project)
+```
+Add entity {Entity} to the existing solution using vertical-slice-checklist.md.
+Follow the same patterns established by {ExistingEntity}.
+```
 

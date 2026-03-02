@@ -105,12 +105,66 @@ public class {Entity}EndpointsTests : EndpointTestBase
     [TestCategory("Endpoint")]
     [TestCategory("Integration")]
     [TestMethod]
-    public async Task CRUD_Pass() { /* POST/GET/PUT/DELETE + 404 */ }
+    public async Task CRUD_Pass()
+    {
+        // Arrange
+        using var client = await GetHttpClient();
+        var tenantId = Guid.NewGuid();
+
+        // Create
+        var createDto = new DefaultRequest<{Entity}Dto>
+        {
+            Item = new {Entity}Dto { Name = "CrudTest", TenantId = tenantId }
+        };
+        var createResponse = await client.PostAsJsonAsync($"v1/tenant/{tenantId}/{entities}", createDto);
+        Assert.AreEqual(HttpStatusCode.Created, createResponse.StatusCode);
+        var created = await createResponse.Content.ReadFromJsonAsync<DefaultResponse<{Entity}Dto>>();
+        var entityId = created!.Item!.Id;
+
+        // Read
+        var getResponse = await client.GetAsync($"v1/tenant/{tenantId}/{entities}/{entityId}");
+        Assert.AreEqual(HttpStatusCode.OK, getResponse.StatusCode);
+
+        // Update
+        var updateDto = new DefaultRequest<{Entity}Dto>
+        {
+            Item = new {Entity}Dto { Id = entityId, Name = "Updated", TenantId = tenantId }
+        };
+        var updateResponse = await client.PutAsJsonAsync($"v1/tenant/{tenantId}/{entities}/{entityId}", updateDto);
+        Assert.AreEqual(HttpStatusCode.OK, updateResponse.StatusCode);
+
+        // Delete
+        var deleteResponse = await client.DeleteAsync($"v1/tenant/{tenantId}/{entities}/{entityId}");
+        Assert.AreEqual(HttpStatusCode.OK, deleteResponse.StatusCode);
+
+        // Verify deleted
+        var verifyResponse = await client.GetAsync($"v1/tenant/{tenantId}/{entities}/{entityId}");
+        Assert.AreEqual(HttpStatusCode.NotFound, verifyResponse.StatusCode);
+    }
 
     [TestCategory("Endpoint")]
     [TestCategory("Integration")]
     [TestMethod]
-    public async Task GetPage_ReturnsOk() { }
+    public async Task GetPage_ReturnsOk()
+    {
+        // Arrange
+        using var client = await GetHttpClient();
+        var tenantId = Guid.NewGuid();
+        var searchRequest = new SearchRequest<{Entity}SearchFilter>
+        {
+            Page = 1,
+            PageSize = 10,
+            Filter = new {Entity}SearchFilter()
+        };
+
+        // Act
+        var response = await client.PostAsJsonAsync($"v1/tenant/{tenantId}/{entities}/search", searchRequest);
+
+        // Assert
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+        var page = await response.Content.ReadFromJsonAsync<PagedResponse<{Entity}Dto>>();
+        Assert.IsNotNull(page);
+    }
 }
 ```
 
