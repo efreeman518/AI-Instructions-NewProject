@@ -173,4 +173,4 @@ Skip by default:
 - [ ] If dashboard enabled, credentials are not default/plain test values
 - [ ] If `{Host}.BackgroundServices` exists, it remains a separate project
 
-See [placeholder-tokens.md](../placeholder-tokens.md) for token definitions.
+See [placeholder-tokens.md](../ai/placeholder-tokens.md) for token definitions.

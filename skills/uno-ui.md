@@ -9,10 +9,10 @@ Scaffold a single Uno codebase (WASM + mobile + desktop) that calls the **Gatewa
 - Pattern: Views (`XAML`) ↔ Presentation (`MVUX`) ↔ Business services ↔ Kiota client ↔ Gateway
 
 References:
-- [../domain-specification-schema.md](../domain-specification-schema.md)
-- [../resource-implementation-schema.md](../resource-implementation-schema.md)
+- [../ai/domain-specification-schema.md](../ai/domain-specification-schema.md)
+- [../ai/resource-implementation-schema.md](../ai/resource-implementation-schema.md)
 - `sample-app/src/TaskFlow/TaskFlow.UI/`
-- [../SKILL.md](../SKILL.md)
+- [../ai/SKILL.md](../ai/SKILL.md)
 
 ## Profiles
 

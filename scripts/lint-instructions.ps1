@@ -74,9 +74,10 @@ foreach ($file in $mdFiles) {
         $lineNumber = $index + 1
 
         if (-not $inFence) {
-            if ($line -match '^```(\w+)?\s*$') {
+            $fenceStart = [regex]::Match($line, '^```(\w+)?\s*$')
+            if ($fenceStart.Success) {
                 $inFence = $true
-                $fenceLang = $Matches[1]
+                $fenceLang = $fenceStart.Groups[1].Value
                 $fenceStartLine = $lineNumber
                 $fenceLines = @()
             }
@@ -115,9 +116,9 @@ foreach ($file in $mdFiles) {
 foreach ($file in $mdFiles) {
     $relativeFile = $file.FullName.Substring($Root.Length + 1).Replace('\', '/')
     $content = Get-Content $file.FullName -Raw -Encoding UTF8
-    $matches = [regex]::Matches($content, '\[[^\]]+\]\(([^)]+)\)')
+    $linkTargets = [regex]::Matches($content, '\[[^\]]+\]\(([^)]+)\)')
 
-    foreach ($match in $matches) {
+    foreach ($match in $linkTargets) {
         $target = $match.Groups[1].Value
 
         if ($target -match '^(http|https|mailto):') { continue }
@@ -170,9 +171,9 @@ foreach ($file in $mdFiles) {
 # -----------------------------------------------------------------------------
 # 5) Placeholder token coverage
 # -----------------------------------------------------------------------------
-$placeholderDocPath = Join-Path $Root 'placeholder-tokens.md'
+$placeholderDocPath = Join-Path $Root 'ai/placeholder-tokens.md'
 if (-not (Test-Path $placeholderDocPath)) {
-    $issues += Add-Issue -Category 'PlaceholderCoverage' -File 'placeholder-tokens.md' -Message 'Missing placeholder token glossary.'
+    $issues += Add-Issue -Category 'PlaceholderCoverage' -File 'ai/placeholder-tokens.md' -Message 'Missing placeholder token glossary.'
 }
 else {
     $placeholderContent = Get-Content $placeholderDocPath -Raw -Encoding UTF8
@@ -209,9 +210,9 @@ else {
 # -----------------------------------------------------------------------------
 # 6) Duplicate critical gotcha entries outside canonical file
 # -----------------------------------------------------------------------------
-$canonicalTroubleshootingPath = Join-Path $Root 'troubleshooting.md'
+$canonicalTroubleshootingPath = Join-Path $Root 'support/troubleshooting.md'
 if (-not (Test-Path $canonicalTroubleshootingPath)) {
-    $issues += Add-Issue -Category 'GotchaDuplication' -File 'troubleshooting.md' -Message 'Missing canonical troubleshooting file.'
+    $issues += Add-Issue -Category 'GotchaDuplication' -File 'support/troubleshooting.md' -Message 'Missing canonical troubleshooting file.'
 }
 else {
     $criticalPhrases = @(
@@ -224,7 +225,7 @@ else {
 
     foreach ($file in $mdFiles) {
         $relativeFile = $file.FullName.Substring($Root.Length + 1).Replace('\', '/')
-        if ($relativeFile -eq 'troubleshooting.md') { continue }
+        if ($relativeFile -eq 'support/troubleshooting.md') { continue }
 
         $content = Get-Content $file.FullName -Raw -Encoding UTF8
         foreach ($phrase in $criticalPhrases) {
@@ -238,7 +239,7 @@ else {
 # -----------------------------------------------------------------------------
 # 7) Skill file existence — verify all skills/ referenced in SKILL.md exist
 # -----------------------------------------------------------------------------
-$skillMdPath = Join-Path $Root 'SKILL.md'
+$skillMdPath = Join-Path $Root 'ai/SKILL.md'
 if (Test-Path $skillMdPath) {
     $skillContent = Get-Content $skillMdPath -Raw -Encoding UTF8
     $skillRefs = [regex]::Matches($skillContent, 'skills/([a-z0-9-]+)\.md') | ForEach-Object { $_.Value } | Sort-Object -Unique
@@ -246,7 +247,7 @@ if (Test-Path $skillMdPath) {
     foreach ($ref in $skillRefs) {
         $fullPath = Join-Path $Root $ref
         if (-not (Test-Path $fullPath)) {
-            $issues += Add-Issue -Category 'MissingSkill' -File 'SKILL.md' -Message "Referenced skill file does not exist: $ref"
+            $issues += Add-Issue -Category 'MissingSkill' -File 'ai/SKILL.md' -Message "Referenced skill file does not exist: $ref"
         }
     }
 }
@@ -296,8 +297,8 @@ if (Test-Path $placeholderDocPath) {
             $relativeFile = $tFile.FullName.Substring($Root.Length + 1).Replace('\', '/')
 
             # Find all {Token} patterns (PascalCase or camelCase, not inside code fences for common C# patterns)
-            $tokenMatches = [regex]::Matches($tContent, '\{([A-Z][A-Za-z0-9-]*)\}')
-            foreach ($match in $tokenMatches) {
+            $tokenResults = [regex]::Matches($tContent, '\{([A-Z][A-Za-z0-9-]*)\}')
+            foreach ($match in $tokenResults) {
                 $token = "{$($match.Groups[1].Value)}"
                 $innerToken = $match.Groups[1].Value
                 # Skip common C# syntax, generics, and template-contextual tokens
@@ -330,6 +331,74 @@ if (Test-Path $placeholderDocPath) {
                 if ($innerToken -in $skipPatterns) { continue }
                 if ($token -notin $knownTokens) {
                     $issues += Add-Issue -Category 'UndefinedToken' -File $relativeFile -Message "Placeholder token not defined in glossary: $token"
+                }
+            }
+        }
+    }
+}
+
+# -----------------------------------------------------------------------------
+# 10) Manifest invariants for load orchestration
+# -----------------------------------------------------------------------------
+if (Test-Path $manifestPath) {
+    $manifest = Get-Content $manifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
+
+    if (-not ($manifest.PSObject.Properties.Name -contains 'modeExclusions')) {
+        $issues += Add-Issue -Category 'ManifestInvariants' -File '_manifest.json' -Message 'Manifest is missing top-level modeExclusions.'
+    }
+    else {
+        foreach ($mode in @('lite', 'api-only')) {
+            if (-not ($manifest.modeExclusions.PSObject.Properties.Name -contains $mode)) {
+                $issues += Add-Issue -Category 'ManifestInvariants' -File '_manifest.json' -Message "modeExclusions is missing '$mode'."
+                continue
+            }
+
+            foreach ($path in @($manifest.modeExclusions.$mode)) {
+                if ($path -notmatch '^skills/.+\.md$') {
+                    $issues += Add-Issue -Category 'ManifestInvariants' -File '_manifest.json' -Message "Mode exclusion '$path' for '$mode' must reference a skill markdown file."
+                    continue
+                }
+
+                $fullPath = Join-Path $Root $path
+                if (-not (Test-Path $fullPath)) {
+                    $issues += Add-Issue -Category 'ManifestInvariants' -File '_manifest.json' -Message "Mode exclusion '$path' for '$mode' does not exist on disk."
+                }
+            }
+        }
+    }
+
+    $identityEntry = @($manifest.files | Where-Object { $_.path -eq 'skills/identity-management.md' } | Select-Object -First 1)
+    if (-not $identityEntry) {
+        $issues += Add-Issue -Category 'ManifestInvariants' -File '_manifest.json' -Message 'skills/identity-management.md is missing from manifest.files.'
+    }
+    elseif ([string]$identityEntry.phase -ne 'phase-4f') {
+        $issues += Add-Issue -Category 'ManifestInvariants' -File '_manifest.json' -Message 'skills/identity-management.md must be assigned to phase-4f.'
+    }
+
+    $phaseLoadPacksPath = Join-Path $Root 'phase-load-packs.json'
+    if (-not (Test-Path $phaseLoadPacksPath)) {
+        $issues += Add-Issue -Category 'ManifestInvariants' -File 'phase-load-packs.json' -Message 'Missing generated phase-load-packs.json.'
+    }
+    else {
+        $phaseLoadPacks = Get-Content $phaseLoadPacksPath -Raw -Encoding UTF8 | ConvertFrom-Json
+        $generatedPhaseOrder = @($phaseLoadPacks.phaseOrder)
+        $manifestPhases = @($manifest.files | ForEach-Object { [string]$_.phase } | Sort-Object -Unique)
+
+        foreach ($phase in $manifestPhases) {
+            if ($phase -notin $generatedPhaseOrder) {
+                $issues += Add-Issue -Category 'ManifestInvariants' -File 'phase-load-packs.json' -Message "Generated phaseOrder is missing manifest phase '$phase'."
+            }
+        }
+
+        foreach ($mode in @('full', 'lite', 'api-only')) {
+            if (-not ($phaseLoadPacks.packs.PSObject.Properties.Name -contains $mode)) {
+                $issues += Add-Issue -Category 'ManifestInvariants' -File 'phase-load-packs.json' -Message "Generated packs is missing mode '$mode'."
+                continue
+            }
+
+            foreach ($phase in $manifestPhases) {
+                if (-not ($phaseLoadPacks.packs.$mode.PSObject.Properties.Name -contains $phase)) {
+                    $issues += Add-Issue -Category 'ManifestInvariants' -File 'phase-load-packs.json' -Message "Generated mode '$mode' is missing phase '$phase'."
                 }
             }
         }

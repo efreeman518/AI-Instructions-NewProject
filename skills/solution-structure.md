@@ -184,4 +184,4 @@ Use this repo as the **authoritative source of truth** for all EF.* types, APIs,
 - [ ] Domain projects do not reference Application/Infrastructure
 - [ ] Host projects depend on Bootstrapper instead of duplicating shared DI wiring
 - [ ] Optional hosts can be removed without breaking core layer compilation
-- [ ] token placeholders follow [placeholder-tokens.md](../placeholder-tokens.md)
+- [ ] token placeholders follow [placeholder-tokens.md](../ai/placeholder-tokens.md)

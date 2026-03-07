@@ -1,6 +1,16 @@
 ````markdown
 # AI Search Template
 
+Use this when the slice needs retrieval over existing data. Start with keyword or semantic search. Add vectorization only after search-quality testing shows a clear gap.
+
+## Default Shape
+
+- One search service
+- One projection document
+- One result model
+- One upsert path from domain events or a batch job
+- Index setup only for the fields you actually query
+
 ## Search Service Interface
 
 ```csharp
@@ -9,22 +19,23 @@ namespace {Org}.{Project}.Infrastructure.AI.Search;
 public interface I{Project}SearchService
 {
     Task<IReadOnlyList<{Entity}SearchResult>> SearchAsync(
-        string query, SearchMode mode = SearchMode.Hybrid, CancellationToken ct = default);
+        string query, SearchMode mode = SearchMode.Semantic, CancellationToken ct = default);
 
-    Task IndexDocumentAsync({Entity}SearchDocument document, CancellationToken ct = default);
+    Task UpsertAsync({Entity}SearchDocument document, CancellationToken ct = default);
 
-    Task IndexDocumentsBatchAsync(IEnumerable<{Entity}SearchDocument> documents, CancellationToken ct = default);
-
-    Task DeleteDocumentAsync(string documentId, CancellationToken ct = default);
+    Task DeleteAsync(string documentId, CancellationToken ct = default);
 }
 
 public enum SearchMode
 {
     Keyword,
+    Semantic,
     Vector,
     Hybrid
 }
 ```
+
+If you are not using embeddings yet, keep usage to `Keyword` and `Semantic` only.
 
 ## Search Document Model
 
@@ -45,17 +56,17 @@ public class {Entity}SearchDocument
     [SearchableField(AnalyzerName = LexicalAnalyzerName.Values.StandardLucene)]
     public string {Property2} { get; set; } = null!;
 
+    [SimpleField(IsFilterable = true, IsSortable = true)]
+    public DateTimeOffset? LastModified { get; set; }
+
+    [SimpleField(IsFilterable = true)]
+    public string? TenantId { get; set; }
+
+    // Add only when embeddings are enabled.
     [VectorSearchField(
         VectorSearchDimensions = 1536,
         VectorSearchProfileName = "default-vector-profile")]
     public ReadOnlyMemory<float>? {Property2}Vector { get; set; }
-
-    [SimpleField(IsFilterable = true, IsSortable = true)]
-    public DateTimeOffset? LastModified { get; set; }
-
-    // Add tenant isolation field when isTenantEntity: true
-    [SimpleField(IsFilterable = true)]
-    public string? TenantId { get; set; }
 }
 ```
 
@@ -74,32 +85,25 @@ public class {Entity}SearchResult
 }
 ```
 
-## Search Service Implementation
+## Default Search Service
 
 ```csharp
 namespace {Org}.{Project}.Infrastructure.AI.Search;
 
-using Azure;
 using Azure.Search.Documents;
 using Azure.Search.Documents.Models;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 internal sealed class {Project}SearchService : I{Project}SearchService
 {
     private readonly SearchClient _searchClient;
-    private readonly ILogger<{Project}SearchService> _logger;
 
-    public {Project}SearchService(
-        SearchClient searchClient,
-        ILogger<{Project}SearchService> logger)
+    public {Project}SearchService(SearchClient searchClient)
     {
         _searchClient = searchClient;
-        _logger = logger;
     }
 
     public async Task<IReadOnlyList<{Entity}SearchResult>> SearchAsync(
-        string query, SearchMode mode = SearchMode.Hybrid, CancellationToken ct = default)
+        string query, SearchMode mode = SearchMode.Semantic, CancellationToken ct = default)
     {
         var options = BuildSearchOptions(mode, query);
         var response = await _searchClient.SearchAsync<{Entity}SearchDocument>(query, options, ct);
@@ -117,30 +121,17 @@ internal sealed class {Project}SearchService : I{Project}SearchService
             });
         }
 
-        _logger.LogInformation("Search for '{Query}' returned {Count} results (mode: {Mode})",
-            query, results.Count, mode);
-
         return results;
     }
 
-    public async Task IndexDocumentAsync({Entity}SearchDocument document, CancellationToken ct = default)
+    public Task UpsertAsync({Entity}SearchDocument document, CancellationToken ct = default)
     {
-        await _searchClient.MergeOrUploadDocumentsAsync([document], cancellationToken: ct);
-        _logger.LogInformation("Indexed document {DocumentId}", document.Id);
+        return _searchClient.MergeOrUploadDocumentsAsync([document], cancellationToken: ct);
     }
 
-    public async Task IndexDocumentsBatchAsync(
-        IEnumerable<{Entity}SearchDocument> documents, CancellationToken ct = default)
+    public Task DeleteAsync(string documentId, CancellationToken ct = default)
     {
-        var batch = IndexDocumentsBatch.MergeOrUpload(documents);
-        await _searchClient.IndexDocumentsAsync(batch, cancellationToken: ct);
-        _logger.LogInformation("Indexed batch of {Count} documents", batch.Actions.Count);
-    }
-
-    public async Task DeleteDocumentAsync(string documentId, CancellationToken ct = default)
-    {
-        await _searchClient.DeleteDocumentsAsync("Id", [documentId], cancellationToken: ct);
-        _logger.LogInformation("Deleted document {DocumentId}", documentId);
+        return _searchClient.DeleteDocumentsAsync("Id", [documentId], cancellationToken: ct);
     }
 
     private static SearchOptions BuildSearchOptions(SearchMode mode, string query)
@@ -150,6 +141,12 @@ internal sealed class {Project}SearchService : I{Project}SearchService
             SearchMode.Keyword => new SearchOptions
             {
                 QueryType = SearchQueryType.Simple,
+                Size = 10
+            },
+            SearchMode.Semantic => new SearchOptions
+            {
+                QueryType = SearchQueryType.Semantic,
+                SemanticSearch = new() { SemanticConfigurationName = "default" },
                 Size = 10
             },
             SearchMode.Vector => new SearchOptions
@@ -170,10 +167,7 @@ internal sealed class {Project}SearchService : I{Project}SearchService
             SearchMode.Hybrid => new SearchOptions
             {
                 QueryType = SearchQueryType.Semantic,
-                SemanticSearch = new()
-                {
-                    SemanticConfigurationName = "default"
-                },
+                SemanticSearch = new() { SemanticConfigurationName = "default" },
                 VectorSearch = new()
                 {
                     Queries =
@@ -193,39 +187,19 @@ internal sealed class {Project}SearchService : I{Project}SearchService
 }
 ```
 
-## Vectorization Handler (On-Write)
+## Add Vectorization Only If Needed
+
+If embeddings are justified, add a projection updater that calls an embedding client and upserts the search document.
 
 ```csharp
-namespace {Org}.{Project}.Infrastructure.AI.Search;
-
-using Azure.AI.OpenAI;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using OpenAI.Embeddings;
-
 internal sealed class {Entity}VectorizationHandler : IMessageHandler<{Entity}CreatedEvent>
 {
-    private readonly I{Project}SearchService _searchService;
-    private readonly EmbeddingClient _embeddingClient;
-    private readonly ILogger<{Entity}VectorizationHandler> _logger;
-
-    public {Entity}VectorizationHandler(
-        I{Project}SearchService searchService,
-        AzureOpenAIClient openAiClient,
-        IOptions<AiSettings> settings,
-        ILogger<{Entity}VectorizationHandler> logger)
-    {
-        _searchService = searchService;
-        _embeddingClient = openAiClient.GetEmbeddingClient(settings.Value.EmbeddingModelDeployment);
-        _logger = logger;
-    }
-
     public async Task HandleAsync({Entity}CreatedEvent evt, CancellationToken ct)
     {
         var textToEmbed = $"{evt.{Property1}} {evt.{Property2}}";
         var embedding = await _embeddingClient.GenerateEmbeddingAsync(textToEmbed, cancellationToken: ct);
 
-        var document = new {Entity}SearchDocument
+        await _searchService.UpsertAsync(new {Entity}SearchDocument
         {
             Id = evt.{Entity}Id.ToString(),
             {Property1} = evt.{Property1},
@@ -233,15 +207,14 @@ internal sealed class {Entity}VectorizationHandler : IMessageHandler<{Entity}Cre
             {Property2}Vector = embedding.Value.ToFloats(),
             LastModified = DateTimeOffset.UtcNow,
             TenantId = evt.TenantId?.ToString()
-        };
-
-        await _searchService.IndexDocumentAsync(document, ct);
-        _logger.LogInformation("Vectorized and indexed {Entity} {EntityId}", nameof({Entity}), evt.{Entity}Id);
+        }, ct);
     }
 }
 ```
 
-## Settings
+Use a batch backfill instead of an on-write handler when eventual consistency is acceptable.
+
+## Relevant Settings
 
 ```csharp
 namespace {Org}.{Project}.Infrastructure.AI;
@@ -250,34 +223,20 @@ public class AiSettings
 {
     public const string ConfigSectionName = "AiServices";
 
-    public string FoundryEndpoint { get; set; } = null!;            // TODO: [CONFIGURE]
-    public string AgentModelDeployment { get; set; } = null!;       // TODO: [CONFIGURE]
-    public string EmbeddingModelDeployment { get; set; } = null!;   // TODO: [CONFIGURE]
-    public string SearchEndpoint { get; set; } = null!;             // TODO: [CONFIGURE]
-    public string SearchIndexName { get; set; } = null!;            // TODO: [CONFIGURE]
-    public string FoundryAgentServiceEndpoint { get; set; } = "";   // TODO: [CONFIGURE] — only if useFoundryAgentService: true
+    public string SearchEndpoint { get; set; } = null!;
+    public string SearchIndexName { get; set; } = null!;
+    public string EmbeddingModelDeployment { get; set; } = ""; // only when embeddings are enabled
 }
 ```
 
-## Index Creation (Setup / Migration Utility)
+## Index Setup
+
+Create only the fields you query. Add vector search configuration only when the document includes vector fields.
 
 ```csharp
-// Run once during setup or as part of deployment script
-var indexClient = new SearchIndexClient(
-    new Uri(settings.SearchEndpoint),
-    new DefaultAzureCredential());
-
-var fieldBuilder = new FieldBuilder();
-var fields = fieldBuilder.Build(typeof({Entity}SearchDocument));
-
 var index = new SearchIndex("{entity}-index")
 {
-    Fields = fields,
-    VectorSearch = new()
-    {
-        Profiles = { new VectorSearchProfile("default-vector-profile", "default-hnsw") },
-        Algorithms = { new HnswAlgorithmConfiguration("default-hnsw") }
-    },
+    Fields = new FieldBuilder().Build(typeof({Entity}SearchDocument)),
     SemanticSearch = new()
     {
         Configurations =

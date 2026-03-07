@@ -2,6 +2,18 @@
 
 Use this guide to run the instruction set with an AI coding assistant in VS Code.
 
+## Quick Start
+
+If you want the shortest path from zero context to first scaffold:
+
+1. Create a new app repo and copy this instruction set into `.instructions/`.
+2. Open the app repo in VS Code.
+3. Run `./.instructions/scripts/preflight-instructions.ps1` once to validate the copied instruction set.
+4. Start Phase 1 with the prompt in [support/prompt-patterns.md](support/prompt-patterns.md) or the Phase 1 prompt below.
+5. When you reach implementation, begin the AI session with [START-AI.md](START-AI.md).
+
+Read the rest of this guide when you need setup details, MCP recommendations, or troubleshooting rules.
+
 ## Prerequisites
 
 - `git`
@@ -42,7 +54,7 @@ Optional additions: Git, Docker, Memory, web-search MCPs, Azure DevOps MCP.
 Before each phase, quickly check for new MCP servers for libraries/services in scope:
 1. Search npm (`mcp + <library/service>`)
 2. Check MCP registry
-3. If useful, add and note in [UPDATE-INSTRUCTIONS.md](UPDATE-INSTRUCTIONS.md)
+3. If useful, add and note in [support/UPDATE-INSTRUCTIONS.md](support/UPDATE-INSTRUCTIONS.md)
 
 ## Repository Setup
 
@@ -55,27 +67,45 @@ Expected shape:
 ```text
 <YourApp>/
   .instructions/
+    START-HUMAN.md
     START-AI.md
-    SKILL.md
-    domain-specification-schema.md
-    resource-implementation-schema.md
+    _manifest.json
+    phase-load-packs.json
+    ai/
+      SKILL.md
+      domain-specification-schema.md
+      resource-implementation-schema.md
+      implementation-plan.md
+      placeholder-tokens.md
+    support/
+      HANDOFF.md
+      prompt-patterns.md
+      execution-gates.md
+      engineer-checklist.md
+      troubleshooting.md
     skills/
+    scripts/
     templates/
+    sample-app/
   README.md
 ```
 
+Notes:
+- `.instructions/support/HANDOFF.md` is the template.
+- The working `HANDOFF.md` used to resume AI sessions is created in the target project root during Phase 4.
+
 ## Choose Mode + Profiles
 
-Set mode/profile fields early in domain inputs. Allowed values and defaults are canonical in [resource-implementation-schema.md](resource-implementation-schema.md) under **Canonical Defaults**.
+Set mode/profile fields early in domain inputs. Allowed values and defaults are canonical in [ai/resource-implementation-schema.md](ai/resource-implementation-schema.md) under **Canonical Defaults**.
 
 Add optional hosts after core backend slices stabilize.
 
 ## Workflow
 
-1. **Phase 1 — Domain Discovery:** model entities, relationships, events, workflows in business language → [domain-specification-schema.md](domain-specification-schema.md)
-2. **Phase 2 — Resource Definition:** map domain to Aspire/Azure resources, datatypes, messaging, hosting → [resource-implementation-schema.md](resource-implementation-schema.md)
+1. **Phase 1 — Domain Discovery:** model entities, relationships, events, workflows in business language → [ai/domain-specification-schema.md](ai/domain-specification-schema.md)
+2. **Phase 2 — Resource Definition:** map domain to Aspire/Azure resources, datatypes, messaging, hosting → [ai/resource-implementation-schema.md](ai/resource-implementation-schema.md)
 3. **Phase 3 — Implementation Plan:** ordered steps, resolve open questions → `implementation-plan.md` in project root
-4. **Phase 4 — Implementation:** start AI session with [START-AI.md](START-AI.md), then execute sub-phases (4a-4e) → [SKILL.md](SKILL.md)
+4. **Phase 4 — Implementation:** start AI session with [START-AI.md](START-AI.md), then execute sub-phases (4a-4g) → [ai/SKILL.md](ai/SKILL.md)
 5. During Phase 4, create/update `HANDOFF.md` at session boundaries when context is high
 6. Run instruction preflight: `./scripts/preflight-instructions.ps1` (refreshes `_manifest.json`, regenerates `phase-load-packs.json`, runs lint)
 7. Resolve phase load sets as needed with `./scripts/get-phase-load-set.ps1`
@@ -105,11 +135,11 @@ Write output to `.instructions/resource-implementation.yaml` (or explicitly stat
 
 ## Scaffolding Prompt Starter
 
-See **Prompt Patterns** in [SKILL.md](SKILL.md).
+See [support/prompt-patterns.md](support/prompt-patterns.md).
 
 ## Validation Cadence
 
-See [execution-gates.md](execution-gates.md) for the canonical phase gates and commands. IaC checks: [engineer-checklist.md](engineer-checklist.md).
+See [support/execution-gates.md](support/execution-gates.md) for the canonical phase gates and commands. IaC checks: [support/engineer-checklist.md](support/engineer-checklist.md).
 Run `./scripts/preflight-instructions.ps1` before Phase 4 execution and before opening validation PRs.
 
 ## Troubleshooting Model
@@ -121,17 +151,17 @@ Run `./scripts/preflight-instructions.ps1` before Phase 4 execution and before o
 ## Core References
 
 - [START-AI.md](START-AI.md) *(AI session bootstrap; load first)*
-- [SKILL.md](SKILL.md)
-- [domain-specification-schema.md](domain-specification-schema.md) *(Phase 1 output)*
-- [resource-implementation-schema.md](resource-implementation-schema.md) *(Phase 2 output)*
-- [implementation-plan.md](implementation-plan.md) *(Phase 3 template)*
-- [execution-gates.md](execution-gates.md) *(canonical phase checkpoints and validation commands)*
-- [troubleshooting.md](troubleshooting.md) *(triage rules + canonical recurring test failures and fixes)*
+- [ai/SKILL.md](ai/SKILL.md)
+- [support/prompt-patterns.md](support/prompt-patterns.md)
+- [ai/domain-specification-schema.md](ai/domain-specification-schema.md) *(Phase 1 output)*
+- [ai/resource-implementation-schema.md](ai/resource-implementation-schema.md) *(Phase 2 output)*
+- [ai/implementation-plan.md](ai/implementation-plan.md) *(Phase 3 template)*
+- [support/execution-gates.md](support/execution-gates.md) *(canonical phase checkpoints and validation commands)*
+- [support/troubleshooting.md](support/troubleshooting.md) *(triage rules + canonical recurring test failures and fixes)*
 - `phase-load-packs.json` *(generated phase load sets)*
-- [sampleapp-patterns.md](sampleapp-patterns.md) *(strictly on-demand for cross-project pattern selection)*
-- [quick-reference.md](quick-reference.md) *(strictly on-demand for naming/DI/config lookups)*
-- [engineer-checklist.md](engineer-checklist.md)
-- [troubleshooting.md](troubleshooting.md) *(on-demand when failures occur)*
+- [support/sampleapp-patterns.md](support/sampleapp-patterns.md) *(strictly on-demand for cross-project pattern selection)*
+- [support/quick-reference.md](support/quick-reference.md) *(strictly on-demand for naming/DI/config lookups)*
+- [support/engineer-checklist.md](support/engineer-checklist.md)
 
 For default phase flow, start with [START-AI.md](START-AI.md) only, then load phase files incrementally.
 
@@ -141,4 +171,4 @@ For default phase flow, start with [START-AI.md](START-AI.md) only, then load ph
 - Never build or compile `sample-app/`; build/test only the new project being scaffolded.
 - Do not over-scaffold optional workloads on first pass.
 - Keep context small; load only files needed for the current phase.
-- Capture instruction improvements in [UPDATE-INSTRUCTIONS.md](UPDATE-INSTRUCTIONS.md).
+- Capture instruction improvements in [support/UPDATE-INSTRUCTIONS.md](support/UPDATE-INSTRUCTIONS.md).

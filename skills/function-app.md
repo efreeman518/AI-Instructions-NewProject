@@ -24,7 +24,7 @@ Use an isolated-worker Function App for trigger-driven workloads that should run
 
 ## Profile Strategy
 
-Set `functionProfile` in [resource-implementation-schema.md](../resource-implementation-schema.md):
+Set `functionProfile` in [resource-implementation-schema.md](../ai/resource-implementation-schema.md):
 
 - `starter`: host + HTTP + Timer first.
 - `full`: add Blob/StorageQueue/ServiceBus/EventGrid after dependencies are ready.
@@ -197,7 +197,7 @@ For `scaffoldMode: lite`:
 6. Apply retries for timer/message triggers.
 7. Do not expose business handlers as `Anonymous`.
 8. If trigger dependencies are not ready, disable registration cleanly rather than shipping broken bindings.
-9. Token placeholders remain defined by [placeholder-tokens.md](../placeholder-tokens.md).
+9. Token placeholders remain defined by [placeholder-tokens.md](../ai/placeholder-tokens.md).
 10. For event-driven ingestion, align ordering/lateness behavior with `ingestionSemantics` from resource mapping.
 
 ---

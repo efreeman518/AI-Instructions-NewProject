@@ -4,7 +4,7 @@
 |---|---|
 | **File** | `{Host}.Api/ExceptionHandlers/DefaultExceptionHandler.cs` |
 | **Depends on** | [api.md](../skills/api.md) |
-| **Referenced by** | [api.md](../skills/api.md), [sampleapp-patterns.md](../sampleapp-patterns.md) |
+| **Referenced by** | [api.md](../skills/api.md), [sampleapp-patterns.md](../support/sampleapp-patterns.md) |
 | **Sampleapp** | `sample-app/src/TaskFlow/TaskFlow.Api/ExceptionHandlers/DefaultExceptionHandler.cs` |
 
 ## Purpose
@@ -106,3 +106,4 @@ app.UseExceptionHandler();
 - [ ] All mapped exceptions return correct HTTP status codes
 - [ ] Logging uses structured placeholders, not string interpolation
 - [ ] No business logic errors handled here — those use `Result<T>` pattern
+

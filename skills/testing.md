@@ -214,7 +214,7 @@ For high-contention domains (inventory, reservations, metering, financial postin
 
 ## TestContainer / WebApplicationFactory Gotchas
 
-Use [troubleshooting.md](../troubleshooting.md) for the canonical test failure catalog and fixes.
+Use [troubleshooting.md](../support/troubleshooting.md) for the canonical test failure catalog and fixes.
 
 ---
 
@@ -305,3 +305,4 @@ var dto = new {Entity}DtoBuilder()
 - [ ] TestContainer tests override `IRequestContext` with a fixed `TestTenantId`
 - [ ] Search tests specify `PageSize` and `PageIndex` (never send empty `{}`)
 - [ ] Rate limiter is disabled in test factory if API uses rate limiting
+

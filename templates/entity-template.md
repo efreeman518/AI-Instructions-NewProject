@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **File** | `Domain.Model/Entities/{Entity}.cs` |
-| **Depends on** | [domain-specification-schema.md](../domain-specification-schema.md), [resource-implementation-schema.md](../resource-implementation-schema.md) |
+| **Depends on** | [domain-specification-schema.md](../ai/domain-specification-schema.md), [resource-implementation-schema.md](../ai/resource-implementation-schema.md) |
 | **Referenced by** | [dto-template](dto-template.md), [ef-configuration-template](ef-configuration-template.md), [mapper-template](mapper-template.md) |
 | **Sampleapp** | `sample-app/src/Domain/TaskFlow.Domain.Model/Entities/TodoItem.cs` |
 
@@ -112,7 +112,7 @@ For playlist-driven content entities, model ordered blocks with:
 - block discriminator/type
 - payload invariants enforced in `Valid()`/domain rules (for example text block requires text, image block requires image URL)
 
-When the child collection property name differs from `{ChildEntity}s`, use the explicit `{Children}` token from [placeholder-tokens.md](../placeholder-tokens.md).
+When the child collection property name differs from `{ChildEntity}s`, use the explicit `{Children}` token from [placeholder-tokens.md](../ai/placeholder-tokens.md).
 
 ## File: Domain/Model/Entities/{Parent}{Related}.cs (Join Entity)
 

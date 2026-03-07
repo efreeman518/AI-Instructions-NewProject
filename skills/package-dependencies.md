@@ -11,7 +11,7 @@ Use this file as a compact contract map for private/shared packages.
 
 ## Feed + Version Rules (Mandatory)
 
-1. `nuget.config` must include `nuget.org` and all `customNugetFeeds` from [resource-implementation-schema.md](../resource-implementation-schema.md).
+1. `nuget.config` must include `nuget.org` and all `customNugetFeeds` from [resource-implementation-schema.md](../ai/resource-implementation-schema.md).
 2. Use central package versions in `Directory.Packages.props`.
 3. After adding packages, restore and update to latest stable versions.
 4. Re-verify with `dotnet restore` and `dotnet build`.

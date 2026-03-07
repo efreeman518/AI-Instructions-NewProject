@@ -2,7 +2,7 @@
 
 High-signal lookup for structure, dependencies, DI patterns, and common routes/config keys during scaffolding.
 
-> **File naming conventions** are in [placeholder-tokens.md](placeholder-tokens.md#file-naming-conventions).
+> **File naming conventions** are in [../ai/placeholder-tokens.md](../ai/placeholder-tokens.md#file-naming-conventions).
 
 ---
 

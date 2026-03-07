@@ -1,7 +1,7 @@
 ````markdown
 # AI Integration
 
-Semantic search (Azure AI Search) and AI agents (Microsoft Agent Framework) backed by Microsoft Foundry models.
+Use this only when the current slice actually needs semantic retrieval, grounded Q&A, or bounded tool-driven automation. Default to search first, agent second, workflows or hosted agents last.
 
 ## Prerequisites
 
@@ -21,61 +21,53 @@ Semantic search (Azure AI Search) and AI agents (Microsoft Agent Framework) back
 6. Configuration-driven model selection (appsettings, not hardcoded deployment names).
 7. Use **Microsoft Agent Framework** (`Microsoft.Agents.AI`) — the successor to Semantic Kernel and AutoGen. Do not scaffold with Semantic Kernel or AutoGen packages.
 8. Agent sessions (`AgentSession`) must be scoped per user/conversation — never share sessions across tenants.
+9. Start with one agent and a small tool set. Do not scaffold multi-agent orchestration until a single-agent path is proven insufficient.
+10. System prompts live in files, not inline string literals spread through services.
 
 ---
 
-## Technology Stack
+## Pragmatic Defaults
 
-### Microsoft Foundry (Azure)
+1. **Search-only first** when the requirement is findability, retrieval, or grounded Q&A over existing data.
+2. **Single agent second** when the model must choose among a few application-service tools.
+3. **Workflows last** when the process is durable, branching, resumable, or needs explicit approvals/checkpoints.
+4. **Foundry Agent Service only when justified** by hosted memory, centralized tool catalogs, or operational requirements that a code-hosted agent cannot meet.
+5. **Keyword or semantic search before vector or hybrid**. Add embeddings only when search quality testing shows a clear gap.
+6. **Do not scaffold empty AI folders**. Add only the Search, Agents, and Workflows folders that are enabled.
 
-The unified Azure PaaS for enterprise AI. Provides:
-- **Model deployments** — deploy and manage OpenAI, Anthropic, and other models
-- **Foundry Agent Service** — hosted agent backend with built-in memory, knowledge (Foundry IQ), and tool catalogs
-- **Observability** — tracing, monitoring, evaluations
-- **Enterprise controls** — RBAC, networking, policies under one resource provider
+## Decision Order
 
-Portal: [ai.azure.com](https://ai.azure.com). SDK: `Azure.AI.OpenAI`, `Azure.AI.Agents.Persistent`.
+- **Need retrieval over business data?** Start with Azure AI Search.
+- **Need the model to call internal business operations?** Add one `ChatClientAgent` with a few function tools that delegate to existing application services.
+- **Need long-running or branching AI processes?** Add `Microsoft.Agents.Workflows`.
+- **Need hosted memory or Foundry-managed tools?** Add Foundry Agent Service after the simpler code-hosted path is proven insufficient.
 
-### Microsoft Agent Framework (Code)
+## Technology Choices
 
-The next-generation agent SDK, created by the Semantic Kernel + AutoGen teams. Key primitives:
+- **Foundry Models / Azure OpenAI client:** default model host for completions, embeddings, and tool-calling.
+- **Azure AI Search:** default retrieval tier.
+- **Microsoft Agent Framework:** default code-side agent SDK.
+- **Foundry Agent Service:** optional hosted agent backend.
+- **Agent Framework Workflows:** optional explicit orchestration layer.
 
-| Concept | Package / Type | Description |
-|---|---|---|
-| `AIAgent` | `Microsoft.Agents.AI` | Base abstraction for all agents |
-| `ChatClientAgent` | `Microsoft.Agents.AI` | Agent wrapping any `IChatClient` |
-| Function tools | `AIFunctionFactory.Create()` | Turn any C# method into an agent tool |
-| Agent-as-tool | `agent.AsAIFunction()` | Compose agents — one agent calls another |
-| Sessions | `AgentSession` | Multi-turn conversation state container |
-| Middleware | `agent.AsBuilder().Use(...)` | Intercept runs, function calls, chat client requests |
-| Workflows | `Microsoft.Agents.Workflows` | Graph-based executors + edges for multi-agent orchestration |
-| MCP tools | Hosted (Foundry) + Local | Connect to 1,400+ tools via MCP protocol |
-
-Docs: [learn.microsoft.com/agent-framework](https://learn.microsoft.com/en-us/agent-framework/overview/).
+Useful primitives:
+- `ChatClientAgent` for the default single-agent path
+- `AIFunctionFactory.Create()` for application-service tools
+- `AgentSession` for per-conversation state
+- `Microsoft.Agents.Workflows` for explicit orchestration only when needed
 
 ---
 
 ## Packages
 
-```xml
-<!-- Agent Framework core -->
-<PackageReference Include="Microsoft.Agents.AI.OpenAI" />
-
-<!-- Azure OpenAI client (also used for Foundry Models) -->
-<PackageReference Include="Azure.AI.OpenAI" />
-
-<!-- Azure AI Search -->
-<PackageReference Include="Azure.Search.Documents" />
-
-<!-- Azure Identity -->
-<PackageReference Include="Azure.Identity" />
-
-<!-- Foundry Agent Service (only if useFoundryAgentService: true) -->
-<PackageReference Include="Azure.AI.Agents.Persistent" />
-
-<!-- Agent Framework workflows (only if workflow.enabled: true) -->
-<PackageReference Include="Microsoft.Agents.Workflows" />
-```
+- Baseline for any AI capability:
+    - `Azure.AI.OpenAI`
+    - `Azure.Identity`
+- Add only when enabled:
+    - `Azure.Search.Documents` for search
+    - `Microsoft.Agents.AI.OpenAI` for agents
+    - `Azure.AI.Agents.Persistent` for Foundry Agent Service
+    - `Microsoft.Agents.Workflows` for workflow orchestration
 
 Version all packages in `Directory.Packages.props`.
 
@@ -83,30 +75,24 @@ Version all packages in `Directory.Packages.props`.
 
 ## Project Structure
 
+Generate only the folders used by the enabled feature set.
+
 ```
 src/Infrastructure/{Project}.Infrastructure.AI/
 ├── {Project}.Infrastructure.AI.csproj
-├── Search/
-│   ├── I{Project}SearchService.cs              # Search abstraction
-│   ├── {Project}SearchService.cs               # Azure AI Search implementation
-│   ├── {Entity}SearchIndexDefinition.cs        # Index field mappings
-│   └── {Entity}VectorizationHandler.cs         # Embedding pipeline (event-driven or batch)
-├── Agents/
-│   ├── I{Agent}Agent.cs                        # Agent abstraction
-│   ├── {Agent}AgentService.cs                  # Agent setup + RunAsync wrapper
+├── Search/                                   # Only if useSearch: true
+│   ├── I{Project}SearchService.cs
+│   ├── {Project}SearchService.cs
+│   ├── {Entity}SearchIndexDefinition.cs
+│   └── {Entity}VectorizationHandler.cs
+├── Agents/                                   # Only if useAgents: true
+│   ├── I{Agent}Agent.cs
+│   ├── {Agent}AgentService.cs
 │   ├── Tools/
-│   │   └── {Tool}Tool.cs                       # Function tools (wrap domain services)
+│   │   └── {Tool}Tool.cs
 │   ├── Middleware/
-│   │   └── {Project}AgentMiddleware.cs          # Logging, auth, content safety
 │   └── Prompts/
-│       └── {Agent}.system-prompt.txt           # System prompts (file-based, not hardcoded)
-├── Workflows/                                   # Only if workflow.enabled: true
-│   ├── {Workflow}WorkflowDefinition.cs          # Executor + edge graph definition
-│   └── {Workflow}Executor.cs                    # Individual workflow step
-├── Models/
-│   ├── SearchResult.cs
-│   ├── SearchRequest.cs
-│   └── AgentResponse.cs
+├── Workflows/                                 # Only if workflow.enabled: true
 ├── {Project}AiSettings.cs
 └── ServiceCollectionExtensions.cs
 ```
@@ -117,27 +103,20 @@ src/Infrastructure/{Project}.Infrastructure.AI/
 
 ### Simple Agent (ChatClientAgent)
 
-Most common pattern. Wraps an Azure OpenAI / Foundry model with function tools that delegate to your existing application services.
+This is the default agent pattern. Wrap an Azure OpenAI / Foundry model with a small number of function tools that delegate to existing application services.
 
 ```csharp
-public class SupportTriageAgentService : ISupportTriageAgent
+public sealed class SupportTriageAgentService : ISupportTriageAgent
 {
     private readonly AIAgent _agent;
-    private readonly ILogger<SupportTriageAgentService> _logger;
 
     public SupportTriageAgentService(
         AzureOpenAIClient openAiClient,
         IOptions<AiSettings> settings,
-        ITicketService ticketService,
-        ISearchService searchService,
-        ILogger<SupportTriageAgentService> logger)
+        ITicketService ticketService)
     {
-        _logger = logger;
-
-        // Load system prompt from embedded file
         var systemPrompt = EmbeddedResource.Read("Prompts.SupportTriageAgent.system-prompt.txt");
 
-        // Create agent with function tools that wrap domain services
         _agent = openAiClient
             .GetChatClient(settings.Value.AgentModelDeployment)
             .AsAIAgent(
@@ -146,13 +125,7 @@ public class SupportTriageAgentService : ISupportTriageAgent
                 tools:
                 [
                     AIFunctionFactory.Create(
-                        ([Description("Search knowledge base")] string query) =>
-                            searchService.SearchAsync(query, CancellationToken.None),
-                        "SearchKnowledgeBase",
-                        "Search the knowledge base for relevant articles"),
-
-                    AIFunctionFactory.Create(
-                        ([Description("Ticket ID")] string ticketId) =>
+                        (string ticketId) =>
                             ticketService.GetTicketHistoryAsync(ticketId, CancellationToken.None),
                         "GetTicketHistory",
                         "Get the history of a support ticket")
@@ -167,82 +140,24 @@ public class SupportTriageAgentService : ISupportTriageAgent
 }
 ```
 
-### Agent with Middleware
+### Escalate Only When Needed
 
-```csharp
-var agentWithMiddleware = baseAgent
-    .AsBuilder()
-    .Use(
-        runFunc: async (messages, session, options, innerAgent, ct) =>
-        {
-            logger.LogInformation("Agent run started with {MessageCount} messages", messages.Count());
-            var response = await innerAgent.RunAsync(messages, session, options, ct);
-            logger.LogInformation("Agent run completed with {ResponseCount} response messages", response.Messages.Count);
-            return response;
-        })
-    .Use(async (agent, context, next, ct) =>
-    {
-        logger.LogInformation("Function call: {FunctionName}", context.Function.Name);
-        var result = await next(context, ct);
-        logger.LogInformation("Function result: {Result}", result?.ToString()?[..100]);
-        return result;
-    })
-    .Build();
-```
+- **Middleware:** add only after the core run path works and there is a concrete need for logging, redaction, authorization, or safety interception.
+- **Agent-as-tool composition:** add only when one agent owns a distinct bounded capability that should stay isolated from the outer agent.
+- **Foundry Agent Service:** use only when server-side memory, hosted tools, or centralized management are real requirements.
+- **Workflows:** use only for branching, resumable, or human-in-the-loop flows. Do not introduce workflows for a single linear task.
 
-### Agent-as-Tool (Composition)
-
-```csharp
-// Inner agent becomes a tool for the outer agent
-AIAgent classifierAgent = openAiClient
-    .GetChatClient(deploymentName)
-    .AsAIAgent(
-        instructions: "Classify support tickets by urgency: Low, Medium, High, Critical.",
-        name: "ClassifierAgent",
-        description: "Classifies support ticket urgency.");
-
-AIAgent triageAgent = openAiClient
-    .GetChatClient(deploymentName)
-    .AsAIAgent(
-        instructions: "You triage support tickets using available tools.",
-        tools: [classifierAgent.AsAIFunction(), searchTool]);
-```
-
-### Foundry Agent Service (Hosted)
-
-Use when you want server-side memory, Foundry IQ knowledge, and the hosted tool catalog.
-
-```csharp
-var persistentAgentsClient = new PersistentAgentsClient(
-    new Uri(settings.FoundryAgentServiceEndpoint),
-    new DefaultAzureCredential());
-
-AIAgent hostedAgent = await persistentAgentsClient.CreateAIAgentAsync(
-    model: settings.AgentModelDeployment,
-    instructions: systemPrompt,
-    name: "HostedSupportAgent");
-```
-
-### Multi-Agent Workflow
-
-Use Agent Framework Workflows for explicit multi-step orchestration with type-safe routing and checkpointing.
-
-```csharp
-// Workflows use executors (processing units) and edges (connections)
-// Each executor receives input, performs work, produces output
-// Edges define the flow graph — sequential, parallel, conditional
-// See: https://learn.microsoft.com/en-us/agent-framework/workflows/
-```
-
-Workflow scaffolding produces:
-- Executor classes per step (wrapping agents or domain functions)
-- Edge definitions with optional conditions
-- Workflow builder + runner registration
-- Checkpoint support for long-running processes
+If you add one of these escalations, keep the first pass narrow: one middleware policy, one subordinate agent, or one workflow path.
 
 ---
 
 ## Search Patterns
+
+### Search Rollout Order
+
+1. Start with keyword or semantic search.
+2. Add vector search only if search-quality testing shows that lexical or semantic ranking is inadequate.
+3. Add hybrid search only after both lexical and vector behavior are individually understood.
 
 ### Azure AI Search Client
 
@@ -250,15 +165,18 @@ Workflow scaffolding produces:
 public class ProjectSearchService : IProjectSearchService
 {
     private readonly SearchClient _searchClient;
-    private readonly AzureOpenAIClient _openAiClient;
-    private readonly AiSettings _settings;
 
-    public async Task<IReadOnlyList<SearchResult<T>>> SearchAsync<T>(
-        string query, SearchMode mode, CancellationToken ct) where T : class
+    public async Task<IReadOnlyList<SearchResult<SearchDocument>>> SearchAsync(
+        string query, SearchMode mode, CancellationToken ct)
     {
         SearchOptions options = mode switch
         {
             SearchMode.Keyword => new() { QueryType = SearchQueryType.Simple },
+            SearchMode.Semantic => new()
+            {
+                QueryType = SearchQueryType.Semantic,
+                SemanticSearch = new() { SemanticConfigurationName = "default" }
+            },
             SearchMode.Vector => new()
             {
                 VectorSearch = new()
@@ -278,7 +196,7 @@ public class ProjectSearchService : IProjectSearchService
             _ => throw new ArgumentOutOfRangeException(nameof(mode))
         };
 
-        var response = await _searchClient.SearchAsync<T>(query, options, ct);
+        var response = await _searchClient.SearchAsync<SearchDocument>(query, options, ct);
         return [.. response.Value.GetResults()];
     }
 }
@@ -288,33 +206,13 @@ public class ProjectSearchService : IProjectSearchService
 
 #### On-Write (Domain Event Handler)
 
-```csharp
-public class ProductVectorizationHandler : IMessageHandler<ProductCreatedEvent>
-{
-    private readonly SearchClient _searchClient;
-    private readonly EmbeddingClient _embeddingClient;
-
-    public async Task HandleAsync(ProductCreatedEvent evt, CancellationToken ct)
-    {
-        var embedding = await _embeddingClient.GenerateEmbeddingAsync(
-            $"{evt.Name} {evt.Description}", cancellationToken: ct);
-
-        var doc = new SearchDocument
-        {
-            ["id"] = evt.ProductId.ToString(),
-            ["Name"] = evt.Name,
-            ["Description"] = evt.Description,
-            ["DescriptionVector"] = embedding.Value.ToFloats()
-        };
-
-        await _searchClient.MergeOrUploadDocumentsAsync([doc], cancellationToken: ct);
-    }
-}
-```
+- Use an event handler only when search freshness matters enough to justify write-path work.
+- Index only projection fields plus the vector field. Always keep the primary entity ID in the document.
+- Call a dedicated embedding service abstraction from the handler or job. Do not generate embeddings in domain code.
 
 #### Batch (Function App / Scheduler)
 
-Use when vectorizing large existing datasets or when eventual consistency is acceptable. Wire as a timer-triggered function or scheduled job.
+Use when vectorizing large existing datasets or when eventual consistency is acceptable. Prefer batch backfill first when introducing embeddings to an existing system.
 
 ---
 
@@ -326,16 +224,24 @@ public static class AiServiceCollectionExtensions
     public static IServiceCollection AddAiServices(this IServiceCollection services, IConfiguration config)
     {
         var aiSection = config.GetSection(AiSettings.ConfigSectionName);
-        services.Configure<AiSettings>(aiSection);
-        var settings = aiSection.Get<AiSettings>()!;
+        services.AddOptions<AiSettings>()
+            .Bind(aiSection)
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
 
         // Azure OpenAI / Foundry Models client
-        services.AddSingleton(new AzureOpenAIClient(
-            new Uri(settings.FoundryEndpoint),
-            new DefaultAzureCredential()));
+        services.AddSingleton(sp =>
+        {
+            var settings = sp.GetRequiredService<IOptions<AiSettings>>().Value;
+            return new AzureOpenAIClient(
+                new Uri(settings.FoundryEndpoint),
+                new DefaultAzureCredential());
+        });
 
         // Azure AI Search (if configured)
-        if (!string.IsNullOrEmpty(settings.SearchEndpoint))
+        var settings = aiSection.Get<AiSettings>()!;
+
+        if (settings.UseSearch && !string.IsNullOrWhiteSpace(settings.SearchEndpoint))
         {
             services.AddSingleton(new SearchClient(
                 new Uri(settings.SearchEndpoint),
@@ -346,7 +252,10 @@ public static class AiServiceCollectionExtensions
         }
 
         // Agent services
-        services.AddScoped<ISupportTriageAgent, SupportTriageAgentService>();
+        if (settings.UseAgents)
+        {
+            services.AddScoped<ISupportTriageAgent, SupportTriageAgentService>();
+        }
 
         return services;
     }
@@ -360,6 +269,10 @@ public static class AiServiceCollectionExtensions
 ```json
 {
   "AiServices": {
+    "UseSearch": true,
+    "UseAgents": false,
+    "UseVectorSearch": false,
+    "UseFoundryAgentService": false,
     "FoundryEndpoint": "https://ai-foundry-{resource}.services.ai.azure.com/",
     "AgentModelDeployment": "gpt-4o-deploy",
     "EmbeddingModelDeployment": "embedding-deploy",
@@ -376,8 +289,9 @@ public static class AiServiceCollectionExtensions
 
 ## Aspire Integration
 
+Only wire AI resources through Aspire if the solution already uses an AppHost. Do not introduce Aspire solely for AI.
+
 ```csharp
-// AppHost — wire AI resources
 var openai = builder.AddAzureOpenAI("openai")
     .AddDeployment(new("gpt-4o-deploy", "gpt-4o", "2024-08-06", "GlobalStandard", 10))
     .AddDeployment(new("embedding-deploy", "text-embedding-3-small", "1", "GlobalStandard", 10));
@@ -393,6 +307,13 @@ var api = builder.AddProject<Projects.MyApp_Api>("api")
 
 ## Testing
 
+Cover the smallest useful surface first:
+
+1. Search service returns expected fields and ordering for the selected search mode.
+2. Agent tools call the intended application services and do not bypass business rules.
+3. Prompt loading works from file-based system prompts.
+4. Disabled AI features do not register or resolve their services.
+
 ### Agent Tests
 
 ```csharp
@@ -407,7 +328,7 @@ Assert.Contains("High urgency", response.ToString());
 
 ### Search Tests
 
-Mock `SearchClient` or use the Azure AI Search emulator for integration tests. Verify index schema matches entity properties.
+Mock `SearchClient` or use an integration test against a real test index. Verify index schema and field names match the projected entity shape.
 
 ### Function Tool Tests
 
@@ -419,12 +340,6 @@ Test function tools independently — they are plain C# methods that wrap domain
 
 - [Microsoft Foundry](https://learn.microsoft.com/en-us/azure/ai-foundry/what-is-foundry)
 - [Agent Framework Overview](https://learn.microsoft.com/en-us/agent-framework/overview/)
-- [Agent Framework — Agents](https://learn.microsoft.com/en-us/agent-framework/agents/)
-- [Agent Framework — Tools](https://learn.microsoft.com/en-us/agent-framework/agents/tools/)
 - [Agent Framework — Workflows](https://learn.microsoft.com/en-us/agent-framework/workflows/)
-- [Agent Framework — Sessions](https://learn.microsoft.com/en-us/agent-framework/agents/conversations/session)
-- [Agent Framework — Middleware](https://learn.microsoft.com/en-us/agent-framework/agents/middleware/)
 - [Azure AI Search — .NET SDK](https://learn.microsoft.com/en-us/azure/search/search-howto-dotnet-sdk)
-- [Migration from Semantic Kernel](https://learn.microsoft.com/en-us/agent-framework/migration-guide/from-semantic-kernel/)
-- [Migration from AutoGen](https://learn.microsoft.com/en-us/agent-framework/migration-guide/from-autogen/)
 ````

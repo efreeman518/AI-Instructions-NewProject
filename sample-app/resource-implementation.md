@@ -1,7 +1,7 @@
 # TaskFlow — Resource Implementation
 
 > Reverse-engineered from the sample-app implementation.  
-> Schema: [resource-implementation-schema.md](../resource-implementation-schema.md)
+> Schema: [resource-implementation-schema.md](../ai/resource-implementation-schema.md)
 
 ## Canonical Defaults
 

@@ -197,7 +197,7 @@ messagingSemantics:
   - { channel: DomainEvents, deliveryMode: at-least-once, outboxEnabled: true, idempotencyKey: MessageId, deduplicationWindow: "PT1H" }
 ```
 
-Options: Azure Service Bus, Event Grid, Event Hubs. See [skills/messaging.md](skills/messaging.md).
+Options: Azure Service Bus, Event Grid, Event Hubs. See [skills/messaging.md](../skills/messaging.md).
 
 ### Hosting
 
@@ -335,7 +335,7 @@ aiServices:
 
 ### Optional Integrations
 
-- `externalApis` — external API integrations ([skills/external-api.md](skills/external-api.md))
+- `externalApis` — external API integrations ([skills/external-api.md](../skills/external-api.md))
 - `includeGrpc` — gRPC services
 - `seedData` — initial data seeding
 
@@ -355,7 +355,7 @@ notifications:
     recipients: [Creator]
 ```
 
-See [skills/notifications.md](skills/notifications.md).
+See [skills/notifications.md](../skills/notifications.md).
 
 #### Scheduled Jobs
 

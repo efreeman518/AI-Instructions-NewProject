@@ -10,7 +10,7 @@ Use this file as the **single execution path** for compile/run verification whil
 2. After every AI phase, run the canonical gates in [execution-gates.md](execution-gates.md).
 3. Run only the optional sections that match enabled hosts/workloads.
 4. If a step fails, log in `HANDOFF.md`, keep scope moving, and return later.
-5. `sample-app/` is reference-only (see [SKILL.md](SKILL.md) non-negotiables).
+5. `sample-app/` is reference-only (see [../ai/SKILL.md](../ai/SKILL.md) non-negotiables).
 
 ---
 
@@ -39,7 +39,7 @@ Use this file as the **single execution path** for compile/run verification whil
 
 Configure these in your AI client (VS Code `settings.json` or Claude Desktop config) so the AI can look up current docs and interact with tools during scaffolding.
 
-- [ ] MCP servers configured per [START-HUMAN.md](START-HUMAN.md) (Essential + phase-relevant)
+- [ ] MCP servers configured per [../START-HUMAN.md](../START-HUMAN.md) (Essential + phase-relevant)
 
 ---
 

@@ -224,7 +224,7 @@ For `scaffoldMode: lite`:
 5. Keep environment promotions explicit and approval-gated.
 6. Validate Bicep before deploy.
 7. Never run E2E/load/benchmark in default PR path.
-8. Keep token placeholders aligned with [placeholder-tokens.md](../placeholder-tokens.md).
+8. Keep token placeholders aligned with [placeholder-tokens.md](../ai/placeholder-tokens.md).
 
 ---
 

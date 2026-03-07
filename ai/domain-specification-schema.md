@@ -316,7 +316,7 @@ Auth provider options:
 - **External / consumer:** `EntraExternal`, `Google`, `Facebook`, `Apple`, `OAuth2` — social/OIDC providers
 - **Hybrid:** combine `EntraID` for internal with `EntraExternal` or social providers for external users
 
-> **Note:** Authentication is configured in the final phase (Phase 4f). During earlier phases, auth is stubbed. See [skills/identity-management.md](skills/identity-management.md).
+> **Note:** Authentication is configured in the final phase (Phase 4f). During earlier phases, auth is stubbed. See [skills/identity-management.md](../skills/identity-management.md).
 
 ---
 

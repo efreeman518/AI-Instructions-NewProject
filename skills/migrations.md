@@ -25,7 +25,7 @@ Format: `YYYYMMDD_Description` — one migration per feature/slice.
 
 ## Migration Commands
 
-Canonical CLI commands (consistent with [engineer-checklist.md](../engineer-checklist.md) and [data-access.md](data-access.md)):
+Canonical CLI commands (consistent with [engineer-checklist.md](../support/engineer-checklist.md) and [data-access.md](data-access.md)):
 
 ```powershell
 # Add migration
@@ -158,3 +158,4 @@ For solutions using SQL + Cosmos/Table hybrids:
 - [ ] Production deployments use idempotent scripts
 - [ ] No migration renamed after sharing
 - [ ] Multi-store changes deploy code before SQL migration
+

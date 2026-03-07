@@ -37,7 +37,7 @@ For each channel/event family, define and implement:
 - outbox requirement for transactional producers
 - deduplication window and duplicate-handling behavior
 
-Keep these aligned with `messagingSemantics` in [resource-implementation-schema.md](../resource-implementation-schema.md).
+Keep these aligned with `messagingSemantics` in [resource-implementation-schema.md](../ai/resource-implementation-schema.md).
 
 ### Service Bus (queue/topic workflows)
 

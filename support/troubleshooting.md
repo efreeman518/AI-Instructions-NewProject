@@ -135,4 +135,5 @@ When blocked, log in `HANDOFF.md` (see [template](HANDOFF.md)):
 - Current phase
 - Next engineer action (link to [engineer-checklist.md](engineer-checklist.md))
 
-If instruction gaps are discovered, append to `UPDATE-INSTRUCTIONS.md`.
+If instruction gaps are discovered, append to `support/UPDATE-INSTRUCTIONS.md`.
+

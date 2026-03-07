@@ -2,7 +2,7 @@
 
 Use this checklist after generating a new entity slice to ensure no required files or wiring steps were missed.
 
-Placeholder tokens: [placeholder-tokens.md](placeholder-tokens.md).
+Placeholder tokens: [../ai/placeholder-tokens.md](../ai/placeholder-tokens.md).
 
 ---
 
@@ -80,23 +80,23 @@ For entity `{Entity}`:
 
 | Layer | File Path | Template | Required |
 |---|---|---|---|
-| Domain | `src/Domain/{Project}.Domain.Model/Entities/{Entity}.cs` | [entity-template.md](templates/entity-template.md) | yes |
+| Domain | `src/Domain/{Project}.Domain.Model/Entities/{Entity}.cs` | [entity-template.md](../templates/entity-template.md) | yes |
 | Domain (optional) | `src/Domain/{Project}.Domain.Model/Enums/{Entity}Status.cs` | — | if flags/status enum used |
-| Domain (optional) | `src/Domain/{Project}.Domain.Rules/{Entity}Rules.cs` | [domain-rules-template.md](templates/domain-rules-template.md) | if rules/state machine/policy matrix used |
-| Domain (optional) | `src/Domain/{Project}.Domain.Rules/{Entity}*TransitionRule.cs` | [domain-rules-template.md](templates/domain-rules-template.md) | if state transitions are constrained |
-| Data | `src/Infrastructure/{Project}.Infrastructure.Data/EntityConfigurations/{Entity}Configuration.cs` | [ef-configuration-template.md](templates/ef-configuration-template.md) | yes |
-| Data | `src/Infrastructure/{Project}.Infrastructure.Repositories/{Entity}RepositoryTrxn.cs` | [repository-template.md](templates/repository-template.md) | yes |
-| Data | `src/Infrastructure/{Project}.Infrastructure.Repositories/{Entity}RepositoryQuery.cs` | [repository-template.md](templates/repository-template.md) | yes |
-| Data (optional) | `src/Infrastructure/{Project}.Infrastructure.Repositories/Updaters/{Entity}Updater.cs` | [updater-template.md](templates/updater-template.md) | if child collections |
-| App | `src/Application/{Project}.Application.Models/{Entity}/{Entity}Dto.cs` | [dto-template.md](templates/dto-template.md) | yes |
-| App | `src/Application/{Project}.Application.Models/{Entity}/{Entity}SearchFilter.cs` | [dto-template.md](templates/dto-template.md) | yes |
-| App | `src/Application/{Project}.Application.Contracts/Services/I{Entity}Service.cs` | [service-template.md](templates/service-template.md) | yes |
-| App | `src/Application/{Project}.Application.Contracts/Repositories/I{Entity}RepositoryTrxn.cs` | [repository-template.md](templates/repository-template.md) | yes |
-| App | `src/Application/{Project}.Application.Contracts/Repositories/I{Entity}RepositoryQuery.cs` | [repository-template.md](templates/repository-template.md) | yes |
-| App | `src/Application/{Project}.Application.Contracts/Mappers/{Entity}Mapper.cs` | [mapper-template.md](templates/mapper-template.md) | yes |
-| App | `src/Application/{Project}.Application.Services/Services/{Entity}Service.cs` | [service-template.md](templates/service-template.md) | yes |
+| Domain (optional) | `src/Domain/{Project}.Domain.Rules/{Entity}Rules.cs` | [domain-rules-template.md](../templates/domain-rules-template.md) | if rules/state machine/policy matrix used |
+| Domain (optional) | `src/Domain/{Project}.Domain.Rules/{Entity}*TransitionRule.cs` | [domain-rules-template.md](../templates/domain-rules-template.md) | if state transitions are constrained |
+| Data | `src/Infrastructure/{Project}.Infrastructure.Data/EntityConfigurations/{Entity}Configuration.cs` | [ef-configuration-template.md](../templates/ef-configuration-template.md) | yes |
+| Data | `src/Infrastructure/{Project}.Infrastructure.Repositories/{Entity}RepositoryTrxn.cs` | [repository-template.md](../templates/repository-template.md) | yes |
+| Data | `src/Infrastructure/{Project}.Infrastructure.Repositories/{Entity}RepositoryQuery.cs` | [repository-template.md](../templates/repository-template.md) | yes |
+| Data (optional) | `src/Infrastructure/{Project}.Infrastructure.Repositories/Updaters/{Entity}Updater.cs` | [updater-template.md](../templates/updater-template.md) | if child collections |
+| App | `src/Application/{Project}.Application.Models/{Entity}/{Entity}Dto.cs` | [dto-template.md](../templates/dto-template.md) | yes |
+| App | `src/Application/{Project}.Application.Models/{Entity}/{Entity}SearchFilter.cs` | [dto-template.md](../templates/dto-template.md) | yes |
+| App | `src/Application/{Project}.Application.Contracts/Services/I{Entity}Service.cs` | [service-template.md](../templates/service-template.md) | yes |
+| App | `src/Application/{Project}.Application.Contracts/Repositories/I{Entity}RepositoryTrxn.cs` | [repository-template.md](../templates/repository-template.md) | yes |
+| App | `src/Application/{Project}.Application.Contracts/Repositories/I{Entity}RepositoryQuery.cs` | [repository-template.md](../templates/repository-template.md) | yes |
+| App | `src/Application/{Project}.Application.Contracts/Mappers/{Entity}Mapper.cs` | [mapper-template.md](../templates/mapper-template.md) | yes |
+| App | `src/Application/{Project}.Application.Services/Services/{Entity}Service.cs` | [service-template.md](../templates/service-template.md) | yes |
 | App (optional) | `src/Application/{Project}.Application.Services/Validators/{Entity}Validator.cs` | — | if custom validator used |
-| API | `src/{Host}/{Host}.Api/Endpoints/{Entity}Endpoints.cs` | [endpoint-template.md](templates/endpoint-template.md) | yes |
+| API | `src/{Host}/{Host}.Api/Endpoints/{Entity}Endpoints.cs` | [endpoint-template.md](../templates/endpoint-template.md) | yes |
 
 ---
 
@@ -121,13 +121,13 @@ dotnet ef migrations add Add{Entity} --project src/Infrastructure/{Project}.Infr
 
 | File Path | Template |
 |---|---|
-| `src/Test/Test.Unit/Domain/{Entity}Tests.cs` | [test-template-unit.md](templates/test-template-unit.md) |
-| `src/Test/Test.Unit/Services/{Entity}ServiceTests.cs` | [test-template-unit.md](templates/test-template-unit.md) |
-| `src/Test/Test.Unit/Repositories/{Entity}RepositoryTrxnTests.cs` | [test-template-unit.md](templates/test-template-unit.md) |
-| `src/Test/Test.Unit/Repositories/{Entity}RepositoryQueryTests.cs` | [test-template-unit.md](templates/test-template-unit.md) |
-| `src/Test/Test.Unit/Mappers/{Entity}MapperTests.cs` | [test-template-unit.md](templates/test-template-unit.md) |
-| `src/Test/Test.Integration/Endpoints/{Entity}EndpointsTests.cs` | [test-template-integration.md](templates/test-template-integration.md) |
-| `src/Test/Test.Architecture/` updates | [test-template-quality.md](templates/test-template-quality.md) |
+| `src/Test/Test.Unit/Domain/{Entity}Tests.cs` | [test-template-unit.md](../templates/test-template-unit.md) |
+| `src/Test/Test.Unit/Services/{Entity}ServiceTests.cs` | [test-template-unit.md](../templates/test-template-unit.md) |
+| `src/Test/Test.Unit/Repositories/{Entity}RepositoryTrxnTests.cs` | [test-template-unit.md](../templates/test-template-unit.md) |
+| `src/Test/Test.Unit/Repositories/{Entity}RepositoryQueryTests.cs` | [test-template-unit.md](../templates/test-template-unit.md) |
+| `src/Test/Test.Unit/Mappers/{Entity}MapperTests.cs` | [test-template-unit.md](../templates/test-template-unit.md) |
+| `src/Test/Test.Integration/Endpoints/{Entity}EndpointsTests.cs` | [test-template-integration.md](../templates/test-template-integration.md) |
+| `src/Test/Test.Architecture/` updates | [test-template-quality.md](../templates/test-template-quality.md) |
 
 ### Required Test Gate by Profile
 
@@ -158,7 +158,7 @@ Also update `App.xaml.host.cs`:
 - register UI services,
 - register navigation routes.
 
-Templates: [ui-model-template.md](templates/ui-model-template.md), [ui-service-template.md](templates/ui-service-template.md), [mvux-model-template.md](templates/mvux-model-template.md), [xaml-page-template.md](templates/xaml-page-template.md).
+Templates: [ui-model-template.md](../templates/ui-model-template.md), [ui-service-template.md](../templates/ui-service-template.md), [mvux-model-template.md](../templates/mvux-model-template.md), [xaml-page-template.md](../templates/xaml-page-template.md).
 
 ---
 

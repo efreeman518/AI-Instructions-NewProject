@@ -1,7 +1,7 @@
 # TaskFlow — Domain Specification
 
 > Reverse-engineered from the sample-app implementation.  
-> Schema: [domain-specification-schema.md](../domain-specification-schema.md)
+> Schema: [domain-specification-schema.md](../ai/domain-specification-schema.md)
 
 ## Project Identity
 

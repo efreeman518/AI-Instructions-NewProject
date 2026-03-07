@@ -172,7 +172,7 @@ Keep full registration details in [bootstrapper.md](bootstrapper.md):
 
 ## SearchRequest Defaults (Critical)
 
-See [troubleshooting.md](../troubleshooting.md) for the canonical paging defaults guidance and test/runtime failure patterns.
+See [troubleshooting.md](../support/troubleshooting.md) for the canonical paging defaults guidance and test/runtime failure patterns.
 
 ---
 

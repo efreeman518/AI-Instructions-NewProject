@@ -4,7 +4,7 @@ Produced after Phase 1 (domain definition) and Phase 2 (resource mapping) are co
 
 **Create this file in the target project root as `implementation-plan.md`.**
 
-Checkpoint commands and pass criteria are canonical in [execution-gates.md](execution-gates.md).
+Checkpoint commands and pass criteria are canonical in [../support/execution-gates.md](../support/execution-gates.md).
 
 ## Template
 
@@ -125,3 +125,4 @@ Before starting Phase 4 implementation, verify all of the following:
 - [ ] Custom NuGet feed URLs and auth configured (if any)
 - [ ] Domain specification and resource implementation YAML files are complete
 - [ ] Implementation plan reviewed and approved by human
+

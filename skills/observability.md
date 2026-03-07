@@ -35,7 +35,7 @@ logger.LogInformation($"Created TodoItem {entity.Id} for tenant {entity.TenantId
 
 ### Sensitive Data
 
-> **CRITICAL:** Never log PII/PHI (names, emails, SSNs, health data). Reference `dataClassification` from [resource-implementation-schema.md](../resource-implementation-schema.md) compliance metadata to identify sensitive fields. Log entity IDs and tenant IDs only.
+> **CRITICAL:** Never log PII/PHI (names, emails, SSNs, health data). Reference `dataClassification` from [resource-implementation-schema.md](../ai/resource-implementation-schema.md) compliance metadata to identify sensitive fields. Log entity IDs and tenant IDs only.
 
 ### Logger Injection
 

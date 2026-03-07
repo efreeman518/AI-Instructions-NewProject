@@ -80,6 +80,11 @@ dotnet run --project src/Aspire/AppHost
 
 Run only for enabled hosts.
 
+Required:
+- enabled optional hosts compile and start cleanly,
+- host-specific integration steps complete,
+- optional host dependencies are reachable.
+
 Function App:
 
 ```powershell
@@ -90,7 +95,15 @@ Uno UI:
 
 ```powershell
 uno-check
+dotnet build --project src/{Project}.UI/{Project}.UI.csproj -f net10.0-browserwasm
 ```
+
+If targeting desktop instead of WASM, build the selected desktop target instead of `net10.0-browserwasm`.
+
+Also verify:
+- Gateway/OpenAPI endpoint is reachable for client generation
+- Kiota client generation completes (if used)
+- the selected Uno target runs successfully
 
 Scheduler:
 

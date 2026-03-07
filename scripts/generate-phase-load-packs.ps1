@@ -7,66 +7,49 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $manifestPath = Join-Path $Root '_manifest.json'
-$skillPath = Join-Path $Root 'SKILL.md'
 $outputPath = Join-Path $Root $OutputFile
 
 if (-not (Test-Path $manifestPath)) {
     throw "Manifest not found: $manifestPath"
 }
-if (-not (Test-Path $skillPath)) {
-    throw "SKILL.md not found: $skillPath"
-}
 
 $manifest = Get-Content $manifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
-$skillLines = Get-Content $skillPath -Encoding UTF8
+
+if (-not ($manifest.PSObject.Properties.Name -contains 'modeExclusions')) {
+    throw 'Manifest is missing top-level modeExclusions metadata.'
+}
+
+$manifestFileSet = @{}
+foreach ($entry in $manifest.files) {
+    $manifestFileSet[[string]$entry.path] = $true
+}
 
 function Get-ModeExclusions {
     param(
-        [string[]]$Lines,
-        [string]$Mode
+        [psobject]$Manifest,
+        [string]$Mode,
+        [hashtable]$ManifestFileSet
     )
 
-    $header = "### ``$Mode``"
-    $start = -1
+    if (-not ($Manifest.modeExclusions.PSObject.Properties.Name -contains $Mode)) {
+        throw "Manifest modeExclusions is missing '$Mode'."
+    }
 
-    for ($i = 0; $i -lt $Lines.Count; $i++) {
-        if ($Lines[$i].Trim() -eq $header) {
-            $start = $i
-            break
+    $paths = @($Manifest.modeExclusions.$Mode | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }) | Sort-Object -Unique
+    foreach ($path in $paths) {
+        if (-not $ManifestFileSet.ContainsKey([string]$path)) {
+            throw "Mode exclusion '$path' for mode '$Mode' does not exist in manifest.files."
         }
     }
 
-    if ($start -lt 0) {
-        return @()
-    }
-
-    $end = $Lines.Count - 1
-    for ($i = $start + 1; $i -lt $Lines.Count; $i++) {
-        if ($Lines[$i].Trim().StartsWith("In ``$Mode`` mode")) {
-            $end = $i
-            break
-        }
-    }
-
-    $paths = @()
-    for ($i = $start; $i -le $end; $i++) {
-        $line = $Lines[$i]
-        $matches = [regex]::Matches($line, '`([^`]+\.md)`')
-        foreach ($match in $matches) {
-            $candidate = $match.Groups[1].Value
-            if ($candidate -like 'skills/*.md') {
-                $paths += $candidate
-            }
-        }
-    }
-
-    return $paths | Sort-Object -Unique
+    return $paths
 }
 
-$excludedLite = Get-ModeExclusions -Lines $skillLines -Mode 'lite'
-$excludedApiOnly = Get-ModeExclusions -Lines $skillLines -Mode 'api-only'
+$excludedLite = Get-ModeExclusions -Manifest $manifest -Mode 'lite' -ManifestFileSet $manifestFileSet
+$excludedApiOnly = Get-ModeExclusions -Manifest $manifest -Mode 'api-only' -ManifestFileSet $manifestFileSet
 
 $phaseOrder = @(
+    'metadata',
     'session-bootstrap',
     'phase-1',
     'phase-2',
@@ -82,6 +65,7 @@ $phaseOrder = @(
     'phase-4e-optional',
     'phase-4f',
     'phase-4g',
+    'support-only',
     'on-demand'
 )
 
@@ -130,7 +114,7 @@ $apiOnlyPack = Get-ModePack -Base $grouped -ExcludedSkills $excludedApiOnly
 $output = [ordered]@{
     source = [ordered]@{
         manifest = '_manifest.json'
-        skill = 'SKILL.md'
+        generator = 'scripts/generate-phase-load-packs.ps1'
     }
     contextBudget = $manifest.contextBudget
     phaseOrder = $phaseOrder
