@@ -72,11 +72,14 @@ public class {Entity}RepositoryQuery({Project}DbContextQuery dbContext)
     {
         return await QueryPageProjectionAsync<{Entity}, {Entity}Dto>(
             {Entity}Mapper.ProjectorSearch,
-            filter: BuildFilter(request.Filter),
-            orderBy: BuildOrderBy(request),
+            readNoLock: true,
             pageSize: request.PageSize,
-            pageNumber: request.Page,
-            cancellationToken: ct);
+            pageIndex: request.PageIndex,
+            filter: BuildFilter(request.Filter),
+            orderBy: BuildOrderBy(request.Sorts),
+            includeTotal: true,
+            splitQueryThresholdOptions: SplitQueryThresholdOptions.Default,
+            cancellationToken: ct).ConfigureAwait(ConfigureAwaitOptions.None);
     }
 
     // ===== Lookup (autocomplete) =====
@@ -92,17 +95,18 @@ public class {Entity}RepositoryQuery({Project}DbContextQuery dbContext)
         else if (!string.IsNullOrWhiteSpace(search))
             filter = e => e.Name.Contains(search);
 
-        return await QueryPageProjectionAsync(
+        var result = await QueryPageProjectionAsync(
             {Entity}Mapper.ProjectorStaticItems,
             readNoLock: false,
             pageSize: 50,
             pageIndex: 1,
             filter: filter,
             orderBy: q => q.OrderBy(e => e.Name),
-            pageSize: 50,
-            pageNumber: 1,
-            cancellationToken: ct)
-            .ContinueWith(t => new StaticList<StaticItem<Guid, Guid?>> { Items = t.Result.Data }, ct);
+            includeTotal: false,
+            splitQueryThresholdOptions: null,
+            cancellationToken: ct).ConfigureAwait(ConfigureAwaitOptions.None);
+
+        return new StaticList<StaticItem<Guid, Guid?>> { Items = result.Data };
     }
 
     // ===== Filter Builder =====
@@ -120,11 +124,19 @@ public class {Entity}RepositoryQuery({Project}DbContextQuery dbContext)
     private static Func<IQueryable<{Entity}>, IOrderedQueryable<{Entity}>> BuildOrderBy(
         IEnumerable<Sort>? sorts)
     {
-        var isDescending = string.Equals(request.SortDirection, "desc", StringComparison.OrdinalIgnoreCase);
-
-        return request.SortBy?.ToLowerInvariant() switch
+        var sort = sorts?.FirstOrDefault();
+        if (sort?.SortOrder == SortOrder.Descending)
         {
-            "name" => isDescending ? q => q.OrderByDescending(e => e.Name) : q => q.OrderBy(e => e.Name),
+            return sort.PropertyName.ToLowerInvariant() switch
+            {
+                "name" => q => q.OrderByDescending(e => e.Name),
+                _ => q => q.OrderByDescending(e => e.Name)
+            };
+        }
+
+        return sort?.PropertyName.ToLowerInvariant() switch
+        {
+            "name" => q => q.OrderBy(e => e.Name),
             _ => q => q.OrderBy(e => e.Name)  // Default sort
         };
     }
