@@ -54,6 +54,10 @@ Use `[Flags]` enums for entity status/features. Always start with `None = 0` and
 
 Standard enums for fixed classifications.
 
+## Namespace Rule
+
+> **Never infer a namespace from a folder path.** In C#, folder structure and namespace are independent. Always read the `namespace` declaration in the source file. For example, enums placed in a `Domain.Shared/Enums/` subfolder may still declare `namespace {Project}.Domain.Shared` — not `{Project}.Domain.Shared.Enums`. Verify actual namespaces before adding `global using` statements.
+
 ## Value Objects / Shared Entities
 
 **Owned type pattern** — stored as columns in the parent table:

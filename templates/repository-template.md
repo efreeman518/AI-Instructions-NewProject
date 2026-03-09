@@ -72,12 +72,11 @@ public class {Entity}RepositoryQuery({Project}DbContextQuery dbContext)
     {
         return await QueryPageProjectionAsync<{Entity}, {Entity}Dto>(
             {Entity}Mapper.ProjectorSearch,
-            true,
-            request.PageIndex,
-            request.PageSize,
-            BuildFilter(request.Filter),
-            BuildOrderBy(request.Sorts),
-            false, null, ct).ConfigureAwait(ConfigureAwaitOptions.None);
+            filter: BuildFilter(request.Filter),
+            orderBy: BuildOrderBy(request),
+            pageSize: request.PageSize,
+            pageNumber: request.Page,
+            cancellationToken: ct);
     }
 
     // ===== Lookup (autocomplete) =====
@@ -93,15 +92,17 @@ public class {Entity}RepositoryQuery({Project}DbContextQuery dbContext)
         else if (!string.IsNullOrWhiteSpace(search))
             filter = e => e.Name.Contains(search);
 
-        var result = await QueryPageProjectionAsync(
+        return await QueryPageProjectionAsync(
             {Entity}Mapper.ProjectorStaticItems,
+            readNoLock: false,
+            pageSize: 50,
+            pageIndex: 1,
             filter: filter,
             orderBy: q => q.OrderBy(e => e.Name),
             pageSize: 50,
             pageNumber: 1,
-            cancellationToken: ct).ConfigureAwait(ConfigureAwaitOptions.None);
-
-        return new StaticList<StaticItem<Guid, Guid?>> { Items = result.Data };
+            cancellationToken: ct)
+            .ContinueWith(t => new StaticList<StaticItem<Guid, Guid?>> { Items = t.Result.Data }, ct);
     }
 
     // ===== Filter Builder =====
@@ -119,18 +120,11 @@ public class {Entity}RepositoryQuery({Project}DbContextQuery dbContext)
     private static Func<IQueryable<{Entity}>, IOrderedQueryable<{Entity}>> BuildOrderBy(
         IEnumerable<Sort>? sorts)
     {
-        var sort = sorts?.FirstOrDefault();
-        if (sort?.SortOrder == SortOrder.Descending)
+        var isDescending = string.Equals(request.SortDirection, "desc", StringComparison.OrdinalIgnoreCase);
+
+        return request.SortBy?.ToLowerInvariant() switch
         {
-            return sort.PropertyName.ToLowerInvariant() switch
-            {
-                "name" => q => q.OrderByDescending(e => e.Name),
-                _ => q => q.OrderByDescending(e => e.Name)
-            };
-        }
-        return sort?.PropertyName.ToLowerInvariant() switch
-        {
-            "name" => q => q.OrderBy(e => e.Name),
+            "name" => isDescending ? q => q.OrderByDescending(e => e.Name) : q => q.OrderBy(e => e.Name),
             _ => q => q.OrderBy(e => e.Name)  // Default sort
         };
     }
@@ -207,7 +201,10 @@ The 2-param overload retries on `DbUpdateConcurrencyException` using the specifi
 ## Notes
 
 - **Repositories inherit `RepositoryBase<TContext, TAuditId, TTenantId>`** — provides `GetEntityAsync`, `Create(ref)`, `UpdateFull(ref)`, `Delete(entity)`, `DeleteAsync(predicate)`, `SaveChangesAsync(OptimisticConcurrencyWinner, CancellationToken)`, `QueryPageProjectionAsync`, `QueryPageAsync`
+- **`DB` property** — `RepositoryBase` exposes `protected TDbContext DB => dbContext;` for calling extension methods (e.g. Updater) on the context
 - **Generic args:** `TAuditId = string` (matches `IRequestContext.AuditId`), `TTenantId = Guid?` (matches `ITenantEntity<Guid>` — nullable for non-tenant scenarios)
+- **`QueryPageProjectionAsync` signature:** `(Expression<Func<T, TProject>> projector, bool readNoLock, int? pageSize, int? pageIndex, Expression<Func<T, bool>>? filter, Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy, bool includeTotal, SplitQueryThresholdOptions?, CancellationToken, params includes[])`
+- **`SearchRequest<TFilter>`** is a record: `PageSize` (int), `PageIndex` (int), `Sorts` (IEnumerable\<Sort\>?), `Filter` (TFilter?). Does **not** have `Page`, `PageNumber`, `SortBy`, or `SortDirection`
 - **Trxn repository**: Uses `{Project}DbContextTrxn` (tracking, audit interceptor, read-write)
 - **Query repository**: Uses `{Project}DbContextQuery` (NoTracking, read-only replica)
 - **UpdateFromDto** delegates to the static Updater extension method on the DbContext (see updater-template.md)

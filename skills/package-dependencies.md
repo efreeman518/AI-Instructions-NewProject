@@ -16,6 +16,8 @@ Use this file as a compact contract map for private/shared packages.
 3. After adding packages, restore and update to latest stable versions.
 4. Re-verify with `dotnet restore` and `dotnet build`.
 
+> **CPM + floating versions = NU1011.** When `ManagePackageVersionsCentrally=true`, every `<PackageVersion>` entry must use an exact version (e.g. `Version="1.0.8"`). Wildcard/floating versions (e.g. `1.0.*`, `*`) are prohibited and cause restore to fail with NU1011. To use floating versions, set `ManagePackageVersionsCentrally=false` and add `Version="*"` directly to each `<PackageReference>`.
+
 ---
 
 ## Critical Domain Contracts
@@ -114,8 +116,10 @@ Other key types:
 - `Result` / `Result<T>` (same shape as domain result, but `Errors: IReadOnlyList<string>`)
 - `IRequestContext<TAuditIdType, TTenantIdType>`
 - `RequestContext<...>` implementation
-- `PagedResponse<T>`
-- `SearchRequest<TFilter>`, `Sort`, `SortOrder`
+- `PagedResponse<T>` — properties: `PageSize` (int), `PageIndex` (int), `Total` (int), `Data` (IReadOnlyList&lt;T&gt;)
+- `SearchRequest<TFilter>` — record with: `PageSize` (int), `PageIndex` (int), `Sorts` (IEnumerable&lt;Sort&gt;?), `Filter` (TFilter?)
+- `Sort` — constructor: `Sort(string propertyName, SortOrder sortOrder)` — properties: `PropertyName`, `SortOrder`
+- `SortOrder` — enum: `Ascending = 0`, `Descending = 1`
 - `IMessage`
 - `AuditEntry<TAuditIdType>` + `AuditStatus`
 
