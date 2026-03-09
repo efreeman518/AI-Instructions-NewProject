@@ -69,12 +69,13 @@ public class {Entity}RepositoryQuery({Project}DbContextQuery dbContext)
     public async Task<PagedResponse<{Entity}Dto>> Search{Entity}Async(
         SearchRequest<{Entity}SearchFilter> request, CancellationToken ct = default)
     {
-        return await QueryPageProjectionAsync(
+        return await QueryPageProjectionAsync<{Entity}, {Entity}Dto>(
             {Entity}Mapper.ProjectorSearch,
+            readNoLock: false,
+            pageSize: request.PageSize,
+            pageIndex: request.PageIndex,
             filter: BuildFilter(request.Filter),
             orderBy: BuildOrderBy(request),
-            pageSize: request.PageSize,
-            pageNumber: request.Page,
             cancellationToken: ct);
     }
 
@@ -91,14 +92,15 @@ public class {Entity}RepositoryQuery({Project}DbContextQuery dbContext)
         else if (!string.IsNullOrWhiteSpace(search))
             filter = e => e.Name.Contains(search);
 
-        return await QueryPageProjectionAsync(
+        var result = await QueryPageProjectionAsync<{Entity}, StaticItem<Guid, Guid?>>(
             {Entity}Mapper.ProjectorStaticItems,
+            readNoLock: false,
+            pageSize: 50,
+            pageIndex: 1,
             filter: filter,
             orderBy: q => q.OrderBy(e => e.Name),
-            pageSize: 50,
-            pageNumber: 1,
-            cancellationToken: ct)
-            .ContinueWith(t => new StaticList<StaticItem<Guid, Guid?>> { Items = t.Result.Data }, ct);
+            cancellationToken: ct);
+        return new StaticList<StaticItem<Guid, Guid?>> { Items = result.Data };
     }
 
     // ===== Filter Builder =====
@@ -116,9 +118,12 @@ public class {Entity}RepositoryQuery({Project}DbContextQuery dbContext)
     private static Func<IQueryable<{Entity}>, IOrderedQueryable<{Entity}>> BuildOrderBy(
         SearchRequest<{Entity}SearchFilter> request)
     {
-        var isDescending = string.Equals(request.SortDirection, "desc", StringComparison.OrdinalIgnoreCase);
+        var sort = request.Sorts?.FirstOrDefault();
+        if (sort == null) return q => q.OrderBy(e => e.Name); // Default sort
 
-        return request.SortBy?.ToLowerInvariant() switch
+        var isDescending = sort.SortOrder == SortOrder.Descending;
+
+        return sort.PropertyName.ToLowerInvariant() switch
         {
             "name" => isDescending ? q => q.OrderByDescending(e => e.Name) : q => q.OrderBy(e => e.Name),
             _ => q => q.OrderBy(e => e.Name)  // Default sort
@@ -197,7 +202,10 @@ The 2-param overload retries on `DbUpdateConcurrencyException` using the specifi
 ## Notes
 
 - **Repositories inherit `RepositoryBase<TContext, TAuditId, TTenantId>`** — provides `GetEntityAsync`, `Create(ref)`, `UpdateFull(ref)`, `Delete(entity)`, `DeleteAsync(predicate)`, `SaveChangesAsync(OptimisticConcurrencyWinner, CancellationToken)`, `QueryPageProjectionAsync`, `QueryPageAsync`
+- **`DB` property** — `RepositoryBase` exposes `protected TDbContext DB => dbContext;` for calling extension methods (e.g. Updater) on the context
 - **Generic args:** `TAuditId = string` (matches `IRequestContext.AuditId`), `TTenantId = Guid?` (matches `ITenantEntity<Guid>` — nullable for non-tenant scenarios)
+- **`QueryPageProjectionAsync` signature:** `(Expression<Func<T, TProject>> projector, bool readNoLock, int? pageSize, int? pageIndex, Expression<Func<T, bool>>? filter, Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy, bool includeTotal, SplitQueryThresholdOptions?, CancellationToken, params includes[])`
+- **`SearchRequest<TFilter>`** is a record: `PageSize` (int), `PageIndex` (int), `Sorts` (IEnumerable\<Sort\>?), `Filter` (TFilter?). Does **not** have `Page`, `PageNumber`, `SortBy`, or `SortDirection`
 - **Trxn repository**: Uses `{Project}DbContextTrxn` (tracking, audit interceptor, read-write)
 - **Query repository**: Uses `{Project}DbContextQuery` (NoTracking, read-only replica)
 - **UpdateFromDto** delegates to the static Updater extension method on the DbContext (see updater-template.md)
