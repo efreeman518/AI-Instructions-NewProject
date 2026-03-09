@@ -67,7 +67,7 @@ public class {Entity}EndpointsTests : EndpointTestBase
         // Act — search with filter
         var searchRequest = new SearchRequest<{Entity}SearchFilter>
         {
-            Page = 1,
+            PageIndex = 1,
             PageSize = 10,
             Filter = new {Entity}SearchFilter { SearchTerm = "SearchTarget" }
         };
@@ -78,8 +78,8 @@ public class {Entity}EndpointsTests : EndpointTestBase
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
         var page = await response.Content.ReadFromJsonAsync<PagedResponse<{Entity}Dto>>();
         Assert.IsNotNull(page);
-        Assert.AreEqual(1, page.TotalCount);
-        Assert.AreEqual("SearchTarget", page.Items.First().Name);
+        Assert.AreEqual(1, page.Total);
+        Assert.AreEqual("SearchTarget", page.Data.First().Name);
     }
 
     [TestCategory("Endpoint")]
@@ -152,7 +152,7 @@ public class {Entity}EndpointsTests : EndpointTestBase
         var tenantId = Guid.NewGuid();
         var searchRequest = new SearchRequest<{Entity}SearchFilter>
         {
-            Page = 1,
+            PageIndex = 1,
             PageSize = 10,
             Filter = new {Entity}SearchFilter()
         };

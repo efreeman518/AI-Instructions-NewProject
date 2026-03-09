@@ -121,7 +121,7 @@ The 2-param overload retries on `DbUpdateConcurrencyException` using either clie
 `Delete(entity)` inherited from `RepositoryBase` marks the entity for deletion in the change tracker. **You MUST call it before `SaveChangesAsync`** — simply loading an entity and saving will NOT delete it.
 
 ```csharp
-var entity = await repoTrxn.GetAsync(id, false, ct);
+var entity = await repoTrxn.Get{Entity}Async(id, false, ct);
 if (entity == null) return Result.Success(); // idempotent
 repoTrxn.Delete(entity);                     // marks for deletion
 await repoTrxn.SaveChangesAsync(OptimisticConcurrencyWinner.ClientWins, ct);

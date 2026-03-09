@@ -250,14 +250,14 @@ public async Task SearchAsync_WithFilter_ReturnsMatchingEntities()
     var page = await repo.Search{Entity}Async(
         new SearchRequest<{Entity}SearchFilter>
         {
-            Page = 1,
+            PageIndex = 1,
             PageSize = 10,
             Filter = new {Entity}SearchFilter { SearchTerm = "Alpha" }
         });
 
     // Assert
-    Assert.AreEqual(2, page.TotalCount);
-    Assert.IsTrue(page.Items.All(i => i.Name.Contains("Alpha")));
+    Assert.AreEqual(2, page.Total);
+    Assert.IsTrue(page.Data.All(i => i.Name.Contains("Alpha")));
 }
 ```
 
