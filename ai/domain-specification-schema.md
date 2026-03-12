@@ -4,7 +4,7 @@ Pure business domain model — no implementation details, no datatypes, no datab
 
 ## Output Contract
 
-Write Phase 1 output to `.instructions/domain-specification.yaml` by default. If another path is used, state it explicitly in handoff notes.
+Write Phase 1 output to `domain-specification.yaml` in the target project root by default. Alternatively, `.instructions/domain-specification.yaml` may be used if the repo explicitly adopts that convention — state the chosen path in handoff notes.
 
 ## Project Identity
 

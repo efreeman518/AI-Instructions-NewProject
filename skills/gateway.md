@@ -69,9 +69,11 @@ private static void AddReverseProxy(IServiceCollection services, IConfiguration 
 
     services.AddReverseProxy()
         .LoadFromConfig(config.GetSection("ReverseProxy"))
-        .AddTransforms(ConfigureProxyTransforms)
-        .AddServiceDiscoveryDestinationResolver();
+        .AddTransforms(ConfigureProxyTransforms);
 }
+```
+
+> **Service discovery:** For Aspire-hosted scenarios, use service-discovery URI syntax (`https+http://{app}-api`) in `appsettings.json` cluster destinations. If explicit resolver registration is needed, add the `Microsoft.Extensions.ServiceDiscovery.Yarp` package and call `AddServiceDiscoveryDestinationResolver()`.
 ```
 
 Transform pattern:

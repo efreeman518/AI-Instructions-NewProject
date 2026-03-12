@@ -99,6 +99,10 @@ When workflows include compensations:
 - persist machine-readable `ReasonCode` fields (use compact string/varchar or enum converters)
 - index `ReasonCode` on high-volume tables used by reconciliation and reporting
 
+## JSON Column Mapping with `ToJson()`
+
+`ToJson()` with owned types is the preferred pattern for structured data stored as JSON columns. When migration generation fails for complex shapes (nested collections, dictionaries), fall back to a serializer-backed value conversion as documented in [data-access.md](../skills/data-access.md) under *JSON Column Mapping (`ToJson()`) Troubleshooting*.
+
 ## File: Infrastructure/Data/Configuration/{ChildEntity}Configuration.cs
 
 ```csharp

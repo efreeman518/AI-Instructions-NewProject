@@ -87,10 +87,24 @@ private static void ConfigureFusionCacheInstance(
     if (!string.IsNullOrEmpty(redisConnStr))
     {
         builder
-            .WithDistributedCache(new RedisCache(new RedisCacheOptions { Configuration = redisConnStr }))
-            .WithBackplane(new RedisBackplane(new RedisBackplaneOptions { Configuration = redisConnStr }));
+            .WithRegisteredDistributedCache(throwIfMissing: false)
+            .WithStackExchangeRedisBackplane(o => o.Configuration = redisConnStr);
     }
 }
+```
+
+---
+
+## Tag-Based Invalidation
+
+Tags are a positional parameter on `GetOrSetAsync` / `SetAsync`, not an option property. Invalidate by tag with `RemoveByTagAsync`.
+
+```csharp
+// Setting tags when caching
+await _cache.SetAsync($"todoitem:{id}", dto, options: null, tags: ["todoitems"], token: ct);
+
+// Invalidating by tag
+await _cache.RemoveByTagAsync("todoitems", null, ct);
 ```
 
 ---

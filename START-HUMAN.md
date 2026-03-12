@@ -117,7 +117,7 @@ Help me model this business domain.
 Define entities, relationships, lifecycle states, business rules, events, and workflows.
 Use business language — no databases, no datatypes, no implementation.
 Ask clarifying questions, summarize each iteration, then produce domain-specification YAML.
-Write output to `.instructions/domain-specification.yaml` (or explicitly state a different agreed path).
+Write output to `domain-specification.yaml` in the project root (or `.instructions/domain-specification.yaml` if the repo explicitly adopts that convention).
 ```
 
 ## Phase 2 — Resource Definition Prompt
@@ -130,7 +130,7 @@ Review the domain definition and help me choose:
 - Hosting model (Container Apps, App Service)
 - UI hosting if applicable
 Map domain constructs to Aspire resources and Azure services.
-Write output to `.instructions/resource-implementation.yaml` (or explicitly state a different agreed path).
+Write output to `resource-implementation.yaml` in the project root (or `.instructions/resource-implementation.yaml` if the repo explicitly adopts that convention).
 ```
 
 ## Scaffolding Prompt Starter

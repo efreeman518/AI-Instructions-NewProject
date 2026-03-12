@@ -91,6 +91,15 @@ var serviceBus = builder.AddAzureServiceBus("servicebus").RunAsEmulator();
 var eventHubs = builder.AddAzureEventHubs("eventhubs").RunAsEmulator();
 ```
 
+### Azure Service Bus Topics and Subscriptions
+
+```csharp
+var sb = builder.AddAzureServiceBus("servicebus").RunAsEmulator();
+sb.AddServiceBusTopic("domain-events")
+  .AddServiceBusSubscription("api")
+  .AddServiceBusSubscription("other-subscriber");
+```
+
 Services like `AddSqlServer`, `AddRedis`, `AddPostgres`, `AddRabbitMQ` already run local containers by default.
 
 ---
@@ -102,6 +111,33 @@ Services like `AddSqlServer`, `AddRedis`, `AddPostgres`, `AddRabbitMQ` already r
 3. Use `WaitFor(...)` for startup ordering dependencies.
 4. Keep Gateway as public ingress, backend hosts internal.
 5. Keep AppHost resource names aligned with IaC modules in [iac.md](iac.md).
+
+---
+
+## Package Source Mapping for Aspire Dependencies
+
+When the project uses `nuget.config` with `<packageSourceMapping>`, the following patterns must be mapped to `nuget.org` or Aspire transitive restores will fail:
+
+```xml
+<packageSource key="nuget.org">
+  <package pattern="AspNetCore.HealthChecks.*" />
+  <!-- ... existing patterns ... -->
+</packageSource>
+```
+
+`Aspire.Hosting.*` and `Aspire.ServiceDefaults` pull `AspNetCore.HealthChecks.UI.*` transitively. Without this entry, `dotnet restore` fails with NU1100.
+
+---
+
+## Azure SQL Transitive Version Conflict
+
+When using `Aspire.Hosting.Azure.Sql`, `Microsoft.Data.SqlClient 6.0.1` pulls `Microsoft.IdentityModel.JsonWebTokens` at a version that conflicts with other Aspire dependencies. To resolve NU1605:
+
+1. Pin in `Directory.Packages.props`:
+   ```xml
+   <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="7.7.1" />
+   ```
+2. Add a redundant `<PackageReference>` for this package in the AppHost `.csproj` to suppress the downgrade warning.
 
 ---
 
@@ -122,15 +158,15 @@ Use persistent `tunnelId` for stable callback URLs.
 
 ## AppHost.csproj Essentials
 
+Use the `Aspire.AppHost.Sdk` MSBuild SDK. It handles `Projects.*` type proxy generation, `IsAspireHost`, and `AspireHostingSDKVersion` automatically.
+
 ```xml
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Aspire.AppHost.Sdk/9.2.0">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
-    <IsAspireHost>true</IsAspireHost>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.AppHost" />
     <PackageReference Include="Aspire.Hosting.SqlServer" />
     <PackageReference Include="Aspire.Hosting.Redis" />
   </ItemGroup>

@@ -65,6 +65,27 @@ public abstract class EntityBaseConfiguration<T>(bool pkClusteredIndex = false)
 
 See [ef-configuration-template.md](../templates/ef-configuration-template.md) for entity-specific configuration patterns.
 
+### JSON Column Mapping (`ToJson()`) Troubleshooting
+
+`ToJson()` with owned types is the preferred pattern for structured data stored as JSON in SQL Server. However, EF Core may fail to generate migrations for complex value-object graphs with **nested collections** or **dictionaries**.
+
+**Fallback:** When `ToJson()` owned mappings fail during migration generation, use a serializer-backed value conversion to `nvarchar(max)` with a custom `ValueComparer`:
+
+```csharp
+builder.Property(e => e.ComplexData)
+    .HasConversion(
+        v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+        v => JsonSerializer.Deserialize<ComplexType>(v, (JsonSerializerOptions?)null)!)
+    .HasColumnType("nvarchar(max)")
+    .Metadata.SetValueComparer(
+        new ValueComparer<ComplexType>(
+            (a, b) => JsonSerializer.Serialize(a, (JsonSerializerOptions?)null) == JsonSerializer.Serialize(b, (JsonSerializerOptions?)null),
+            v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null).GetHashCode(),
+            v => JsonSerializer.Deserialize<ComplexType>(JsonSerializer.Serialize(v, (JsonSerializerOptions?)null), (JsonSerializerOptions?)null)!));
+```
+
+> **Document any deviation:** If serialized JSON conversions are used instead of `ToJson()`, record this in `HANDOFF.md` and the repo docs so future sessions know to revisit when EF Core improves owned-type migration support.
+
 ### Configuration Rules
 
 1. Keep PK non-clustered when clustered multi-tenant access index is used.
@@ -132,6 +153,33 @@ await repoTrxn.SaveChangesAsync(OptimisticConcurrencyWinner.ClientWins, ct);
 ## Design-Time Factory and Migrations
 
 Use `IDesignTimeDbContextFactory<{Project}DbContextTrxn>` for CLI migrations.
+
+### EF CLI Availability
+
+Before running migration commands, verify `dotnet ef` is available:
+
+```powershell
+dotnet ef --version
+```
+
+If the command is not found (common on clean machines), install it as a **repo-local tool**:
+
+```powershell
+dotnet new tool-manifest   # creates .config/dotnet-tools.json if absent
+dotnet tool install dotnet-ef
+```
+
+> **Package source mapping:** If the project uses `nuget.config` with `<packageSourceMapping>`, add an explicit entry for `dotnet-ef`:
+> ```xml
+> <packageSource key="nuget.org">
+>   <package pattern="dotnet-ef" />
+> </packageSource>
+> ```
+> Without this, `dotnet tool install dotnet-ef` fails with NU1100.
+>
+> When local tooling is introduced, record that choice in `HANDOFF.md` so subsequent sessions know to use `dotnet tool restore` before running migrations.
+
+### Design-Time Factory
 
 ```csharp
 public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<{Project}DbContextTrxn>

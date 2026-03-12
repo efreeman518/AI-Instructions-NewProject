@@ -46,6 +46,7 @@ Canonical generated output: `phase-load-packs.json`.
   - `ai/domain-specification-schema.md` (reference)
   - `ai/resource-implementation-schema.md` (reference)
   - **Pre-flight:** Prompt user for any custom/private NuGet feed URLs and auth method before proceeding. Update `nuget.config` and verify `dotnet restore` exits 0.
+  - **Pre-flight:** Verify `dotnet ef` is available. If missing, install as a repo-local tool (`dotnet new tool-manifest && dotnet tool install dotnet-ef`). If `nuget.config` uses package source mapping, add `<package pattern="dotnet-ef" />` under the `nuget.org` source.
 - **Phase 4 (Implementation)**
   - `ai/SKILL.md`
   - `ai/placeholder-tokens.md`

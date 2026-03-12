@@ -25,6 +25,20 @@ Format: `YYYYMMDD_Description` — one migration per feature/slice.
 
 ## Migration Commands
 
+### EF CLI Prerequisites
+
+Before running any migration command, ensure `dotnet ef` is available. If not installed globally, set up repo-local tooling:
+
+```powershell
+dotnet ef --version                    # check availability
+dotnet new tool-manifest               # if .config/dotnet-tools.json does not exist
+dotnet tool install dotnet-ef           # install as local tool
+```
+
+If the project uses `nuget.config` with `<packageSourceMapping>`, add `<package pattern="dotnet-ef" />` under the `nuget.org` source before running `dotnet tool install`. Record local-tool usage in `HANDOFF.md`.
+
+### Canonical CLI Commands
+
 Canonical CLI commands (consistent with [engineer-checklist.md](../support/engineer-checklist.md) and [data-access.md](data-access.md)):
 
 ```powershell
@@ -131,6 +145,19 @@ migrationBuilder.DropColumn("Status", "TodoItems");
 ```
 
 > Each phase is a **separate migration + deployment cycle**. Never combine expand and contract in one deployment.
+
+---
+
+## JSON Column / ToJson() Migration Troubleshooting
+
+EF Core `ToJson()` with owned types is the preferred approach for structured JSON data, but migration generation may fail for complex value-object graphs containing nested collections or dictionaries.
+
+When this happens:
+1. Switch the affected properties to a serializer-backed `HasConversion` + `ValueComparer` targeting `nvarchar(max)` (see [data-access.md](data-access.md) for the pattern).
+2. Re-run `dotnet ef migrations add` — the migration should succeed.
+3. Document the deviation in `HANDOFF.md` and the repo docs for future review.
+
+Do **not** hand-edit generated migration files to work around `ToJson()` failures — the model snapshot will be inconsistent.
 
 ---
 

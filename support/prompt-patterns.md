@@ -14,8 +14,8 @@ Please generate a domain-specification YAML following .instructions/ai/domain-sp
 ## Phase 2 — Resource Definition
 
 ```text
-Using the domain specification in .instructions/domain-specification.yaml, generate the resource
-implementation YAML per .instructions/ai/resource-implementation-schema.md.
+Using the domain specification in domain-specification.yaml (project root), generate the resource
+implementation YAML per ai/resource-implementation-schema.md.
 Mode: {full|lite|api-only}. Testing profile: {minimal|balanced|comprehensive}.
 Data store: {sqlServer|cosmosDb|etc}. Include: {gateway/functions/uno-ui/scheduler as needed}.
 ```

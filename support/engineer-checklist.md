@@ -82,7 +82,7 @@ dotnet ef migrations add InitialCreate `
 
 ### Aspire AppHost
 
-- [ ] `src/Aspire/AppHost/AppHost.csproj` has `<PackageReference Include="Aspire.Hosting.AppHost" />`
+- [ ] `src/Aspire/AppHost/AppHost.csproj` uses `Aspire.AppHost.Sdk` MSBuild SDK
 - [ ] Required Aspire CLI env vars are set before terminal `dotnet run`
 - [ ] `dotnet build src/Aspire/AppHost` succeeds
 - [ ] `dotnet run --project src/Aspire/AppHost` starts resources
