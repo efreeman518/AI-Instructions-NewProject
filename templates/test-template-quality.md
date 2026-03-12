@@ -43,7 +43,7 @@ public void SearchEndpoint_LoadProfile()
 {
     var scenario = Scenario.Create("search", async context =>
     {
-        var response = await _httpClient.GetAsync("api/v1/{entity}?page=1&pageSize=20");
+        var response = await _httpClient.GetAsync("api/v1/{entity}?pageIndex=1&pageSize=20");
         return response.IsSuccessStatusCode ? Response.Ok() : Response.Fail();
     })
     .WithLoadSimulations(Simulation.InjectPerSec(rate: 20, during: TimeSpan.FromSeconds(60)));
@@ -66,6 +66,6 @@ public class {Entity}Benchmarks
     public void Setup() { /* seed in-memory context and create service */ }
 
     [Benchmark]
-    public async Task SearchPage() => await _service.SearchAsync(new SearchRequest<{Entity}SearchFilter> { Page = 1, PageSize = 20 });
+    public async Task SearchPage() => await _service.SearchAsync(new SearchRequest<{Entity}SearchFilter> { PageIndex = 1, PageSize = 20 });
 }
 ```

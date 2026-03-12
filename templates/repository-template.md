@@ -57,6 +57,7 @@ public class {Entity}RepositoryTrxn({Project}DbContextTrxn dbContext)
 ## File: Infrastructure/Repositories/{Entity}RepositoryQuery.cs
 
 ```csharp
+using System.Linq.Expressions;
 using EF.Data;
 using EF.Common;
 
@@ -71,12 +72,14 @@ public class {Entity}RepositoryQuery({Project}DbContextQuery dbContext)
     {
         return await QueryPageProjectionAsync<{Entity}, {Entity}Dto>(
             {Entity}Mapper.ProjectorSearch,
-            readNoLock: false,
+            readNoLock: true,
             pageSize: request.PageSize,
             pageIndex: request.PageIndex,
             filter: BuildFilter(request.Filter),
-            orderBy: BuildOrderBy(request),
-            cancellationToken: ct);
+            orderBy: BuildOrderBy(request.Sorts),
+            includeTotal: true,
+            splitQueryThresholdOptions: SplitQueryThresholdOptions.Default,
+            cancellationToken: ct).ConfigureAwait(ConfigureAwaitOptions.None);
     }
 
     // ===== Lookup (autocomplete) =====
@@ -92,14 +95,17 @@ public class {Entity}RepositoryQuery({Project}DbContextQuery dbContext)
         else if (!string.IsNullOrWhiteSpace(search))
             filter = e => e.Name.Contains(search);
 
-        var result = await QueryPageProjectionAsync<{Entity}, StaticItem<Guid, Guid?>>(
+        var result = await QueryPageProjectionAsync(
             {Entity}Mapper.ProjectorStaticItems,
             readNoLock: false,
             pageSize: 50,
             pageIndex: 1,
             filter: filter,
             orderBy: q => q.OrderBy(e => e.Name),
-            cancellationToken: ct);
+            includeTotal: false,
+            splitQueryThresholdOptions: null,
+            cancellationToken: ct).ConfigureAwait(ConfigureAwaitOptions.None);
+
         return new StaticList<StaticItem<Guid, Guid?>> { Items = result.Data };
     }
 
@@ -116,16 +122,21 @@ public class {Entity}RepositoryQuery({Project}DbContextQuery dbContext)
 
     // ===== Order Builder =====
     private static Func<IQueryable<{Entity}>, IOrderedQueryable<{Entity}>> BuildOrderBy(
-        SearchRequest<{Entity}SearchFilter> request)
+        IEnumerable<Sort>? sorts)
     {
-        var sort = request.Sorts?.FirstOrDefault();
-        if (sort == null) return q => q.OrderBy(e => e.Name); // Default sort
-
-        var isDescending = sort.SortOrder == SortOrder.Descending;
-
-        return sort.PropertyName.ToLowerInvariant() switch
+        var sort = sorts?.FirstOrDefault();
+        if (sort?.SortOrder == SortOrder.Descending)
         {
-            "name" => isDescending ? q => q.OrderByDescending(e => e.Name) : q => q.OrderBy(e => e.Name),
+            return sort.PropertyName.ToLowerInvariant() switch
+            {
+                "name" => q => q.OrderByDescending(e => e.Name),
+                _ => q => q.OrderByDescending(e => e.Name)
+            };
+        }
+
+        return sort?.PropertyName.ToLowerInvariant() switch
+        {
+            "name" => q => q.OrderBy(e => e.Name),
             _ => q => q.OrderBy(e => e.Name)  // Default sort
         };
     }
@@ -176,7 +187,7 @@ The `Delete` method is inherited from `RepositoryBase`. It marks the entity for 
 
 ```csharp
 // In service layer (not repository):
-var entity = await repoTrxn.GetAsync(id, false, ct);
+var entity = await repoTrxn.Get{Entity}Async(id, false, ct);
 if (entity == null) return Result.Success(); // idempotent — not-found returns success
 repoTrxn.Delete(entity);                     // marks for deletion
 await repoTrxn.SaveChangesAsync(OptimisticConcurrencyWinner.ClientWins, ct);
