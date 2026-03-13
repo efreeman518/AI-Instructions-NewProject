@@ -30,6 +30,17 @@ resumeCommand: ""
 - Result:
 - Notes:
 
+### Per-Host Gate Status (Phase 4d)
+
+For each enabled optional host, record its individual gate result. Use "complete", "scaffolded", or "partially validated" — never claim Phase 4d complete if any enabled host is only scaffolded.
+
+| Host | Build | Host-Specific Gate | Status | Notes |
+|------|-------|--------------------|--------|-------|
+| Scheduler | | | | |
+| Function App | | | | |
+| Uno UI | | | | |
+| Gateway | | | | |
+
 ## Blockers
 
 - None

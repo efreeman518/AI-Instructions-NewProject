@@ -85,6 +85,8 @@ Required:
 - host-specific integration steps complete,
 - optional host dependencies are reachable.
 
+> **Scaffold vs Complete:** Do NOT mark Phase 4d complete unless each enabled optional host has both a validated build AND its host-specific gate result recorded below. If a host only scaffolds successfully (e.g., solution builds but the host has not been started or its target-specific checks have not passed), record the status as "scaffolded" or "partially validated" — not "complete". The handoff must reflect per-host gate status, not just solution-level build success.
+
 Function App:
 
 ```powershell
@@ -100,6 +102,8 @@ dotnet build --project src/{Project}.UI/{Project}.UI.csproj -f net10.0-browserwa
 
 If targeting desktop instead of WASM, build the selected desktop target instead of `net10.0-browserwasm`.
 
+> **Starter-library escape hatch:** If the repo currently contains only a `net10.0` starter library or shell-contract scaffold instead of a real Uno multi-target app, Phase 4d for Uno must be recorded as **incomplete**. `NETSDK1139` on `net10.0-browserwasm` is expected in that scenario and is evidence that Uno scaffolding is still missing — not an environment glitch. Do not debug/workaround it; record the status as "scaffolded — Uno multi-target not yet created" and move on.
+
 Also verify:
 - Gateway/OpenAPI endpoint is reachable for client generation
 - Kiota client generation completes (if used)
@@ -110,6 +114,8 @@ Scheduler:
 ```powershell
 dotnet run --project src/{Host}/{Host}.Scheduler
 ```
+
+> **AppHost/config dependency:** When the scheduler depends on AppHost-provided resources (e.g., connection strings via service discovery), either run it through AppHost or provide equivalent local connection strings (e.g., `ConnectionStrings:LuminaDb`) before using direct `dotnet run`. Record which path was validated in the handoff.
 
 ## 4e — Quality + Delivery
 
