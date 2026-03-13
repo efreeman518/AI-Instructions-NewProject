@@ -129,7 +129,9 @@ Key settings:
 ## Runtime Scheduling APIs
 
 - One-off jobs: use `ITimeTickerManager<T>.EnqueueAsync("JobName", scheduledTime, payload)`.
-- Cron jobs: use `ICronTickerManager<T>.AddOrUpdateCronTickerAsync(...)` and `RemoveCronTickerAsync(...)`.
+- Cron job seeding: use `ICronTickerManager.AddAsync(new CronTickerEntity { Function = "JobName", Expression = "* * * * * *", ... })`.
+  `ICronTickerManager` is NOT generic. Property names on `CronTickerEntity` are `Function` (not `FunctionName`) and `Expression` (not `CronExpression`).
+- In-memory mode (no `TickerQ.EntityFrameworkCore` configured) does NOT register `ICronTickerManager` — wrap cron seeding in a try-catch on `InvalidOperationException` so the host starts cleanly during development.
 
 TickerQ cron format is six fields: seconds, minutes, hours, day-of-month, month, day-of-week.
 

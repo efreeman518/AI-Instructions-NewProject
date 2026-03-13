@@ -128,6 +128,33 @@ builder.Services.AddProblemDetails(options =>
 
 ---
 
+## Razor vs C# Namespace Scoping
+
+`global using` in a `.cs` GlobalUsings.cs file applies only to C# source files — it does NOT affect Razor component C# code blocks.
+For every namespace used inside a `.razor` file, add an explicit `@using Namespace.Here` in the nearest `_Imports.razor`.
+Rule of thumb: if a type is used both in `.cs` service layer code AND in `.razor` pages, it needs entries in BOTH `GlobalUsings.cs` AND `_Imports.razor`.
+
+---
+
+## Inspecting private NuGet package API surfaces
+
+When a private package's public API is unknown or differs from docs/conventions:
+
+1. Locate the DLL: find it under `%USERPROFILE%\.nuget\packages\{package}\{version}\lib\`.
+2. Create a throwaway console project targeting `net10.0`:
+   ```
+   dotnet new console -o C:\Temp\InspectLib --framework net10.0
+   ```
+3. Add a `<Reference>` to the DLL in the `.csproj`.
+   Preload any dependency assemblies (e.g., `Microsoft.Extensions.Logging.Abstractions`) with `Assembly.LoadFrom()` before calling `GetParameters()`.
+4. Use `Assembly.LoadFrom(path)`, wrap `GetTypes()` in a `ReflectionTypeLoadException` catch, then iterate types/members.
+5. `dotnet run` and inspect the output.
+
+> **Note:** `Assembly.ReflectionOnlyLoadFrom()` is NOT supported on .NET 10 — use full load + exception handling instead.
+> Binary text extraction (grep for strings in the DLL bytes) is useful as a quick fallback to spot type names before writing reflection code.
+
+---
+
 ## Session State
 
 When blocked, log in `HANDOFF.md` (see [template](HANDOFF.md)):
