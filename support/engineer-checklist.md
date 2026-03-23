@@ -98,6 +98,8 @@ dotnet ef migrations add InitialCreate `
 - [ ] Scheduler host starts once (`dotnet run --project src/{Host}/{Host}.Scheduler`)
 - [ ] Deployment script generated/applied if required
 
+> When the scheduler depends on AppHost-provided resources, either validate through AppHost or provide equivalent local connection strings before direct `dotnet run`. Record which path was used.
+
 ### Function App
 
 - [ ] `local.settings.json` contains required runtime keys and trigger bindings
@@ -110,6 +112,8 @@ dotnet ef migrations add InitialCreate `
 - [ ] Gateway/OpenAPI endpoint reachable for client generation
 - [ ] Kiota client generation completes (if used)
 - [ ] UI runs on selected target (`net10.0-browserwasm` or `net10.0-desktop`)
+
+> If the repo contains only a `net10.0` starter library or shell-contract scaffold instead of a real Uno multi-target app, record Phase 4d Uno as **incomplete/scaffolded**. `NETSDK1139` on `browserwasm` confirms Uno scaffolding is missing — do not debug it as an environment issue.
 
 ---
 
