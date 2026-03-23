@@ -132,10 +132,18 @@ az bicep build --file infra/main.bicep
 
 ## 4f — Authentication Finalization
 
-Required:
-- auth provider configured,
-- authenticated endpoint behavior verified,
-- auth stubs removed or gated for dev-only.
+**Scaffold mode is the default.** Phase 4f is complete when the app builds, tests pass, and auth works with the config-driven scaffold principal. Live identity provider setup is supplemental hardening — it does **not** block scaffold completion.
+
+Required (scaffold mode):
+- `AuthMode` toggle present in config (`Scaffold` vs provider name)
+- App boots and all endpoints are reachable with scaffold principal
+- Auth stubs/no-op passthrough removed or gated behind `AuthMode` check
+- Endpoint tests pass against the scaffold auth path
+
+Required (live provider — only when intentionally provisioned):
+- Auth provider configured with real tenant values
+- Authenticated endpoint behavior verified against live tokens
+- Scaffold stub gated by config so it does not activate in production
 
 Commands:
 
@@ -144,19 +152,30 @@ dotnet build
 dotnet test --filter "TestCategory=Endpoint"
 ```
 
+If live Entra setup is not yet performed, log it in `HANDOFF.md` as a deployment-only dependency and continue.
+
 ## 4g — AI Integration
 
-Required:
-- search service responds,
-- agent endpoint responds,
-- AI DI/configuration compiles.
+**Scaffold mode is the default.** Phase 4g is complete when AI-backed interfaces compile, resolve from DI, and tests pass with stubs or no-op implementations. Live Foundry/AI Search endpoints are deployment-only dependencies and do not block scaffold completion.
+
+Required (scaffold mode):
+- AI service interfaces compile and resolve from DI
+- Config sections absent → services register as no-op stubs (not throws/missing-registration)
+- AI DI/configuration compiles
+
+Required (live endpoints — only when provisioned):
+- Search service responds
+- Agent endpoint responds
+- Integration tests pass against live resources
 
 Commands:
 
 ```powershell
 dotnet build
-dotnet test --filter "TestCategory=Integration"
+dotnet test --filter "TestCategory=Unit"
 ```
+
+If live AI endpoints are not yet provisioned, log them in `HANDOFF.md` as deployment-only dependencies.
 
 ---
 

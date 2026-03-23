@@ -97,6 +97,13 @@ Generate one complete slice, validate, then move to next slice.
 - Tenant-safe defaults where enabled
 - SQL defaults: `nvarchar(N)`, `decimal(10,4)`, `datetime2`
 - Stub external dependencies for local compile/run — generate compilable no-op implementations with `// TODO: [CONFIGURE]` comments at every integration point (stub class, DI registration, appsettings section)
+- **Every external dependency must declare one scaffold-time mode** before Phase 4 code is generated for it. Valid modes:
+  - `emulator` — Aspire-hosted or local emulator available (SQL, Redis, Azure Storage Emulator, Service Bus emulator)
+  - `lazy-optional` — config-driven; service activates only when config section is present/non-empty; absent = no-op passthrough
+  - `no-op stub` — compile-time stub that satisfies the interface and returns safe defaults; no cloud call made
+  - `deployment-only` — live integration deferred to deployment; **a no-op stub must still be generated** so the solution compiles and runs locally. Stub must satisfy the interface, return safe defaults, and carry a `// TODO: [CONFIGURE]` comment. Blocker logged in `HANDOFF.md`.
+- **Scaffold is complete when: solution builds, unit/endpoint tests pass, and the app boots end-to-end without any manual cloud setup.** Manual cloud provisioning (Entra, Key Vault, Foundry, ACS) must use `lazy-optional` or `no-op stub` mode and cannot block scaffold completion.
+- No commercial-licensed test packages. Use MSTest built-in assertions as the baseline. See [../skills/testing.md](../skills/testing.md) for approved assertion options.
 - Keep Aspire config and IaC names aligned
 - Start with minimal viable profiles, promote later
 

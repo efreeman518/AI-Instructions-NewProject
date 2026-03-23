@@ -50,6 +50,23 @@ Test/
 
 Keep package versions centralized in `Directory.Packages.props`.
 
+### Assertion Library Policy
+
+**Do not use FluentAssertions.** Version 8+ carries a commercial (Xceed) license that is incompatible with open-source and most commercial project policies.
+
+Use one of the following instead — discuss the choice with the developer before scaffolding:
+
+| Option | Package | License | Style |
+|---|---|---|---|
+| **MSTest built-ins** (default) | none — included in MSTest | MIT | `Assert.AreEqual(...)`, `Assert.IsTrue(...)` |
+| **Shouldly** | `Shouldly` | MIT | `value.ShouldBe(expected)` |
+| **Custom helpers** | none — add to `Test.Support` | n/a | Team-defined; recommended for domain-specific assertions |
+
+- **Default to MSTest built-ins.** They cover the vast majority of assertions without an extra dependency.
+- **Recommend Shouldly** when the developer explicitly wants expressive/fluent assertion syntax.
+- **Avoid TUnit assertions standalone** — TUnit is an alternative test runner, not a drop-in assertion library for MSTest projects.
+- If migrating an existing project that uses FluentAssertions, replace usages with the MSTest or Shouldly equivalent and remove the package reference.
+
 ---
 
 ## Parallelism Rules

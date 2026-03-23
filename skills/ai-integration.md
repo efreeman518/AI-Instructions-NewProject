@@ -23,6 +23,7 @@ Use this only when the current slice actually needs semantic retrieval, grounded
 8. Agent sessions (`AgentSession`) must be scoped per user/conversation — never share sessions across tenants.
 9. Start with one agent and a small tool set. Do not scaffold multi-agent orchestration until a single-agent path is proven insufficient.
 10. System prompts live in files, not inline string literals spread through services.
+11. **Scaffold mode is the default.** Foundry and AI Search are `deployment-only` external dependencies — no Aspire emulator or local alternative exists. When endpoints are absent from config, AI services must register as no-op stubs so the app boots without cloud credentials. Live endpoints are wired only when intentionally provisioned; log them in `HANDOFF.md` as deployment-only blockers.
 
 ---
 
@@ -218,6 +219,8 @@ Use when vectorizing large existing datasets or when eventual consistency is acc
 
 ## DI Registration
 
+AI services use conditional registration — absent config → no-op stubs registered, app boots without cloud credentials.
+
 ```csharp
 public static class AiServiceCollectionExtensions
 {
@@ -229,18 +232,22 @@ public static class AiServiceCollectionExtensions
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
-        // Azure OpenAI / Foundry Models client
-        services.AddSingleton(sp =>
+        var settings = aiSection.Get<AiSettings>() ?? new AiSettings();
+
+        // Azure OpenAI / Foundry Models client — conditional on endpoint config
+        if (!string.IsNullOrWhiteSpace(settings.FoundryEndpoint))
         {
-            var settings = sp.GetRequiredService<IOptions<AiSettings>>().Value;
-            return new AzureOpenAIClient(
+            services.AddSingleton(new AzureOpenAIClient(
                 new Uri(settings.FoundryEndpoint),
-                new DefaultAzureCredential());
-        });
+                new DefaultAzureCredential()));
+        }
+        else
+        {
+            // TODO: [CONFIGURE] Foundry endpoint — set AiServices:FoundryEndpoint for live AI completions
+            // No-op: AzureOpenAIClient not registered; agents/search will register no-op stubs below
+        }
 
         // Azure AI Search (if configured)
-        var settings = aiSection.Get<AiSettings>()!;
-
         if (settings.UseSearch && !string.IsNullOrWhiteSpace(settings.SearchEndpoint))
         {
             services.AddSingleton(new SearchClient(
@@ -250,17 +257,32 @@ public static class AiServiceCollectionExtensions
 
             services.AddScoped<IProjectSearchService, ProjectSearchService>();
         }
+        else if (settings.UseSearch)
+        {
+            // TODO: [CONFIGURE] AI Search endpoint — set AiServices:SearchEndpoint for live search
+            services.AddScoped<IProjectSearchService, NoOpSearchService>();
+        }
 
         // Agent services
         if (settings.UseAgents)
         {
-            services.AddScoped<ISupportTriageAgent, SupportTriageAgentService>();
+            if (!string.IsNullOrWhiteSpace(settings.FoundryEndpoint))
+            {
+                services.AddScoped<ISupportTriageAgent, SupportTriageAgentService>();
+            }
+            else
+            {
+                // TODO: [CONFIGURE] Foundry endpoint required for live agents
+                services.AddScoped<ISupportTriageAgent, NoOpSupportTriageAgent>();
+            }
         }
 
         return services;
     }
 }
 ```
+
+No-op stubs return empty results or a `Result.Failure("AI service not configured")` and log a warning; they do not throw on DI resolution.
 
 ---
 
