@@ -1,20 +1,24 @@
 # HANDOFF.md
 
-Use this file in the target project root to preserve session state between AI turns.
+Create this file in the **target project root** at the end of every phase and each Phase 4 sub-phase session. The next AI session loads `START-AI.md` + this file only — nothing else — and resumes from `currentSubPhase`.
 
 ```yaml
 instructionVersion: ""
-currentPhase: ""
-currentSubPhase: ""
-scaffoldMode: ""
-testingProfile: ""
+currentPhase: ""           # 1 | 2 | 3 | 4
+currentSubPhase: ""        # 4a | 4b | 4c | 4d | 4e | 4f | 4g (Phase 4 only)
+scaffoldMode: ""           # full | lite | api-only
+testingProfile: ""         # minimal | balanced | comprehensive
 enabledFeatures:
   includeGateway: false
   includeScheduler: false
   includeFunctionApp: false
   includeUnoUI: false
   includeAiServices: false
-resumeCommand: ""
+hostGates:                 # Phase 4d per-host status: not-started | scaffolded | validated
+  scheduler: not-started
+  functionApp: not-started
+  unoUI: not-started       # always a dedicated session
+resumeCommand: ""          # exact prompt to paste at the next session start
 ```
 
 ## Next Step
@@ -23,7 +27,7 @@ resumeCommand: ""
 
 ## Next Load Set
 
-Load only these files next session:
+Load only these files next session (do not load anything else until this list is confirmed):
 
 - `START-AI.md`
 - `HANDOFF.md`
@@ -31,7 +35,7 @@ Load only these files next session:
 
 ## Environment Setup
 
-Before running `dotnet restore` in any new session:
+Run before `dotnet restore` in any new session:
 
 - 
 
@@ -53,19 +57,20 @@ Out of scope for this session — do not attempt unless explicitly re-scoped:
 ## Notes
 
 - Record any non-default paths for `domain-specification.yaml` or `resource-implementation.yaml`.
-- Set `enabledFeatures` flags to match `resource-implementation.yaml` so the next session knows which optional hosts are in scope without re-reading the full resource spec.
-- Note unresolved infra/auth/package-feed issues here instead of retrying them repeatedly.
+- Keep `enabledFeatures` flags in sync with `resource-implementation.yaml`.
+- For Phase 4d, update `hostGates` per-host as each host moves through scaffolded → validated. Do not mark the sub-phase complete until all enabled hosts reach `validated`.
+- Note unresolved infra/auth/package-feed issues here rather than retrying them repeatedly.
 - Keep entries short so the next AI turn can resume without reloading unnecessary docs.
 
 ## Residual Environment Note
 
-Known local or CI quirks that will not be resolved this session:
+Known local or CI quirks not resolved this session:
 
 - 
 
 ## Validation Findings Resolved
 
-Issues encountered and fixed this session (so the next session doesn't re-investigate):
+Issues encountered and fixed this session (so the next session does not re-investigate):
 
 - 
 

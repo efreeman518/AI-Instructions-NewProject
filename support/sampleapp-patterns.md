@@ -38,64 +38,35 @@ Distilled cross-cutting patterns from `sample-app/` that span multiple files/pro
 
 ## Canonical Composite Snippets
 
+Quick-reference for patterns that span multiple files. These are excerpts only — the owning template or skill file is the authoritative source for full implementation.
+
 ### 1) Self-Referencing Hierarchy
 
-```csharp
-public Guid? ParentId { get; private set; }
-public TodoItem? Parent { get; private set; }
-public ICollection<TodoItem> SubTasks { get; private set; } = [];
-
-builder.HasOne(e => e.Parent)
-    .WithMany(e => e.SubTasks)
-    .HasForeignKey(e => e.ParentId)
-    .OnDelete(DeleteBehavior.Restrict);
-```
-
-Pair this with a domain rule to prevent self-parenting/cycles and enforce max depth.
+Key wiring points: nav props on entity + `HasOne/WithMany/HasForeignKey/OnDelete(Restrict)` in EF config + domain rule to prevent self-parenting/cycles. See [../templates/entity-template.md](../templates/entity-template.md) and [../templates/ef-configuration-template.md](../templates/ef-configuration-template.md).
 
 ### 2) TickerQ Job Adapter + Handler Split
 
-```csharp
-[TickerFunction("ProcessDueReminders", "10 */5 * * * *", TickerTaskPriority.High)]
-public async Task ProcessDueRemindersAsync(TickerFunctionContext context, CancellationToken ct)
-{
-    await ExecuteJobAsync<ProcessDueRemindersHandler>("ProcessDueReminders", context, ct);
-}
-```
-
-Job method is an adapter only; business logic remains in `IScheduledJobHandler` implementation.
+Scheduler method is a thin adapter (`[TickerFunction]` → `ExecuteJobAsync<THandler>`). All business logic stays in the `IScheduledJobHandler` implementation. See [../skills/background-services.md](../skills/background-services.md).
 
 ### 3) Gateway Claim Relay
 
-```csharp
-context.AddRequestTransform(async transformContext =>
-{
-    AddOriginalUserClaimsHeader(transformContext);
-    var token = await tokenService.GetAccessTokenAsync(clusterId);
-    transformContext.ProxyRequest!.Headers.Authorization = new("Bearer", token);
-});
-```
-
-Always normalize inbound claims before forwarding.
+Normalize inbound claims, then forward a service token. Pattern: `AddRequestTransform` → `AddOriginalUserClaimsHeader` → `GetAccessTokenAsync` → set `Authorization` header. See [../skills/gateway.md](../skills/gateway.md) and [../skills/identity-management.md](../skills/identity-management.md).
 
 ### 4) Result-Through-Layers Error Strategy
 
 Two complementary error paths — never mix them:
 
 ```
-[Domain]  DomainResult<T>.Success / .Failure   — business validation, rules, state transitions
-              ↓
-[Service] Result<T>.Success / .Failure / .None  — orchestration, tenant boundary, structure validation
-              ↓
-[Endpoint] result.Match(ok => ..., errors => ProblemDetails, notFound => NotFound)
-              ↓
-[DefaultExceptionHandler] IExceptionHandler     — catches ONLY unexpected exceptions (infra, null ref, timeout)
-                          maps to ProblemDetails with appropriate HTTP status
+[Domain]   DomainResult<T>.Success / .Failure  — business validation, rules, state transitions
+               ↓
+[Service]  Result<T>.Success / .Failure / .None — orchestration, tenant boundary, structure validation
+               ↓
+[Endpoint] result.Match(ok, errors → ProblemDetails, notFound → NotFound)
+               ↓
+[DefaultExceptionHandler]                       — catches ONLY unexpected exceptions; last-resort safety net
 ```
 
-**Rule:** Use `Result`/`DomainResult` for all expected outcomes. Throw exceptions only for truly unexpected failures. `DefaultExceptionHandler` is a safety net, not a control-flow mechanism.
-
-Reference: `sample-app/src/TaskFlow/TaskFlow.Api/ExceptionHandlers/DefaultExceptionHandler.cs`.
+**Rule:** Use `Result`/`DomainResult` for all expected outcomes. Throw only for truly unexpected failures. See [../skills/domain-model.md](../skills/domain-model.md), [../templates/service-template.md](../templates/service-template.md), [../templates/endpoint-template.md](../templates/endpoint-template.md).
 
 ---
 

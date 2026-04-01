@@ -407,6 +407,40 @@ ingestionSemantics:
 
 ---
 
+## External Dependency Scaffold Modes
+
+**Declare a scaffold mode for every external dependency before Phase 3.** This locks the local-run strategy at design time and prevents inconsistent stub generation in Phase 4.
+
+Valid modes:
+
+| Mode | Meaning |
+|---|---|
+| `emulator` | Aspire-hosted or local emulator available (SQL, Redis, Azure Storage Emulator, Service Bus emulator) |
+| `lazy-optional` | Config-driven; service activates only when config section is present/non-empty; absent = no-op passthrough |
+| `no-op stub` | Compile-time stub satisfies the interface and returns safe defaults; no cloud call made |
+| `deployment-only` | Live integration deferred to deployment; a no-op stub must still be generated so the solution compiles locally |
+
+```yaml
+externalDependencyModes:
+  sql: emulator                   # emulator | deployment-only
+  redis: emulator                 # emulator | lazy-optional | deployment-only
+  serviceBus: no-op stub          # emulator | no-op stub | deployment-only
+  eventGrid: no-op stub
+  keyVault: lazy-optional
+  blobStorage: emulator
+  cosmosDb: emulator
+  aiServices: no-op stub          # always no-op stub or deployment-only until Foundry is provisioned
+  externalApis:
+    - name: PaymentGateway
+      mode: no-op stub
+    - name: IdentityProvider
+      mode: deployment-only
+```
+
+> **Rule:** Every `deployment-only` entry requires a `no-op stub` generated in Phase 4 and a blocker recorded in `HANDOFF.md`. The scaffold is not complete until the solution compiles and boots without any manual cloud setup.
+
+---
+
 ## Phase 2 → 3 Transition Gate
 
 Before moving to Phase 3 (Implementation Plan), verify all of the following:
@@ -419,4 +453,5 @@ Before moving to Phase 3 (Implementation Plan), verify all of the following:
 - [ ] If `many-to-many` relationship exists, `joinEntity` is specified
 - [ ] `testingProfile` is set (`minimal`, `balanced`, or `comprehensive`)
 - [ ] `customNugetFeeds` is defined (empty array if none)
+- [ ] `externalDependencyModes` declared for every external dependency
 - [ ] If `includeAiServices: true`: Foundry project name set, at least one model defined, each agent references a defined model, search indexes reference defined entities

@@ -45,7 +45,7 @@ Configure these in your AI client (VS Code `settings.json` or Claude Desktop con
 
 ## Phase Execution Loop (Run After Each Scaffolding Phase)
 
-Use [execution-gates.md](execution-gates.md) as the source of truth for loop commands and per-phase pass criteria.
+Use [execution-gates.md](execution-gates.md) as the source of truth for all loop commands and per-phase pass criteria. Commands are not duplicated here.
 
 ---
 
@@ -129,19 +129,3 @@ dotnet ef migrations add InitialCreate `
 ## Failure Handling
 
 When a step fails, log the blocker in `HANDOFF.md` (see [HANDOFF.md template](HANDOFF.md)) and continue with non-blocked work.
-
----
-
-## Quick Commands
-
-```powershell
-# Core loop
-dotnet restore
-dotnet build
-dotnet test --filter "TestCategory=Unit"
-
-# Broader validation
-dotnet test
-dotnet run --project src/Aspire/AppHost
-az bicep build --file infra/main.bicep
-```

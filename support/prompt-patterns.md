@@ -1,43 +1,58 @@
 # Prompt Patterns
 
-Copy-paste these prompts to start or resume a phase. Replace `{...}` with actual values.
+Copy-paste these prompts to start a phase. Replace `{...}` with actual values.
 
-## Phase 1 — Domain Discovery
+**Session model:** Each phase (and each Phase 4 sub-phase) runs in its own AI session. At the end of each session the AI writes/updates `HANDOFF.md` in the target project root, then the session closes. The next session starts from `START-AI.md` + `HANDOFF.md` only.
+
+---
+
+## Phase 1 — Domain Discovery (Session 1)
 
 ```text
-I need to define the domain for a new application called {ProjectName}.
+Load .instructions/START-AI.md. This is a new project — no HANDOFF.md yet.
+Generate a domain-specification YAML for a new application called {ProjectName}.
 The business is: {one-sentence business description}.
 Key entities: {entity list}.
-Please generate a domain-specification YAML following .instructions/ai/domain-specification-schema.md.
+Follow .instructions/ai/domain-specification-schema.md.
+When the YAML is complete and reviewed, write HANDOFF.md to the project root and close the session.
 ```
 
-## Phase 2 — Resource Definition
+## Phase 2 — Resource Definition (Session 2)
 
 ```text
-Using the domain specification in domain-specification.yaml (project root), generate the resource
-implementation YAML per ai/resource-implementation-schema.md.
+Load .instructions/START-AI.md and HANDOFF.md from the project root.
+Generate the resource implementation YAML per .instructions/ai/resource-implementation-schema.md.
 Mode: {full|lite|api-only}. Testing profile: {minimal|balanced|comprehensive}.
-Data store: {sqlServer|cosmosDb|etc}. Include: {gateway/functions/uno-ui/scheduler as needed}.
+Declare externalDependencyModes for every external dependency before finalizing.
+When the YAML is complete and the Phase 2→3 transition gate passes, update HANDOFF.md and close the session.
 ```
 
-## Phase 3 — Implementation Plan
+## Phase 3 — Implementation Plan (Session 3)
 
 ```text
-Using the domain spec and resource implementation, generate an implementation plan
-per .instructions/ai/implementation-plan.md template. Flag any open questions before proceeding.
-Pre-flight: confirm custom NuGet feeds are configured in nuget.config and dotnet restore exits 0.
-Pre-flight: confirm dotnet ef is available (dotnet tool list -g or local tool manifest).
+Load .instructions/START-AI.md and HANDOFF.md from the project root.
+Generate an implementation plan per .instructions/ai/implementation-plan.md template.
+Run Phase 3 pre-flights: NuGet feeds configured (dotnet restore exits 0), dotnet ef available.
+Flag open questions before writing implementation-plan.md to the project root.
+When the plan is reviewed and open questions resolved, update HANDOFF.md and close the session.
 ```
 
 ## Phase 4 — Sub-Phase Start Prompts
 
+Each sub-phase is its own session. Start every Phase 4 session with:
+
+```text
+Load .instructions/START-AI.md and HANDOFF.md from the project root.
+```
+
+Then append the sub-phase–specific block below.
+
 ### 4a — Foundation
 
 ```text
-Load START-AI.md. Check for HANDOFF.md in the project root.
 Run ./scripts/get-phase-load-set.ps1 -Phase 4a -Mode {full|lite|api-only} to resolve the load set.
 Scaffold Phase 4a: solution structure, domain model, data access, core entity/config/repository/appsettings.
-Validate with 'dotnet build' before proceeding.
+Gate: 'dotnet build' passes. When gate passes, update HANDOFF.md (currentSubPhase: 4b) and close session.
 ```
 
 ### 4b — App Core
@@ -45,7 +60,7 @@ Validate with 'dotnet build' before proceeding.
 ```text
 Run ./scripts/get-phase-load-set.ps1 -Phase 4b -Mode {full|lite|api-only}.
 Scaffold Phase 4b: DTOs, mappers, services, endpoints, bootstrapper DI wiring.
-Validate with 'dotnet build' and 'dotnet test --filter TestCategory=Endpoint'.
+Gate: 'dotnet build' + 'dotnet test --filter TestCategory=Endpoint'. When gate passes, update HANDOFF.md and close session.
 ```
 
 ### 4c — Runtime / Edge
@@ -53,23 +68,26 @@ Validate with 'dotnet build' and 'dotnet test --filter TestCategory=Endpoint'.
 ```text
 Run ./scripts/get-phase-load-set.ps1 -Phase 4c -Mode {full|lite|api-only}.
 Scaffold only the enabled runtime concerns: {gateway/aspire/caching/observability/security}.
-Validate with 'dotnet build' and verify the app starts via Aspire (if enabled).
+Gate: 'dotnet build' + app starts via Aspire. When gate passes, update HANDOFF.md and close session.
 ```
 
 ### 4d — Optional Hosts
 
 ```text
 Run ./scripts/get-phase-load-set.ps1 -Phase 4d -Mode {full|lite|api-only}.
-Scaffold only the enabled optional hosts: {scheduler/functionapp/uno-ui/notifications}.
-Record per-host gate status in HANDOFF.md after each host is validated.
+Scaffold only the enabled optional hosts: {scheduler/functionapp/notifications}.
+Update hostGates in HANDOFF.md per host as each reaches scaffolded → validated.
+Close session when all enabled hosts are validated (or blockers are recorded for deployment-only deps).
 ```
+
+> Note: Uno UI is always a dedicated session within 4d. Use the same session start prompt but scope only to Uno UI.
 
 ### 4e — Quality + Delivery
 
 ```text
 Run ./scripts/get-phase-load-set.ps1 -Phase 4e -Mode {full|lite|api-only}.
 Scaffold tests (profile: {minimal|balanced|comprehensive}), IaC, and CI/CD as in scope.
-Validate with 'dotnet test' and (if IaC enabled) 'az bicep build --file infra/main.bicep'.
+Gate: 'dotnet test' passes; 'az bicep build --file infra/main.bicep' passes (if IaC enabled). Update HANDOFF.md and close session.
 ```
 
 ### 4f — Authentication
@@ -77,8 +95,7 @@ Validate with 'dotnet test' and (if IaC enabled) 'az bicep build --file infra/ma
 ```text
 Run ./scripts/get-phase-load-set.ps1 -Phase 4f -Mode {full|lite|api-only}.
 Finalize auth: replace stubs with config-driven scaffold principal ({Entra|OAuth2|social|hybrid}).
-Scaffold mode is the gate — live provider setup is supplemental and does not block completion.
-Validate with 'dotnet build' and 'dotnet test --filter TestCategory=Endpoint'.
+Gate: 'dotnet build' + 'dotnet test --filter TestCategory=Endpoint'. Update HANDOFF.md and close session.
 ```
 
 ### 4g — AI Integration
@@ -86,20 +103,22 @@ Validate with 'dotnet build' and 'dotnet test --filter TestCategory=Endpoint'.
 ```text
 Run ./scripts/get-phase-load-set.ps1 -Phase 4g -Mode {full|lite|api-only} {-IncludeAiSearch} {-IncludeAgents}.
 Scaffold AI integration: {search indexing/agent service} as enabled.
-Scaffold mode is the gate — live Foundry/AI Search endpoints are deployment-only dependencies.
-Validate with 'dotnet build' and 'dotnet test --filter TestCategory=Unit'.
+Gate: 'dotnet build' + 'dotnet test --filter TestCategory=Unit'. Update HANDOFF.md and close session.
 ```
+
+---
 
 ## Resume from HANDOFF
 
 ```text
-Read HANDOFF.md in the project root. Resume from the documented phase.
-Load the files listed in Next Load Set. Check Blockers before proceeding.
+Load .instructions/START-AI.md and HANDOFF.md from the project root.
+Resume from currentSubPhase. Load the files listed in Next Load Set. Check Blockers before proceeding.
 ```
 
 ## Add New Entity (Existing Project)
 
 ```text
-Add entity {Entity} to the existing solution using .instructions/support/vertical-slice-checklist.md.
-Follow the same patterns established by {ExistingEntity}.
+Load .instructions/START-AI.md. No HANDOFF.md needed — this is an add-entity operation.
+Add entity {Entity} to the existing solution using .instructions/support/vertical-slice-checklist.md fast-path.
+Follow patterns established by {ExistingEntity}.
 ```

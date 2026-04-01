@@ -31,7 +31,7 @@ When generating code from templates and skill files, substitute these placeholde
 
 ## Casing Conventions
 
-> **⚠️ Naming Conflicts:** When choosing entity names, avoid C# framework type names (`Task`, `Thread`, `Timer`, `Type`, `String`, `Object`, `Action`, `Attribute`, `File`, `Path`). See [domain-specification-schema.md](domain-specification-schema.md) Entities section for safe alternatives.
+> **Naming conflicts:** Avoid entity names that collide with C# framework types. Canonical list and safe alternatives: [domain-specification-schema.md — Entities section](domain-specification-schema.md#entities).
 
 | Convention | Rule | Example |
 |------------|------|---------|

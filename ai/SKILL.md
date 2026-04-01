@@ -39,13 +39,18 @@ Use for:
 
 ## Session Start (Every AI Turn)
 
-Follow [../START-AI.md](../START-AI.md) for session bootstrap, version checks, and phase routing.
+Follow [../START-AI.md](../START-AI.md) for session bootstrap, version checks, phase routing, and the session-per-phase model. This file does not repeat those steps.
 
-For Phase 4 execution:
+**Each Phase 4 sub-phase runs in its own session.** At session start for Phase 4:
 1. Load `SKILL.md` + [placeholder-tokens.md](placeholder-tokens.md).
 2. Read [resource-implementation-schema.md](resource-implementation-schema.md) for `scaffoldMode`, `testingProfile`, host profiles, enabled flags, and canonical defaults.
-3. Resolve the current sub-phase with `./scripts/get-phase-load-set.ps1`.
-4. Keep only the current sub-phase docs loaded; unload completed sub-phases before continuing.
+3. Resolve the current sub-phase load set: `./scripts/get-phase-load-set.ps1 -Phase <4x> -Mode <mode>`.
+4. Keep only the current sub-phase docs loaded; unload prior sub-phase docs before continuing.
+
+**Session end — after each sub-phase gate passes:**
+1. Update `HANDOFF.md` with `currentSubPhase`, gate result, and next load set.
+2. Record any blockers, deferred items, and residual environment notes.
+3. Close the session. The next session starts from `START-AI.md` + `HANDOFF.md` only.
 
 ---
 
@@ -64,13 +69,15 @@ Primary path:
 
 ## Phase 4 Sub-Phases (Execution Order)
 
-1. **4a — Foundation:** solution structure, domain model, data access, packages, and core entity/config/repository/appsettings templates. Add non-SQL store skills only when the slice uses them.
-2. **4b — App Core:** application layer, bootstrapper, API, and the DTO/mapper/service/endpoint validator templates. Add message handlers only when events exist.
-3. **4c — Runtime/Edge:** load only enabled gateway, aspire, configuration, multi-tenant, caching, observability, and security concerns.
-4. **4d — Optional Hosts:** load scheduler, Function App, Uno UI, and notifications only when enabled. Prefer a dedicated session for Uno UI.
-5. **4e — Quality + Delivery:** testing plus only the test templates in scope. Add IaC, CI/CD, and optional integrations when they are part of the current milestone.
-6. **4f — Authentication:** finalize identity last. Use stubs in earlier sub-phases when needed for compile-time flow.
-7. **4g — AI Integration:** run only when `includeAiServices: true`, and scope further with `-IncludeAiSearch` / `-IncludeAgents` where possible.
+Each sub-phase is one session. Gate must pass before the next session begins.
+
+1. **4a — Foundation:** solution structure, domain model, data access, packages, and core entity/config/repository/appsettings templates. Add non-SQL store skills only when the slice uses them. Gate: `dotnet build`.
+2. **4b — App Core:** application layer, bootstrapper, API, and the DTO/mapper/service/endpoint validator templates. Add message handlers only when events exist. Gate: `dotnet build` + endpoint tests.
+3. **4c — Runtime/Edge:** load only enabled gateway, aspire, configuration, multi-tenant, caching, observability, and security concerns. Gate: `dotnet build` + app starts via Aspire.
+4. **4d — Optional Hosts:** load scheduler, Function App, Uno UI, and notifications only when enabled. Uno UI is a dedicated session on its own. Gate: per-host status recorded in `HANDOFF.md` `hostGates`.
+5. **4e — Quality + Delivery:** testing plus only the test templates in scope. Add IaC, CI/CD, and optional integrations when they are part of the current milestone. Gate: full test suite passes.
+6. **4f — Authentication:** finalize identity last. Use stubs in earlier sub-phases when needed for compile-time flow. Gate: authenticated endpoints respond correctly.
+7. **4g — AI Integration:** run only when `includeAiServices: true`, scope further with `-IncludeAiSearch` / `-IncludeAgents`. Gate: search returns results, agent responds to test prompt.
 
 ## Template Usage
 
@@ -149,7 +156,7 @@ For slices spanning SQL + Cosmos/Table/Blob + messaging:
 
 ## Session State (`HANDOFF.md`)
 
-Create in target project root during Phase 4 when context is high or at session boundaries. Not needed during Phases 1-3. See [../support/HANDOFF.md](../support/HANDOFF.md) for template.
+Create or update in the target project root at the end of **every** phase and sub-phase session — not only when context is high. Phases 1–3 use it to hand off their output artifacts and open questions. Phase 4 sub-phases use it to record gate results, blockers, and the next load set. See [../support/HANDOFF.md](../support/HANDOFF.md) for the template.
 
 ---
 
