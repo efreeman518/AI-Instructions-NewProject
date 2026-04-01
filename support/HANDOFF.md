@@ -17,16 +17,59 @@ enabledFeatures:
 resumeCommand: ""
 ```
 
+## Next Step
+
+- 
+
+## Next Load Set
+
+Load only these files next session:
+
+- `START-AI.md`
+- `HANDOFF.md`
+- 
+
+## Environment Setup
+
+Before running `dotnet restore` in any new session:
+
+- 
+
 ## Current Objective
 
 - Goal:
 - Scope for this session:
 
-## Completed
+## Deferred
+
+Out of scope for this session — do not attempt unless explicitly re-scoped:
 
 - 
 
-## Files Changed
+## Blockers
+
+- None
+
+## Notes
+
+- Record any non-default paths for `domain-specification.yaml` or `resource-implementation.yaml`.
+- Set `enabledFeatures` flags to match `resource-implementation.yaml` so the next session knows which optional hosts are in scope without re-reading the full resource spec.
+- Note unresolved infra/auth/package-feed issues here instead of retrying them repeatedly.
+- Keep entries short so the next AI turn can resume without reloading unnecessary docs.
+
+## Residual Environment Note
+
+Known local or CI quirks that will not be resolved this session:
+
+- 
+
+## Validation Findings Resolved
+
+Issues encountered and fixed this session (so the next session doesn't re-investigate):
+
+- 
+
+## Completed
 
 - 
 
@@ -46,27 +89,3 @@ For each enabled optional host, record its individual gate result. Use "complete
 | Function App | | | | |
 | Uno UI | | | | |
 | Gateway | | | | |
-
-## Blockers
-
-- None
-
-## Next Load Set
-
-Load only these files next session:
-
-- `START-AI.md`
-- `HANDOFF.md`
-- 
-
-## Next Step
-
-- 
-
-## Notes
-
-- Record any non-default paths for `domain-specification.yaml` or `resource-implementation.yaml`.
-- Set `enabledFeatures` flags to match `resource-implementation.yaml` so the next session knows which optional hosts are in scope without re-reading the full resource spec.
-- Note unresolved infra/auth/package-feed issues here instead of retrying them repeatedly.
-- Keep entries short so the next AI turn can resume without reloading unnecessary docs.
-
