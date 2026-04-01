@@ -2,7 +2,7 @@
 
 Use Aspire AppHost for local orchestration and keep it consistent with IaC outputs.
 
-Reference implementation: `sample-app/src/Aspire/AppHost/`, `sample-app/src/Aspire/ServiceDefaults/`.
+Reference patterns: [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) (Aspire Resource Wiring).
 
 ## Structure
 

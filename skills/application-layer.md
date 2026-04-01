@@ -9,10 +9,10 @@ The application layer owns DTOs, contracts, static mappers, orchestration servic
 1. Keep contracts separate from implementations.
 2. DTOs live in `Application.Models`; services live in `Application.Services`.
 3. Mappers are static and provide EF-safe projector expressions.
-4. Services enforce validation + tenant boundary checks before writes.
+4. Services enforce validation + tenant boundary checks before writes. See [multi-tenant.md](multi-tenant.md) for `TenantBoundaryValidator` usage and `EnsureTenantBoundary(...)` patterns.
 5. Internal event DTOs and handlers stay in contracts/message-handler projects.
 
-Reference implementation: `sample-app/src/Application/`.
+Reference patterns: [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) (Expected Output File Index — Application Layer).
 
 ---
 
@@ -36,7 +36,7 @@ Application/
 
 ## DTO Pattern
 
-Entity-specific DTOs and filters go under `Application.Models/{Entity}/`. See [dto-template.md](../templates/dto-template.md) for record patterns.
+Entity-specific DTOs and filters go under `Application.Models/{Entity}/`. See [data-mapping-template.md](../templates/data-mapping-template.md) for record patterns.
 
 Shared DTO infrastructure (do not duplicate per entity):
 
@@ -51,7 +51,7 @@ Shared DTO infrastructure (do not duplicate per entity):
 
 ## Static Mapper Pattern
 
-See [mapper-template.md](../templates/mapper-template.md) for full implementation.
+See [data-mapping-template.md](../templates/data-mapping-template.md) for full implementation.
 
 Mapper rules:
 

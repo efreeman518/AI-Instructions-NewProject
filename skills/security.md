@@ -168,7 +168,7 @@ Enable in `Directory.Build.props` or `.csproj`:
 
 ## Secret Rotation
 
-Secrets must be stored in Azure Key Vault (see [skills/keyvault.md](keyvault.md)).
+Secrets must be stored in Azure Key Vault (see [configuration-secrets.md](configuration-secrets.md)).
 
 ### Rotation Workflow
 

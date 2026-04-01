@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **File** | `Infrastructure.Repositories/Updaters/{Entity}Updater.cs` |
-| **Depends on** | [entity-template](entity-template.md), [dto-template](dto-template.md) |
+| **Depends on** | [entity-template](entity-template.md), [data-mapping-template](data-mapping-template.md) |
 | **Referenced by** | [repository-template](repository-template.md) |
 
 ## File: Infrastructure/Repositories/Updaters/{Entity}Updater.cs

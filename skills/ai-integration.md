@@ -7,7 +7,7 @@ Use this only when the current slice actually needs semantic retrieval, grounded
 
 - [solution-structure.md](solution-structure.md)
 - [bootstrapper.md](bootstrapper.md)
-- [configuration.md](configuration.md)
+- [configuration-secrets.md](configuration-secrets.md)
 - [identity-management.md](identity-management.md) (agents need auth context)
 - [package-dependencies.md](package-dependencies.md)
 

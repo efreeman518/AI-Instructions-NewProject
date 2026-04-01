@@ -79,7 +79,7 @@ entities:
 
 ## Sampleapp Token Mapping
 
-The reference implementation (`sample-app/`) demonstrates all tokens with these resolved values:
+The reference patterns in `support/sampleapp-patterns.md` use these resolved token values:
 
 ```yaml
 Org: Sample

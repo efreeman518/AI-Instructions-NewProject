@@ -11,7 +11,7 @@ Scaffold a single Uno codebase (WASM + mobile + desktop) that calls the **Gatewa
 References:
 - [../ai/domain-specification-schema.md](../ai/domain-specification-schema.md)
 - [../ai/resource-implementation-schema.md](../ai/resource-implementation-schema.md)
-- `sample-app/src/TaskFlow/TaskFlow.UI/`
+- See sampleapp-patterns.md (Expected Output File Index).
 - [../ai/SKILL.md](../ai/SKILL.md)
 
 ## Profiles
@@ -238,4 +238,4 @@ Uno.Resizetizer requires asset filenames to be **lowercase**, containing only al
 - Gateway integration: [gateway.md](gateway.md)
 - Auth setup: [identity-management.md](identity-management.md)
 - Testing strategy: [testing.md](testing.md)
-- App configuration: [configuration.md](configuration.md)
+- App configuration: [configuration-secrets.md](configuration-secrets.md)

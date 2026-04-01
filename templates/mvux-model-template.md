@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Files** | `Presentation/{Entity}ListModel.cs`, `{Entity}DetailModel.cs`, `Create{Entity}Model.cs` |
-| **Depends on** | [ui-model-template](ui-model-template.md), [ui-service-template](ui-service-template.md) |
+| **Depends on** | [ui-client-layer](ui-client-layer.md), [ui-client-layer](ui-client-layer.md) |
 | **Referenced by** | [xaml-page-template](xaml-page-template.md), [uno-ui.md](../skills/uno-ui.md) |
 
 ## List Model

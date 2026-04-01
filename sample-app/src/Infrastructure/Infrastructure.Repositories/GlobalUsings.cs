@@ -1,9 +1,0 @@
-global using Application.Contracts.Repositories;
-global using Application.Mappers;
-global using Application.Models;
-global using Domain.Model;
-global using Infrastructure.Data;
-global using Microsoft.EntityFrameworkCore;
-global using EF.Common.Contracts;
-global using EF.Data;
-global using EF.Data.Contracts;

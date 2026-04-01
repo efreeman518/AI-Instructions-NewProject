@@ -1,6 +1,6 @@
 # Caching
 
-Reference implementation: `sample-app/src/TaskFlow/TaskFlow.Bootstrapper/` (FusionCache registration + named cache config).
+Reference patterns: [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) (Multi-Cache Configuration).
 
 ## Purpose
 

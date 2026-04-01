@@ -1,6 +1,6 @@
 # Multi-Tenant Architecture
 
-Reference implementation: `sample-app/src/Infrastructure/TaskFlow.Infrastructure.Data/` (query filters), `sample-app/src/Application/TaskFlow.Application.Services/` (tenant boundary validation).
+Reference patterns: [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) (Request Context Resolution, Multi-tenant Query Filter).
 
 ## Purpose
 

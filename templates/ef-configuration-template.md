@@ -4,8 +4,7 @@
 |---|---|
 | **File** | `Infrastructure.Data/Configuration/{Entity}Configuration.cs` |
 | **Depends on** | [entity-template](entity-template.md) |
-| **Referenced by** | [data-access.md](../skills/data-access.md), [repository-template](repository-template.md) |
-| **Sampleapp** | `sample-app/src/Infrastructure/TaskFlow.Infrastructure.Data/EntityConfigurations/TodoItemConfiguration.cs` |
+| **Referenced by** | [data-persistence.md](../skills/data-persistence.md), [repository-template](repository-template.md) |
 
 ## File: Infrastructure/Data/Configuration/EntityBaseConfiguration.cs (REQUIRED)
 
@@ -101,7 +100,7 @@ When workflows include compensations:
 
 ## JSON Column Mapping with `ToJson()`
 
-`ToJson()` with owned types is the preferred pattern for structured data stored as JSON columns. When migration generation fails for complex shapes (nested collections, dictionaries), fall back to a serializer-backed value conversion as documented in [data-access.md](../skills/data-access.md) under *JSON Column Mapping (`ToJson()`) Troubleshooting*.
+`ToJson()` with owned types is the preferred pattern for structured data stored as JSON columns. When migration generation fails for complex shapes (nested collections, dictionaries), fall back to a serializer-backed value conversion as documented in [data-persistence.md](../skills/data-persistence.md) under *JSON Column Mapping (`ToJson()`) Troubleshooting*.
 
 ## File: Infrastructure/Data/Configuration/{ChildEntity}Configuration.cs
 

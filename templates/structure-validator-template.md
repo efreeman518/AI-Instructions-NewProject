@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **File** | `Application.Services/Rules/{Entity}StructureValidator.cs` |
-| **Depends on** | [dto-template](dto-template.md) |
+| **Depends on** | [data-mapping-template](data-mapping-template.md) |
 | **Referenced by** | [service-template](service-template.md), [application-layer.md](../skills/application-layer.md) |
 
 ## Purpose

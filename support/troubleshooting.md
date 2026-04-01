@@ -2,7 +2,7 @@
 
 This file is intentionally lightweight. Use it to decide **what the AI should do next** when a build/test/run problem appears.
 
-> **For compile/run commands and engineer actions, use [engineer-checklist.md](engineer-checklist.md) as the execution checklist.**
+> **For compile/run commands and engineer actions, use [execution-gates.md](execution-gates.md) as the execution checklist.**
 
 ---
 
@@ -10,7 +10,7 @@ This file is intentionally lightweight. Use it to decide **what the AI should do
 
 AI agents generate code. Engineers own environment and runtime setup.
 
-> **⛔ NEVER fix, modify, or build sampleapp code unless explicitly instructed to do so.** The `sample-app/` directory is read-only reference. All code generation and fixes apply to the **new project** only. If an error points to a sampleapp file, document the issue and fix only in `UPDATE-INSTRUCTIONS.md` — it is not your code to fix directly.
+> All code generation and fixes apply to the **new project** only. If an error points to a pattern in `support/sampleapp-patterns.md`, document the issue in `support/UPDATE-INSTRUCTIONS.md`.
 
 When an error appears:
 1. Classify it (code-generation vs infrastructure/tooling)
@@ -37,7 +37,7 @@ Flag immediately for the engineer when issues involve:
 - Aspire env vars/ports, Functions runtime tools/config, Playwright install
 - Certificates/credentials, cloud subscription access, deployment permissions
 
-Reference the exact relevant section in [engineer-checklist.md](engineer-checklist.md).
+Reference the exact relevant section in [execution-gates.md](execution-gates.md).
 
 ---
 
@@ -53,7 +53,7 @@ When inputs are unclear, prefer pragmatic defaults and continue:
 ## Common Test Failures
 
 Single source of truth for recurring scaffolding test failures and known fixes.
-If another file disagrees, this section wins.
+For phase gates and validation commands, see [execution-gates.md](execution-gates.md).
 
 ### Quick Reference
 
@@ -160,7 +160,7 @@ When a private package's public API is unknown or differs from docs/conventions:
 When blocked, log in `HANDOFF.md` (see [template](HANDOFF.md)):
 - Symptom + classification (`code-generation` or `infrastructure`)
 - Current phase
-- Next engineer action (link to [engineer-checklist.md](engineer-checklist.md))
+- Next engineer action (link to [execution-gates.md](execution-gates.md))
 
 If instruction gaps are discovered, append to `support/UPDATE-INSTRUCTIONS.md`.
 

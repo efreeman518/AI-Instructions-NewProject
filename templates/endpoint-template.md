@@ -3,9 +3,8 @@
 | | |
 |---|---|
 | **File** | `{Host}.Api/Endpoints/{Entity}Endpoints.cs` |
-| **Depends on** | [service-template](service-template.md), [dto-template](dto-template.md) |
-| **Referenced by** | [api.md](../skills/api.md), [test-template-integration.md](test-template-integration.md) |
-| **Sampleapp** | `sample-app/src/TaskFlow/TaskFlow.Api/Endpoints/TodoItemEndpoints.cs` |
+| **Depends on** | [service-template](service-template.md), [data-mapping-template](data-mapping-template.md) |
+| **Referenced by** | [api.md](../skills/api.md), [test-templates.md](test-templates.md) |
 
 ## File: {Host}.Api/Endpoints/{Entity}Endpoints.cs
 

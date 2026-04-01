@@ -55,7 +55,7 @@ src/
 └── {SolutionName}.slnx
 ```
 
-Reference implementation: `sample-app/src/`.
+Reference patterns: [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) (Expected Output File Index).
 
 Note: Domain rules and specifications live in `Domain.Model/Rules/` (or `Domain.Model/Specifications/`). A separate `Domain.Rules` project is not required.
 

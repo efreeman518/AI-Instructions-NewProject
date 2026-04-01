@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rtk ls:*)",
+      "Bash(rtk git:*)",
+      "Bash(wc -l /c/Users/EbenFreeman/source/repos/AI-Instructions-NewProject/skills/*.md)",
+      "Bash(wc -l templates/*.md)",
+      "Bash(wc -l /c/Users/EbenFreeman/source/repos/AI-Instructions-NewProject/scripts/*.ps1)",
+      "Bash(find /c/Users/EbenFreeman/source/repos/AI-Instructions-NewProject/scripts -name \"*.ps1\" -exec wc -l {} +)",
+      "Bash(find /c/Users/EbenFreeman/source/repos/AI-Instructions-NewProject/sample-app -maxdepth 1 -type f -name \".gitignore\" -exec cat {} \\\\;)",
+      "Bash(chmod +x /c/Users/EbenFreeman/source/repos/AI-Instructions-NewProject/.githooks/pre-commit)",
+      "Bash(python -m json.tool _manifest.json)",
+      "Bash(pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/generate-phase-load-packs.ps1)",
+      "Bash(python -m json.tool phase-load-packs.json)",
+      "Bash(pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/lint-instructions.ps1)",
+      "Bash(find \"c:\\\\Users\\\\EbenFreeman\\\\source\\\\repos\\\\AI-Instructions-NewProject\\\\sample-app\\\\src\" -type f \\\\\\( -name \"*.cs\" \\\\\\) -exec grep -l \"class EntityBase\" {} \\\\;)",
+      "Bash(find \"c:\\\\Users\\\\EbenFreeman\\\\source\\\\repos\\\\AI-Instructions-NewProject\\\\sample-app\\\\src\" -type f -name \"*.cs\" -exec grep -l \"IRequestContext\\\\|interface IRequestContext\" {} \\\\;)"
+    ]
+  }
+}

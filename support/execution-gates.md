@@ -1,13 +1,44 @@
-# Execution Gates (Canonical)
+# Execution Gates & Validation
 
 Single source of truth for compile/test/run checkpoints across implementation phases.
 
 Use this file for:
+- operator setup and preflight verification,
 - phase-by-phase validation commands,
 - exit criteria,
 - pre-merge quality gates.
 
 If another file disagrees, this file wins.
+
+---
+
+## Operator Setup (Pre-Scaffold)
+
+Run once per machine/repo before beginning any scaffolding phase.
+
+### Scope Selection (Pick One)
+
+- [ ] **API-only baseline**: Foundation + App Core + API verification
+- [ ] **API + services**: API baseline + Gateway/Aspire/Scheduler as enabled
+- [ ] **Full app**: API + services + Function App + Uno UI + IaC as enabled
+
+### Development Tools
+
+- [ ] Git repo initialized with `.gitignore` for .NET
+- [ ] `.NET SDK` installed (`dotnet --version`)
+- [ ] Docker running (if Aspire uses SQL/Redis containers)
+- [ ] `nuget.config` includes `nuget.org` + all custom/private feeds
+- [ ] EF tools installed (`dotnet tool install -g dotnet-ef`)
+- [ ] Functions Core Tools installed (`func --version`) *(if using Functions)*
+- [ ] Uno templates installed (`dotnet new install Uno.Templates`) *(if using Uno UI)*
+- [ ] Uno.Check installed (`dotnet tool install -g uno.check`) *(if using Uno UI)*
+- [ ] Kiota CLI installed (`dotnet tool install -g Microsoft.OpenApi.Kiota`) *(if using Uno UI)*
+
+### AI Assistant — MCP Servers
+
+Configure these in your AI client (VS Code `settings.json` or Claude Desktop config) so the AI can look up current docs and interact with tools during scaffolding.
+
+- [ ] MCP servers configured per [../README.md](../README.md) (Essential + phase-relevant)
 
 ---
 
@@ -34,6 +65,11 @@ Required:
 - domain + data-access projects build,
 - DbContext + repository wiring is present.
 
+Exit criteria:
+- [ ] Project structure matches `skills/solution-structure.md`
+- [ ] Domain entities exist in expected folders/namespaces
+- [ ] DbContext files compile
+
 Commands:
 
 ```powershell
@@ -56,6 +92,12 @@ Required:
 - API endpoint mappings compile,
 - DI registrations resolve.
 
+Exit criteria:
+- [ ] Service + repository registrations added in `RegisterServices.cs`
+- [ ] API endpoint mappings added in `WebApplicationBuilderExtensions.cs`
+- [ ] `DbSet<{Entity}>` exists in Trxn + Query DbContexts
+- [ ] API host builds cleanly
+
 Commands:
 
 ```powershell
@@ -68,6 +110,20 @@ dotnet test --filter "TestCategory=Endpoint"
 Required:
 - host startup path is healthy for enabled runtime concerns,
 - Aspire wiring works when enabled.
+
+Runtime/Host checks (enabled features only):
+
+### Aspire AppHost
+
+- [ ] `src/Aspire/AppHost/AppHost.csproj` uses `Aspire.AppHost.Sdk` MSBuild SDK
+- [ ] Required Aspire CLI env vars are set before terminal `dotnet run`
+- [ ] `dotnet build src/Aspire/AppHost` succeeds
+- [ ] `dotnet run --project src/Aspire/AppHost` starts resources
+
+### Gateway
+
+- [ ] Gateway build succeeds
+- [ ] Gateway can route to API via configured cluster/service discovery
 
 Commands:
 
@@ -89,11 +145,19 @@ Required:
 
 Function App:
 
+- [ ] `local.settings.json` contains required runtime keys and trigger bindings
+- [ ] Azurite/dev-tunnel/ngrok started if required by triggers
+
 ```powershell
 func host start --verbose
 ```
 
 Uno UI:
+
+- [ ] `uno-check` validates workloads
+- [ ] Gateway/OpenAPI endpoint reachable for client generation
+- [ ] Kiota client generation completes (if used)
+- [ ] UI runs on selected target (`net10.0-browserwasm` or `net10.0-desktop`)
 
 ```powershell
 uno-check
@@ -110,6 +174,8 @@ Also verify:
 - the selected Uno target runs successfully
 
 Scheduler:
+
+- [ ] Scheduler connection string configured
 
 ```powershell
 dotnet run --project src/{Host}/{Host}.Scheduler
@@ -135,6 +201,12 @@ IaC (if enabled):
 ```powershell
 az bicep build --file infra/main.bicep
 ```
+
+Delivery checks:
+- [ ] Endpoint and integration tests pass for current scope
+- [ ] Optional architecture tests pass (if included)
+- [ ] `az bicep build --file infra/main.bicep` succeeds *(if IaC enabled)*
+- [ ] Aspire <-> IaC names/connection strings are aligned
 
 ## 4f — Authentication Finalization
 
@@ -208,6 +280,8 @@ az bicep build --file infra/main.bicep
 - Code-generation failures: one focused AI fix pass, then re-run failing gate.
 - Infra/environment failures: log in `HANDOFF.md`, classify blocker, continue non-blocked scope.
 - Instruction gaps: append to `UPDATE-INSTRUCTIONS.md`.
+- If a step fails, log the blocker in `HANDOFF.md` (see [HANDOFF.md template](HANDOFF.md)) and continue with non-blocked work.
+- Pattern reference: [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) for composition wiring.
 
 ---
 

@@ -2,6 +2,8 @@
 
 Maps domain constructs from [domain-specification-schema.md](domain-specification-schema.md) to concrete Aspire/Azure resources, datatypes, and infrastructure.
 
+**JSON Schema:** [`schemas/resource-implementation.schema.json`](../schemas/resource-implementation.schema.json) — use for programmatic validation of `resource-implementation.yaml`.
+
 **Prerequisite:** Complete Phase 1 domain definition first.
 
 ## Output Contract

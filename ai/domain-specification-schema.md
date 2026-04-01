@@ -2,6 +2,8 @@
 
 Pure business domain model — no implementation details, no datatypes, no databases.
 
+**JSON Schema:** [`schemas/domain-specification.schema.json`](../schemas/domain-specification.schema.json) — use for programmatic validation of `domain-specification.yaml`.
+
 ## Output Contract
 
 Write Phase 1 output to `domain-specification.yaml` in the target project root by default. Alternatively, `.instructions/domain-specification.yaml` may be used if the repo explicitly adopts that convention — state the chosen path in handoff notes.

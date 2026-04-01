@@ -4,7 +4,7 @@
 
 Use ASP.NET Core Minimal APIs with endpoint classes (no controllers), API versioning, `ProblemDetails`, and deterministic middleware ordering.
 
-Reference implementation: `sample-app/src/TaskFlow/TaskFlow.Api/`.
+Reference patterns: [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) (API Startup Sequence, Middleware Pipeline).
 
 ## Required Layout
 

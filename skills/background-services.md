@@ -5,7 +5,7 @@
 - [solution-structure.md](solution-structure.md)
 - [bootstrapper.md](bootstrapper.md)
 - [aspire.md](aspire.md)
-- [data-access.md](data-access.md)
+- [data-persistence.md](data-persistence.md)
 
 ## Purpose
 
@@ -42,7 +42,7 @@ Use `{Host}.Scheduler` for cron/time-based orchestration with persisted scheduli
 └── appsettings*.json
 ```
 
-Reference: `sample-app/src/TaskFlow/TaskFlow.Scheduler/`.
+Reference patterns: [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) (TickerQ Job Adapter).
 
 ---
 

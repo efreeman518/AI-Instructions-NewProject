@@ -1,6 +1,6 @@
 # Azure Functions (Isolated Worker)
 
-Reference implementation: `sample-app/src/Functions/TaskFlow.FunctionApp/`.
+Reference patterns: [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) (Expected Output File Index).
 
 ## Prerequisites
 

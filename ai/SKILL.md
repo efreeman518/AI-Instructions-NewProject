@@ -14,14 +14,13 @@ Use for:
 
 ## Non-Negotiables
 
-- `sample-app/` is **read-only reference**; never edit/build/delete files there.
-- Load [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) only when selecting cross-project patterns or before opening raw `sample-app/src/` files. Do not preload it for routine scaffolding.
+- Load [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) only when selecting cross-project patterns or needing composition wiring reference. Do not preload it for routine scaffolding.
 - Generate code only in the user's new project directory.
 - Use `.slnx` (not legacy `.sln`).
 - Use central package management (`Directory.Packages.props`).
 - After adding packages, update to latest stable and verify restore/build.
 - Record instruction gaps in [../support/UPDATE-INSTRUCTIONS.md](../support/UPDATE-INSTRUCTIONS.md) (do not hot-edit baseline instructions mid-scaffold).
-- Prefer latest stable .NET SDK and package releases. MCP server setup: see [../START-HUMAN.md](../START-HUMAN.md).
+- Prefer latest stable .NET SDK and package releases. MCP server setup: see [../README.md](../README.md).
 - All mode/profile/flag defaults come from [resource-implementation-schema.md](resource-implementation-schema.md) (**Canonical Defaults**).
 
 ## Context Budget Rules (Mandatory)
@@ -33,7 +32,7 @@ Use for:
 5. Do not preload [../support/quick-reference.md](../support/quick-reference.md) or [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md); load only when needed.
 6. Use [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) before opening any raw sampleapp source.
 7. Large files must be loaded selectively:
-   - `templates/test-template-*.md`: only needed test type
+   - `templates/test-templates.md`: only needed test type
    - [skills/uno-ui.md](../skills/uno-ui.md): dedicated session preferred
 8. When context is high during execution, create/update `HANDOFF.md` with resume instructions for next session.
 
@@ -85,7 +84,7 @@ Use templates for generated artifacts and keep naming aligned with [placeholder-
 
 - Backend templates: entity/config/repository/dto/mapper/service/endpoint/rules/message-handler/structure-validator/exception-handler
 - UI templates: MVUX model/XAML page/UI model/UI service
-- Tests: load only needed file from `templates/test-template-*.md`
+- Tests: load only needed file from `templates/test-templates.md`
 
 ## Vertical Slice Shortcut
 
@@ -121,7 +120,7 @@ Generate one complete slice, validate, then move to next slice.
 After every build:
 - **Code-generation issue** (usings/references/DI/wiring/packages): attempt one focused fix pass, rebuild.
 - **Missing package in `Directory.Packages.props`**: add at latest stable version, restore, rebuild.
-- **Infrastructure issue** (feed auth, env vars, Docker, certs, SQL/cloud access): do not loop fixes. Document blocker in `HANDOFF.md`, point engineer to [../support/engineer-checklist.md](../support/engineer-checklist.md).
+- **Infrastructure issue** (feed auth, env vars, Docker, certs, SQL/cloud access): do not loop fixes. Document blocker in `HANDOFF.md`, point engineer to [../support/execution-gates.md](../support/execution-gates.md).
 
 ## Git Checkpoint Protocol
 
@@ -162,6 +161,6 @@ Create or update in the target project root at the end of **every** phase and su
 
 ## Prompt Starters
 
-Copy-paste prompt starters live in [../support/prompt-patterns.md](../support/prompt-patterns.md). Load them only when starting or resuming a phase, not as part of the default Phase 4 base context.
+Copy-paste prompt starters live in the Prompt Starters section in [../README.md](../README.md). Load them only when starting or resuming a phase, not as part of the default Phase 4 base context.
 
 

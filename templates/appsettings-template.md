@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Files** | `appsettings.json` per host (API, Gateway, Scheduler, Functions) |
-| **Depends on** | [configuration.md](../skills/configuration.md) |
+| **Depends on** | [configuration-secrets.md](../skills/configuration-secrets.md) |
 | **Referenced by** | [api.md](../skills/api.md), [gateway.md](../skills/gateway.md), [bootstrapper.md](../skills/bootstrapper.md) |
 
 ## API appsettings.json

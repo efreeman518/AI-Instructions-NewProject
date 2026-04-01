@@ -3,7 +3,7 @@
     Updates _manifest.json token estimates by scanning all .md files.
 
 .DESCRIPTION
-    1. Scans all .md files (excluding sample-app/).
+    1. Scans all .md files.
     2. Computes ceil(chars / 4) per file.
     3. Reads _manifest.json, updates estimatedTokens for matching paths.
     4. Adds new entries for untracked .md files with "phase": "unknown".

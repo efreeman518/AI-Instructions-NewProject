@@ -6,7 +6,7 @@ The **Bootstrapper project** is the centralized DI registration hub. It wires up
 
 ## Project Structure
 
-> **Reference implementation:** See `sample-app/src/TaskFlow/TaskFlow.Bootstrapper/`
+> Reference patterns: [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md).
 
 ```
 {Host}.Bootstrapper/
@@ -19,7 +19,7 @@ The **Bootstrapper project** is the centralized DI registration hub. It wires up
 
 `RegisterServices.cs` is a **static class** with extension methods on `IServiceCollection`, organized by layer:
 
-> **Reference implementation:** See `sample-app/src/TaskFlow/TaskFlow.Bootstrapper/RegisterServices.cs` for the full registration pattern including DbContext pooling, repository registration, service registration with per-service settings, caching, message handlers, and startup tasks.
+> See sampleapp-patterns.md for full registration pattern.
 
 ```csharp
 // Compact pattern — see sampleapp for full implementation
@@ -59,7 +59,7 @@ public static class RegisterServices
 
 ## Startup Task Pattern
 
-> **Reference implementation:** See `sample-app/src/TaskFlow/TaskFlow.Bootstrapper/IStartupTask.cs` and `sample-app/src/TaskFlow/TaskFlow.Bootstrapper/IHostExtensions.cs`
+> See sampleapp-patterns.md.
 
 ### Interface
 
@@ -99,7 +99,7 @@ public class ApplyEFMigrationsStartup(IDbContextFactory<{Project}DbContextTrxn> 
 
 ## Usage in Host Projects
 
-> **Reference implementation:** See `sample-app/src/TaskFlow/TaskFlow.Api/Program.cs` (API), `sample-app/src/Functions/TaskFlow.FunctionApp/Program.cs` (Functions)
+> See sampleapp-patterns.md (API Startup Sequence).
 
 ### API Program.cs
 

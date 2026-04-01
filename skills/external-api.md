@@ -1,5 +1,7 @@
 # External API Integration
 
+> **Shared infrastructure pattern:** External APIs and messaging services both follow the same integration chain: **Settings class → Named client/auth handler → DI extension method → Resilience pipeline → Wrapper service**. This file shows the pattern for external APIs. For messaging-specific adapters (Service Bus, Event Grid, Event Hub), see [messaging.md](messaging.md) which follows the same structural conventions.
+
 Use one infrastructure project per external API: `Infrastructure.{ServiceName}`.
 
 ## Structure

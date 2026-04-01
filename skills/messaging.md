@@ -6,10 +6,12 @@ Base types (`IServiceBusSender`, `IEventGridPublisher`, `IEventHubProducer`) com
 
 - [package-dependencies.md](package-dependencies.md)
 - [bootstrapper.md](bootstrapper.md)
-- [configuration.md](configuration.md)
+- [configuration-secrets.md](configuration-secrets.md)
 - [background-services.md](background-services.md)
 
 Rule: use `IInternalMessageBus` for in-process events; use this skill for cross-service messaging.
+
+> **Shared infrastructure pattern:** Messaging follows the same **Settings → Named client → DI → Resilience** integration chain as external APIs. See [external-api.md](external-api.md) for the general pattern with Refit/resilience pipeline. This file covers messaging-specific adapters.
 
 ## Service Selection
 

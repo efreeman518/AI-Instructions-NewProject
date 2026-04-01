@@ -3,9 +3,8 @@
 | | |
 |---|---|
 | **File** | `Application.Services/{Entity}Service.cs` |
-| **Depends on** | [repository-template](repository-template.md), [mapper-template](mapper-template.md), [dto-template](dto-template.md), [structure-validator-template](structure-validator-template.md) |
+| **Depends on** | [repository-template](repository-template.md), [data-mapping-template](data-mapping-template.md), [data-mapping-template](data-mapping-template.md), [structure-validator-template](structure-validator-template.md) |
 | **Referenced by** | [endpoint-template](endpoint-template.md), [bootstrapper.md](../skills/bootstrapper.md) |
-| **Sampleapp** | `sample-app/src/Application/TaskFlow.Application.Services/Services/TodoItemService.cs` |
 
 ## File: Application/Services/{Entity}Service.cs
 

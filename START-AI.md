@@ -39,7 +39,7 @@ Status: MATCH | MISMATCH | FIRST-TIME
 ```
 
 - **MATCH** → proceed.
-- **MISMATCH** → stop. Warn the user: *"Target project was scaffolded with instruction set v{old}; current is v{new}. Review support/CHANGELOG.md for breaking changes before continuing."*
+- **MISMATCH** → stop. Warn the user: *"Target project was scaffolded with instruction set v{old}; current is v{new}. Review README.md release notes for breaking changes before continuing."*
 - **FIRST-TIME** → proceed. After Phase 4a completes, create `.instruction-version` in the target project root with the manifest version string.
 
 If `HANDOFF.md` contains an `instructionVersion` field, include it in the comparison.
@@ -49,18 +49,17 @@ If `HANDOFF.md` contains an `instructionVersion` field, include it in the compar
 When instructions in different files disagree:
 `support/execution-gates.md` > `ai/SKILL.md` > individual skill files > templates
 
-## Phase Load Automation
+## Phase Load Resolution
 
-Prefer generated load packs over manual file picking:
+Use `phase-load-packs.json` as the primary interface for phase file lists. It is pre-computed from `_manifest.json` and keyed by scaffold mode.
 
-1. Run `./scripts/get-phase-load-set.ps1 -Phase <phase> -Mode <full|lite|api-only> [feature flags]`
-2. The resolver expands transitive `requires`/`dependencies` and applies manifest-driven mode exclusions.
-3. For Phase 4g, add `-IncludeAiSearch` and/or `-IncludeAgents` when only one AI capability is in scope.
-4. Load only the returned files.
+1. Read `phase-load-packs.json` → `packs.<mode>.<phase>` for the current phase and mode.
+2. Load only the returned files.
+3. For Phase 4g, scope further: load only AI search or agent files as needed.
 
-**If scripts are unavailable:** read `phase-load-packs.json` directly for the current phase and mode.
+**To regenerate** (after adding/removing instruction files): run `./scripts/get-phase-load-set.ps1 -Phase <phase> -Mode <full|lite|api-only> [feature flags]`. The resolver expands transitive `requires`/`dependencies` and applies manifest-driven mode exclusions.
 
-Canonical generated output: `phase-load-packs.json`.
+For quick template lookups, see `templates/index.md`.
 
 ## Phase Router
 
@@ -93,13 +92,13 @@ Each phase is one session. Load only the files listed for the current phase.
 
 ## Strict On-Demand Files
 
-Do not preload these. Load only when needed:
+Do not preload these. Load only when the trigger condition is met:
 
-- `support/quick-reference.md` (naming/DI/config lookups)
-- `support/sampleapp-patterns.md` (cross-project pattern selection; load before opening raw sampleapp source)
-- `support/troubleshooting.md` (only when failures occur)
-- `support/engineer-checklist.md` (execution/infra verification)
-- `support/execution-gates.md` (canonical phase checkpoints and commands)
+- `support/quick-reference.md` — **load when** scaffolding entities/endpoints and you need naming conventions, DI patterns, or config key lookups
+- `support/sampleapp-patterns.md` — **load when** building a new slice or optional host, or when you need composition wiring patterns (how files connect across projects)
+- `support/troubleshooting.md` — **load when** a build/test/run failure occurs that isn't resolved by the one-pass fix attempt
+- `support/execution-gates.md` — **load when** validating phase completion gates or running operator setup checks
+- `templates/index.md` — **load when** you need a quick lookup for "I need to scaffold X → load template Y + skill Z"
 
 ## Defaults Source of Truth
 
@@ -107,6 +106,5 @@ All defaults and profile values must come from `ai/resource-implementation-schem
 
 ## Guardrails
 
-- Never edit/build `sample-app/`.
 - Generate code only in the target project.
 - Keep context minimal per phase; unload prior-phase docs when transitioning.

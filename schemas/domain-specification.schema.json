@@ -1,0 +1,274 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "domain-specification.schema.json",
+  "title": "Domain Specification",
+  "description": "Phase 1 output: pure business domain model. Schema reference: ai/domain-specification-schema.md",
+  "type": "object",
+  "required": ["ProjectName", "entities"],
+  "properties": {
+    "ProjectName": {
+      "type": "string",
+      "pattern": "^[A-Z][a-zA-Z0-9]+$",
+      "description": "PascalCase project name, no spaces"
+    },
+    "ProjectDescription": { "type": "string" },
+    "OrganizationName": {
+      "type": "string",
+      "pattern": "^[A-Z][a-zA-Z0-9]*$",
+      "description": "Optional namespace prefix (PascalCase)"
+    },
+    "multiTenant": { "type": "boolean", "default": true },
+    "tenantIsolation": {
+      "type": "string",
+      "enum": ["row-level", "schema", "database"],
+      "default": "row-level"
+    },
+    "globalAdminRole": { "type": "string", "default": "GlobalAdmin" },
+    "authProvider": {
+      "type": "string",
+      "enum": ["EntraID", "EntraExternal", "Google", "Facebook", "Apple", "OAuth2", "None"],
+      "default": "EntraID"
+    },
+    "authScenario": {
+      "type": "string",
+      "enum": ["enterprise", "external", "hybrid"],
+      "default": "enterprise"
+    },
+    "entities": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/entity" }
+    },
+    "domainRules": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/domainRule" }
+    },
+    "events": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/event" }
+    },
+    "workflows": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/workflow" }
+    },
+    "policyMatrices": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/policyMatrix" }
+    },
+    "aiCapabilities": { "$ref": "#/$defs/aiCapabilities" }
+  },
+  "$defs": {
+    "entity": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Z][a-zA-Z0-9]+$",
+          "not": {
+            "enum": ["Task", "Thread", "Timer", "Type", "String", "Object", "Action", "Attribute", "File", "Path"]
+          }
+        },
+        "description": { "type": "string" },
+        "isTenantEntity": { "type": "boolean", "default": true },
+        "properties": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/property" }
+        },
+        "children": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/childRelationship" }
+        },
+        "navigation": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/navigationRelationship" }
+        },
+        "rules": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/entityRule" }
+        },
+        "stateMachine": { "$ref": "#/$defs/stateMachine" },
+        "customActions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string" },
+              "params": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["name"],
+                  "properties": {
+                    "name": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "property": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string" },
+        "kind": {
+          "type": "string",
+          "enum": ["string", "enum", "flags_enum", "number", "date", "boolean", "identifier", "money", "text"],
+          "default": "string"
+        },
+        "required": { "type": "boolean", "default": false },
+        "description": { "type": "string" },
+        "values": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Enum/flags_enum values"
+        }
+      }
+    },
+    "childRelationship": {
+      "type": "object",
+      "required": ["name", "entity", "relationship"],
+      "properties": {
+        "name": { "type": "string" },
+        "entity": { "type": "string" },
+        "relationship": {
+          "type": "string",
+          "enum": ["one-to-many", "many-to-many", "self-referencing", "polymorphic-join"]
+        },
+        "cascadeDelete": { "type": "boolean" },
+        "selfReferenceKey": { "type": "string" },
+        "polymorphicEntityTypes": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "navigationRelationship": {
+      "type": "object",
+      "required": ["name", "entity"],
+      "properties": {
+        "name": { "type": "string" },
+        "entity": { "type": "string" },
+        "required": { "type": "boolean", "default": false }
+      }
+    },
+    "entityRule": {
+      "type": "object",
+      "required": ["name", "condition"],
+      "properties": {
+        "name": { "type": "string" },
+        "condition": { "type": "string" },
+        "errorMessage": { "type": "string" }
+      }
+    },
+    "domainRule": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string" },
+        "appliesTo": { "type": "array", "items": { "type": "string" } },
+        "dependsOn": { "type": "array", "items": { "type": "string" } },
+        "errorMessage": { "type": "string" }
+      }
+    },
+    "stateMachine": {
+      "type": "object",
+      "required": ["field", "initial", "states", "transitions"],
+      "properties": {
+        "field": { "type": "string" },
+        "initial": { "type": "string" },
+        "states": { "type": "array", "items": { "type": "string" } },
+        "transitions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["from", "to", "action"],
+            "properties": {
+              "from": { "type": "string" },
+              "to": { "type": "string" },
+              "action": { "type": "string" },
+              "guard": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "event": {
+      "type": "object",
+      "required": ["name", "raisedBy", "trigger"],
+      "properties": {
+        "name": { "type": "string" },
+        "raisedBy": { "type": "string" },
+        "trigger": {
+          "type": "string",
+          "pattern": "^(afterCreate|afterUpdate|afterStatusChange|afterAction\\(.+\\)|afterDelete|scheduled)$"
+        },
+        "payload": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "workflow": {
+      "type": "object",
+      "required": ["name", "pattern", "involvedEntities", "steps"],
+      "properties": {
+        "name": { "type": "string" },
+        "pattern": { "type": "string", "enum": ["orchestrator", "saga", "choreography"] },
+        "involvedEntities": { "type": "array", "items": { "type": "string" } },
+        "steps": { "type": "array", "items": { "type": "string" } },
+        "compensationRequired": { "type": "boolean" },
+        "compensation": {
+          "type": "object",
+          "properties": {
+            "rollbackOrder": { "type": "string" },
+            "rules": { "type": "array", "items": { "type": "object" } }
+          }
+        },
+        "notes": { "type": "string" }
+      }
+    },
+    "policyMatrix": {
+      "type": "object",
+      "required": ["name", "dimensions", "outputs", "rows"],
+      "properties": {
+        "name": { "type": "string" },
+        "dimensions": { "type": "array", "items": { "type": "string" } },
+        "outputs": { "type": "array", "items": { "type": "string" } },
+        "rows": { "type": "array", "items": { "type": "object" } }
+      }
+    },
+    "aiCapabilities": {
+      "type": "object",
+      "properties": {
+        "search": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["entity", "searchableFields", "intent"],
+            "properties": {
+              "entity": { "type": "string" },
+              "searchableFields": { "type": "array", "items": { "type": "string" } },
+              "intent": { "type": "string" }
+            }
+          }
+        },
+        "agentWorkflows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "description", "involvedEntities"],
+            "properties": {
+              "name": { "type": "string" },
+              "description": { "type": "string" },
+              "involvedEntities": { "type": "array", "items": { "type": "string" } },
+              "humanInLoop": { "type": "boolean" },
+              "decisions": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        }
+      }
+    }
+  }
+}

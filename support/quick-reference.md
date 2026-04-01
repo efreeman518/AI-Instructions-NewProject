@@ -139,7 +139,7 @@ Or from the project root:
 cat .instruction-version   # version the target project was scaffolded with
 ```
 
-Version mismatch → see `support/CHANGELOG.md` for breaking changes before continuing.
+Version mismatch → see `README.md` release notes for breaking changes before continuing.
 
 ---
 

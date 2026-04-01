@@ -20,10 +20,10 @@ Use this when adding a new entity to an **already-scaffolded** solution. Skip fu
 
 1. `SKILL.md` (base reference)
 2. `placeholder-tokens.md`
-3. Backend templates: `entity-template.md`, `ef-configuration-template.md`, `repository-template.md`, `dto-template.md`, `mapper-template.md`, `service-template.md`, `endpoint-template.md`, `structure-validator-template.md`
+3. Backend templates: `entity-template.md`, `ef-configuration-template.md`, `repository-template.md`, `data-mapping-template.md`, `service-template.md`, `endpoint-template.md`, `structure-validator-template.md`
 4. If domain rules needed: `domain-rules-template.md`
 5. If child collections: `updater-template.md`
-6. If UI enabled: `mvux-model-template.md`, `xaml-page-template.md`, `ui-model-template.md`, `ui-service-template.md`
+6. If UI enabled: `mvux-model-template.md`, `xaml-page-template.md`, `ui-client-layer.md`
 
 ### Slice Execution Order
 
@@ -88,12 +88,12 @@ For entity `{Entity}`:
 | Data | `src/Infrastructure/{Project}.Infrastructure.Repositories/{Entity}RepositoryTrxn.cs` | [repository-template.md](../templates/repository-template.md) | yes |
 | Data | `src/Infrastructure/{Project}.Infrastructure.Repositories/{Entity}RepositoryQuery.cs` | [repository-template.md](../templates/repository-template.md) | yes |
 | Data (optional) | `src/Infrastructure/{Project}.Infrastructure.Repositories/Updaters/{Entity}Updater.cs` | [updater-template.md](../templates/updater-template.md) | if child collections |
-| App | `src/Application/{Project}.Application.Models/{Entity}/{Entity}Dto.cs` | [dto-template.md](../templates/dto-template.md) | yes |
-| App | `src/Application/{Project}.Application.Models/{Entity}/{Entity}SearchFilter.cs` | [dto-template.md](../templates/dto-template.md) | yes |
+| App | `src/Application/{Project}.Application.Models/{Entity}/{Entity}Dto.cs` | [data-mapping-template.md](../templates/data-mapping-template.md) | yes |
+| App | `src/Application/{Project}.Application.Models/{Entity}/{Entity}SearchFilter.cs` | [data-mapping-template.md](../templates/data-mapping-template.md) | yes |
 | App | `src/Application/{Project}.Application.Contracts/Services/I{Entity}Service.cs` | [service-template.md](../templates/service-template.md) | yes |
 | App | `src/Application/{Project}.Application.Contracts/Repositories/I{Entity}RepositoryTrxn.cs` | [repository-template.md](../templates/repository-template.md) | yes |
 | App | `src/Application/{Project}.Application.Contracts/Repositories/I{Entity}RepositoryQuery.cs` | [repository-template.md](../templates/repository-template.md) | yes |
-| App | `src/Application/{Project}.Application.Contracts/Mappers/{Entity}Mapper.cs` | [mapper-template.md](../templates/mapper-template.md) | yes |
+| App | `src/Application/{Project}.Application.Contracts/Mappers/{Entity}Mapper.cs` | [data-mapping-template.md](../templates/data-mapping-template.md) | yes |
 | App | `src/Application/{Project}.Application.Services/Services/{Entity}Service.cs` | [service-template.md](../templates/service-template.md) | yes |
 | App (optional) | `src/Application/{Project}.Application.Services/Validators/{Entity}Validator.cs` | — | if custom validator used |
 | API | `src/{Host}/{Host}.Api/Endpoints/{Entity}Endpoints.cs` | [endpoint-template.md](../templates/endpoint-template.md) | yes |
@@ -121,13 +121,13 @@ dotnet ef migrations add Add{Entity} --project src/Infrastructure/{Project}.Infr
 
 | File Path | Template |
 |---|---|
-| `src/Test/Test.Unit/Domain/{Entity}Tests.cs` | [test-template-unit.md](../templates/test-template-unit.md) |
-| `src/Test/Test.Unit/Services/{Entity}ServiceTests.cs` | [test-template-unit.md](../templates/test-template-unit.md) |
-| `src/Test/Test.Unit/Repositories/{Entity}RepositoryTrxnTests.cs` | [test-template-unit.md](../templates/test-template-unit.md) |
-| `src/Test/Test.Unit/Repositories/{Entity}RepositoryQueryTests.cs` | [test-template-unit.md](../templates/test-template-unit.md) |
-| `src/Test/Test.Unit/Mappers/{Entity}MapperTests.cs` | [test-template-unit.md](../templates/test-template-unit.md) |
-| `src/Test/Test.Integration/Endpoints/{Entity}EndpointsTests.cs` | [test-template-integration.md](../templates/test-template-integration.md) |
-| `src/Test/Test.Architecture/` updates | [test-template-quality.md](../templates/test-template-quality.md) |
+| `src/Test/Test.Unit/Domain/{Entity}Tests.cs` | [test-templates.md](../templates/test-templates.md) |
+| `src/Test/Test.Unit/Services/{Entity}ServiceTests.cs` | [test-templates.md](../templates/test-templates.md) |
+| `src/Test/Test.Unit/Repositories/{Entity}RepositoryTrxnTests.cs` | [test-templates.md](../templates/test-templates.md) |
+| `src/Test/Test.Unit/Repositories/{Entity}RepositoryQueryTests.cs` | [test-templates.md](../templates/test-templates.md) |
+| `src/Test/Test.Unit/Mappers/{Entity}MapperTests.cs` | [test-templates.md](../templates/test-templates.md) |
+| `src/Test/Test.Integration/Endpoints/{Entity}EndpointsTests.cs` | [test-templates.md](../templates/test-templates.md) |
+| `src/Test/Test.Architecture/` updates | [test-templates.md](../templates/test-templates.md) |
 
 ### Required Test Gate by Profile
 
@@ -158,7 +158,7 @@ Also update `App.xaml.host.cs`:
 - register UI services,
 - register navigation routes.
 
-Templates: [ui-model-template.md](../templates/ui-model-template.md), [ui-service-template.md](../templates/ui-service-template.md), [mvux-model-template.md](../templates/mvux-model-template.md), [xaml-page-template.md](../templates/xaml-page-template.md).
+Templates: [ui-client-layer.md](../templates/ui-client-layer.md), [ui-client-layer.md](../templates/ui-client-layer.md), [mvux-model-template.md](../templates/mvux-model-template.md), [xaml-page-template.md](../templates/xaml-page-template.md).
 
 ---
 

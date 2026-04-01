@@ -1,0 +1,325 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "resource-implementation.schema.json",
+  "title": "Resource Implementation",
+  "description": "Phase 2 output: maps domain to Aspire/Azure resources and datatypes. Schema reference: ai/resource-implementation-schema.md",
+  "type": "object",
+  "required": ["scaffoldMode", "testingProfile", "entities", "externalDependencyModes"],
+  "properties": {
+    "scaffoldMode": {
+      "type": "string",
+      "enum": ["full", "lite", "api-only"],
+      "default": "full"
+    },
+    "testingProfile": {
+      "type": "string",
+      "enum": ["minimal", "balanced", "comprehensive"],
+      "default": "balanced"
+    },
+    "functionProfile": {
+      "type": "string",
+      "enum": ["starter", "full"],
+      "default": "starter"
+    },
+    "unoProfile": {
+      "type": "string",
+      "enum": ["starter", "full"],
+      "default": "starter"
+    },
+    "customNugetFeeds": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "includeApi": { "type": "boolean", "default": true },
+    "includeGateway": { "type": "boolean", "default": false },
+    "includeFunctionApp": { "type": "boolean", "default": false },
+    "includeScheduler": { "type": "boolean", "default": false },
+    "includeUnoUI": { "type": "boolean", "default": false },
+    "includeIaC": { "type": "boolean", "default": true },
+    "includeGitHubActions": { "type": "boolean", "default": false },
+    "includeAzd": { "type": "boolean", "default": false },
+    "includeAiServices": { "type": "boolean", "default": false },
+    "database": {
+      "type": "string",
+      "enum": ["AzureSQL", "SQLServer"],
+      "default": "AzureSQL"
+    },
+    "caching": {
+      "type": "string",
+      "enum": ["FusionCache+Redis", "DistributedMemory", "None"],
+      "default": "FusionCache+Redis"
+    },
+    "includeKeyVault": { "type": "boolean", "default": false },
+    "deployTarget": {
+      "type": "string",
+      "enum": ["ContainerApps", "AppService", "AKS"],
+      "default": "ContainerApps"
+    },
+    "useAspire": { "type": "boolean", "default": true },
+    "gatewayAuth": { "type": "string", "default": "EntraExternal" },
+    "apiAuth": { "type": "string", "default": "EntraID" },
+    "tokenRelay": { "type": "boolean", "default": true },
+    "tenantIdType": { "type": "string", "default": "Guid" },
+    "includeArchitectureTests": { "type": "boolean", "default": false },
+    "includeE2ETests": { "type": "boolean", "default": false },
+    "includeLoadTests": { "type": "boolean", "default": false },
+    "includeBenchmarkTests": { "type": "boolean", "default": false },
+    "azureRegion": { "type": "string", "default": "eastus2" },
+    "iacEnvironments": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": ["dev", "staging", "prod"]
+    },
+    "usePrivateEndpoints": { "type": "boolean", "default": false },
+    "entities": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/entityMapping" }
+    },
+    "messagingProviders": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/messagingProvider" }
+    },
+    "messagingChannels": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/messagingChannel" }
+    },
+    "messagingSemantics": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/messagingSemantic" }
+    },
+    "notifications": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/notification" }
+    },
+    "scheduledJobs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/scheduledJob" }
+    },
+    "functionDefinitions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/functionDefinition" }
+    },
+    "externalDependencyModes": { "$ref": "#/$defs/externalDependencyModes" },
+    "aiServices": { "$ref": "#/$defs/aiServices" },
+    "compliance": { "$ref": "#/$defs/compliance" },
+    "moneyCalculationPolicy": { "type": "object" },
+    "timeBoundaryPolicy": { "type": "object" },
+    "entitlementPolicy": { "type": "object" },
+    "ingestionSemantics": { "type": "object" }
+  },
+  "$defs": {
+    "entityMapping": {
+      "type": "object",
+      "required": ["name", "dataStore"],
+      "properties": {
+        "name": { "type": "string" },
+        "dataStore": {
+          "type": "string",
+          "enum": ["sql", "cosmosdb", "table", "blob"]
+        },
+        "partitionKeyProperty": { "type": "string" },
+        "throughputProfile": { "type": "string" },
+        "retentionPolicy": { "type": "string" },
+        "replayWindow": { "type": "string" },
+        "properties": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/typedProperty" }
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "entity", "relationship"],
+            "properties": {
+              "name": { "type": "string" },
+              "entity": { "type": "string" },
+              "relationship": { "type": "string" },
+              "joinEntity": { "type": "string" }
+            }
+          }
+        },
+        "navigation": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "entity"],
+            "properties": {
+              "name": { "type": "string" },
+              "entity": { "type": "string" },
+              "required": { "type": "boolean" },
+              "deleteRestrict": { "type": "boolean" }
+            }
+          }
+        },
+        "embedded": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string" },
+              "properties": {
+                "type": "array",
+                "items": { "$ref": "#/$defs/typedProperty" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "typedProperty": {
+      "type": "object",
+      "required": ["name", "type"],
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string" },
+        "maxLength": { "type": "integer" },
+        "precision": { "type": "integer" },
+        "scale": { "type": "integer" },
+        "required": { "type": "boolean" }
+      }
+    },
+    "messagingProvider": {
+      "type": "object",
+      "required": ["name", "type"],
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["AzureServiceBus", "EventGrid", "EventHubs"] }
+      }
+    },
+    "messagingChannel": {
+      "type": "object",
+      "required": ["name", "provider", "pattern"],
+      "properties": {
+        "name": { "type": "string" },
+        "provider": { "type": "string" },
+        "pattern": { "type": "string", "enum": ["topic", "queue"] }
+      }
+    },
+    "messagingSemantic": {
+      "type": "object",
+      "required": ["channel"],
+      "properties": {
+        "channel": { "type": "string" },
+        "deliveryMode": { "type": "string", "enum": ["at-least-once", "at-most-once", "exactly-once"] },
+        "outboxEnabled": { "type": "boolean" },
+        "idempotencyKey": { "type": "string" },
+        "deduplicationWindow": { "type": "string" }
+      }
+    },
+    "notification": {
+      "type": "object",
+      "required": ["name", "trigger", "channel"],
+      "properties": {
+        "name": { "type": "string" },
+        "trigger": { "type": "string" },
+        "channel": { "type": "string", "enum": ["email", "push", "sms", "in-app"] },
+        "template": { "type": "string" },
+        "recipients": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "scheduledJob": {
+      "type": "object",
+      "required": ["name", "schedule"],
+      "properties": {
+        "name": { "type": "string" },
+        "schedule": { "type": "string" },
+        "description": { "type": "string" },
+        "targetService": { "type": "string" },
+        "method": { "type": "string" }
+      }
+    },
+    "functionDefinition": {
+      "type": "object",
+      "required": ["name", "trigger"],
+      "properties": {
+        "name": { "type": "string" },
+        "trigger": { "type": "string", "enum": ["serviceBusTopic", "httpTrigger", "timerTrigger", "blobTrigger", "queueTrigger"] },
+        "channel": { "type": "string" },
+        "subscription": { "type": "string" },
+        "schedule": { "type": "string" },
+        "description": { "type": "string" }
+      }
+    },
+    "externalDependencyModes": {
+      "type": "object",
+      "properties": {
+        "sql": { "$ref": "#/$defs/dependencyMode" },
+        "redis": { "$ref": "#/$defs/dependencyMode" },
+        "serviceBus": { "$ref": "#/$defs/dependencyMode" },
+        "eventGrid": { "$ref": "#/$defs/dependencyMode" },
+        "keyVault": { "$ref": "#/$defs/dependencyMode" },
+        "blobStorage": { "$ref": "#/$defs/dependencyMode" },
+        "cosmosDb": { "$ref": "#/$defs/dependencyMode" },
+        "aiServices": { "$ref": "#/$defs/dependencyMode" },
+        "externalApis": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "mode"],
+            "properties": {
+              "name": { "type": "string" },
+              "mode": { "$ref": "#/$defs/dependencyMode" }
+            }
+          }
+        }
+      }
+    },
+    "dependencyMode": {
+      "type": "string",
+      "enum": ["emulator", "lazy-optional", "no-op stub", "deployment-only"]
+    },
+    "aiServices": {
+      "type": "object",
+      "properties": {
+        "includeAiServices": { "type": "boolean" },
+        "foundry": {
+          "type": "object",
+          "properties": {
+            "projectName": { "type": "string" },
+            "models": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["name", "purpose"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "purpose": { "type": "string", "enum": ["agent-reasoning", "embedding", "completion"] },
+                  "deploymentName": { "type": "string" }
+                }
+              }
+            },
+            "useFoundryAgentService": { "type": "boolean" }
+          }
+        },
+        "search": {
+          "type": "object",
+          "properties": {
+            "provider": { "type": "string", "enum": ["AzureAISearch", "None"] },
+            "indexes": { "type": "array", "items": { "type": "object" } },
+            "embeddingModel": { "type": "string" },
+            "embeddingDimensions": { "type": "integer" },
+            "vectorizationStrategy": { "type": "string", "enum": ["on-write", "batch", "change-feed"] }
+          }
+        },
+        "agents": {
+          "type": "object",
+          "properties": {
+            "framework": { "type": "string" },
+            "agents": { "type": "array", "items": { "type": "object" } },
+            "workflow": { "type": "object" }
+          }
+        }
+      }
+    },
+    "compliance": {
+      "type": "object",
+      "properties": {
+        "defaultClassification": { "type": "string" },
+        "entities": { "type": "array", "items": { "type": "object" } }
+      }
+    }
+  }
+}

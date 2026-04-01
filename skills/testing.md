@@ -2,7 +2,7 @@
 
 Use this skill to scaffold tests by profile and phase.
 
-Reference implementation: `sample-app/src/Test/` (7 test projects covering unit, integration, architecture, E2E, load, benchmarks).
+Reference patterns: [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) (Expected Output File Index — Testing).
 
 ## Profiles
 
@@ -31,10 +31,10 @@ Test/
 
 ## Templates
 
-- Unit: [../templates/test-template-unit.md](../templates/test-template-unit.md)
-- Integration: [../templates/test-template-integration.md](../templates/test-template-integration.md)
-- E2E: [../templates/test-template-e2e.md](../templates/test-template-e2e.md)
-- Quality gates: [../templates/test-template-quality.md](../templates/test-template-quality.md)
+- Unit: [../templates/test-templates.md](../templates/test-templates.md)
+- Integration: [../templates/test-templates.md](../templates/test-templates.md)
+- E2E: [../templates/test-templates.md](../templates/test-templates.md)
+- Quality gates: [../templates/test-templates.md](../templates/test-templates.md)
 
 ---
 

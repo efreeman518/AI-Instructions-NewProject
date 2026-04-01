@@ -5,25 +5,17 @@ on:
     branches: [main]
     paths:
       - "**/*.md"
-      - "scripts/preflight-instructions.ps1"
-      - "scripts/lint-instructions.ps1"
-      - "scripts/update-manifest.ps1"
-      - "scripts/generate-phase-load-packs.ps1"
-      - "scripts/get-phase-load-set.ps1"
+      - "scripts/**"
       - "phase-load-packs.json"
-      - "sample-app/**"
+      - "_manifest.json"
       - ".github/workflows/instruction-preflight.yml"
   push:
     branches: [main]
     paths:
       - "**/*.md"
-      - "scripts/preflight-instructions.ps1"
-      - "scripts/lint-instructions.ps1"
-      - "scripts/update-manifest.ps1"
-      - "scripts/generate-phase-load-packs.ps1"
-      - "scripts/get-phase-load-set.ps1"
+      - "scripts/**"
       - "phase-load-packs.json"
-      - "sample-app/**"
+      - "_manifest.json"
       - ".github/workflows/instruction-preflight.yml"
   workflow_dispatch:
 
@@ -41,29 +33,3 @@ jobs:
       - name: Run instruction preflight
         shell: pwsh
         run: ./scripts/preflight-instructions.ps1
-
-  sample-app-build:
-    # Validates that sample-app stays buildable and tests pass as instructions evolve.
-    # Note: net10.0-ios target requires macOS and is excluded here; wasm + android are covered.
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.x'
-
-      - name: Install Uno workloads (wasm + android)
-        run: dotnet workload install wasm-tools android
-
-      - name: Restore
-        run: dotnet restore sample-app/src/TaskFlow.slnx
-
-      - name: Build
-        run: dotnet build sample-app/src/TaskFlow.slnx --no-restore --configuration Release
-
-      - name: Unit tests
-        run: dotnet test sample-app/src/TaskFlow.slnx --no-build --configuration Release --filter "TestCategory=Unit"

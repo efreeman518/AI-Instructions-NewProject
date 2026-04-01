@@ -25,7 +25,7 @@ public abstract class EntityBase
 
 See [entity-template.md](../templates/entity-template.md) for full implementation patterns including factory creation, child collections, flags enums, and join entities.
 
-Reference implementation: `sample-app/src/Domain/TaskFlow.Domain.Model/Entities/`.
+Reference patterns: [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) (Expected Output File Index — Domain Layer).
 
 ## Key Design Rules
 
@@ -137,4 +137,4 @@ After generating domain entities, confirm:
 - [ ] Child collections use `ICollection<T>` with controlled mutation methods (`Add/Remove`) on the entity
 - [ ] `RowVersion` property exists for concurrency (configured in EF, not in entity)
 - [ ] No infrastructure concerns (no EF attributes, no `DbContext`, no DTOs)
-- [ ] Cross-references: Entity properties align with [dto-template.md](../templates/dto-template.md), EF config covers all relationships per [ef-configuration-template.md](../templates/ef-configuration-template.md)
+- [ ] Cross-references: Entity properties align with [data-mapping-template.md](../templates/data-mapping-template.md), EF config covers all relationships per [ef-configuration-template.md](../templates/ef-configuration-template.md)
