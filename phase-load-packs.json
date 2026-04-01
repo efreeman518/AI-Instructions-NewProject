@@ -67,28 +67,35 @@
         "templates/structure-validator-template.md",
         "templates/exception-handler-template.md"
       ],
-      "phase-2": [
-        "ai/resource-implementation-schema.md"
-      ],
-      "phase-4-base": [
-        "ai/SKILL.md",
-        "ai/placeholder-tokens.md"
-      ],
-      "on-demand": [
-        "support/quick-reference.md",
-        "support/troubleshooting.md",
-        "support/sampleapp-patterns.md",
-        "support/vertical-slice-checklist.md",
-        "support/UPDATE-INSTRUCTIONS.md",
-        "support/HANDOFF.md",
-        "support/execution-gates.md",
-        "templates/index.md"
+      "phase-4a-optional": [
+        "skills/azure-data-storage.md",
+        "templates/updater-template.md"
       ],
       "phase-4d": [
         "skills/background-services.md",
         "skills/function-app.md",
         "skills/uno-ui.md",
         "skills/notifications.md"
+      ],
+      "phase-4g": [
+        "skills/ai-integration.md",
+        "templates/ai-search-template.md",
+        "templates/agent-template.md"
+      ],
+      "phase-4c": [
+        "skills/gateway.md",
+        "skills/multi-tenant.md",
+        "skills/caching.md",
+        "skills/aspire.md",
+        "skills/configuration-secrets.md",
+        "skills/observability.md",
+        "skills/security.md"
+      ],
+      "phase-2": [
+        "ai/resource-implementation-schema.md"
+      ],
+      "phase-1": [
+        "ai/domain-specification-schema.md"
       ],
       "phase-4a": [
         "skills/solution-structure.md",
@@ -101,45 +108,18 @@
         "templates/domain-rules-template.md",
         "templates/appsettings-template.md"
       ],
-      "phase-4e-optional": [
-        "skills/messaging.md",
-        "skills/grpc.md",
-        "skills/external-api.md"
-      ],
-      "phase-4a-optional": [
-        "skills/azure-data-storage.md",
-        "templates/updater-template.md"
-      ],
-      "metadata": [
-        "_manifest.json",
-        "scripts/update-manifest.ps1"
-      ],
-      "support-only": [
-        "README.md"
-      ],
-      "session-bootstrap": [
-        "START-AI.md",
-        "CLAUDE.md",
-        ".github/copilot-instructions.md"
-      ],
-      "phase-4g": [
-        "skills/ai-integration.md",
-        "templates/ai-search-template.md",
-        "templates/agent-template.md"
+      "on-demand": [
+        "support/quick-reference.md",
+        "support/troubleshooting.md",
+        "support/sampleapp-patterns.md",
+        "support/vertical-slice-checklist.md",
+        "support/UPDATE-INSTRUCTIONS.md",
+        "support/HANDOFF.md",
+        "support/execution-gates.md",
+        "templates/index.md"
       ],
       "phase-3": [
         "ai/implementation-plan.md"
-      ],
-      "phase-4d-optional": [
-        "templates/mvux-model-template.md",
-        "templates/ui-client-layer.md",
-        "templates/xaml-page-template.md"
-      ],
-      "phase-4f": [
-        "skills/identity-management.md"
-      ],
-      "phase-1": [
-        "ai/domain-specification-schema.md"
       ],
       "phase-4e": [
         "skills/testing.md",
@@ -148,14 +128,34 @@
         "skills/cicd.md",
         "templates/dockerfile-template.md"
       ],
-      "phase-4c": [
-        "skills/gateway.md",
-        "skills/multi-tenant.md",
-        "skills/caching.md",
-        "skills/aspire.md",
-        "skills/configuration-secrets.md",
-        "skills/observability.md",
-        "skills/security.md"
+      "phase-4d-optional": [
+        "templates/mvux-model-template.md",
+        "templates/ui-client-layer.md",
+        "templates/xaml-page-template.md"
+      ],
+      "support-only": [
+        "README.md"
+      ],
+      "phase-4-base": [
+        "ai/SKILL.md",
+        "ai/placeholder-tokens.md"
+      ],
+      "phase-4e-optional": [
+        "skills/messaging.md",
+        "skills/grpc.md",
+        "skills/external-api.md"
+      ],
+      "metadata": [
+        "_manifest.json",
+        "scripts/update-manifest.ps1"
+      ],
+      "phase-4f": [
+        "skills/identity-management.md"
+      ],
+      "session-bootstrap": [
+        "START-AI.md",
+        "CLAUDE.md",
+        ".github/copilot-instructions.md"
       ]
     },
     "lite": {
@@ -170,24 +170,27 @@
         "templates/structure-validator-template.md",
         "templates/exception-handler-template.md"
       ],
+      "phase-4a-optional": [
+        "skills/azure-data-storage.md",
+        "templates/updater-template.md"
+      ],
+      "phase-4d": [],
+      "phase-4g": [
+        "skills/ai-integration.md",
+        "templates/ai-search-template.md",
+        "templates/agent-template.md"
+      ],
+      "phase-4c": [
+        "skills/configuration-secrets.md",
+        "skills/observability.md",
+        "skills/security.md"
+      ],
       "phase-2": [
         "ai/resource-implementation-schema.md"
       ],
-      "phase-4-base": [
-        "ai/SKILL.md",
-        "ai/placeholder-tokens.md"
+      "phase-1": [
+        "ai/domain-specification-schema.md"
       ],
-      "on-demand": [
-        "support/quick-reference.md",
-        "support/troubleshooting.md",
-        "support/sampleapp-patterns.md",
-        "support/vertical-slice-checklist.md",
-        "support/UPDATE-INSTRUCTIONS.md",
-        "support/HANDOFF.md",
-        "support/execution-gates.md",
-        "templates/index.md"
-      ],
-      "phase-4d": [],
       "phase-4a": [
         "skills/solution-structure.md",
         "skills/domain-model.md",
@@ -199,55 +202,52 @@
         "templates/domain-rules-template.md",
         "templates/appsettings-template.md"
       ],
-      "phase-4e-optional": [
-        "skills/messaging.md",
-        "skills/grpc.md",
-        "skills/external-api.md"
-      ],
-      "phase-4a-optional": [
-        "skills/azure-data-storage.md",
-        "templates/updater-template.md"
-      ],
-      "metadata": [
-        "_manifest.json",
-        "scripts/update-manifest.ps1"
-      ],
-      "support-only": [
-        "README.md"
-      ],
-      "session-bootstrap": [
-        "START-AI.md",
-        "CLAUDE.md",
-        ".github/copilot-instructions.md"
-      ],
-      "phase-4g": [
-        "skills/ai-integration.md",
-        "templates/ai-search-template.md",
-        "templates/agent-template.md"
+      "on-demand": [
+        "support/quick-reference.md",
+        "support/troubleshooting.md",
+        "support/sampleapp-patterns.md",
+        "support/vertical-slice-checklist.md",
+        "support/UPDATE-INSTRUCTIONS.md",
+        "support/HANDOFF.md",
+        "support/execution-gates.md",
+        "templates/index.md"
       ],
       "phase-3": [
         "ai/implementation-plan.md"
-      ],
-      "phase-4d-optional": [
-        "templates/mvux-model-template.md",
-        "templates/ui-client-layer.md",
-        "templates/xaml-page-template.md"
-      ],
-      "phase-4f": [
-        "skills/identity-management.md"
-      ],
-      "phase-1": [
-        "ai/domain-specification-schema.md"
       ],
       "phase-4e": [
         "skills/testing.md",
         "templates/test-templates.md",
         "templates/dockerfile-template.md"
       ],
-      "phase-4c": [
-        "skills/configuration-secrets.md",
-        "skills/observability.md",
-        "skills/security.md"
+      "phase-4d-optional": [
+        "templates/mvux-model-template.md",
+        "templates/ui-client-layer.md",
+        "templates/xaml-page-template.md"
+      ],
+      "support-only": [
+        "README.md"
+      ],
+      "phase-4-base": [
+        "ai/SKILL.md",
+        "ai/placeholder-tokens.md"
+      ],
+      "phase-4e-optional": [
+        "skills/messaging.md",
+        "skills/grpc.md",
+        "skills/external-api.md"
+      ],
+      "metadata": [
+        "_manifest.json",
+        "scripts/update-manifest.ps1"
+      ],
+      "phase-4f": [
+        "skills/identity-management.md"
+      ],
+      "session-bootstrap": [
+        "START-AI.md",
+        "CLAUDE.md",
+        ".github/copilot-instructions.md"
       ]
     },
     "api-only": {
@@ -262,24 +262,28 @@
         "templates/structure-validator-template.md",
         "templates/exception-handler-template.md"
       ],
+      "phase-4a-optional": [
+        "skills/azure-data-storage.md",
+        "templates/updater-template.md"
+      ],
+      "phase-4d": [],
+      "phase-4g": [
+        "skills/ai-integration.md",
+        "templates/ai-search-template.md",
+        "templates/agent-template.md"
+      ],
+      "phase-4c": [
+        "skills/aspire.md",
+        "skills/configuration-secrets.md",
+        "skills/observability.md",
+        "skills/security.md"
+      ],
       "phase-2": [
         "ai/resource-implementation-schema.md"
       ],
-      "phase-4-base": [
-        "ai/SKILL.md",
-        "ai/placeholder-tokens.md"
+      "phase-1": [
+        "ai/domain-specification-schema.md"
       ],
-      "on-demand": [
-        "support/quick-reference.md",
-        "support/troubleshooting.md",
-        "support/sampleapp-patterns.md",
-        "support/vertical-slice-checklist.md",
-        "support/UPDATE-INSTRUCTIONS.md",
-        "support/HANDOFF.md",
-        "support/execution-gates.md",
-        "templates/index.md"
-      ],
-      "phase-4d": [],
       "phase-4a": [
         "skills/solution-structure.md",
         "skills/domain-model.md",
@@ -291,56 +295,52 @@
         "templates/domain-rules-template.md",
         "templates/appsettings-template.md"
       ],
-      "phase-4e-optional": [
-        "skills/messaging.md",
-        "skills/grpc.md",
-        "skills/external-api.md"
-      ],
-      "phase-4a-optional": [
-        "skills/azure-data-storage.md",
-        "templates/updater-template.md"
-      ],
-      "metadata": [
-        "_manifest.json",
-        "scripts/update-manifest.ps1"
-      ],
-      "support-only": [
-        "README.md"
-      ],
-      "session-bootstrap": [
-        "START-AI.md",
-        "CLAUDE.md",
-        ".github/copilot-instructions.md"
-      ],
-      "phase-4g": [
-        "skills/ai-integration.md",
-        "templates/ai-search-template.md",
-        "templates/agent-template.md"
+      "on-demand": [
+        "support/quick-reference.md",
+        "support/troubleshooting.md",
+        "support/sampleapp-patterns.md",
+        "support/vertical-slice-checklist.md",
+        "support/UPDATE-INSTRUCTIONS.md",
+        "support/HANDOFF.md",
+        "support/execution-gates.md",
+        "templates/index.md"
       ],
       "phase-3": [
         "ai/implementation-plan.md"
-      ],
-      "phase-4d-optional": [
-        "templates/mvux-model-template.md",
-        "templates/ui-client-layer.md",
-        "templates/xaml-page-template.md"
-      ],
-      "phase-4f": [
-        "skills/identity-management.md"
-      ],
-      "phase-1": [
-        "ai/domain-specification-schema.md"
       ],
       "phase-4e": [
         "skills/testing.md",
         "templates/test-templates.md",
         "templates/dockerfile-template.md"
       ],
-      "phase-4c": [
-        "skills/aspire.md",
-        "skills/configuration-secrets.md",
-        "skills/observability.md",
-        "skills/security.md"
+      "phase-4d-optional": [
+        "templates/mvux-model-template.md",
+        "templates/ui-client-layer.md",
+        "templates/xaml-page-template.md"
+      ],
+      "support-only": [
+        "README.md"
+      ],
+      "phase-4-base": [
+        "ai/SKILL.md",
+        "ai/placeholder-tokens.md"
+      ],
+      "phase-4e-optional": [
+        "skills/messaging.md",
+        "skills/grpc.md",
+        "skills/external-api.md"
+      ],
+      "metadata": [
+        "_manifest.json",
+        "scripts/update-manifest.ps1"
+      ],
+      "phase-4f": [
+        "skills/identity-management.md"
+      ],
+      "session-bootstrap": [
+        "START-AI.md",
+        "CLAUDE.md",
+        ".github/copilot-instructions.md"
       ]
     }
   }
