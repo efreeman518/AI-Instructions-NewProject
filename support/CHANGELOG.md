@@ -2,18 +2,18 @@
 
 This file tracks the current instruction-set release only. Historical entries are intentionally discarded.
 
-## [1.4] — 2026-03-07
-### Added
-- Manifest-driven `modeExclusions` in `_manifest.json` as the source of truth for `lite` and `api-only`
-- Dependency-aware `get-phase-load-set.ps1` resolution with transitive `requires`/`dependencies`, topological ordering, and budget reporting
-- Lint checks for manifest load-orchestration invariants (`modeExclusions`, auth phase placement)
+## [1.0] — 2026-04-01 — Initial baseline release
 
-### Fixed
-- `phase-load-packs.json` generation no longer parses prose from `SKILL.md` to infer mode exclusions
-- `skills/identity-management.md` moved to canonical `phase-4f` to match auth finalization guidance
-- Canonical Uno gate now requires actual target build validation in addition to `uno-check`
+### Included at baseline
 
-### Changed
-- `scripts/generate-phase-load-packs.ps1` now uses `_manifest.json` as the only source of truth for phase/mode pack generation
-- `README.md`, `SKILL.md`, and `START-AI.md` updated to describe manifest-driven load resolution
-- `SKILL.md` trimmed to Phase 4 execution guidance; prompt starters moved to `prompt-patterns.md`
+- 4-phase workflow: Domain Discovery → Resource Definition → Implementation Planning → Implementation (4a–4g)
+- Manifest-driven token-aware phase loading (`_manifest.json`, `phase-load-packs.json`)
+- `modeExclusions` in `_manifest.json` as the source of truth for `full`, `lite`, and `api-only` modes
+- Dependency-aware `get-phase-load-set.ps1` with transitive `requires`/`dependencies` resolution, topological ordering, and budget reporting
+- `scripts/generate-phase-load-packs.ps1` as the only driver of phase/mode pack generation
+- `skills/identity-management.md` placed at canonical `phase-4f`
+- `ai/SKILL.md` scoped to Phase 4 execution guidance; prompt starters in `support/prompt-patterns.md`
+- TaskFlow sample app as read-only reference implementation
+- `support/HANDOFF.md` for session state preservation across context boundaries
+- Lint checks for manifest load-orchestration invariants
+- CI workflow (`instruction-preflight.yml`) validating manifest, load packs, lint, and YAML schema on every push/PR

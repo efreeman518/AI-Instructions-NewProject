@@ -1,6 +1,6 @@
 {
-  "version": "1.4",
-  "generatedAt": "2026-03-07",
+  "version": "1.0",
+  "generatedAt": "2026-04-01",
   "tokenEstimationMethod": "ceil(characters/4)",
   "scope": {
     "include": [

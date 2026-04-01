@@ -258,6 +258,6 @@ services.AddScoped<I{Entity}Service, {Entity}Service>();
 ## Quick Runbook
 
 1. `dotnet build`
-2. `dotnet ef migrations add Add{Entity}`
+2. `dotnet ef migrations add Add{Entity} --project src/Infrastructure/{Project}.Infrastructure.Data --startup-project src/{Host}/{Host}.Api --context {App}DbContextTrxn`
 3. `dotnet test --filter "TestCategory=Unit"`
 4. `dotnet test --filter "TestCategory=Endpoint"`

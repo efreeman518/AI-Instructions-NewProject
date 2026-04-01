@@ -8,6 +8,12 @@ currentPhase: ""
 currentSubPhase: ""
 scaffoldMode: ""
 testingProfile: ""
+enabledFeatures:
+  includeGateway: false
+  includeScheduler: false
+  includeFunctionApp: false
+  includeUnoUI: false
+  includeAiServices: false
 resumeCommand: ""
 ```
 
@@ -60,6 +66,7 @@ Load only these files next session:
 ## Notes
 
 - Record any non-default paths for `domain-specification.yaml` or `resource-implementation.yaml`.
+- Set `enabledFeatures` flags to match `resource-implementation.yaml` so the next session knows which optional hosts are in scope without re-reading the full resource spec.
 - Note unresolved infra/auth/package-feed issues here instead of retrying them repeatedly.
 - Keep entries short so the next AI turn can resume without reloading unnecessary docs.
 
