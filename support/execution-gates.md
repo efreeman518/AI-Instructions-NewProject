@@ -135,6 +135,7 @@ Gate:
 - [ ] `dotnet run --project src/Aspire/AppHost` starts resources
 - [ ] Dashboard reachable (URL from console output — do not reuse prior session URLs)
 - [ ] All registered resources show healthy in dashboard before testing endpoints
+- [ ] Data-plane spot check: at least one backing store (SQL tables exist, Redis reachable, seed rows present) verified directly — not just via dashboard liveness
 
 ### Gateway
 
@@ -192,6 +193,7 @@ Also verify:
 Scheduler:
 
 - [ ] Scheduler connection string configured
+- [ ] Scheduler operational tables exist (verify schema ownership — see [troubleshooting.md](troubleshooting.md) § Third-Party Operational Store Schema Triage)
 
 ```powershell
 dotnet run --project src/{Host}/{Host}.Scheduler

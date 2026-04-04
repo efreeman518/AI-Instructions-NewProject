@@ -78,6 +78,35 @@ When a multi-host app (Aspire, Gateway, API, Scheduler) fails at runtime, **sepa
 
 If Step 1 fails, the problem is infrastructure — flag for the engineer per [execution-gates.md](execution-gates.md). Do not debug application code when the host substrate is not ready.
 
+**Step 3 — After fixing an infrastructure startup issue, verify at the data plane:**
+Process liveness and clean logs are necessary but not sufficient. When a fix targets a component that creates or seeds backing data (migrations, seed tasks, scheduler tables, queue metadata), perform one direct data-plane check before declaring the fix complete:
+- **Database:** query for expected tables, seed rows, or schema objects
+- **Queue/bus:** confirm the queue or topic exists and is reachable
+- **Storage:** verify the container or blob artifact was created
+
+This prevents false-positive fixes where the crash is resolved but the intended persistence or seeding outcome was never achieved.
+
+---
+
+## Third-Party Operational Store Schema Triage
+
+When a third-party library (scheduler, queue, dashboard, job runner) uses EF-backed or SQL-backed operational tables and startup or seeding fails:
+
+1. **Identify the schema owner.** Does the library auto-create its tables at startup? Does it ship migrations or SQL scripts you must run? Does it expect a design-time factory in your project? Or does it assume tables already exist?
+2. **Do not conflate startup success with schema presence.** Many libraries start without error even when their backing tables are missing — failures appear later during seeding, first job execution, or dashboard queries, and are easily misread as connection or configuration issues.
+3. **Verify the schema directly.** Query `INFORMATION_SCHEMA.TABLES` or the database tool of your choice to confirm the expected tables exist before investigating application-level failures.
+4. **Record the schema ownership model** in `HANDOFF.md` and `resource-implementation.yaml` so future sessions do not re-diagnose the same issue.
+
+---
+
+## Upstream Issue Diagnosis Discipline
+
+When consulting upstream GitHub issues, PRs, or release notes to diagnose a third-party library failure:
+
+1. **Extract the specific failure class** the upstream material addresses before applying its fix. Design-time migration problems, host-lifecycle startup problems, schema-default problems, and runtime missing-table problems are **separate fault domains** — treat them as distinct until proven otherwise.
+2. **Match, don't pattern-match.** An upstream issue is relevant only if its failure mode matches your local failure mode, not just the library or feature area. A migration-generation fix does not resolve a runtime missing-table error, even if both involve the same library.
+3. **Use upstream material to refine the diagnosis, not to short-circuit it.** If an upstream issue narrows the problem to a specific version, config flag, or code path, use that to focus your investigation — do not copy the fix verbatim without verifying the preconditions match.
+
 ---
 
 ## Domain Ambiguity Defaults
