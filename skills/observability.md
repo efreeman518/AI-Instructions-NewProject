@@ -125,57 +125,12 @@ s_cacheHit.Add(1, new KeyValuePair<string, object?>("key", cacheKey));
 
 ## Health Checks
 
-### Required (All Hosts)
+**Required:** SQL connectivity (all hosts), Redis connectivity (if caching enabled).
+**Optional:** Downstream API (Gateway → API), Blob storage, Service Bus, Cosmos DB.
 
-- SQL connectivity
-- Redis connectivity (if caching enabled)
+Implementation: Use `IHealthCheck` per dependency. Register with `services.AddHealthChecks().AddCheck<T>(name, tags: ["ready"])`. Map `/healthz` (liveness, all checks) and `/readyz` (readiness, tag-filtered). See [health-check-template.md](../templates/health-check-template.md) for the implementation pattern.
 
-### Optional (Per Host)
-
-- Downstream API reachability (Gateway → API)
-- Blob storage connectivity
-- Service Bus connectivity
-- Cosmos DB connectivity
-
-### Implementation Pattern
-
-```csharp
-public class SqlHealthCheck(IDbContextFactory<{App}DbContextTrxn> factory) : IHealthCheck
-{
-    public async Task<HealthCheckResult> CheckHealthAsync(
-        HealthCheckContext context, CancellationToken ct = default)
-    {
-        try
-        {
-            using var db = await factory.CreateDbContextAsync(ct);
-            await db.Database.CanConnectAsync(ct);
-            return HealthCheckResult.Healthy();
-        }
-        catch (Exception ex)
-        {
-            return HealthCheckResult.Unhealthy("SQL connection failed", ex);
-        }
-    }
-}
-```
-
-### Registration
-
-```csharp
-// In RegisterApiServices or Bootstrapper
-services.AddHealthChecks()
-    .AddCheck<SqlHealthCheck>("sql", tags: ["ready"])
-    .AddCheck<RedisHealthCheck>("redis", tags: ["ready"]);
-```
-
-### Endpoint Mapping
-
-```csharp
-app.MapHealthChecks("/healthz", new() { Predicate = _ => true });           // liveness
-app.MapHealthChecks("/readyz", new() { Predicate = r => r.Tags.Contains("ready") }); // readiness
-```
-
-Aspire health check wiring: ServiceDefaults calls `AddDefaultHealthChecks()` which adds basic liveness. Add domain-specific readiness checks in host registration.
+Aspire wiring: ServiceDefaults calls `AddDefaultHealthChecks()` for basic liveness. Add domain-specific readiness checks in host registration.
 
 ---
 

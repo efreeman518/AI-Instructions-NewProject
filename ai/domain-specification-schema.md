@@ -184,19 +184,7 @@ workflows:
     notes: "Thresholds configurable per tenant"
 ```
 
-Skip workflows when CRUD + state transitions suffice.
-
-### When to add workflows
-- Multiple entities must coordinate in sequence
-- Steps may fail and need compensation/rollback
-- Async waits (human approval, external callback)
-- Time-based escalation or retry logic
-
-### What scaffolding produces from workflows
-- Orchestrator service shell + step method stubs
-- Compensation stubs (if `compensationRequired`)
-- DI registration
-- No API endpoints by default
+Skip workflows when CRUD + state transitions suffice. Add workflows when multiple entities must coordinate in sequence, steps may fail and need compensation, or async waits/escalations are involved.
 
 ### Ingestion Semantics (Optional)
 
@@ -286,20 +274,7 @@ Identify decisions or processes where an AI agent could assist. Focus on what th
         - "Extract key points from article body"
 ```
 
-### When to Add AI Capabilities
-
-- Search should be "smart" (meaning-based, not just keyword filters)
-- Decisions involve classification, ranking, or natural-language reasoning
-- Content generation or summarization is needed
-- Multi-step processes could benefit from autonomous planning
-
-### What Scaffolding Produces from AI Capabilities
-
-- Agent service shells + tool/function stubs
-- Search index definitions (mapped to concrete stores in Phase 2)
-- Workflow executor stubs (if multi-agent)
-- DI registration stubs
-- No model deployment or prompt engineering — those are Phase 2/4 concerns
+Add AI capabilities when search should be meaning-based (not just keyword filters), decisions involve classification/ranking/NL reasoning, or content generation/summarization is needed. Implementation details (models, indexes, prompts) are Phase 2/4 concerns — see [skills/ai-integration.md](../skills/ai-integration.md).
 
 ---
 

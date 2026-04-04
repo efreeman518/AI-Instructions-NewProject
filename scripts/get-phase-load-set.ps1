@@ -34,6 +34,7 @@ if (-not (Test-Path $packsPath)) {
 $packs = Get-Content $packsPath -Raw -Encoding UTF8 | ConvertFrom-Json
 $manifest = Get-Content $manifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
 
+if (-not $Phase.StartsWith("phase-")) { $Phase = "phase-$Phase" }
 if ($Phase -notin $packs.phaseOrder) {
     throw "Unknown phase '$Phase'."
 }
@@ -47,7 +48,7 @@ if (-not ($packs.contextBudget.PSObject.Properties.Name -contains $BudgetProfile
     throw "Unknown budget profile '$BudgetProfile'."
 }
 
-function Filter-RequestedPaths {
+function Select-RequestedPaths {
     param(
         [string[]]$Paths,
         [string]$RequestedPhase,
@@ -109,7 +110,7 @@ function Filter-RequestedPaths {
     return $filtered
 }
 
-$requestedPaths = Filter-RequestedPaths -Paths @($modePack.$Phase) -RequestedPhase $Phase -RequestedMode $Mode
+$requestedPaths = Select-RequestedPaths -Paths @($modePack.$Phase) -RequestedPhase $Phase -RequestedMode $Mode
 
 $entryMap = @{}
 foreach ($entry in $manifest.files) {

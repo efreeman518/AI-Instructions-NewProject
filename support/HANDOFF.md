@@ -61,6 +61,7 @@ Out of scope for this session — do not attempt unless explicitly re-scoped:
 - For Phase 4d, update `hostGates` per-host as each host moves through scaffolded → validated. Do not mark the sub-phase complete until all enabled hosts reach `validated`.
 - Note unresolved infra/auth/package-feed issues here rather than retrying them repeatedly.
 - Keep entries short so the next AI turn can resume without reloading unnecessary docs.
+- **Ephemeral URLs:** Do not record Aspire dashboard URLs, proxy ports, or host endpoints. These are assigned at runtime and change between launches. Instead, record the discovery method (e.g., "read dashboard URL from `dotnet run` output, then check resource list for host URLs").
 
 ## Residual Environment Note
 

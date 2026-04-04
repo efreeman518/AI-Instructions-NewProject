@@ -2,7 +2,7 @@
 
 Use this skill to scaffold tests by profile and phase.
 
-Reference patterns: [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) (Expected Output File Index — Testing).
+Reference patterns: [../patterns/expected-output-index.md](../patterns/expected-output-index.md) (Testing).
 
 ## Profiles
 

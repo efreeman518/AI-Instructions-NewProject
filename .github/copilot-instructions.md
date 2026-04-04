@@ -17,7 +17,8 @@ Only load files for the current phase. Unload prior-phase files when transitioni
 ## Guardrails
 
 - Generate code only in the **target project directory** (not this repo).
-- `support/sampleapp-patterns.md` contains composition wiring patterns and the expected output file index — load it when building new slices or debugging cross-file wiring.
+- `patterns/` folder contains phase-aligned composition wiring patterns — load the relevant pattern file for the current phase via `support/sampleapp-patterns.md` (index).
+- `support/ef-packages-reference.md` documents the EF.Packages shared library — check before generating base types.
 - Conflict resolution: `support/execution-gates.md` > `ai/SKILL.md` > individual skills > templates.
 
 ## Key Files
@@ -28,4 +29,5 @@ Only load files for the current phase. Unload prior-phase files when transitioni
 - `phase-load-packs.json` — pre-computed phase file lists by mode
 - `_manifest.json` — token estimates, phase membership, dependencies
 - `templates/index.md` — quick lookup for "I need to scaffold X → load Y"
-- `support/sampleapp-patterns.md` — composition wiring patterns + expected output file index
+- `support/sampleapp-patterns.md` — pattern index (routes to `patterns/` folder)
+- `support/ef-packages-reference.md` — shared library types (do not regenerate these)

@@ -2,7 +2,7 @@
 
 Use Aspire AppHost for local orchestration and keep it consistent with IaC outputs.
 
-Reference patterns: [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) (Aspire Resource Wiring).
+Reference patterns: [../patterns/infrastructure-wiring.md](../patterns/infrastructure-wiring.md) (Aspire Resource Wiring).
 
 ## Structure
 
@@ -177,6 +177,19 @@ If using dev tunnels, add `Aspire.Hosting.DevTunnels`.
 
 ---
 
+## Preflight (Before First Launch)
+
+Before running `dotnet run --project src/Aspire/AppHost`, confirm the substrate:
+
+1. **Docker running:** `docker info` succeeds. If not, start Docker — do not debug app code.
+2. **Required env vars set:** `DOTNET_DASHBOARD_OTLP_ENDPOINT_URL`, `ASPIRE_ALLOW_UNSECURED_TRANSPORT` (when running from CLI without launch profile).
+3. **Ports available:** No stale containers holding SQL/Redis ports. Run `docker ps` to check.
+4. **NuGet restore clean:** `dotnet restore` on the AppHost project succeeds (catches `packageSourceMapping` issues before launch).
+
+Only after all four pass, proceed to `dotnet run`.
+
+---
+
 ## Run
 
 ```bash
@@ -184,6 +197,19 @@ dotnet run --project src/Aspire/AppHost
 ```
 
 If running from CLI without launch profile, set required env vars for dashboard/OTLP endpoints.
+
+---
+
+## Ephemeral URL Discovery
+
+Aspire dashboard URLs, proxy ports, and host endpoints are **assigned at runtime** and may change between launches. Do not carry forward URLs from a previous session.
+
+On each launch:
+1. Read the dashboard URL from the `dotnet run` console output.
+2. Confirm resource health on the dashboard before testing endpoints.
+3. Use the dashboard's resource list to find current host URLs — do not assume prior ports.
+
+When writing `HANDOFF.md`, record the **method to discover URLs** (e.g., "check Aspire dashboard"), not the URLs themselves.
 
 ---
 

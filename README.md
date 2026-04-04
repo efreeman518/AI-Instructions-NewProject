@@ -27,7 +27,7 @@ If you want the shortest path from zero context to first scaffold:
 
 1. Create a new app repo and copy this instruction set into `.instructions/`.
 2. Open the app repo in VS Code.
-3. Run `./.instructions/scripts/preflight-instructions.ps1` once to validate the copied instruction set.
+3. Run `python .instructions/scripts/preflight-instructions.py` once to validate the copied instruction set.
 4. Start Phase 1 with the Phase 1 prompt in the [Prompt Patterns](#prompt-patterns) section.
 5. When you reach implementation, begin the AI session with [START-AI.md](START-AI.md).
 
@@ -117,11 +117,11 @@ Before each phase, quickly check for new MCP servers for libraries/services in s
 |---|---|
 | **Domain discovery conversation** | Phase 1 drives a structured discussion to define entities, relationships, events, workflows, and business rules in pure business language — no implementation details. The resulting [domain specification](ai/domain-specification-schema.md) YAML becomes the single source of truth that every later phase consumes, preventing scope drift and hallucinated architecture. |
 | **Resource & technology mapping** | Phase 2 is a deliberate conversation about *how* to implement each domain concept — which data store fits each entity (SQL, Cosmos DB, Table Storage), where messaging is needed (Service Bus, Event Grid), whether AI capabilities apply (search, agents, document intelligence), and which hosting model suits each workload. The output is a [resource implementation](ai/resource-implementation-schema.md) YAML that locks in technology choices before any code is written. |
-| **Token-aware phase loading** | A manifest and PowerShell scripts calculate per-file token costs and generate phase-specific load sets, keeping AI context usage under a configurable ceiling (~30K tokens/phase). |
+| **Token-aware phase loading** | A manifest and Python scripts calculate per-file token costs and generate phase-specific load sets, keeping AI context usage under a configurable ceiling (~30K tokens/phase). |
 | **Three scaffolding modes** | `full` (production w/ gateway, scheduler, UI, IaC), `lite` (clean architecture without infra), `api-only` (single API host). Set once in resource YAML, all downstream loading adapts. |
 | **Vertical-slice scaffolding** | Each entity is built end-to-end: domain model → EF config → repository → DTO/mapper → service → endpoint → tests. A [checklist](support/vertical-slice-checklist.md) and [execution gates](support/execution-gates.md) enforce completeness. |
 | **Built-in quality gates** | `dotnet build` + targeted tests after every sub-phase. Architecture tests enforce layer dependencies. Structure validators catch DTO issues before runtime. |
-| **Automated validation scripts** | PowerShell scripts lint instruction files (broken links, placeholder coverage, terminology drift, manifest sync), validate domain/resource YAML schemas, and run preflight checks before scaffolding begins. |
+| **Automated validation scripts** | Python scripts lint instruction files (broken links, placeholder coverage, terminology drift, manifest sync), validate domain/resource YAML schemas, and run preflight checks before scaffolding begins. |
 | **Safe session handoff** | Context budget tracking per sub-phase plus a `HANDOFF.md` template let the AI resume cleanly across sessions without losing progress or re-reading the full instruction set. |
 | **Result pattern error flow** | Domain → Service → Endpoint error mapping is fully documented with a type mapping table, anti-patterns, and end-to-end trace example. No exceptions for business logic. |
 | **Test data builders** | Fluent builder patterns for entities and DTOs ensure tests construct valid objects by default and override only the property under test. |
@@ -158,6 +158,7 @@ Copy-paste these prompts to start a phase. Replace `{...}` with actual values.
 
 ```text
 Load .instructions/START-AI.md. This is a new project — no HANDOFF.md yet.
+Run the MCP Server Check from START-AI.md — ensure Microsoft Docs and Context7 MCPs are active.
 Generate a domain-specification YAML for a new application called {ProjectName}.
 The business is: {one-sentence business description}.
 Key entities: {entity list}.
@@ -169,6 +170,7 @@ When the YAML is complete and reviewed, write HANDOFF.md to the project root and
 
 ```text
 Load .instructions/START-AI.md and HANDOFF.md from the project root.
+Run the MCP Server Check — ensure Microsoft Docs and Context7 MCPs are active.
 Generate the resource implementation YAML per .instructions/ai/resource-implementation-schema.md.
 Mode: {full|lite|api-only}. Testing profile: {minimal|balanced|comprehensive}.
 Declare externalDependencyModes for every external dependency before finalizing.
@@ -179,6 +181,7 @@ When the YAML is complete and the Phase 2→3 transition gate passes, update HAN
 
 ```text
 Load .instructions/START-AI.md and HANDOFF.md from the project root.
+Run the MCP Server Check — enable GitHub MCP and Azure MCP for this phase.
 Generate an implementation plan per .instructions/ai/implementation-plan.md template.
 Run Phase 3 pre-flights: NuGet feeds configured (dotnet restore exits 0), dotnet ef available.
 Flag open questions before writing implementation-plan.md to the project root.
@@ -191,6 +194,7 @@ Each sub-phase is its own session. Start every Phase 4 session with:
 
 ```text
 Load .instructions/START-AI.md and HANDOFF.md from the project root.
+Run the MCP Server Check for this sub-phase.
 ```
 
 Then append the sub-phase-specific block below.
@@ -198,7 +202,7 @@ Then append the sub-phase-specific block below.
 #### 4a — Foundation
 
 ```text
-Run ./scripts/get-phase-load-set.ps1 -Phase 4a -Mode {full|lite|api-only} to resolve the load set.
+Run python scripts/get-phase-load-set.py --phase 4a --mode {full|lite|api-only} to resolve the load set.
 Scaffold Phase 4a: solution structure, domain model, data access, core entity/config/repository/appsettings.
 Gate: 'dotnet build' passes. When gate passes, update HANDOFF.md (currentSubPhase: 4b) and close session.
 ```
@@ -206,7 +210,7 @@ Gate: 'dotnet build' passes. When gate passes, update HANDOFF.md (currentSubPhas
 #### 4b — App Core
 
 ```text
-Run ./scripts/get-phase-load-set.ps1 -Phase 4b -Mode {full|lite|api-only}.
+Run python scripts/get-phase-load-set.py --phase 4b --mode {full|lite|api-only}.
 Scaffold Phase 4b: DTOs, mappers, services, endpoints, bootstrapper DI wiring.
 Gate: 'dotnet build' + 'dotnet test --filter TestCategory=Endpoint'. When gate passes, update HANDOFF.md and close session.
 ```
@@ -214,7 +218,7 @@ Gate: 'dotnet build' + 'dotnet test --filter TestCategory=Endpoint'. When gate p
 #### 4c — Runtime / Edge
 
 ```text
-Run ./scripts/get-phase-load-set.ps1 -Phase 4c -Mode {full|lite|api-only}.
+Run python scripts/get-phase-load-set.py --phase 4c --mode {full|lite|api-only}.
 Scaffold only the enabled runtime concerns: {gateway/aspire/caching/observability/security}.
 Gate: 'dotnet build' + app starts via Aspire. When gate passes, update HANDOFF.md and close session.
 ```
@@ -222,7 +226,7 @@ Gate: 'dotnet build' + app starts via Aspire. When gate passes, update HANDOFF.m
 #### 4d — Optional Hosts
 
 ```text
-Run ./scripts/get-phase-load-set.ps1 -Phase 4d -Mode {full|lite|api-only}.
+Run python scripts/get-phase-load-set.py --phase 4d --mode {full|lite|api-only}.
 Scaffold only the enabled optional hosts: {scheduler/functionapp/notifications}.
 Update hostGates in HANDOFF.md per host as each reaches scaffolded → validated.
 Close session when all enabled hosts are validated (or blockers are recorded for deployment-only deps).
@@ -233,7 +237,7 @@ Close session when all enabled hosts are validated (or blockers are recorded for
 #### 4e — Quality + Delivery
 
 ```text
-Run ./scripts/get-phase-load-set.ps1 -Phase 4e -Mode {full|lite|api-only}.
+Run python scripts/get-phase-load-set.py --phase 4e --mode {full|lite|api-only}.
 Scaffold tests (profile: {minimal|balanced|comprehensive}), IaC, and CI/CD as in scope.
 Gate: 'dotnet test' passes; 'az bicep build --file infra/main.bicep' passes (if IaC enabled). Update HANDOFF.md and close session.
 ```
@@ -241,7 +245,7 @@ Gate: 'dotnet test' passes; 'az bicep build --file infra/main.bicep' passes (if 
 #### 4f — Authentication
 
 ```text
-Run ./scripts/get-phase-load-set.ps1 -Phase 4f -Mode {full|lite|api-only}.
+Run python scripts/get-phase-load-set.py --phase 4f --mode {full|lite|api-only}.
 Finalize auth: replace stubs with config-driven scaffold principal ({Entra|OAuth2|social|hybrid}).
 Gate: 'dotnet build' + 'dotnet test --filter TestCategory=Endpoint'. Update HANDOFF.md and close session.
 ```
@@ -249,7 +253,7 @@ Gate: 'dotnet build' + 'dotnet test --filter TestCategory=Endpoint'. Update HAND
 #### 4g — AI Integration
 
 ```text
-Run ./scripts/get-phase-load-set.ps1 -Phase 4g -Mode {full|lite|api-only} {-IncludeAiSearch} {-IncludeAgents}.
+Run python scripts/get-phase-load-set.py --phase 4g --mode {full|lite|api-only} {--include-ai-search} {--include-agents}.
 Scaffold AI integration: {search indexing/agent service} as enabled.
 Gate: 'dotnet build' + 'dotnet test --filter TestCategory=Unit'. Update HANDOFF.md and close session.
 ```
@@ -272,7 +276,7 @@ Follow patterns established by {ExistingEntity}.
 ## Validation Cadence
 
 See [support/execution-gates.md](support/execution-gates.md) for the canonical phase gates, commands, and operator setup checklist.
-Run `./scripts/preflight-instructions.ps1` before Phase 4 execution and before opening validation PRs.
+Run `python scripts/preflight-instructions.py` before Phase 4 execution and before opening validation PRs.
 
 ## Troubleshooting Model
 
@@ -318,8 +322,8 @@ For default phase flow, start with [START-AI.md](START-AI.md) only, then load ph
 - 4-phase workflow: Domain Discovery → Resource Definition → Implementation Planning → Implementation (4a–4g)
 - Manifest-driven token-aware phase loading (`_manifest.json`, `phase-load-packs.json`)
 - `modeExclusions` in `_manifest.json` as the source of truth for `full`, `lite`, and `api-only` modes
-- Dependency-aware `get-phase-load-set.ps1` with transitive `requires`/`dependencies` resolution, topological ordering, and budget reporting
-- `scripts/generate-phase-load-packs.ps1` as the only driver of phase/mode pack generation
+- Dependency-aware `get-phase-load-set.py` with transitive `requires`/`dependencies` resolution, topological ordering, and budget reporting
+- `scripts/generate-phase-load-packs.py` as the only driver of phase/mode pack generation
 - `skills/identity-management.md` placed at canonical `phase-4f`
 - `ai/SKILL.md` scoped to Phase 4 execution guidance; prompt starters in README.md
 - TaskFlow pattern catalog with composition wiring snippets

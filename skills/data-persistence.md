@@ -4,7 +4,8 @@
 
 Use EF Core with split read/write contexts, explicit entity configurations, repository abstractions, updater helpers for aggregate child synchronization, and a disciplined migration strategy. Cosmos, Table Storage, and Blob Storage do not use EF migrations — see [azure-data-storage.md](azure-data-storage.md) for Cosmos schema evolution patterns.
 
-Reference patterns: [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) (Database Context Pooling, DbContext OnModelCreating Order).
+Reference patterns: [../patterns/data-layer-wiring.md](../patterns/data-layer-wiring.md) (Database Context Pooling, DbContext OnModelCreating Order).
+Base types (`DbContextBase`, `RepositoryBase`, `AuditInterceptor`, `SearchRequest`/`SearchResponse`): [../support/ef-packages-reference.md](../support/ef-packages-reference.md) — do not regenerate these.
 
 ---
 

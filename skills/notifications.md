@@ -1,6 +1,6 @@
 # Notifications
 
-Reference patterns: [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md).
+Reference patterns: [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) (pattern index).
 
 ## Purpose
 

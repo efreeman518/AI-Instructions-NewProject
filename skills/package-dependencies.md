@@ -5,7 +5,7 @@ Use this file as a compact contract map for private/shared packages.
 ## Sources
 
 - Internal packages source: <https://github.com/efreeman518/EF.Packages>
-- See Expected Output File Index in sampleapp-patterns.md.
+- See [../patterns/expected-output-index.md](../patterns/expected-output-index.md).
 
 > **AI lookup rule:** This file provides a compact contract map. When you need full API signatures, constructor parameters, or method overloads for any `EF.*` base type (e.g., `TableRepositoryBase`, `IBlobRepository`, `ICosmosDbRepository`, `IKeyVaultManager`), use the GitHub MCP server to read the source from the [EF.Packages repo](https://github.com/efreeman518/EF.Packages).
 

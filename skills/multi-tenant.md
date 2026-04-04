@@ -1,6 +1,6 @@
 # Multi-Tenant Architecture
 
-Reference patterns: [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) (Request Context Resolution, Multi-tenant Query Filter).
+Reference patterns: [../patterns/api-host-wiring.md](../patterns/api-host-wiring.md) (Request Context Resolution), [../patterns/data-layer-wiring.md](../patterns/data-layer-wiring.md) (Multi-tenant Query Filter).
 
 ## Purpose
 

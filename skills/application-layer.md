@@ -4,6 +4,8 @@
 
 The application layer owns DTOs, contracts, static mappers, orchestration services, validation helpers, and internal message handlers. Domain invariants stay in domain factories/methods.
 
+Base types (`IRequestContext`, `Result<T>`, `IStartupTask`): [../support/ef-packages-reference.md](../support/ef-packages-reference.md) — do not regenerate these.
+
 ## Non-Negotiables
 
 1. Keep contracts separate from implementations.
@@ -12,7 +14,7 @@ The application layer owns DTOs, contracts, static mappers, orchestration servic
 4. Services enforce validation + tenant boundary checks before writes. See [multi-tenant.md](multi-tenant.md) for `TenantBoundaryValidator` usage and `EnsureTenantBoundary(...)` patterns.
 5. Internal event DTOs and handlers stay in contracts/message-handler projects.
 
-Reference patterns: [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) (Expected Output File Index — Application Layer).
+Reference patterns: [../patterns/expected-output-index.md](../patterns/expected-output-index.md) (Application Layer).
 
 ---
 

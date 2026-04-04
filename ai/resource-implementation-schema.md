@@ -118,19 +118,9 @@ compliance:
         - { name: DateOfBirth, dataClassification: PII }
 ```
 
-### Data Store Selection
+### Data Store Quick Rules
 
-| Signal | `sql` | `cosmosdb` | `table` | `blob` |
-|---|---|---|---|---|
-| Data shape | fixed relational | document/variable | flat key-value | unstructured file |
-| Relationships | joins/FKs | aggregate nesting | none | none |
-| Query style | complex filters/joins | partition-aligned reads | partition+row key | get/put/list |
-| Transactions | cross-entity ACID | partition-local | single row | object-level |
-| Typical use | business source of truth | read models/events | audit/config/counters | attachments/media |
-
-**Quick rules:** Binary content → `blob`. Relational + complex queries → `sql`. Simple key lookups → `table`. Document aggregates → `cosmosdb`. Uncertain → `sql`.
-
-**Common hybrids:** SQL metadata + Blob content. SQL source of truth + Cosmos read model. SQL core + Table audit trail.
+Binary content → `blob`. Relational + complex queries → `sql`. Simple key lookups → `table`. Document aggregates → `cosmosdb`. Uncertain → default to `sql`. For detailed selection guidance, see [skills/data-persistence.md](../skills/data-persistence.md) and [skills/azure-data-storage.md](../skills/azure-data-storage.md).
 
 ### SQL Type Defaults
 
@@ -301,29 +291,7 @@ aiServices:
       checkpointing: false             # persist workflow state for long-running processes
 ```
 
-#### AI Services Selection Guide
-
-| Signal | Azure AI Search | None (EF full-text) |
-|---|---|---|
-| Scale | Production semantic/vector search | Dev/PoC, small datasets |
-| Data shape | Dedicated search indexes | Existing SQL tables |
-| Query style | Hybrid (keyword + vector + semantic) | SQL `LIKE` / `CONTAINS` |
-| Use when | Primary search experience | Simple keyword filters suffice |
-
-#### Agent Framework Concepts
-
-| Concept | Description | Use when |
-|---|---|---|
-| `ChatClientAgent` | Wraps any `IChatClient` (Azure OpenAI, Foundry Models) | Most agent scenarios — tool calling, completions |
-| `FoundryAgent` | Uses Foundry Agent Service as hosted backend | Hosted memory, knowledge (Foundry IQ), tool catalog |
-| `CustomAgent` | Subclass `AIAgent` for full control | Non-LLM agents, custom inference |
-| Function tools | C# methods via `AIFunctionFactory.Create()` | Domain operations exposed to agents |
-| Agent-as-tool | `.AsAIFunction()` on an agent | Agent composition / delegation |
-| Workflows | Graph-based executors + edges | Multi-agent orchestration, sequential/parallel/branching |
-| Sessions | `AgentSession` for multi-turn state | Conversational agents, stateful interactions |
-| Middleware | Run/function-calling/IChatClient interception | Logging, auth, content safety, error handling |
-
-> **Note:** Microsoft Agent Framework is the successor to both Semantic Kernel and AutoGen. It combines AutoGen's simple agent abstractions with Semantic Kernel's enterprise features (session state, type safety, middleware, telemetry) and adds graph-based workflows for multi-agent orchestration. See [Agent Framework docs](https://learn.microsoft.com/en-us/agent-framework/overview/) and [Microsoft Foundry docs](https://learn.microsoft.com/en-us/azure/ai-foundry/what-is-foundry).
+For AI services selection guidance and agent framework concepts, see [skills/ai-integration.md](../skills/ai-integration.md).
 
 ### Testing
 
@@ -440,6 +408,22 @@ externalDependencyModes:
 ```
 
 > **Rule:** Every `deployment-only` entry requires a `no-op stub` generated in Phase 4 and a blocker recorded in `HANDOFF.md`. The scaffold is not complete until the solution compiles and boots without any manual cloud setup.
+
+---
+
+## Discovery Conversation Pattern
+
+Work through these in order during Phase 2:
+
+1. **Scaffold mode** — full, lite, or api-only? What optional hosts are needed?
+2. **Data store mapping** — for each entity: SQL (default), Cosmos, Table, or Blob? Binary content → blob, relational → sql, key-value → table, document aggregates → cosmosdb.
+3. **Property details** — add types, maxLength, precision/scale to every property. Resolve ambiguous Phase 1 kinds.
+4. **Relationship config** — join entities for many-to-many, cascade behavior, FK naming.
+5. **External dependencies** — declare a scaffold mode for each (emulator, lazy-optional, no-op stub, deployment-only). Think about what needs to run locally vs. what can be deferred.
+6. **Messaging & events** — which events need Service Bus topics? Which are in-process channel dispatches?
+7. **AI services** — if enabled: which entities need search indexes? Which decisions need agents? What models?
+8. **Testing profile** — minimal, balanced, or comprehensive? Which optional test types (E2E, architecture, load)?
+9. **Custom NuGet feeds** — private feed URLs for EF.Packages and any other internal packages.
 
 ---
 

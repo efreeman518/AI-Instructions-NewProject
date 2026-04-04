@@ -4,7 +4,7 @@
 
 Use ASP.NET Core Minimal APIs with endpoint classes (no controllers), API versioning, `ProblemDetails`, and deterministic middleware ordering.
 
-Reference patterns: [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) (API Startup Sequence, Middleware Pipeline).
+Reference patterns: [../patterns/api-host-wiring.md](../patterns/api-host-wiring.md) (API Startup Sequence, Middleware Pipeline).
 
 ## Required Layout
 
@@ -202,29 +202,9 @@ group.MapGet("/{id:guid}", GetById)
 
 ## End-to-End Error Flow Example
 
-This traces a single validation error from endpoint to client, showing how Result pattern + `ProblemDetails` work together:
+Validation error trace: `Client POST → Endpoint → Service.Create → Domain.Create → StructureValidator fails → DomainResult.Failure → Result.Failure → Endpoint result.Match → 400 + ProblemDetails`.
 
-```
-1. Client POSTs invalid payload → Endpoint handler
-2. Handler calls service.CreateAsync(dto) → Service
-3. Service maps DTO → Domain.Create(...)
-4. Domain.Create runs StructureValidator → fails (name too long)
-5. Domain.Create returns DomainResult<T>.Failure(errors) → Service
-6. Service maps DomainResult.Failure → Result<T>.Failure(errors)
-7. Service returns Result<T>.Failure → Endpoint handler
-8. Handler calls result.Match(
-       success: entity => TypedResults.Created(...),
-       failure: errors => TypedResults.Problem(errors.ToProblemDetails()),
-       notFound: () => TypedResults.NotFound())
-9. Client receives 400 + ProblemDetails JSON:
-   {
-     "status": 400,
-     "title": "Validation Error",
-     "errors": { "Name": ["Name must not exceed 200 characters"] }
-   }
-```
-
-The `DefaultExceptionHandler` is **never invoked** here — it only catches unhandled exceptions (null refs, timeouts, infra failures) that escape the Result pattern.
+`DefaultExceptionHandler` is **never invoked** for business errors — it only catches unexpected exceptions that escape the Result pattern.
 
 ---
 

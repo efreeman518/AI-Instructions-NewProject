@@ -12,7 +12,7 @@ Gateway is a YARP reverse proxy in front of API/backends. It handles user-facing
 4. Keep pipeline order deterministic (security -> routing/auth -> endpoints -> proxy).
 5. Normalize path prefixes consistently between UI, gateway transforms, and backend routes.
 
-Reference patterns: [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) (Gateway Claim Relay).
+Reference patterns: [../patterns/api-host-wiring.md](../patterns/api-host-wiring.md) (Gateway Claim Relay).
 
 ---
 

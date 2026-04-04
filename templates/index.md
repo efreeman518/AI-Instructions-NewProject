@@ -44,6 +44,7 @@ Quick lookup: "I need to scaffold X" → load these files.
 
 | Artifact | Template | Required Skill |
 |---|---|---|
+| Health checks | `health-check-template.md` | `skills/observability.md` |
 | Dockerfile | `dockerfile-template.md` | `skills/solution-structure.md` + `skills/aspire.md` |
 
 ## Phase-to-Template Mapping
@@ -52,6 +53,7 @@ Quick lookup: "I need to scaffold X" → load these files.
 |---|---|
 | **4a — Foundation** | `entity-template`, `ef-configuration-template`, `repository-template`, `domain-rules-template`, `appsettings-template`, `updater-template` (if needed) |
 | **4b — App Core** | `data-mapping-template`, `service-template`, `endpoint-template`, `structure-validator-template`, `exception-handler-template`, `message-handler-template` (if events) |
+| **4c — Runtime/Edge** | `health-check-template` |
 | **4d — UI** | `ui-client-layer`, `mvux-model-template`, `xaml-page-template` |
 | **4e — Quality** | `test-templates`, `dockerfile-template` |
 | **4g — AI** | `ai-search-template`, `agent-template` |

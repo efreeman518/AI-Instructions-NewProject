@@ -44,6 +44,29 @@ Status: MATCH | MISMATCH | FIRST-TIME
 
 If `HANDOFF.md` contains an `instructionVersion` field, include it in the comparison.
 
+## MCP Server Check
+
+Before loading phase files, verify the AI assistant has appropriate MCP servers enabled for the current phase.
+
+**Always on:**
+- Microsoft Docs MCP — .NET/Azure docs, samples, full-page retrieval
+- Context7 MCP — third-party library/API docs
+
+**Enable by phase:**
+
+| Phase | MCP Servers to Enable |
+|---|---|
+| 1–2 (Domain/Resource) | GitHub MCP (repo context), Sequential Thinking MCP (complex design) |
+| 3 (Planning) | GitHub MCP, Azure MCP (resource validation) |
+| 4a–4b (Foundation/Core) | GitHub MCP |
+| 4c (Runtime/Edge) | GitHub MCP, Azure MCP |
+| 4d (Optional Hosts) | Playwright MCP (if Uno UI), Fetch MCP (external specs) |
+| 4e (Quality/Delivery) | GitHub MCP (CI workflows), Azure MCP (IaC validation), Playwright MCP (E2E) |
+| 4f (Auth) | Azure MCP (Entra config) |
+| 4g (AI Integration) | Azure MCP (Foundry/AI Search) |
+
+If a suggested MCP server is not available, note it in `HANDOFF.md` under Residual Environment Note and continue without it.
+
 ## Conflict Resolution Order
 
 When instructions in different files disagree:
@@ -57,7 +80,7 @@ Use `phase-load-packs.json` as the primary interface for phase file lists. It is
 2. Load only the returned files.
 3. For Phase 4g, scope further: load only AI search or agent files as needed.
 
-**To regenerate** (after adding/removing instruction files): run `./scripts/get-phase-load-set.ps1 -Phase <phase> -Mode <full|lite|api-only> [feature flags]`. The resolver expands transitive `requires`/`dependencies` and applies manifest-driven mode exclusions.
+**To regenerate** (after adding/removing instruction files): run `python scripts/get-phase-load-set.py --phase <phase> --mode <full|lite|api-only> [feature flags]`. The resolver expands transitive `requires`/`dependencies` and applies manifest-driven mode exclusions.
 
 For quick template lookups, see `templates/index.md`.
 
@@ -95,7 +118,12 @@ Each phase is one session. Load only the files listed for the current phase.
 Do not preload these. Load only when the trigger condition is met:
 
 - `support/quick-reference.md` — **load when** scaffolding entities/endpoints and you need naming conventions, DI patterns, or config key lookups
-- `support/sampleapp-patterns.md` — **load when** building a new slice or optional host, or when you need composition wiring patterns (how files connect across projects)
+- `support/sampleapp-patterns.md` — **load when** you need the pattern index to find the right `patterns/` file for the current phase
+- `patterns/data-layer-wiring.md` — **load before Phase 4a/4b** for DB context pooling, OnModelCreating, startup tasks, seed data, scaffold migrations
+- `patterns/api-host-wiring.md` — **load before Phase 4b/4c** for API startup sequence, request context, conditional auth
+- `patterns/infrastructure-wiring.md` — **load before Phase 4c/4d** for multi-cache config, Aspire resource wiring
+- `patterns/expected-output-index.md` — **load when** verifying scaffolded file layout
+- `support/ef-packages-reference.md` — **load before Phase 4a** to know which base types come from EF.Packages (do not regenerate these)
 - `support/troubleshooting.md` — **load when** a build/test/run failure occurs that isn't resolved by the one-pass fix attempt
 - `support/execution-gates.md` — **load when** validating phase completion gates or running operator setup checks
 - `templates/index.md` — **load when** you need a quick lookup for "I need to scaffold X → load template Y + skill Z"

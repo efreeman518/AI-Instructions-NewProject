@@ -14,7 +14,8 @@ Use for:
 
 ## Non-Negotiables
 
-- Load [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) only when selecting cross-project patterns or needing composition wiring reference. Do not preload it for routine scaffolding.
+- Load pattern files from `patterns/` only when needed for cross-project wiring. Use [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) as the index to find the right file.
+- **Load [../support/ef-packages-reference.md](../support/ef-packages-reference.md) before Phase 4a** to know which base types (DbContextBase, DomainResult, IRequestContext, etc.) come from the EF.Packages private feed. Do not regenerate these types.
 - Generate code only in the user's new project directory.
 - Use `.slnx` (not legacy `.sln`).
 - Use central package management (`Directory.Packages.props`).
@@ -29,12 +30,12 @@ Use for:
 2. Keep instruction context around **≤30K tokens per phase** (see `_manifest.json` `contextBudget` for model-specific overrides).
 3. Use the **Phase Loading Manifest** (below) for per-phase file lists.
 4. Unload prior phase docs when transitioning.
-5. Do not preload [../support/quick-reference.md](../support/quick-reference.md) or [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md); load only when needed.
-6. Use [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) before opening any raw sampleapp source.
+5. Do not preload [../support/quick-reference.md](../support/quick-reference.md) or pattern files in early phases.
+6. **Load the phase-relevant pattern file before cross-project wiring:** `patterns/data-layer-wiring.md` before 4a/4b, `patterns/api-host-wiring.md` before 4b/4c, `patterns/infrastructure-wiring.md` before 4c/4d. See [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) for the full index.
 7. Large files must be loaded selectively:
    - `templates/test-templates.md`: only needed test type
    - [skills/uno-ui.md](../skills/uno-ui.md): dedicated session preferred
-8. When context is high during execution, create/update `HANDOFF.md` with resume instructions for next session.
+8. **Context checkpoint rule:** If you have generated **15+ files** in a single session, or the sub-phase has taken more than 3 rounds of build/fix cycles, checkpoint immediately — update `HANDOFF.md` with current state, completed work, and next steps. Do not wait for the gate to pass.
 
 ## Session Start (Every AI Turn)
 
@@ -43,7 +44,7 @@ Follow [../START-AI.md](../START-AI.md) for session bootstrap, version checks, p
 **Each Phase 4 sub-phase runs in its own session.** At session start for Phase 4:
 1. Load `SKILL.md` + [placeholder-tokens.md](placeholder-tokens.md).
 2. Read [resource-implementation-schema.md](resource-implementation-schema.md) for `scaffoldMode`, `testingProfile`, host profiles, enabled flags, and canonical defaults.
-3. Resolve the current sub-phase load set: `./scripts/get-phase-load-set.ps1 -Phase <4x> -Mode <mode>`.
+3. Resolve the current sub-phase load set: `python scripts/get-phase-load-set.py --phase <4x> --mode <mode>`.
 4. Keep only the current sub-phase docs loaded; unload prior sub-phase docs before continuing.
 
 **Session end — after each sub-phase gate passes:**
@@ -55,16 +56,11 @@ Follow [../START-AI.md](../START-AI.md) for session bootstrap, version checks, p
 
 ## Mode + Load Resolution
 
+Follow the **Phase Load Resolution** procedure in [../START-AI.md](../START-AI.md). Key points for Phase 4:
+
 - [resource-implementation-schema.md](resource-implementation-schema.md) is the source of truth for `scaffoldMode`, `testingProfile`, enabled capabilities, and defaults.
-- `_manifest.json` and `phase-load-packs.json` are the source of truth for phase membership, dependencies, and mode exclusions.
-- Do not infer current load sets from prose in this file.
-
-Primary path:
-
-1. Run `./scripts/generate-phase-load-packs.ps1` when `_manifest.json` changes.
-2. Resolve the current load set with `./scripts/get-phase-load-set.ps1 -Phase <phase> -Mode <full|lite|api-only> [feature flags]`.
-3. Use `-IncludeAiSearch` and/or `-IncludeAgents` for Phase 4g when only one AI capability is in scope.
-4. Load only files returned by the script.
+- Use `-IncludeAiSearch` and/or `-IncludeAgents` for Phase 4g when only one AI capability is in scope.
+- Load only files returned by the script.
 
 ## Phase 4 Sub-Phases (Execution Order)
 
@@ -112,6 +108,7 @@ Generate one complete slice, validate, then move to next slice.
 - No commercial-licensed test packages. Use MSTest built-in assertions as the baseline. See [../skills/testing.md](../skills/testing.md) for approved assertion options.
 - Keep Aspire config and IaC names aligned
 - Start with minimal viable profiles, promote later
+- **Seed deterministic startup data early.** For scaffold, demo, or local-development modes, generate seed data for the minimum required user/profile/domain state so that first-run UI and API flows work against real records. Do not spend time hardening first-run UX around empty datasets — seed first, polish later.
 
 ---
 
@@ -124,7 +121,7 @@ After every build:
 
 ## Git Checkpoint Protocol
 
-If the engineer wants source-control checkpoints, cut one clean checkpoint after each successful sub-phase.
+Cut a git commit after each successful sub-phase gate. This is **not optional** — checkpoints are required for the mid-session rollback protocol in [../support/execution-gates.md](../support/execution-gates.md) to work.
 
 If a sub-phase fails after the one-pass fix attempt:
 - isolate the broken changes from the last clean state,
@@ -161,6 +158,6 @@ Create or update in the target project root at the end of **every** phase and su
 
 ## Prompt Starters
 
-Copy-paste prompt starters live in the Prompt Starters section in [../README.md](../README.md). Load them only when starting or resuming a phase, not as part of the default Phase 4 base context.
+Copy-paste prompt starters live in the Prompt Patterns section in [../README.md](../README.md). Load them only when starting or resuming a phase, not as part of the default Phase 4 base context.
 
 

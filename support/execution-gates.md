@@ -76,14 +76,22 @@ Commands:
 dotnet build
 ```
 
-Optional migration readiness check:
+Scaffold migration (remove old, create fresh baseline — see [../patterns/data-layer-wiring.md](../patterns/data-layer-wiring.md)):
 
 ```powershell
+# Remove any existing migrations first
+dotnet ef migrations remove --force `
+  --project src/Infrastructure/{Project}.Infrastructure.Data `
+  --startup-project src/{Host}/{Host}.Api
+
+# Create a clean baseline
 dotnet ef migrations add InitialCreate `
   --project src/Infrastructure/{Project}.Infrastructure.Data `
   --startup-project src/{Host}/{Host}.Api `
   --context {App}DbContextTrxn
 ```
+
+> **Scaffold rule:** During scaffolding, always start fresh. Do not accumulate incremental migrations until the baseline is established and the project is in production.
 
 ## 4b — App Core
 
@@ -115,10 +123,18 @@ Runtime/Host checks (enabled features only):
 
 ### Aspire AppHost
 
+Preflight (run before first launch — see [../skills/aspire.md](../skills/aspire.md) § Preflight):
+- [ ] Docker running (`docker info` succeeds)
+- [ ] No stale containers holding required ports (`docker ps`)
+- [ ] `dotnet restore` on AppHost succeeds
+
+Gate:
 - [ ] `src/Aspire/AppHost/AppHost.csproj` uses `Aspire.AppHost.Sdk` MSBuild SDK
 - [ ] Required Aspire CLI env vars are set before terminal `dotnet run`
 - [ ] `dotnet build src/Aspire/AppHost` succeeds
 - [ ] `dotnet run --project src/Aspire/AppHost` starts resources
+- [ ] Dashboard reachable (URL from console output — do not reuse prior session URLs)
+- [ ] All registered resources show healthy in dashboard before testing endpoints
 
 ### Gateway
 
@@ -281,7 +297,7 @@ az bicep build --file infra/main.bicep
 - Infra/environment failures: log in `HANDOFF.md`, classify blocker, continue non-blocked scope.
 - Instruction gaps: append to `UPDATE-INSTRUCTIONS.md`.
 - If a step fails, log the blocker in `HANDOFF.md` (see [HANDOFF.md template](HANDOFF.md)) and continue with non-blocked work.
-- Pattern reference: [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) for composition wiring.
+- Pattern reference: [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) (pattern index → `patterns/` folder) for composition wiring.
 
 ---
 

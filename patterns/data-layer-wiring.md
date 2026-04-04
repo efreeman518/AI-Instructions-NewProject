@@ -1,0 +1,251 @@
+# Data Layer Wiring Patterns
+
+Cross-project wiring for database context setup, startup tasks, migrations, and seed data. Load before Phase 4a (Foundation) and Phase 4b (App Core).
+
+For base types used here (`DbContextBase`, `DbContextScopedFactory`, `AuditInterceptor`, `IStartupTask`), see [../support/ef-packages-reference.md](../support/ef-packages-reference.md).
+
+---
+
+## Database Context Pooling & Scoped Wrappers
+
+**Source:** `{App}.Bootstrapper/Registration/RegisterServices.Database.cs`
+
+Dual-context registration: pooled factories for Trxn and Query contexts, `DbContextScopedFactory` wrappers for scoped resolution, audit interceptor on Trxn only, `ConnectionNoLockInterceptor` on both, Azure vs local SQL detection, `ReadOnly` intent injection for Query.
+
+```csharp
+private static void AddDatabaseServices(IServiceCollection services, IConfiguration config)
+{
+    // Repository registrations (scoped, per-entity, Trxn + Query pairs)
+    services.AddScoped<I{Entity}RepositoryQuery, {Entity}RepositoryQuery>();
+    services.AddScoped<I{Entity}RepositoryTrxn, {Entity}RepositoryTrxn>();
+
+    // Interceptors
+    services.AddTransient<AuditInterceptor<string, Guid?>>();
+    services.AddTransient<ConnectionNoLockInterceptor>();
+
+    ConfigureDatabaseContexts(services, config);
+}
+```
+
+**Dual pooled context wiring:**
+
+```csharp
+private static void ConfigureSqlDatabase(IServiceCollection services,
+    string dbConnectionStringTrxn, string dbConnectionStringQuery)
+{
+    // -- TRXN context: audit interceptor + exception processor
+    services.AddPooledDbContextFactory<{App}DbContextTrxn>((sp, options) =>
+    {
+        ConfigureTrxnDbContext(options, dbConnectionStringTrxn);
+        var auditInterceptor = sp.GetRequiredService<AuditInterceptor<string, Guid?>>();
+        options.UseExceptionProcessor().AddInterceptors(auditInterceptor);
+    });
+    services.AddScoped<DbContextScopedFactory<{App}DbContextTrxn, string, Guid?>>();
+    services.AddScoped(sp => sp.GetRequiredService<DbContextScopedFactory<{App}DbContextTrxn, string, Guid?>>()
+        .CreateDbContext());
+
+    // -- QUERY context: no audit interceptor, no-tracking, ReadOnly intent
+    services.AddPooledDbContextFactory<{App}DbContextQuery>((sp, options) =>
+    {
+        ConfigureQueryDbContext(options, dbConnectionStringQuery);
+        options.UseExceptionProcessor();
+    });
+    services.AddScoped<DbContextScopedFactory<{App}DbContextQuery, string, Guid?>>();
+    services.AddScoped(sp => sp.GetRequiredService<DbContextScopedFactory<{App}DbContextQuery, string, Guid?>>()
+        .CreateDbContext());
+}
+```
+
+**Azure vs local detection + ReadOnly intent for Query:**
+
+```csharp
+private static void ConfigureSqlOptions(DbContextOptionsBuilder options, string connectionString)
+{
+    if (connectionString.Contains("database.windows.net"))
+    {
+        options.UseAzureSql(connectionString, sqlOptions =>
+        {
+            sqlOptions.UseCompatibilityLevel(170);
+            sqlOptions.EnableRetryOnFailure(maxRetryCount: 5,
+                maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
+        });
+    }
+    else
+    {
+        options.UseSqlServer(connectionString, sqlOptions =>
+        {
+            sqlOptions.UseCompatibilityLevel(160);
+            sqlOptions.EnableRetryOnFailure(maxRetryCount: 5,
+                maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
+        });
+    }
+}
+
+private static void ConfigureQueryDbContext(DbContextOptionsBuilder options, string connectionString)
+{
+    var readOnlyConnectionString = connectionString.Contains("ApplicationIntent=")
+        ? connectionString
+        : connectionString + ";ApplicationIntent=ReadOnly";
+    options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+    ConfigureSqlOptions(options, readOnlyConnectionString);
+}
+```
+
+---
+
+## DbContext OnModelCreating Order
+
+**Source:** `Infrastructure.Data/{App}DbContextBase.cs`
+
+The base context inherits from `DbContextBase<string, Guid?>` (from EF.Data). `OnModelCreating` must follow this exact call order:
+
+```csharp
+public abstract class {App}DbContextBase(DbContextOptions options)
+    : DbContextBase<string, Guid?>(options)
+{
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);                                      // 1. Base class config
+
+        modelBuilder.HasDefaultSchema("{schemaName}");                           // 2. Default schema
+
+        modelBuilder.ApplyConfigurationsFromAssembly(                            // 3. All IEntityTypeConfiguration<T>
+            typeof({App}DbContextBase).Assembly);
+
+        ConfigureDefaultDataTypes(modelBuilder);                                 // 4. Global type defaults
+        SetTableNames(modelBuilder);                                             // 5. Table naming convention
+        ConfigureTenantQueryFilters(modelBuilder);                               // 6. Tenant filters
+    }
+```
+
+**Dynamic tenant query filter** -- applied to every entity implementing `ITenantEntity<Guid>`:
+
+```csharp
+    private void ConfigureTenantQueryFilters(ModelBuilder modelBuilder)
+    {
+        var tenantEntityClrTypes = modelBuilder.Model.GetEntityTypes()
+            .Where(entityType => typeof(ITenantEntity<Guid>).IsAssignableFrom(entityType.ClrType))
+            .Select(entityType => entityType.ClrType);
+
+        foreach (var clrType in tenantEntityClrTypes)
+        {
+            var filter = BuildTenantFilter(clrType);   // from DbContextBase -- uses IRequestContext.TenantId
+            modelBuilder.Entity(clrType).HasQueryFilter(filter);
+        }
+    }
+```
+
+**Global decimal and datetime2 defaults:**
+
+```csharp
+    private static void ConfigureDefaultDataTypes(ModelBuilder modelBuilder)
+    {
+        var decimalProperties = modelBuilder.Model.GetEntityTypes()
+            .SelectMany(t => t.GetProperties())
+            .Where(p => p.ClrType == typeof(decimal) || p.ClrType == typeof(decimal?))
+            .Where(p => p.GetColumnType() == null);
+        foreach (var property in decimalProperties)
+            property.SetColumnType("decimal(10,4)");
+
+        var dateProperties = modelBuilder.Model.GetEntityTypes()
+            .SelectMany(t => t.GetProperties())
+            .Where(p => p.ClrType == typeof(DateTime) || p.ClrType == typeof(DateTime?))
+            .Where(p => p.GetColumnType() == null);
+        foreach (var property in dateProperties)
+            property.SetColumnType("datetime2");
+    }
+```
+
+---
+
+## Startup Tasks
+
+`IStartupTask` (from EF.Common.Contracts) is the interface for tasks that run after `builder.Build()` but before the host accepts requests. `app.RunStartupTasks()` (from EF.Host) resolves and executes all registered implementations in order.
+
+### Registration
+
+```csharp
+public static partial class RegisterServices
+{
+    private static void AddStartupTasks(IServiceCollection services)
+    {
+        services.AddTransient<IStartupTask, ApplyEFMigrationsStartup>();
+        services.AddTransient<IStartupTask, WarmupDependencies>();
+        services.AddTransient<IStartupTask, LoadCacheStartup>();
+    }
+}
+```
+
+### Example: Cache Warming
+
+```csharp
+public class LoadCacheStartup(
+    IConfiguration config,
+    ILogger<LoadCacheStartup> logger,
+    IFusionCacheProvider cache,
+    IGenericRepositoryQuery repoQuery) : IStartupTask
+{
+    public async Task ExecuteAsync(CancellationToken cancellationToken = default)
+    {
+        logger.LogInformation("Startup LoadCache Start");
+        // Use FusionCache to preload hot data from repoQuery
+        await Task.CompletedTask;
+        logger.LogInformation("Startup LoadCache Finish");
+    }
+}
+```
+
+### Example: Seed Data (Local Development)
+
+```csharp
+public class SeedDataTask(
+    IDbContextFactory<{App}DbContextTrxn> factory,
+    IHostEnvironment env,
+    ILogger<SeedDataTask> logger) : IStartupTask
+{
+    public async Task ExecuteAsync(CancellationToken ct = default)
+    {
+        if (!env.IsDevelopment()) return;
+
+        using var db = await factory.CreateDbContextAsync(ct);
+        if (await db.Set<{Entity}>().AnyAsync(ct)) return; // already seeded
+
+        db.Add({Entity}.Create("Sample {Entity}", SeedConstants.DevTenantId));
+        await db.SaveChangesAsync(ct);
+        logger.LogInformation("Seed data applied for local development.");
+    }
+}
+```
+
+**Rules:**
+- Guard with `AnyAsync` — idempotent, safe on repeat runs.
+- Gate dev-only tasks with `IHostEnvironment.IsDevelopment()`.
+- Use deterministic IDs for dev tenant (`SeedConstants.DevTenantId`) so tests can reference them.
+
+---
+
+## Scaffold Migration Strategy
+
+During scaffolding phases, the database schema is evolving rapidly. Use a single clean `InitialCreate` migration — do not accumulate incremental migrations.
+
+**Rule:** Before creating a migration, remove any existing migrations first:
+
+```powershell
+# Remove all existing migrations
+dotnet ef migrations remove --force `
+  --project src/Infrastructure/{Project}.Infrastructure.Data `
+  --startup-project src/{Host}/{Host}.Api
+
+# Create a fresh baseline
+dotnet ef migrations add InitialCreate `
+  --project src/Infrastructure/{Project}.Infrastructure.Data `
+  --startup-project src/{Host}/{Host}.Api `
+  --context {App}DbContextTrxn
+```
+
+**When to run:**
+- After Phase 4a (all entities + DbContext configured)
+- After any entity/relationship change during scaffolding
+- Before Phase 4e tests that need a database
+
+**Post-scaffold:** Once the baseline is established and the project is in production, switch to incremental migrations with descriptive names.

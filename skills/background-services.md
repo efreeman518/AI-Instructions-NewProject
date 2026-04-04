@@ -42,7 +42,7 @@ Use `{Host}.Scheduler` for cron/time-based orchestration with persisted scheduli
 └── appsettings*.json
 ```
 
-Reference patterns: [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) (TickerQ Job Adapter).
+Reference patterns: [../patterns/infrastructure-wiring.md](../patterns/infrastructure-wiring.md) (Aspire Resource Wiring).
 
 ---
 

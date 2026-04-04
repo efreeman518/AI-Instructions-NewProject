@@ -6,7 +6,8 @@ The **Bootstrapper project** is the centralized DI registration hub. It wires up
 
 ## Project Structure
 
-> Reference patterns: [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md).
+> Reference patterns: [../patterns/api-host-wiring.md](../patterns/api-host-wiring.md) (API Startup), [../patterns/data-layer-wiring.md](../patterns/data-layer-wiring.md) (DB Wiring).
+> Base types (`IStartupTask`, `RunStartupTasks()`, `StaticLogging`): [../support/ef-packages-reference.md](../support/ef-packages-reference.md).
 
 ```
 {Host}.Bootstrapper/
@@ -19,7 +20,7 @@ The **Bootstrapper project** is the centralized DI registration hub. It wires up
 
 `RegisterServices.cs` is a **static class** with extension methods on `IServiceCollection`, organized by layer:
 
-> See sampleapp-patterns.md for full registration pattern.
+> See [../patterns/data-layer-wiring.md](../patterns/data-layer-wiring.md) for full registration pattern.
 
 ```csharp
 // Compact pattern — see sampleapp for full implementation
@@ -59,7 +60,7 @@ public static class RegisterServices
 
 ## Startup Task Pattern
 
-> See sampleapp-patterns.md.
+> See [../patterns/data-layer-wiring.md](../patterns/data-layer-wiring.md).
 
 ### Interface
 
@@ -99,7 +100,7 @@ public class ApplyEFMigrationsStartup(IDbContextFactory<{Project}DbContextTrxn> 
 
 ## Usage in Host Projects
 
-> See sampleapp-patterns.md (API Startup Sequence).
+> See [../patterns/api-host-wiring.md](../patterns/api-host-wiring.md) (API Startup Sequence).
 
 ### API Program.cs
 

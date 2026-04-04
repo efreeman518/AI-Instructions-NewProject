@@ -1,347 +1,365 @@
 {
-  "source": {
-    "manifest": "_manifest.json",
-    "generator": "scripts/generate-phase-load-packs.ps1"
-  },
-  "contextBudget": {
-    "default": 30000,
-    "extended": 60000,
-    "compact": 15000,
-    "note": "Token ceiling per phase. Use 'extended' for 128K+ context models. Use 'compact' for constrained sessions."
-  },
-  "phaseOrder": [
-    "metadata",
-    "session-bootstrap",
-    "phase-1",
-    "phase-2",
-    "phase-3",
-    "phase-4-base",
-    "phase-4a",
-    "phase-4a-optional",
-    "phase-4b",
-    "phase-4c",
-    "phase-4d",
-    "phase-4d-optional",
-    "phase-4e",
-    "phase-4e-optional",
-    "phase-4f",
-    "phase-4g",
-    "support-only",
-    "on-demand"
-  ],
-  "modeExclusions": {
-    "lite": [
-      "skills/aspire.md",
-      "skills/background-services.md",
-      "skills/caching.md",
-      "skills/cicd.md",
-      "skills/function-app.md",
-      "skills/gateway.md",
-      "skills/iac.md",
-      "skills/multi-tenant.md",
-      "skills/notifications.md",
-      "skills/uno-ui.md"
+    "source": {
+        "manifest": "_manifest.json",
+        "generator": "scripts/generate-phase-load-packs.py"
+    },
+    "contextBudget": {
+        "default": 30000,
+        "extended": 60000,
+        "compact": 15000,
+        "note": "Token ceiling per phase. Use 'extended' for 128K+ context models. Use 'compact' for constrained sessions."
+    },
+    "phaseOrder": [
+        "metadata",
+        "session-bootstrap",
+        "phase-1",
+        "phase-2",
+        "phase-3",
+        "phase-4-base",
+        "phase-4a",
+        "phase-4a-optional",
+        "phase-4b",
+        "phase-4c",
+        "phase-4d",
+        "phase-4d-optional",
+        "phase-4e",
+        "phase-4e-optional",
+        "phase-4f",
+        "phase-4g",
+        "support-only",
+        "on-demand"
     ],
-    "api-only": [
-      "skills/background-services.md",
-      "skills/caching.md",
-      "skills/cicd.md",
-      "skills/function-app.md",
-      "skills/gateway.md",
-      "skills/iac.md",
-      "skills/multi-tenant.md",
-      "skills/notifications.md",
-      "skills/uno-ui.md"
-    ]
-  },
-  "packs": {
-    "full": {
-      "phase-4b": [
-        "skills/application-layer.md",
-        "skills/bootstrapper.md",
-        "skills/api.md",
-        "templates/data-mapping-template.md",
-        "templates/service-template.md",
-        "templates/endpoint-template.md",
-        "templates/message-handler-template.md",
-        "templates/structure-validator-template.md",
-        "templates/exception-handler-template.md"
-      ],
-      "phase-4a-optional": [
-        "skills/azure-data-storage.md",
-        "templates/updater-template.md"
-      ],
-      "phase-4d": [
-        "skills/background-services.md",
-        "skills/function-app.md",
-        "skills/uno-ui.md",
-        "skills/notifications.md"
-      ],
-      "phase-4g": [
-        "skills/ai-integration.md",
-        "templates/ai-search-template.md",
-        "templates/agent-template.md"
-      ],
-      "phase-4c": [
-        "skills/gateway.md",
-        "skills/multi-tenant.md",
-        "skills/caching.md",
-        "skills/aspire.md",
-        "skills/configuration-secrets.md",
-        "skills/observability.md",
-        "skills/security.md"
-      ],
-      "phase-2": [
-        "ai/resource-implementation-schema.md"
-      ],
-      "phase-1": [
-        "ai/domain-specification-schema.md"
-      ],
-      "phase-4a": [
-        "skills/solution-structure.md",
-        "skills/domain-model.md",
-        "skills/data-persistence.md",
-        "skills/package-dependencies.md",
-        "templates/entity-template.md",
-        "templates/ef-configuration-template.md",
-        "templates/repository-template.md",
-        "templates/domain-rules-template.md",
-        "templates/appsettings-template.md"
-      ],
-      "on-demand": [
-        "support/quick-reference.md",
-        "support/troubleshooting.md",
-        "support/sampleapp-patterns.md",
-        "support/vertical-slice-checklist.md",
-        "support/UPDATE-INSTRUCTIONS.md",
-        "support/HANDOFF.md",
-        "support/execution-gates.md",
-        "templates/index.md"
-      ],
-      "phase-3": [
-        "ai/implementation-plan.md"
-      ],
-      "phase-4e": [
-        "skills/testing.md",
-        "templates/test-templates.md",
-        "skills/iac.md",
-        "skills/cicd.md",
-        "templates/dockerfile-template.md"
-      ],
-      "phase-4d-optional": [
-        "templates/mvux-model-template.md",
-        "templates/ui-client-layer.md",
-        "templates/xaml-page-template.md"
-      ],
-      "support-only": [
-        "README.md"
-      ],
-      "phase-4-base": [
-        "ai/SKILL.md",
-        "ai/placeholder-tokens.md"
-      ],
-      "phase-4e-optional": [
-        "skills/messaging.md",
-        "skills/grpc.md",
-        "skills/external-api.md"
-      ],
-      "metadata": [
-        "_manifest.json",
-        "scripts/update-manifest.ps1"
-      ],
-      "phase-4f": [
-        "skills/identity-management.md"
-      ],
-      "session-bootstrap": [
-        "START-AI.md",
-        "CLAUDE.md",
-        ".github/copilot-instructions.md"
-      ]
+    "modeExclusions": {
+        "lite": [
+            "skills/aspire.md",
+            "skills/background-services.md",
+            "skills/caching.md",
+            "skills/cicd.md",
+            "skills/function-app.md",
+            "skills/gateway.md",
+            "skills/iac.md",
+            "skills/multi-tenant.md",
+            "skills/notifications.md",
+            "skills/uno-ui.md"
+        ],
+        "api-only": [
+            "skills/background-services.md",
+            "skills/caching.md",
+            "skills/cicd.md",
+            "skills/function-app.md",
+            "skills/gateway.md",
+            "skills/iac.md",
+            "skills/multi-tenant.md",
+            "skills/notifications.md",
+            "skills/uno-ui.md"
+        ]
     },
-    "lite": {
-      "phase-4b": [
-        "skills/application-layer.md",
-        "skills/bootstrapper.md",
-        "skills/api.md",
-        "templates/data-mapping-template.md",
-        "templates/service-template.md",
-        "templates/endpoint-template.md",
-        "templates/message-handler-template.md",
-        "templates/structure-validator-template.md",
-        "templates/exception-handler-template.md"
-      ],
-      "phase-4a-optional": [
-        "skills/azure-data-storage.md",
-        "templates/updater-template.md"
-      ],
-      "phase-4d": [],
-      "phase-4g": [
-        "skills/ai-integration.md",
-        "templates/ai-search-template.md",
-        "templates/agent-template.md"
-      ],
-      "phase-4c": [
-        "skills/configuration-secrets.md",
-        "skills/observability.md",
-        "skills/security.md"
-      ],
-      "phase-2": [
-        "ai/resource-implementation-schema.md"
-      ],
-      "phase-1": [
-        "ai/domain-specification-schema.md"
-      ],
-      "phase-4a": [
-        "skills/solution-structure.md",
-        "skills/domain-model.md",
-        "skills/data-persistence.md",
-        "skills/package-dependencies.md",
-        "templates/entity-template.md",
-        "templates/ef-configuration-template.md",
-        "templates/repository-template.md",
-        "templates/domain-rules-template.md",
-        "templates/appsettings-template.md"
-      ],
-      "on-demand": [
-        "support/quick-reference.md",
-        "support/troubleshooting.md",
-        "support/sampleapp-patterns.md",
-        "support/vertical-slice-checklist.md",
-        "support/UPDATE-INSTRUCTIONS.md",
-        "support/HANDOFF.md",
-        "support/execution-gates.md",
-        "templates/index.md"
-      ],
-      "phase-3": [
-        "ai/implementation-plan.md"
-      ],
-      "phase-4e": [
-        "skills/testing.md",
-        "templates/test-templates.md",
-        "templates/dockerfile-template.md"
-      ],
-      "phase-4d-optional": [
-        "templates/mvux-model-template.md",
-        "templates/ui-client-layer.md",
-        "templates/xaml-page-template.md"
-      ],
-      "support-only": [
-        "README.md"
-      ],
-      "phase-4-base": [
-        "ai/SKILL.md",
-        "ai/placeholder-tokens.md"
-      ],
-      "phase-4e-optional": [
-        "skills/messaging.md",
-        "skills/grpc.md",
-        "skills/external-api.md"
-      ],
-      "metadata": [
-        "_manifest.json",
-        "scripts/update-manifest.ps1"
-      ],
-      "phase-4f": [
-        "skills/identity-management.md"
-      ],
-      "session-bootstrap": [
-        "START-AI.md",
-        "CLAUDE.md",
-        ".github/copilot-instructions.md"
-      ]
-    },
-    "api-only": {
-      "phase-4b": [
-        "skills/application-layer.md",
-        "skills/bootstrapper.md",
-        "skills/api.md",
-        "templates/data-mapping-template.md",
-        "templates/service-template.md",
-        "templates/endpoint-template.md",
-        "templates/message-handler-template.md",
-        "templates/structure-validator-template.md",
-        "templates/exception-handler-template.md"
-      ],
-      "phase-4a-optional": [
-        "skills/azure-data-storage.md",
-        "templates/updater-template.md"
-      ],
-      "phase-4d": [],
-      "phase-4g": [
-        "skills/ai-integration.md",
-        "templates/ai-search-template.md",
-        "templates/agent-template.md"
-      ],
-      "phase-4c": [
-        "skills/aspire.md",
-        "skills/configuration-secrets.md",
-        "skills/observability.md",
-        "skills/security.md"
-      ],
-      "phase-2": [
-        "ai/resource-implementation-schema.md"
-      ],
-      "phase-1": [
-        "ai/domain-specification-schema.md"
-      ],
-      "phase-4a": [
-        "skills/solution-structure.md",
-        "skills/domain-model.md",
-        "skills/data-persistence.md",
-        "skills/package-dependencies.md",
-        "templates/entity-template.md",
-        "templates/ef-configuration-template.md",
-        "templates/repository-template.md",
-        "templates/domain-rules-template.md",
-        "templates/appsettings-template.md"
-      ],
-      "on-demand": [
-        "support/quick-reference.md",
-        "support/troubleshooting.md",
-        "support/sampleapp-patterns.md",
-        "support/vertical-slice-checklist.md",
-        "support/UPDATE-INSTRUCTIONS.md",
-        "support/HANDOFF.md",
-        "support/execution-gates.md",
-        "templates/index.md"
-      ],
-      "phase-3": [
-        "ai/implementation-plan.md"
-      ],
-      "phase-4e": [
-        "skills/testing.md",
-        "templates/test-templates.md",
-        "templates/dockerfile-template.md"
-      ],
-      "phase-4d-optional": [
-        "templates/mvux-model-template.md",
-        "templates/ui-client-layer.md",
-        "templates/xaml-page-template.md"
-      ],
-      "support-only": [
-        "README.md"
-      ],
-      "phase-4-base": [
-        "ai/SKILL.md",
-        "ai/placeholder-tokens.md"
-      ],
-      "phase-4e-optional": [
-        "skills/messaging.md",
-        "skills/grpc.md",
-        "skills/external-api.md"
-      ],
-      "metadata": [
-        "_manifest.json",
-        "scripts/update-manifest.ps1"
-      ],
-      "phase-4f": [
-        "skills/identity-management.md"
-      ],
-      "session-bootstrap": [
-        "START-AI.md",
-        "CLAUDE.md",
-        ".github/copilot-instructions.md"
-      ]
+    "packs": {
+        "full": {
+            "metadata": [
+                "_manifest.json",
+                "scripts/update-manifest.py"
+            ],
+            "session-bootstrap": [
+                "START-AI.md",
+                "CLAUDE.md",
+                ".github/copilot-instructions.md"
+            ],
+            "phase-1": [
+                "ai/domain-specification-schema.md"
+            ],
+            "phase-2": [
+                "ai/resource-implementation-schema.md"
+            ],
+            "phase-3": [
+                "ai/implementation-plan.md"
+            ],
+            "phase-4-base": [
+                "ai/SKILL.md",
+                "ai/placeholder-tokens.md",
+                "support/ef-packages-reference.md"
+            ],
+            "phase-4a": [
+                "skills/solution-structure.md",
+                "skills/domain-model.md",
+                "skills/data-persistence.md",
+                "skills/package-dependencies.md",
+                "templates/entity-template.md",
+                "templates/ef-configuration-template.md",
+                "templates/repository-template.md",
+                "templates/domain-rules-template.md",
+                "templates/appsettings-template.md"
+            ],
+            "phase-4a-optional": [
+                "skills/azure-data-storage.md",
+                "templates/updater-template.md"
+            ],
+            "phase-4b": [
+                "skills/application-layer.md",
+                "skills/bootstrapper.md",
+                "skills/api.md",
+                "templates/data-mapping-template.md",
+                "templates/service-template.md",
+                "templates/endpoint-template.md",
+                "templates/message-handler-template.md",
+                "templates/structure-validator-template.md",
+                "templates/exception-handler-template.md"
+            ],
+            "phase-4c": [
+                "skills/gateway.md",
+                "skills/multi-tenant.md",
+                "skills/caching.md",
+                "skills/aspire.md",
+                "skills/configuration-secrets.md",
+                "templates/health-check-template.md",
+                "skills/observability.md",
+                "skills/security.md"
+            ],
+            "phase-4d": [
+                "skills/background-services.md",
+                "skills/function-app.md",
+                "skills/uno-ui.md",
+                "skills/notifications.md"
+            ],
+            "phase-4d-optional": [
+                "templates/mvux-model-template.md",
+                "templates/ui-client-layer.md",
+                "templates/xaml-page-template.md"
+            ],
+            "phase-4e": [
+                "skills/testing.md",
+                "templates/test-templates.md",
+                "skills/iac.md",
+                "skills/cicd.md",
+                "templates/dockerfile-template.md"
+            ],
+            "phase-4e-optional": [
+                "skills/messaging.md",
+                "skills/grpc.md",
+                "skills/external-api.md"
+            ],
+            "phase-4f": [
+                "skills/identity-management.md"
+            ],
+            "phase-4g": [
+                "skills/ai-integration.md",
+                "templates/ai-search-template.md",
+                "templates/agent-template.md"
+            ],
+            "support-only": [
+                "README.md"
+            ],
+            "on-demand": [
+                "support/quick-reference.md",
+                "support/troubleshooting.md",
+                "support/sampleapp-patterns.md",
+                "patterns/data-layer-wiring.md",
+                "patterns/api-host-wiring.md",
+                "patterns/infrastructure-wiring.md",
+                "patterns/expected-output-index.md",
+                "support/vertical-slice-checklist.md",
+                "support/UPDATE-INSTRUCTIONS.md",
+                "support/HANDOFF.md",
+                "support/execution-gates.md",
+                "templates/index.md"
+            ]
+        },
+        "lite": {
+            "metadata": [
+                "_manifest.json",
+                "scripts/update-manifest.py"
+            ],
+            "session-bootstrap": [
+                "START-AI.md",
+                "CLAUDE.md",
+                ".github/copilot-instructions.md"
+            ],
+            "phase-1": [
+                "ai/domain-specification-schema.md"
+            ],
+            "phase-2": [
+                "ai/resource-implementation-schema.md"
+            ],
+            "phase-3": [
+                "ai/implementation-plan.md"
+            ],
+            "phase-4-base": [
+                "ai/SKILL.md",
+                "ai/placeholder-tokens.md",
+                "support/ef-packages-reference.md"
+            ],
+            "phase-4a": [
+                "skills/solution-structure.md",
+                "skills/domain-model.md",
+                "skills/data-persistence.md",
+                "skills/package-dependencies.md",
+                "templates/entity-template.md",
+                "templates/ef-configuration-template.md",
+                "templates/repository-template.md",
+                "templates/domain-rules-template.md",
+                "templates/appsettings-template.md"
+            ],
+            "phase-4a-optional": [
+                "skills/azure-data-storage.md",
+                "templates/updater-template.md"
+            ],
+            "phase-4b": [
+                "skills/application-layer.md",
+                "skills/bootstrapper.md",
+                "skills/api.md",
+                "templates/data-mapping-template.md",
+                "templates/service-template.md",
+                "templates/endpoint-template.md",
+                "templates/message-handler-template.md",
+                "templates/structure-validator-template.md",
+                "templates/exception-handler-template.md"
+            ],
+            "phase-4c": [
+                "skills/configuration-secrets.md",
+                "templates/health-check-template.md",
+                "skills/observability.md",
+                "skills/security.md"
+            ],
+            "phase-4d": [],
+            "phase-4d-optional": [
+                "templates/mvux-model-template.md",
+                "templates/ui-client-layer.md",
+                "templates/xaml-page-template.md"
+            ],
+            "phase-4e": [
+                "skills/testing.md",
+                "templates/test-templates.md",
+                "templates/dockerfile-template.md"
+            ],
+            "phase-4e-optional": [
+                "skills/messaging.md",
+                "skills/grpc.md",
+                "skills/external-api.md"
+            ],
+            "phase-4f": [
+                "skills/identity-management.md"
+            ],
+            "phase-4g": [
+                "skills/ai-integration.md",
+                "templates/ai-search-template.md",
+                "templates/agent-template.md"
+            ],
+            "support-only": [
+                "README.md"
+            ],
+            "on-demand": [
+                "support/quick-reference.md",
+                "support/troubleshooting.md",
+                "support/sampleapp-patterns.md",
+                "patterns/data-layer-wiring.md",
+                "patterns/api-host-wiring.md",
+                "patterns/infrastructure-wiring.md",
+                "patterns/expected-output-index.md",
+                "support/vertical-slice-checklist.md",
+                "support/UPDATE-INSTRUCTIONS.md",
+                "support/HANDOFF.md",
+                "support/execution-gates.md",
+                "templates/index.md"
+            ]
+        },
+        "api-only": {
+            "metadata": [
+                "_manifest.json",
+                "scripts/update-manifest.py"
+            ],
+            "session-bootstrap": [
+                "START-AI.md",
+                "CLAUDE.md",
+                ".github/copilot-instructions.md"
+            ],
+            "phase-1": [
+                "ai/domain-specification-schema.md"
+            ],
+            "phase-2": [
+                "ai/resource-implementation-schema.md"
+            ],
+            "phase-3": [
+                "ai/implementation-plan.md"
+            ],
+            "phase-4-base": [
+                "ai/SKILL.md",
+                "ai/placeholder-tokens.md",
+                "support/ef-packages-reference.md"
+            ],
+            "phase-4a": [
+                "skills/solution-structure.md",
+                "skills/domain-model.md",
+                "skills/data-persistence.md",
+                "skills/package-dependencies.md",
+                "templates/entity-template.md",
+                "templates/ef-configuration-template.md",
+                "templates/repository-template.md",
+                "templates/domain-rules-template.md",
+                "templates/appsettings-template.md"
+            ],
+            "phase-4a-optional": [
+                "skills/azure-data-storage.md",
+                "templates/updater-template.md"
+            ],
+            "phase-4b": [
+                "skills/application-layer.md",
+                "skills/bootstrapper.md",
+                "skills/api.md",
+                "templates/data-mapping-template.md",
+                "templates/service-template.md",
+                "templates/endpoint-template.md",
+                "templates/message-handler-template.md",
+                "templates/structure-validator-template.md",
+                "templates/exception-handler-template.md"
+            ],
+            "phase-4c": [
+                "skills/aspire.md",
+                "skills/configuration-secrets.md",
+                "templates/health-check-template.md",
+                "skills/observability.md",
+                "skills/security.md"
+            ],
+            "phase-4d": [],
+            "phase-4d-optional": [
+                "templates/mvux-model-template.md",
+                "templates/ui-client-layer.md",
+                "templates/xaml-page-template.md"
+            ],
+            "phase-4e": [
+                "skills/testing.md",
+                "templates/test-templates.md",
+                "templates/dockerfile-template.md"
+            ],
+            "phase-4e-optional": [
+                "skills/messaging.md",
+                "skills/grpc.md",
+                "skills/external-api.md"
+            ],
+            "phase-4f": [
+                "skills/identity-management.md"
+            ],
+            "phase-4g": [
+                "skills/ai-integration.md",
+                "templates/ai-search-template.md",
+                "templates/agent-template.md"
+            ],
+            "support-only": [
+                "README.md"
+            ],
+            "on-demand": [
+                "support/quick-reference.md",
+                "support/troubleshooting.md",
+                "support/sampleapp-patterns.md",
+                "patterns/data-layer-wiring.md",
+                "patterns/api-host-wiring.md",
+                "patterns/infrastructure-wiring.md",
+                "patterns/expected-output-index.md",
+                "support/vertical-slice-checklist.md",
+                "support/UPDATE-INSTRUCTIONS.md",
+                "support/HANDOFF.md",
+                "support/execution-gates.md",
+                "templates/index.md"
+            ]
+        }
     }
-  }
 }

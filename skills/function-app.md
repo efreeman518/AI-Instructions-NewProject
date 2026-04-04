@@ -1,6 +1,6 @@
 # Azure Functions (Isolated Worker)
 
-Reference patterns: [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) (Expected Output File Index).
+Reference patterns: [../patterns/expected-output-index.md](../patterns/expected-output-index.md).
 
 ## Prerequisites
 

@@ -19,6 +19,25 @@ When an error appears:
 
 ---
 
+## Narrow Before Broad
+
+After each material change, validate at the **smallest meaningful scope first**. Only escalate to broader builds, full-system runs, or browser sessions when the narrower check passes or cannot answer the question.
+
+Validation ladder (prefer higher rows):
+
+| Scope | When to use |
+|---|---|
+| Single file / `dotnet build` one project | After editing one project's code |
+| `dotnet build` solution | After cross-project changes |
+| `dotnet test --filter "TestCategory=Unit"` | After logic changes |
+| `dotnet test` (full suite) | After wiring / DI / integration changes |
+| Host startup / Aspire run | After config, startup, or infrastructure changes |
+| Browser / E2E | Only after host-level checks pass |
+
+Do not run a full-stack validation when a targeted build or endpoint check would isolate the issue faster.
+
+---
+
 ## AI Fixes (One Pass Max)
 
 The AI may fix:
@@ -38,6 +57,26 @@ Flag immediately for the engineer when issues involve:
 - Certificates/credentials, cloud subscription access, deployment permissions
 
 Reference the exact relevant section in [execution-gates.md](execution-gates.md).
+
+---
+
+## Distributed Host Debugging: Orchestration vs Application
+
+When a multi-host app (Aspire, Gateway, API, Scheduler) fails at runtime, **separate orchestration failures from application failures** before investigating code.
+
+**Step 1 — Confirm the substrate is running:**
+- Docker containers started? (`docker ps`)
+- Aspire dashboard reachable? (check the URL from `dotnet run` output — do not reuse a prior session's URL)
+- All registered resources show healthy in the dashboard?
+- Gateway/proxy routes respond (even with 401/404)?
+
+**Step 2 — Only then investigate application-level concerns:**
+- API returns expected status codes?
+- Auth tokens/claims correct?
+- Seed/migration data present?
+- Config values (connection strings, feature flags) populated?
+
+If Step 1 fails, the problem is infrastructure — flag for the engineer per [execution-gates.md](execution-gates.md). Do not debug application code when the host substrate is not ready.
 
 ---
 

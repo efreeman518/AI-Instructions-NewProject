@@ -2,7 +2,7 @@
 
 Use this skill when domain inputs enable `authProvider` and the solution needs authentication or identity-backed user management. **This skill is applied as the final phase (Phase 4f)** — earlier phases use auth stubs so the project compiles and runs without identity configuration.
 
-Reference patterns: [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) (Conditional Auth Configuration).
+Reference patterns: [../patterns/api-host-wiring.md](../patterns/api-host-wiring.md) (Conditional Auth Configuration).
 
 ## Scaffold Mode vs Live Provider
 

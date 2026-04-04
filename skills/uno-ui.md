@@ -11,7 +11,7 @@ Scaffold a single Uno codebase (WASM + mobile + desktop) that calls the **Gatewa
 References:
 - [../ai/domain-specification-schema.md](../ai/domain-specification-schema.md)
 - [../ai/resource-implementation-schema.md](../ai/resource-implementation-schema.md)
-- See sampleapp-patterns.md (Expected Output File Index).
+- See [../patterns/expected-output-index.md](../patterns/expected-output-index.md).
 - [../ai/SKILL.md](../ai/SKILL.md)
 
 ## Profiles
@@ -195,6 +195,36 @@ Scaffold with `.AddCustom()` (no external identity provider required). When read
 - [ ] Core pages scaffolded: Home, List, Detail, Settings (+ Login when auth enabled)
 - [ ] Route mappings and page-model bindings compile
 - [ ] UI uses Gateway endpoints only
+
+## WASM Debugging Ladder
+
+When a Uno WASM build or runtime failure occurs, follow this fixed validation order before applying broader hosting rewrites:
+
+1. **Root document:** Does the WASM host page (`index.html`) load at all? Check for 404/500 on the base URL.
+2. **Package/static assets:** Are CSS, images, and app-specific static files served? Check browser network tab for 404s.
+3. **`/_framework` assets:** Do `dotnet.wasm`, `blazor.boot.json` / `uno-boot.json`, and framework DLLs load? Missing `/_framework` files indicate a build or publish issue, not a routing issue.
+4. **Generated bootstrap/config:** Are `appsettings.json`, `AppManifest.js`, and generated host files present and correct? Do not rewrite these unless a specific file is confirmed missing or malformed.
+5. **Browser console:** Check for JS errors, CORS failures, or WASM instantiation errors. These narrow the fault to runtime init vs asset serving.
+
+Do not apply broad hosting or routing rewrites before completing this sequence.
+
+## Generated Code Intervention Rule
+
+For generator-driven stacks (Uno, Kiota, Resizetizer, and similar toolchains):
+
+- **Preserve generated conventions by default.** Do not rewrite generated bootstrap, host plumbing, or build targets unless a specific symptom proves the generated assumption is wrong.
+- **Patch minimally.** Fix only the smallest confirmed incompatibility. One targeted MSBuild property override or one config fixup — not a full rewrite of the generated file.
+- **Document the justification.** Every patch to generated code must carry an inline comment citing the exact symptom (e.g., `<!-- Workaround: Resizetizer 1.12.1 manifest-path bug -->`).
+
+If you cannot identify the specific failing assumption, do not modify generated code — escalate to the engineer.
+
+## Environment Detection Rule
+
+When distinguishing browser, Electron, desktop-webview, or similar runtime environments, prefer **capability or runtime-object checks** over raw user-agent string matching. User-agent strings are unreliable in embedded browsers, IDE preview panes, and WebView2 hosts.
+
+Example: check for `window.__TAURI__` or `navigator.userAgentData` rather than parsing `navigator.userAgent`.
+
+---
 
 ## Known Build Issues / Workarounds
 

@@ -1,6 +1,6 @@
 # Caching
 
-Reference patterns: [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) (Multi-Cache Configuration).
+Reference patterns: [../patterns/infrastructure-wiring.md](../patterns/infrastructure-wiring.md) (Multi-Cache Configuration).
 
 ## Purpose
 
