@@ -226,6 +226,62 @@ Example: check for `window.__TAURI__` or `navigator.userAgentData` rather than p
 
 ---
 
+## .NET for Android — Build & Deploy Rules
+
+These rules apply when targeting `net10.0-android` (or equivalent) via Uno, MAUI, or bare .NET for Android.
+
+### Android SDK Discovery (Windows)
+
+Before writing any `emulator`, `adb`, or SDK tool command, resolve the actual SDK root:
+
+1. Check `ANDROID_HOME` / `ANDROID_SDK_ROOT` env vars.
+2. If unset, check `C:\Program Files (x86)\Android\android-sdk` (Android Studio default) and `%LOCALAPPDATA%\Android\Sdk` (standalone SDK manager default).
+3. Verify `emulator\emulator.exe` and `platform-tools\adb.exe` exist at the resolved path.
+4. Set `ANDROID_HOME` explicitly in the shell session before invoking any SDK tools.
+
+Do not assume SDK tools are on `PATH`.
+
+### Embedded Assemblies for Sideloading
+
+When building for manual ADB sideloading (`dotnet build` + `adb install`), always set in the Android TFM `PropertyGroup`:
+
+```xml
+<EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
+```
+
+The default Debug mode uses **Fast Deployment**, which expects the .NET tooling to push managed assemblies to the device separately after install. A bare APK installed without that push crashes immediately with _"No assemblies found … Assuming this is part of Fast Deployment"_. Lock this property into the project file permanently for any project that supports manual sideloading — do not rely on a command-line override.
+
+### Emulator Host Networking
+
+Apps running on the Android emulator that call local backend services must use `10.0.2.2` in place of `localhost` / `127.0.0.1`. Gate this with a compile-time check so WASM/desktop builds continue to use `localhost`:
+
+```csharp
+#if __ANDROID__
+    const string LocalHost = "10.0.2.2";
+#else
+    const string LocalHost = "localhost";
+#endif
+```
+
+Quick validation from emulator shell (no running service required):
+```bash
+adb shell "echo TEST | nc 10.0.2.2 <PORT>"
+```
+
+### Activity Class Name Discovery
+
+.NET for Android generates a CRC-based Java class name for activities (e.g., `crc64<hash>.MainActivity`) that differs from the C# class name. Do not guess it from source.
+
+When launching via `adb shell am start -n`, first discover the registered activity:
+
+```bash
+adb shell dumpsys package <package-id> | grep -A 3 "MAIN"
+```
+
+Use the class name from the output — the generated name cannot be predicted from C# source alone.
+
+---
+
 ## Known Build Issues / Workarounds
 
 ### Resizetizer File Naming Rules
