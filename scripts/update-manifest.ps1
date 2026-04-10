@@ -1,20 +1,3 @@
-<#
-.SYNOPSIS
-    Updates _manifest.json token estimates by scanning all .md files.
-
-.DESCRIPTION
-    1. Scans all .md files.
-    2. Computes ceil(chars / 4) per file.
-    3. Reads _manifest.json, updates estimatedTokens for matching paths.
-    4. Adds new entries for untracked .md files with "phase": "unknown".
-    5. Updates totalEstimatedTokens.
-    6. Writes back with consistent formatting.
-    7. Reports summary.
-
-.EXAMPLE
-    .\scripts\update-manifest.ps1
-#>
-
 param(
     [string]$Root = (Split-Path $PSScriptRoot -Parent)
 )
@@ -22,102 +5,19 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-function Test-IgnoredMarkdownPath {
-    param([string]$RelativePath)
+. (Join-Path $PSScriptRoot 'python-command.ps1')
 
-    return ($RelativePath -match '^sample-app/' -or
-        $RelativePath -match '(^|/)(\.git|bin|obj|\.venv|venv|env)/')
-}
-
-$manifestPath = Join-Path $Root '_manifest.json'
-if (-not (Test-Path $manifestPath)) {
-    Write-Error "Manifest not found at $manifestPath"
+if (-not (Test-Path $Root)) {
+    Write-Error "Root directory not found: $Root"
     return
 }
 
-# Load manifest
-$json = Get-Content $manifestPath -Raw -Encoding UTF8
-$manifest = $json | ConvertFrom-Json
+$Root = (Resolve-Path $Root).Path
 
-# Scan repo .md files (exclude sample-app, build output, VCS, and local venvs)
-$mdFiles = Get-ChildItem -Path $Root -Filter '*.md' -Recurse |
-    Where-Object {
-        $relativePath = $_.FullName.Substring($Root.Length + 1).Replace('\', '/')
-        -not (Test-IgnoredMarkdownPath -RelativePath $relativePath)
-    }
-$mdFileSet = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-foreach ($file in $mdFiles) {
-    $relativePath = $file.FullName.Substring($Root.Length + 1).Replace('\', '/')
-    $mdFileSet.Add($relativePath) | Out-Null
+$python = Resolve-PythonCommand
+$scriptPath = Join-Path $PSScriptRoot 'update-manifest.py'
+
+& $python.Executable @($python.PrefixArgs) $scriptPath --root $Root
+if ($LASTEXITCODE -ne 0) {
+    exit $LASTEXITCODE
 }
-
-# Drop stale or ignored markdown entries before recalculating token counts.
-$manifest.files = @($manifest.files | Where-Object {
-    $path = [string]$_.path
-    if (-not $path.EndsWith('.md')) { return $true }
-    return $mdFileSet.Contains($path) -and -not (Test-IgnoredMarkdownPath -RelativePath $path)
-})
-
-# Build lookup of existing entries by path
-$fileEntries = @{}
-foreach ($entry in $manifest.files) {
-    $fileEntries[$entry.path] = $entry
-}
-
-$updated = 0
-$added = 0
-
-foreach ($file in $mdFiles) {
-    $relativePath = $file.FullName.Substring($Root.Length + 1).Replace('\', '/')
-    $content = Get-Content $file.FullName -Raw -Encoding UTF8
-    # Normalize line endings to LF so token counts are consistent across Windows/Linux
-    $content = $content -replace "`r`n", "`n"
-    $chars = $content.Length
-    $tokens = [int][Math]::Ceiling($chars / 4)
-
-    if ($fileEntries.ContainsKey($relativePath)) {
-        $entry = $fileEntries[$relativePath]
-        if ([int]$entry.estimatedTokens -ne $tokens) {
-            $entry.estimatedTokens = $tokens
-            $updated++
-        }
-    }
-    else {
-        # Add new entry
-        $newEntry = [PSCustomObject]@{
-            path            = $relativePath
-            phase           = 'unknown'
-            estimatedTokens = $tokens
-        }
-        $manifest.files += $newEntry
-        $fileEntries[$relativePath] = $newEntry
-        $added++
-    }
-}
-
-# Also update _manifest.json's own token estimate
-$manifestRelative = '_manifest.json'
-if ($fileEntries.ContainsKey($manifestRelative)) {
-    $manifestContent = Get-Content $manifestPath -Raw -Encoding UTF8
-    $manifestContent = $manifestContent -replace "`r`n", "`n"
-    $manifestTokens = [int][Math]::Ceiling($manifestContent.Length / 4)
-    $entry = $fileEntries[$manifestRelative]
-    if ($entry.estimatedTokens -ne $manifestTokens) {
-        $entry.estimatedTokens = $manifestTokens
-        $updated++
-    }
-}
-
-# Compute total
-[int]$total = 0
-foreach ($entry in $manifest.files) {
-    $entry.estimatedTokens = [int]$entry.estimatedTokens
-    $total += $entry.estimatedTokens
-}
-$manifest.totalEstimatedTokens = $total
-
-# Serialize and write back
-$outputJson = $manifest | ConvertTo-Json -Depth 10
-[System.IO.File]::WriteAllText($manifestPath, $outputJson, [System.Text.UTF8Encoding]::new($false))
-
-Write-Host "Updated $updated files, added $added new entries, total tokens: $total"

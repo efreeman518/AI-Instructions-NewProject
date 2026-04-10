@@ -15,7 +15,7 @@
             "env/**"
         ]
     },
-    "totalEstimatedTokens": 156429,
+    "totalEstimatedTokens": 155981,
     "contextBudget": {
         "default": 30000,
         "extended": 60000,
@@ -51,27 +51,22 @@
         {
             "path": "_manifest.json",
             "phase": "metadata",
-            "estimatedTokens": 5547
-        },
-        {
-            "path": "scripts/update-manifest.py",
-            "phase": "metadata",
-            "estimatedTokens": 0
+            "estimatedTokens": 5446
         },
         {
             "path": "START-AI.md",
             "phase": "session-bootstrap",
-            "estimatedTokens": 1977
+            "estimatedTokens": 2021
         },
         {
             "path": "CLAUDE.md",
             "phase": "session-bootstrap",
-            "estimatedTokens": 484
+            "estimatedTokens": 236
         },
         {
             "path": ".github/copilot-instructions.md",
             "phase": "session-bootstrap",
-            "estimatedTokens": 484
+            "estimatedTokens": 241
         },
         {
             "path": "ai/domain-specification-schema.md",
@@ -596,14 +591,13 @@
         {
             "path": "templates/agent-template.md",
             "phase": "phase-5g",
-            "estimatedTokens": 1345,
+            "estimatedTokens": 1467,
             "generates": [
                 "{Agent}AgentService.cs",
                 "I{Agent}Agent.cs"
             ],
             "requires": [
-                "skills/ai-integration.md",
-                "templates/service-template.md"
+                "skills/ai-integration.md"
             ]
         },
         {
@@ -675,7 +669,12 @@
         {
             "path": "README.md",
             "phase": "support-only",
-            "estimatedTokens": 4719
+            "estimatedTokens": 3043
+        },
+        {
+            "path": "support/prompt-catalog.md",
+            "phase": "support-only",
+            "estimatedTokens": 1654
         }
     ],
     "phases": {

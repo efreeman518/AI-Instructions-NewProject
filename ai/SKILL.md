@@ -166,8 +166,8 @@ Create or update in the target project root at the end of **every** phase and su
 
 ---
 
-## Prompt Starters
+## Prompt Catalog
 
-Copy-paste prompt starters live in the Prompt Patterns section in [../README.md](../README.md). Load them only when starting or resuming a phase, not as part of the default Phase 5 base context.
+Copy-paste prompts live in [../support/prompt-catalog.md](../support/prompt-catalog.md). Load that file only when starting or resuming a phase; keep it out of the default Phase 5 execution context.
 
 

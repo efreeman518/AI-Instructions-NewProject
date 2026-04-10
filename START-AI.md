@@ -1,5 +1,7 @@
 # START-AI
 
+This file is the canonical AI session bootstrap for this repository. Keep `CLAUDE.md` and `.github/copilot-instructions.md` as thin entry-point summaries that point back here.
+
 Load this file first. Do not preload the full instruction set.
 
 ## Session Model

@@ -27,8 +27,8 @@ If you want the shortest path from zero context to first scaffold:
 
 1. Create a new app repo and copy this instruction set into `.instructions/`.
 2. Open the app repo in VS Code.
-3. Run `python .instructions/scripts/preflight-instructions.py` once to validate the copied instruction set.
-4. Start Phase 1 with the Phase 1 prompt in the [Prompt Patterns](#prompt-patterns) section.
+3. Run `python .instructions/scripts/preflight-instructions.py` once to validate the copied instruction set. This refreshes manifest metadata, regenerates load packs, lints the docs, and runs the Python script test suite. PowerShell equivalent: `./.instructions/scripts/preflight-instructions.ps1`.
+4. Start Phase 1 with the Phase 1 prompt in [support/prompt-catalog.md](support/prompt-catalog.md).
 5. When you reach implementation, begin the AI session with [START-AI.md](START-AI.md).
 
 Read the rest of this guide when you need setup details, MCP recommendations, or troubleshooting rules.
@@ -73,6 +73,7 @@ Expected shape:
       execution-gates.md
       troubleshooting.md
     skills/
+    tests/
     scripts/
     templates/
     schemas/
@@ -126,7 +127,7 @@ Before each phase, quickly check for new MCP servers for libraries/services in s
 | **Result pattern error flow** | Domain → Service → Endpoint error mapping is fully documented with a type mapping table, anti-patterns, and end-to-end trace example. No exceptions for business logic. |
 | **Test data builders** | Fluent builder patterns for entities and DTOs ensure tests construct valid objects by default and override only the property under test. |
 | **Composition pattern catalog** | A comprehensive pattern catalog (`support/sampleapp-patterns.md`) documents cross-file wiring — startup sequences, database pooling, request context, cache configuration, middleware ordering — with inline code snippets. |
-| **Prompt starters** | Copy-paste prompts for each phase let engineers kick off AI sessions without memorizing the workflow. |
+| **Prompt catalog** | Copy-paste prompts for each phase live in [support/prompt-catalog.md](support/prompt-catalog.md), keeping `README.md` focused on human onboarding while [START-AI.md](START-AI.md) stays canonical for execution. |
 
 ## Mode Selection
 
@@ -149,185 +150,31 @@ Defaults: [ai/resource-implementation-schema.md](ai/resource-implementation-sche
 7. Validate gates → [support/execution-gates.md](support/execution-gates.md)
 8. Troubleshoot → [support/troubleshooting.md](support/troubleshooting.md)
 
-## Prompt Patterns
+## Prompt Catalog
 
-Copy-paste these prompts to start a phase. Replace `{...}` with actual values.
+For copy-paste phase prompts, see [support/prompt-catalog.md](support/prompt-catalog.md). The catalog is a convenience layer for engineers; [START-AI.md](START-AI.md) remains the canonical operational bootstrap for AI execution.
 
-**Session model:** Each phase (and each Phase 5 sub-phase) runs in its own AI session. At the end of each session the AI writes/updates `HANDOFF.md` in the target project root, then the session closes. The next session starts from `START-AI.md` + `HANDOFF.md` only.
+## Operational References
 
-### Phase 1 — Domain Discovery (Session 1)
+- [START-AI.md](START-AI.md) — canonical AI bootstrap, version checks, phase routing, and load rules
+- [support/prompt-catalog.md](support/prompt-catalog.md) — copy-paste prompts for starting or resuming a session
+- [support/execution-gates.md](support/execution-gates.md) — canonical validation gates and operator setup checklist
+- [support/troubleshooting.md](support/troubleshooting.md) — failure triage and recurring issue guidance
+- [support/UPDATE-INSTRUCTIONS.md](support/UPDATE-INSTRUCTIONS.md) — capture improvements discovered during scaffolding
 
-```text
-Load .instructions/START-AI.md. This is a new project — no HANDOFF.md yet.
-Run the MCP Server Check from START-AI.md — ensure Microsoft Docs and Context7 MCPs are active.
-Generate a domain-specification YAML for a new application called {ProjectName}.
-The business is: {one-sentence business description}.
-Key entities: {entity list}.
-Follow .instructions/ai/domain-specification-schema.md.
-When the YAML is complete and reviewed, write HANDOFF.md to the project root and close the session.
-```
+Run `python scripts/preflight-instructions.py` before Phase 4 execution and before opening validation PRs. It refreshes `_manifest.json`, regenerates `phase-load-packs.json`, lints markdown invariants, and runs the Python unittest suite in `tests/`. PowerShell equivalent: `./scripts/preflight-instructions.ps1`.
 
-### Phase 2 — Resource Definition (Session 2)
+## Document Ownership
 
-```text
-Load .instructions/START-AI.md and HANDOFF.md from the project root.
-Run the MCP Server Check — ensure Microsoft Docs and Context7 MCPs are active.
-Generate the resource implementation YAML per .instructions/ai/resource-implementation-schema.md.
-Mode: {full|lite|api-only}. Testing profile: {minimal|balanced|comprehensive}.
-Declare externalDependencyModes for every external dependency before finalizing.
-When the YAML is complete and the Phase 2→3 transition gate passes, update HANDOFF.md and close the session.
-```
-
-### Phase 3 — Implementation Plan (Session 3)
-
-```text
-Load .instructions/START-AI.md and HANDOFF.md from the project root.
-Run the MCP Server Check — enable GitHub MCP and Azure MCP for this phase.
-Generate an implementation plan per .instructions/ai/implementation-plan.md template.
-Run Phase 3 pre-flights: NuGet feeds configured (dotnet restore exits 0), dotnet ef available.
-Flag open questions before writing implementation-plan.md to the project root.
-When the plan is reviewed and open questions resolved, update HANDOFF.md and close the session.
-```
-
-### Phase 4 — Contract Scaffolding (Session 4)
-
-```text
-Load .instructions/START-AI.md and HANDOFF.md from the project root.
-Run the MCP Server Check — ensure GitHub MCP is active.
-Run python scripts/get-phase-load-set.py --phase 4 --mode {full|lite|api-only} to resolve the load set.
-Generate the contract scaffold per .instructions/ai/contract-scaffolding.md:
-  solution structure, interfaces, DTOs, entity shells, test infrastructure, no-op DI stubs.
-Gate: 'dotnet build' succeeds on the full solution including test projects.
-When gate passes, set contractsScaffolded: true in HANDOFF.md and close the session.
-```
-
-### Phase 5 — Sub-Phase Start Prompts
-
-Each sub-phase is its own session. Start every Phase 5 session with:
-
-```text
-Load .instructions/START-AI.md and HANDOFF.md from the project root.
-Run the MCP Server Check for this sub-phase.
-```
-
-Then append the sub-phase-specific block below.
-
-#### 5a — Foundation (TDD)
-
-```text
-Run python scripts/get-phase-load-set.py --phase 5a --mode {full|lite|api-only} to resolve the load set.
-Follow .instructions/ai/tdd-protocol.md: write domain/rule/repository tests first (red), then implement to green.
-Contracts and entity shells already exist from Phase 4. Activate builders after entity logic is implemented.
-Gate: 'dotnet build' + 'dotnet test --filter TestCategory=Unit'. When gate passes, update HANDOFF.md (currentSubPhase: 5b) and close session.
-```
-
-#### 5b — App Core (TDD)
-
-```text
-Run python scripts/get-phase-load-set.py --phase 5b --mode {full|lite|api-only}.
-Follow .instructions/ai/tdd-protocol.md: write service tests (red), implement services (green), write endpoint tests (red), implement endpoints (green).
-Replace no-op DI stubs with real implementations.
-Gate: 'dotnet build' + 'dotnet test --filter TestCategory=Unit|TestCategory=Endpoint'. When gate passes, update HANDOFF.md and close session.
-```
-
-#### 5c — Runtime / Edge (Tests-After)
-
-```text
-Run python scripts/get-phase-load-set.py --phase 5c --mode {full|lite|api-only}.
-Scaffold only the enabled runtime concerns: {gateway/aspire/caching/observability/security}.
-After implementation, write infrastructure tests (health checks, config loading, caching).
-Gate: 'dotnet build' + 'dotnet test' + app starts via Aspire. When gate passes, update HANDOFF.md and close session.
-```
-
-#### 5d — Optional Hosts
-
-```text
-Run python scripts/get-phase-load-set.py --phase 5d --mode {full|lite|api-only}.
-Scaffold only the enabled optional hosts: {scheduler/functionapp/notifications}.
-Update hostGates in HANDOFF.md per host as each reaches scaffolded → validated.
-Close session when all enabled hosts are validated (or blockers are recorded for deployment-only deps).
-```
-
-> Note: Uno UI is always a dedicated session within 5d. Use the same session start prompt but scope only to Uno UI.
-
-#### 5e — Quality Gates + Delivery
-
-```text
-Run python scripts/get-phase-load-set.py --phase 5e --mode {full|lite|api-only}.
-Unit/endpoint/integration tests already exist from 5a/5b/5c/5d.
-Scaffold quality gate tests (architecture, load, benchmarks per profile: {minimal|balanced|comprehensive}), IaC, CI/CD, Dockerfile.
-Run full regression: 'dotnet test'. Also 'az bicep build --file infra/main.bicep' (if IaC enabled). Update HANDOFF.md and close session.
-```
-
-#### 5f — Authentication
-
-```text
-Run python scripts/get-phase-load-set.py --phase 5f --mode {full|lite|api-only}.
-Finalize auth: replace stubs with config-driven scaffold principal ({Entra|OAuth2|social|hybrid}).
-Gate: 'dotnet build' + 'dotnet test --filter TestCategory=Endpoint'. Update HANDOFF.md and close session.
-```
-
-#### 5g — AI Integration
-
-```text
-Run python scripts/get-phase-load-set.py --phase 5g --mode {full|lite|api-only} {--include-ai-search} {--include-agents}.
-Scaffold AI integration: {search indexing/agent service} as enabled.
-Gate: 'dotnet build' + 'dotnet test --filter TestCategory=Unit'. Update HANDOFF.md and close session.
-```
-
-### Resume from HANDOFF
-
-```text
-Load .instructions/START-AI.md and HANDOFF.md from the project root.
-Resume from currentSubPhase. Load the files listed in Next Load Set. Check Blockers before proceeding.
-```
-
-### Add New Entity (Existing Project)
-
-```text
-Load .instructions/START-AI.md. No HANDOFF.md needed — this is an add-entity operation.
-Add entity {Entity} to the existing solution using .instructions/support/vertical-slice-checklist.md fast-path.
-Follow patterns established by {ExistingEntity}.
-```
-
-## Validation Cadence
-
-See [support/execution-gates.md](support/execution-gates.md) for the canonical phase gates, commands, and operator setup checklist.
-Run `python scripts/preflight-instructions.py` before Phase 4 execution and before opening validation PRs.
-
-## Troubleshooting Model
-
-- AI handles code-generation issues in one pass.
-- Engineer handles infra/environment issues (feeds, auth, Docker, ports, certs, cloud auth).
-- During Phase 5 execution, AI creates `HANDOFF.md` when context is high or at session boundaries.
-
-## Important Guardrails
-
-- Generate code only in the target project, not in this instruction repo.
-- Do not over-scaffold optional workloads on first pass.
-- Keep context small; load only files needed for the current phase.
-- Capture instruction improvements in [support/UPDATE-INSTRUCTIONS.md](support/UPDATE-INSTRUCTIONS.md).
-
-## Core References
-
-- [START-AI.md](START-AI.md) *(AI session bootstrap; load first)*
-- [ai/SKILL.md](ai/SKILL.md)
-- [ai/domain-specification-schema.md](ai/domain-specification-schema.md) *(Phase 1 output)*
-- [ai/resource-implementation-schema.md](ai/resource-implementation-schema.md) *(Phase 2 output)*
-- [ai/implementation-plan.md](ai/implementation-plan.md) *(Phase 3 template)*
-- [support/execution-gates.md](support/execution-gates.md) *(canonical phase checkpoints, validation commands, and operator setup checklist)*
-- [support/troubleshooting.md](support/troubleshooting.md) *(triage rules + canonical recurring test failures and fixes)*
-- `phase-load-packs.json` *(generated phase load sets)*
-- [support/sampleapp-patterns.md](support/sampleapp-patterns.md) *(strictly on-demand for cross-project pattern selection)*
-- [support/quick-reference.md](support/quick-reference.md) *(strictly on-demand for naming/DI/config lookups)*
-
-For default phase flow, start with [START-AI.md](START-AI.md) only, then load phase files incrementally.
+- `README.md` — human onboarding, repository overview, layout, and release notes
+- `START-AI.md` — canonical AI session bootstrap and phase router
+- `ai/SKILL.md` — Phase 5 execution policy only
 
 ## Layout
 
 - Root: entry points and machine-readable metadata (`README.md`, `START-AI.md`, `_manifest.json`, `phase-load-packs.json`)
 - `ai/`: phase schemas, execution guidance, and AI-loaded base docs
-- `support/`: operator checklists, troubleshooting, handoff template, prompt starters, and repo change notes
+- `support/`: operator checklists, troubleshooting, handoff template, prompt catalog, and repo change notes
 - `skills/`, `templates/`, `scripts/`, `schemas/`: domain-specific content and validation schemas
 
 ## Release Notes
@@ -342,7 +189,7 @@ For default phase flow, start with [START-AI.md](START-AI.md) only, then load ph
 - Dependency-aware `get-phase-load-set.py` with transitive `requires`/`dependencies` resolution, topological ordering, and budget reporting
 - `scripts/generate-phase-load-packs.py` as the only driver of phase/mode pack generation
 - `skills/identity-management.md` placed at canonical `phase-5f`
-- `ai/SKILL.md` scoped to Phase 5 execution guidance; prompt starters in README.md
+- `ai/SKILL.md` scoped to Phase 5 execution guidance; prompt catalog moved to support/prompt-catalog.md
 - TaskFlow pattern catalog with composition wiring snippets
 - `support/HANDOFF.md` for session state preservation across context boundaries
 - Lint checks for manifest load-orchestration invariants

@@ -6,6 +6,7 @@ on:
     paths:
       - "**/*.md"
       - "scripts/**"
+      - "tests/**"
       - "phase-load-packs.json"
       - "_manifest.json"
       - ".github/workflows/instruction-preflight.yml"
@@ -14,6 +15,7 @@ on:
     paths:
       - "**/*.md"
       - "scripts/**"
+      - "tests/**"
       - "phase-load-packs.json"
       - "_manifest.json"
       - ".github/workflows/instruction-preflight.yml"
@@ -24,7 +26,11 @@ permissions:
 
 jobs:
   instruction-preflight:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
 
     steps:
       - name: Checkout
@@ -37,3 +43,10 @@ jobs:
 
       - name: Run instruction preflight
         run: python scripts/preflight-instructions.py
+
+      - name: Run PowerShell instruction preflight
+        shell: pwsh
+        run: ./scripts/preflight-instructions.ps1 -Root .
+
+      - name: Verify generated files are committed
+        run: git diff --exit-code -- _manifest.json phase-load-packs.json

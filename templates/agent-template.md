@@ -3,6 +3,8 @@
 
 Use this only when search alone is not enough and a single model needs to choose among a few bounded application-service tools. Default to one `ChatClientAgent`. Add middleware, agent-to-agent composition, or Foundry Agent Service only after the simple path is proven insufficient.
 
+This template is self-contained. Do not load `service-template.md` just to confirm the application-service contract for `GetAsync(...)`.
+
 ## Default Shape
 
 - One interface
@@ -24,6 +26,17 @@ public interface I{Agent}Agent
     Task<AgentResponse> RunAsync(string userMessage, AgentSession? session = null, CancellationToken ct = default);
 
     Task<AgentSession> CreateSessionAsync(CancellationToken ct = default);
+}
+```
+
+## Expected Application-Service Contract
+
+The tool examples assume the existing application service already exposes the standard read method below. Keep the agent tool aligned to this signature.
+
+```csharp
+public interface I{Entity}Service
+{
+    Task<Result<DefaultResponse<{Entity}Dto>>> GetAsync(Guid id, CancellationToken ct = default);
 }
 ```
 
