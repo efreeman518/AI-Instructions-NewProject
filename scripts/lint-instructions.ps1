@@ -21,9 +21,20 @@ function Add-Issue {
     }
 }
 
+function Test-IgnoredMarkdownPath {
+    param([string]$RelativePath)
+
+    return ($RelativePath -match '^sample-app/' -or
+        $RelativePath -match '(^|/)(bin|obj|\.venv|venv|env)/')
+}
+
 $issues = @()
 
-$mdFiles = Get-ChildItem -Path $Root -Recurse -File -Filter '*.md'
+$mdFiles = Get-ChildItem -Path $Root -Recurse -File -Filter '*.md' |
+    Where-Object {
+        $relativePath = $_.FullName.Substring($Root.Length + 1).Replace('\', '/')
+        -not (Test-IgnoredMarkdownPath -RelativePath $relativePath)
+    }
 
 # -----------------------------------------------------------------------------
 # 1) Template symbol contract checks
@@ -266,7 +277,7 @@ if (Test-Path $manifestPath) {
         }
     }
 
-    # Check that all .md files (except sample-app/, bin/, obj/) are in the manifest
+    # Check that all repo .md files (except sample-app/, build output, local venvs) are in the manifest
     $manifestPathSet = @{}
     foreach ($entry in $manifest.files) {
         $normalized = $entry.path.Replace('/', '\').ToLower()
@@ -274,8 +285,6 @@ if (Test-Path $manifestPath) {
     }
     foreach ($file in $mdFiles) {
         $relativeFile = $file.FullName.Substring($Root.Length + 1).Replace('\', '/')
-        if ($relativeFile -match '^sample-app/') { continue }
-        if ($relativeFile -match '(^|/)bin/' -or $relativeFile -match '(^|/)obj/') { continue }
         if ($relativeFile -eq 'CHANGELOG.md') { continue }
         $lookupKey = $relativeFile.Replace('/', '\').ToLower()
         if (-not $manifestPathSet.ContainsKey($lookupKey)) {
@@ -371,8 +380,8 @@ if (Test-Path $manifestPath) {
     if (-not $identityEntry) {
         $issues += Add-Issue -Category 'ManifestInvariants' -File '_manifest.json' -Message 'skills/identity-management.md is missing from manifest.files.'
     }
-    elseif ([string]$identityEntry.phase -ne 'phase-4f') {
-        $issues += Add-Issue -Category 'ManifestInvariants' -File '_manifest.json' -Message 'skills/identity-management.md must be assigned to phase-4f.'
+    elseif ([string]$identityEntry.phase -ne 'phase-5f') {
+        $issues += Add-Issue -Category 'ManifestInvariants' -File '_manifest.json' -Message 'skills/identity-management.md must be assigned to phase-5f.'
     }
 
     $phaseLoadPacksPath = Join-Path $Root 'phase-load-packs.json'

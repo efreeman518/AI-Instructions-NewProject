@@ -4,7 +4,7 @@
 |---|---|
 | **File** | `{Host}.Api/Endpoints/{Entity}Endpoints.cs` |
 | **Depends on** | [service-template](service-template.md), [data-mapping-template](data-mapping-template.md) |
-| **Referenced by** | [api.md](../skills/api.md), [test-templates.md](test-templates.md) |
+| **Referenced by** | [api.md](../skills/api.md), [test-templates-endpoint.md](test-templates-endpoint.md), [test-templates.md](test-templates.md) |
 
 ## File: {Host}.Api/Endpoints/{Entity}Endpoints.cs
 

@@ -72,17 +72,18 @@ def main():
         "phase-1",
         "phase-2",
         "phase-3",
-        "phase-4-base",
-        "phase-4a",
-        "phase-4a-optional",
-        "phase-4b",
-        "phase-4c",
-        "phase-4d",
-        "phase-4d-optional",
-        "phase-4e",
-        "phase-4e-optional",
-        "phase-4f",
-        "phase-4g",
+        "phase-4",
+        "phase-5-base",
+        "phase-5a",
+        "phase-5a-optional",
+        "phase-5b",
+        "phase-5c",
+        "phase-5d",
+        "phase-5d-optional",
+        "phase-5e",
+        "phase-5e-optional",
+        "phase-5f",
+        "phase-5g",
         "support-only",
         "on-demand",
     ]
@@ -100,6 +101,23 @@ def main():
     # Deduplicate per phase
     for phase in grouped:
         grouped[phase] = list(dict.fromkeys(grouped[phase]))
+
+    phase_overlays = OrderedDict([
+        ("phase-4", [
+            "ai/placeholder-tokens.md",
+            "support/ef-packages-reference.md",
+        ]),
+    ])
+    for phase, overlay_paths in phase_overlays.items():
+        if phase not in grouped:
+            grouped[phase] = []
+        for path in overlay_paths:
+            if path not in manifest_file_set:
+                raise SystemExit(
+                    f"Phase overlay '{path}' for phase '{phase}' does not exist in manifest.files."
+                )
+            if path not in grouped[phase]:
+                grouped[phase].append(path)
 
     full_pack = get_mode_pack(grouped, [])
     lite_pack = get_mode_pack(grouped, excluded_lite)

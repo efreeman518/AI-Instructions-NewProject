@@ -89,7 +89,7 @@ Use templates for generated artifacts and keep naming aligned with [placeholder-
 
 - Backend templates: entity/config/repository/dto/mapper/service/endpoint/rules/message-handler/structure-validator/exception-handler
 - UI templates: MVUX model/XAML page/UI model/UI service
-- Tests: load only needed file from `templates/test-templates.md`
+- Tests: load only the phase-specific split test template for the current sub-phase; use `templates/test-templates.md` only as an on-demand reference
 
 ## Vertical Slice Shortcut
 

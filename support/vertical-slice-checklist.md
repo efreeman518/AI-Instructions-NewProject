@@ -121,13 +121,13 @@ dotnet ef migrations add Add{Entity} --project src/Infrastructure/{Project}.Infr
 
 | File Path | Template |
 |---|---|
-| `src/Test/Test.Unit/Domain/{Entity}Tests.cs` | [test-templates.md](../templates/test-templates.md) |
-| `src/Test/Test.Unit/Services/{Entity}ServiceTests.cs` | [test-templates.md](../templates/test-templates.md) |
-| `src/Test/Test.Unit/Repositories/{Entity}RepositoryTrxnTests.cs` | [test-templates.md](../templates/test-templates.md) |
-| `src/Test/Test.Unit/Repositories/{Entity}RepositoryQueryTests.cs` | [test-templates.md](../templates/test-templates.md) |
-| `src/Test/Test.Unit/Mappers/{Entity}MapperTests.cs` | [test-templates.md](../templates/test-templates.md) |
-| `src/Test/Test.Integration/Endpoints/{Entity}EndpointsTests.cs` | [test-templates.md](../templates/test-templates.md) |
-| `src/Test/Test.Architecture/` updates | [test-templates.md](../templates/test-templates.md) |
+| `src/Test/Test.Unit/Domain/{Entity}Tests.cs` | [test-templates-domain.md](../templates/test-templates-domain.md) |
+| `src/Test/Test.Unit/Services/{Entity}ServiceTests.cs` | [test-templates-service.md](../templates/test-templates-service.md) |
+| `src/Test/Test.Unit/Repositories/{Entity}RepositoryTrxnTests.cs` | [test-templates-repository.md](../templates/test-templates-repository.md) |
+| `src/Test/Test.Unit/Repositories/{Entity}RepositoryQueryTests.cs` | [test-templates-repository.md](../templates/test-templates-repository.md) |
+| `src/Test/Test.Unit/Mappers/{Entity}MapperTests.cs` | [test-templates-service.md](../templates/test-templates-service.md) |
+| `src/Test/Test.Integration/Endpoints/{Entity}EndpointsTests.cs` | [test-templates-endpoint.md](../templates/test-templates-endpoint.md) |
+| `src/Test/Test.Architecture/` updates | [test-templates-quality.md](../templates/test-templates-quality.md) |
 
 ### Required Test Gate by Profile
 

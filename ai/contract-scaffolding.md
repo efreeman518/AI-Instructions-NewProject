@@ -112,7 +112,7 @@ public class {Entity} : EntityBase, ITenantEntity<Guid>
 ### 4. Test Infrastructure
 
 **Test.Support:**
-- `UnitTestBase.cs` — shared `MockRepository` (from `test-templates.md` Common Setup)
+- `UnitTestBase.cs` — shared `MockRepository` (see `test-templates.md` Common Setup as on-demand reference)
 - `InMemoryDbBuilder.cs` — fluent in-memory/SQLite DB builder
 - `DbSupport.cs` — test DB wiring for integration tests
 - `Utility.cs` — config builder + random string helper

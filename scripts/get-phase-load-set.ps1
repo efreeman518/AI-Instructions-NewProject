@@ -57,7 +57,7 @@ function Select-RequestedPaths {
 
     $filtered = @($Paths)
 
-    if ($RequestedPhase -eq 'phase-4c') {
+    if ($RequestedPhase -eq 'phase-5c') {
         if (-not $IncludeGateway.IsPresent) {
             $filtered = @($filtered | Where-Object { $_ -ne 'skills/gateway.md' })
         }
@@ -67,7 +67,7 @@ function Select-RequestedPaths {
         }
     }
 
-    if ($RequestedPhase -eq 'phase-4d') {
+    if ($RequestedPhase -eq 'phase-5d') {
         if (-not $IncludeScheduler.IsPresent) {
             $filtered = @($filtered | Where-Object { $_ -ne 'skills/background-services.md' })
         }
@@ -81,15 +81,15 @@ function Select-RequestedPaths {
         }
     }
 
-    if ($RequestedPhase -eq 'phase-4d-optional' -and -not $IncludeUnoUI.IsPresent) {
+    if ($RequestedPhase -eq 'phase-5d-optional' -and -not $IncludeUnoUI.IsPresent) {
         return @()
     }
 
-    if ($RequestedPhase -eq 'phase-4g' -and -not $IncludeAiServices.IsPresent) {
+    if ($RequestedPhase -eq 'phase-5g' -and -not $IncludeAiServices.IsPresent) {
         return @()
     }
 
-    if ($RequestedPhase -eq 'phase-4g' -and $IncludeAiServices.IsPresent) {
+    if ($RequestedPhase -eq 'phase-5g' -and $IncludeAiServices.IsPresent) {
         $hasGranularAiSelection = $IncludeAiSearch.IsPresent -or $IncludeAgents.IsPresent
         if ($hasGranularAiSelection) {
             $allowedPaths = [System.Collections.Generic.HashSet[string]]::new()

@@ -54,17 +54,18 @@ $phaseOrder = @(
     'phase-1',
     'phase-2',
     'phase-3',
-    'phase-4-base',
-    'phase-4a',
-    'phase-4a-optional',
-    'phase-4b',
-    'phase-4c',
-    'phase-4d',
-    'phase-4d-optional',
-    'phase-4e',
-    'phase-4e-optional',
-    'phase-4f',
-    'phase-4g',
+    'phase-4',
+    'phase-5-base',
+    'phase-5a',
+    'phase-5a-optional',
+    'phase-5b',
+    'phase-5c',
+    'phase-5d',
+    'phase-5d-optional',
+    'phase-5e',
+    'phase-5e-optional',
+    'phase-5f',
+    'phase-5g',
     'support-only',
     'on-demand'
 )
@@ -85,6 +86,28 @@ foreach ($entry in $manifest.files) {
 
 foreach ($phase in @($grouped.Keys)) {
     $grouped[$phase] = @($grouped[$phase] | Select-Object -Unique)
+}
+
+$phaseOverlays = [ordered]@{
+    'phase-4' = @(
+        'ai/placeholder-tokens.md',
+        'support/ef-packages-reference.md'
+    )
+}
+foreach ($phase in $phaseOverlays.Keys) {
+    if (-not $grouped.ContainsKey($phase)) {
+        $grouped[$phase] = @()
+    }
+
+    foreach ($path in $phaseOverlays[$phase]) {
+        if (-not $manifestFileSet.ContainsKey($path)) {
+            throw "Phase overlay '$path' for phase '$phase' does not exist in manifest.files."
+        }
+
+        if ($path -notin $grouped[$phase]) {
+            $grouped[$phase] += $path
+        }
+    }
 }
 
 function Get-ModePack {

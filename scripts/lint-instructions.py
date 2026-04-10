@@ -12,6 +12,13 @@ def add_issue(category, file, message, line=0):
     return {"Category": category, "File": file, "Line": line, "Message": message}
 
 
+def should_ignore_markdown_path(relative_path):
+    return (
+        relative_path.startswith("sample-app/")
+        or re.search(r"(^|/)(bin|obj|\.venv|venv|env)/", relative_path) is not None
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(description="Lint instruction files")
     parser.add_argument("--root", "-Root", default=None,
@@ -22,7 +29,10 @@ def main():
 
     issues = []
 
-    md_files = list(root.rglob("*.md"))
+    md_files = [
+        file for file in root.rglob("*.md")
+        if not should_ignore_markdown_path(file.relative_to(root).as_posix())
+    ]
 
     # -------------------------------------------------------------------------
     # 1) Template symbol contract checks
@@ -290,7 +300,7 @@ def main():
                     f"Manifest entry references missing file: {entry['path']}"
                 ))
 
-        # Check that all .md files (except sample-app/, bin/, obj/) are in the manifest
+        # Check that all repo .md files (except sample-app/, build output, local venvs) are in the manifest
         manifest_path_set = set()
         for entry in manifest["files"]:
             normalized = entry["path"].replace("/", "\\").lower()
@@ -298,10 +308,6 @@ def main():
 
         for file in md_files:
             relative_file = file.relative_to(root).as_posix()
-            if relative_file.startswith("sample-app/"):
-                continue
-            if re.search(r"(^|/)bin/", relative_file) or re.search(r"(^|/)obj/", relative_file):
-                continue
             if relative_file == "CHANGELOG.md":
                 continue
             lookup_key = relative_file.replace("/", "\\").lower()
@@ -392,7 +398,7 @@ def main():
                             f"Mode exclusion '{path}' for '{mode}' does not exist on disk."
                         ))
 
-            # identity-management.md must be in phase-4f
+            # identity-management.md must be in phase-5f
             identity_entries = [
                 e for e in manifest["files"]
                 if e["path"] == "skills/identity-management.md"
@@ -402,10 +408,10 @@ def main():
                     "ManifestInvariants", "_manifest.json",
                     "skills/identity-management.md is missing from manifest.files."
                 ))
-            elif str(identity_entries[0]["phase"]) != "phase-4f":
+            elif str(identity_entries[0]["phase"]) != "phase-5f":
                 issues.append(add_issue(
                     "ManifestInvariants", "_manifest.json",
-                    "skills/identity-management.md must be assigned to phase-4f."
+                    "skills/identity-management.md must be assigned to phase-5f."
                 ))
 
             phase_load_packs_path = root / "phase-load-packs.json"

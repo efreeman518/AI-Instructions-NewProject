@@ -67,10 +67,12 @@ Test/
 
 ## Templates
 
-- Unit: [../templates/test-templates.md](../templates/test-templates.md)
-- Integration: [../templates/test-templates.md](../templates/test-templates.md)
-- E2E: [../templates/test-templates.md](../templates/test-templates.md)
-- Quality gates: [../templates/test-templates.md](../templates/test-templates.md)
+- Domain + rules: [../templates/test-templates-domain.md](../templates/test-templates-domain.md)
+- Repository: [../templates/test-templates-repository.md](../templates/test-templates-repository.md)
+- Service + mappers: [../templates/test-templates-service.md](../templates/test-templates-service.md)
+- Endpoint integration: [../templates/test-templates-endpoint.md](../templates/test-templates-endpoint.md)
+- Quality gates: [../templates/test-templates-quality.md](../templates/test-templates-quality.md)
+- Complete on-demand reference: [../templates/test-templates.md](../templates/test-templates.md)
 
 ---
 

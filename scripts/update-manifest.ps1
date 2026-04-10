@@ -22,6 +22,13 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+function Test-IgnoredMarkdownPath {
+    param([string]$RelativePath)
+
+    return ($RelativePath -match '^sample-app/' -or
+        $RelativePath -match '(^|/)(\.git|bin|obj|\.venv|venv|env)/')
+}
+
 $manifestPath = Join-Path $Root '_manifest.json'
 if (-not (Test-Path $manifestPath)) {
     Write-Error "Manifest not found at $manifestPath"
@@ -32,16 +39,30 @@ if (-not (Test-Path $manifestPath)) {
 $json = Get-Content $manifestPath -Raw -Encoding UTF8
 $manifest = $json | ConvertFrom-Json
 
+# Scan repo .md files (exclude sample-app, build output, VCS, and local venvs)
+$mdFiles = Get-ChildItem -Path $Root -Filter '*.md' -Recurse |
+    Where-Object {
+        $relativePath = $_.FullName.Substring($Root.Length + 1).Replace('\', '/')
+        -not (Test-IgnoredMarkdownPath -RelativePath $relativePath)
+    }
+$mdFileSet = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+foreach ($file in $mdFiles) {
+    $relativePath = $file.FullName.Substring($Root.Length + 1).Replace('\', '/')
+    $mdFileSet.Add($relativePath) | Out-Null
+}
+
+# Drop stale or ignored markdown entries before recalculating token counts.
+$manifest.files = @($manifest.files | Where-Object {
+    $path = [string]$_.path
+    if (-not $path.EndsWith('.md')) { return $true }
+    return $mdFileSet.Contains($path) -and -not (Test-IgnoredMarkdownPath -RelativePath $path)
+})
+
 # Build lookup of existing entries by path
 $fileEntries = @{}
 foreach ($entry in $manifest.files) {
     $fileEntries[$entry.path] = $entry
 }
-
-# Scan .md files (exclude sample-app)
-$mdFiles = Get-ChildItem -Path $Root -Filter '*.md' -Recurse |
-    Where-Object { $_.FullName -notmatch [regex]::Escape((Join-Path $Root 'sample-app')) } |
-    Where-Object { $_.FullName -notmatch '[\\/]\.git[\\/]' }
 
 $updated = 0
 $added = 0

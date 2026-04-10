@@ -8,10 +8,14 @@
             "_manifest.json"
         ],
         "exclude": [
-            ".git/**"
+            ".git/**",
+            "sample-app/**",
+            ".venv/**",
+            "venv/**",
+            "env/**"
         ]
     },
-    "totalEstimatedTokens": 140777,
+    "totalEstimatedTokens": 156429,
     "contextBudget": {
         "default": 30000,
         "extended": 60000,
@@ -47,7 +51,7 @@
         {
             "path": "_manifest.json",
             "phase": "metadata",
-            "estimatedTokens": 7224
+            "estimatedTokens": 5547
         },
         {
             "path": "scripts/update-manifest.py",
@@ -57,17 +61,17 @@
         {
             "path": "START-AI.md",
             "phase": "session-bootstrap",
-            "estimatedTokens": 1750
+            "estimatedTokens": 1977
         },
         {
             "path": "CLAUDE.md",
             "phase": "session-bootstrap",
-            "estimatedTokens": 451
+            "estimatedTokens": 484
         },
         {
             "path": ".github/copilot-instructions.md",
             "phase": "session-bootstrap",
-            "estimatedTokens": 451
+            "estimatedTokens": 484
         },
         {
             "path": "ai/domain-specification-schema.md",
@@ -77,17 +81,17 @@
         {
             "path": "ai/resource-implementation-schema.md",
             "phase": "phase-2",
-            "estimatedTokens": 4004
+            "estimatedTokens": 4017
         },
         {
             "path": "ai/implementation-plan.md",
             "phase": "phase-3",
-            "estimatedTokens": 1273
+            "estimatedTokens": 1579
         },
         {
             "path": "ai/contract-scaffolding.md",
             "phase": "phase-4",
-            "estimatedTokens": 3000
+            "estimatedTokens": 2339
         },
         {
             "path": "skills/solution-structure.md",
@@ -102,7 +106,7 @@
         {
             "path": "ai/SKILL.md",
             "phase": "phase-5-base",
-            "estimatedTokens": 2762
+            "estimatedTokens": 3412
         },
         {
             "path": "ai/placeholder-tokens.md",
@@ -112,7 +116,7 @@
         {
             "path": "ai/tdd-protocol.md",
             "phase": "phase-5-base",
-            "estimatedTokens": 2500
+            "estimatedTokens": 2197
         },
         {
             "path": "support/ef-packages-reference.md",
@@ -195,7 +199,7 @@
         {
             "path": "templates/test-templates-domain.md",
             "phase": "phase-5a",
-            "estimatedTokens": 2000,
+            "estimatedTokens": 1268,
             "generates": [
                 "{Entity}Tests.cs",
                 "{Entity}RulesTests.cs"
@@ -208,7 +212,7 @@
         {
             "path": "templates/test-templates-repository.md",
             "phase": "phase-5a",
-            "estimatedTokens": 1500,
+            "estimatedTokens": 1400,
             "generates": [
                 "{Entity}RepositoryTrxnTests.cs",
                 "{Entity}RepositoryQueryTests.cs"
@@ -287,7 +291,7 @@
         {
             "path": "templates/endpoint-template.md",
             "phase": "phase-5b",
-            "estimatedTokens": 1398,
+            "estimatedTokens": 1412,
             "generates": [
                 "{Entity}Endpoints.cs"
             ],
@@ -333,7 +337,7 @@
         {
             "path": "templates/test-templates-service.md",
             "phase": "phase-5b",
-            "estimatedTokens": 1500,
+            "estimatedTokens": 1599,
             "generates": [
                 "{Entity}ServiceTests.cs",
                 "{Entity}MapperTests.cs"
@@ -346,7 +350,7 @@
         {
             "path": "templates/test-templates-endpoint.md",
             "phase": "phase-5b",
-            "estimatedTokens": 2500,
+            "estimatedTokens": 1910,
             "generates": [
                 "{Entity}EndpointsTests.cs"
             ],
@@ -443,7 +447,7 @@
         {
             "path": "skills/uno-ui.md",
             "phase": "phase-5d",
-            "estimatedTokens": 2968,
+            "estimatedTokens": 3550,
             "dependencies": [
                 "skills/solution-structure.md",
                 "skills/gateway.md",
@@ -500,12 +504,12 @@
         {
             "path": "skills/testing.md",
             "phase": "phase-5e",
-            "estimatedTokens": 2442
+            "estimatedTokens": 3049
         },
         {
             "path": "templates/test-templates-quality.md",
             "phase": "phase-5e",
-            "estimatedTokens": 2000,
+            "estimatedTokens": 1614,
             "generates": [
                 "ArchitectureTests.cs",
                 "BaseTest.cs",
@@ -605,13 +609,13 @@
         {
             "path": "templates/test-templates.md",
             "phase": "on-demand",
-            "estimatedTokens": 6097,
+            "estimatedTokens": 6426,
             "note": "Unified reference. For phase-specific loading use the split templates below."
         },
         {
             "path": "templates/index.md",
             "phase": "on-demand",
-            "estimatedTokens": 700
+            "estimatedTokens": 935
         },
         {
             "path": "support/quick-reference.md",
@@ -621,7 +625,7 @@
         {
             "path": "support/troubleshooting.md",
             "phase": "on-demand",
-            "estimatedTokens": 2140
+            "estimatedTokens": 2828
         },
         {
             "path": "support/sampleapp-patterns.md",
@@ -631,12 +635,12 @@
         {
             "path": "support/execution-gates.md",
             "phase": "on-demand",
-            "estimatedTokens": 3289
+            "estimatedTokens": 4074
         },
         {
             "path": "support/vertical-slice-checklist.md",
             "phase": "on-demand",
-            "estimatedTokens": 3044
+            "estimatedTokens": 3075
         },
         {
             "path": "support/UPDATE-INSTRUCTIONS.md",
@@ -646,7 +650,7 @@
         {
             "path": "support/HANDOFF.md",
             "phase": "on-demand",
-            "estimatedTokens": 717
+            "estimatedTokens": 851
         },
         {
             "path": "patterns/data-layer-wiring.md",
@@ -671,7 +675,7 @@
         {
             "path": "README.md",
             "phase": "support-only",
-            "estimatedTokens": 4384
+            "estimatedTokens": 4719
         }
     ],
     "phases": {

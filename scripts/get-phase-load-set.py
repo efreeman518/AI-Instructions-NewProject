@@ -15,13 +15,13 @@ def filter_requested_paths(paths, requested_phase, requested_mode,
                            include_ai_search, include_agents):
     filtered = list(paths)
 
-    if requested_phase == "phase-4c":
+    if requested_phase == "phase-5c":
         if not include_gateway:
             filtered = [p for p in filtered if p != "skills/gateway.md"]
         if requested_mode == "api-only" and not include_aspire:
             filtered = [p for p in filtered if p != "skills/aspire.md"]
 
-    if requested_phase == "phase-4d":
+    if requested_phase == "phase-5d":
         if not include_scheduler:
             filtered = [p for p in filtered if p != "skills/background-services.md"]
         if not include_function_app:
@@ -29,13 +29,13 @@ def filter_requested_paths(paths, requested_phase, requested_mode,
         if not include_uno_ui:
             filtered = [p for p in filtered if p != "skills/uno-ui.md"]
 
-    if requested_phase == "phase-4d-optional" and not include_uno_ui:
+    if requested_phase == "phase-5d-optional" and not include_uno_ui:
         return []
 
-    if requested_phase == "phase-4g" and not include_ai_services:
+    if requested_phase == "phase-5g" and not include_ai_services:
         return []
 
-    if requested_phase == "phase-4g" and include_ai_services:
+    if requested_phase == "phase-5g" and include_ai_services:
         has_granular_ai_selection = include_ai_search or include_agents
         if has_granular_ai_selection:
             allowed_paths = {"skills/ai-integration.md"}
@@ -82,7 +82,7 @@ def add_resolved_path(path, visited, visiting, ordered_paths,
 
 def main():
     parser = argparse.ArgumentParser(description="Resolve the load set for a phase")
-    parser.add_argument("--phase", "-Phase", required=True, help="Phase name (e.g. phase-4a)")
+    parser.add_argument("--phase", "-Phase", required=True, help="Phase name (e.g. phase-5a)")
     parser.add_argument("--mode", "-Mode", default="full",
                         choices=["full", "lite", "api-only"], help="Scaffold mode")
     parser.add_argument("--include-gateway", "-IncludeGateway",

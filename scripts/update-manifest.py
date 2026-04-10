@@ -14,8 +14,16 @@ Updates _manifest.json token estimates by scanning all .md files.
 import argparse
 import json
 import math
+import re
 import sys
 from pathlib import Path
+
+
+def should_ignore_markdown_path(relative_path):
+    return (
+        relative_path.startswith("sample-app/")
+        or re.search(r"(^|/)(\.git|bin|obj|\.venv|venv|env)/", relative_path) is not None
+    )
 
 
 def main():
@@ -34,16 +42,29 @@ def main():
     with open(manifest_path, "r", encoding="utf-8") as f:
         manifest = json.load(f)
 
+    # Scan repo .md files (exclude sample-app, build output, VCS, and local venvs)
+    md_files = [
+        p for p in root.rglob("*.md")
+        if not should_ignore_markdown_path(p.relative_to(root).as_posix())
+    ]
+    md_file_set = {p.relative_to(root).as_posix() for p in md_files}
+
+    # Drop stale or ignored markdown entries before recalculating token counts.
+    manifest["files"] = [
+        entry for entry in manifest["files"]
+        if not (
+            str(entry["path"]).endswith(".md")
+            and (
+                str(entry["path"]) not in md_file_set
+                or should_ignore_markdown_path(str(entry["path"]))
+            )
+        )
+    ]
+
     # Build lookup of existing entries by path
     file_entries = {}
     for entry in manifest["files"]:
         file_entries[entry["path"]] = entry
-
-    # Scan .md files (exclude sample-app and .git)
-    md_files = [
-        p for p in root.rglob("*.md")
-        if "sample-app" not in p.parts and ".git" not in p.parts
-    ]
 
     updated = 0
     added = 0
