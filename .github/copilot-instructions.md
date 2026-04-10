@@ -24,7 +24,9 @@ Only load files for the current phase. Unload prior-phase files when transitioni
 ## Key Files
 
 - `START-AI.md` — session bootstrap and phase router
-- `ai/SKILL.md` — Phase 4 execution rules
+- `ai/contract-scaffolding.md` — Phase 4 contract scaffolding rules
+- `ai/SKILL.md` — Phase 5 execution rules
+- `ai/tdd-protocol.md` — TDD red/green protocol for Phase 5a/5b
 - `ai/placeholder-tokens.md` — token substitution glossary
 - `phase-load-packs.json` — pre-computed phase file lists by mode
 - `_manifest.json` — token estimates, phase membership, dependencies

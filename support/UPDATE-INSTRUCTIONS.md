@@ -59,7 +59,7 @@ Your job is to read the findings below and apply approved changes to the instruc
 - **Recommended change:** {add to Essential/Recommended/Optional tier, update description, etc.}
 - **Reason:** {why this MCP improves the scaffolding workflow}
 - **Priority:** medium | low
-- **Discovered during:** {phase name — e.g., "Phase 4 MCP discovery before Uno UI scaffolding"}
+- **Discovered during:** {phase name — e.g., "Phase 5 MCP discovery before Uno UI scaffolding"}
 -->
 
 ---

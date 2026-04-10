@@ -1,6 +1,6 @@
 # Expected Output File Index
 
-Load on-demand as a reference during Phase 4a–4e to verify scaffolded file layout.
+Load on-demand as a reference during Phase 5a–5e to verify scaffolded file layout.
 
 Expected file layout when scaffolding is complete. All paths relative to project root `src/`.
 

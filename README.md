@@ -81,7 +81,7 @@ Expected shape:
 
 Notes:
 - `.instructions/support/HANDOFF.md` is the template.
-- The working `HANDOFF.md` used to resume AI sessions is created in the target project root during Phase 4.
+- The working `HANDOFF.md` used to resume AI sessions is created in the target project root during Phase 5.
 
 ## Recommended MCP Servers
 
@@ -144,15 +144,16 @@ Defaults: [ai/resource-implementation-schema.md](ai/resource-implementation-sche
 2. Phase 1: Domain YAML → [ai/domain-specification-schema.md](ai/domain-specification-schema.md)
 3. Phase 2: Resource YAML → [ai/resource-implementation-schema.md](ai/resource-implementation-schema.md)
 4. Phase 3: Implementation plan → [ai/implementation-plan.md](ai/implementation-plan.md)
-5. Phase 4: Build → [ai/SKILL.md](ai/SKILL.md)
-6. Validate gates → [support/execution-gates.md](support/execution-gates.md)
-7. Troubleshoot → [support/troubleshooting.md](support/troubleshooting.md)
+5. Phase 4: Contract scaffolding → [ai/contract-scaffolding.md](ai/contract-scaffolding.md)
+6. Phase 5: Implementation (TDD) → [ai/SKILL.md](ai/SKILL.md) + [ai/tdd-protocol.md](ai/tdd-protocol.md)
+7. Validate gates → [support/execution-gates.md](support/execution-gates.md)
+8. Troubleshoot → [support/troubleshooting.md](support/troubleshooting.md)
 
 ## Prompt Patterns
 
 Copy-paste these prompts to start a phase. Replace `{...}` with actual values.
 
-**Session model:** Each phase (and each Phase 4 sub-phase) runs in its own AI session. At the end of each session the AI writes/updates `HANDOFF.md` in the target project root, then the session closes. The next session starts from `START-AI.md` + `HANDOFF.md` only.
+**Session model:** Each phase (and each Phase 5 sub-phase) runs in its own AI session. At the end of each session the AI writes/updates `HANDOFF.md` in the target project root, then the session closes. The next session starts from `START-AI.md` + `HANDOFF.md` only.
 
 ### Phase 1 — Domain Discovery (Session 1)
 
@@ -188,9 +189,21 @@ Flag open questions before writing implementation-plan.md to the project root.
 When the plan is reviewed and open questions resolved, update HANDOFF.md and close the session.
 ```
 
-### Phase 4 — Sub-Phase Start Prompts
+### Phase 4 — Contract Scaffolding (Session 4)
 
-Each sub-phase is its own session. Start every Phase 4 session with:
+```text
+Load .instructions/START-AI.md and HANDOFF.md from the project root.
+Run the MCP Server Check — ensure GitHub MCP is active.
+Run python scripts/get-phase-load-set.py --phase 4 --mode {full|lite|api-only} to resolve the load set.
+Generate the contract scaffold per .instructions/ai/contract-scaffolding.md:
+  solution structure, interfaces, DTOs, entity shells, test infrastructure, no-op DI stubs.
+Gate: 'dotnet build' succeeds on the full solution including test projects.
+When gate passes, set contractsScaffolded: true in HANDOFF.md and close the session.
+```
+
+### Phase 5 — Sub-Phase Start Prompts
+
+Each sub-phase is its own session. Start every Phase 5 session with:
 
 ```text
 Load .instructions/START-AI.md and HANDOFF.md from the project root.
@@ -199,61 +212,65 @@ Run the MCP Server Check for this sub-phase.
 
 Then append the sub-phase-specific block below.
 
-#### 4a — Foundation
+#### 5a — Foundation (TDD)
 
 ```text
-Run python scripts/get-phase-load-set.py --phase 4a --mode {full|lite|api-only} to resolve the load set.
-Scaffold Phase 4a: solution structure, domain model, data access, core entity/config/repository/appsettings.
-Gate: 'dotnet build' passes. When gate passes, update HANDOFF.md (currentSubPhase: 4b) and close session.
+Run python scripts/get-phase-load-set.py --phase 5a --mode {full|lite|api-only} to resolve the load set.
+Follow .instructions/ai/tdd-protocol.md: write domain/rule/repository tests first (red), then implement to green.
+Contracts and entity shells already exist from Phase 4. Activate builders after entity logic is implemented.
+Gate: 'dotnet build' + 'dotnet test --filter TestCategory=Unit'. When gate passes, update HANDOFF.md (currentSubPhase: 5b) and close session.
 ```
 
-#### 4b — App Core
+#### 5b — App Core (TDD)
 
 ```text
-Run python scripts/get-phase-load-set.py --phase 4b --mode {full|lite|api-only}.
-Scaffold Phase 4b: DTOs, mappers, services, endpoints, bootstrapper DI wiring.
-Gate: 'dotnet build' + 'dotnet test --filter TestCategory=Endpoint'. When gate passes, update HANDOFF.md and close session.
+Run python scripts/get-phase-load-set.py --phase 5b --mode {full|lite|api-only}.
+Follow .instructions/ai/tdd-protocol.md: write service tests (red), implement services (green), write endpoint tests (red), implement endpoints (green).
+Replace no-op DI stubs with real implementations.
+Gate: 'dotnet build' + 'dotnet test --filter TestCategory=Unit|TestCategory=Endpoint'. When gate passes, update HANDOFF.md and close session.
 ```
 
-#### 4c — Runtime / Edge
+#### 5c — Runtime / Edge (Tests-After)
 
 ```text
-Run python scripts/get-phase-load-set.py --phase 4c --mode {full|lite|api-only}.
+Run python scripts/get-phase-load-set.py --phase 5c --mode {full|lite|api-only}.
 Scaffold only the enabled runtime concerns: {gateway/aspire/caching/observability/security}.
-Gate: 'dotnet build' + app starts via Aspire. When gate passes, update HANDOFF.md and close session.
+After implementation, write infrastructure tests (health checks, config loading, caching).
+Gate: 'dotnet build' + 'dotnet test' + app starts via Aspire. When gate passes, update HANDOFF.md and close session.
 ```
 
-#### 4d — Optional Hosts
+#### 5d — Optional Hosts
 
 ```text
-Run python scripts/get-phase-load-set.py --phase 4d --mode {full|lite|api-only}.
+Run python scripts/get-phase-load-set.py --phase 5d --mode {full|lite|api-only}.
 Scaffold only the enabled optional hosts: {scheduler/functionapp/notifications}.
 Update hostGates in HANDOFF.md per host as each reaches scaffolded → validated.
 Close session when all enabled hosts are validated (or blockers are recorded for deployment-only deps).
 ```
 
-> Note: Uno UI is always a dedicated session within 4d. Use the same session start prompt but scope only to Uno UI.
+> Note: Uno UI is always a dedicated session within 5d. Use the same session start prompt but scope only to Uno UI.
 
-#### 4e — Quality + Delivery
+#### 5e — Quality Gates + Delivery
 
 ```text
-Run python scripts/get-phase-load-set.py --phase 4e --mode {full|lite|api-only}.
-Scaffold tests (profile: {minimal|balanced|comprehensive}), IaC, and CI/CD as in scope.
-Gate: 'dotnet test' passes; 'az bicep build --file infra/main.bicep' passes (if IaC enabled). Update HANDOFF.md and close session.
+Run python scripts/get-phase-load-set.py --phase 5e --mode {full|lite|api-only}.
+Unit/endpoint/integration tests already exist from 5a/5b/5c/5d.
+Scaffold quality gate tests (architecture, load, benchmarks per profile: {minimal|balanced|comprehensive}), IaC, CI/CD, Dockerfile.
+Run full regression: 'dotnet test'. Also 'az bicep build --file infra/main.bicep' (if IaC enabled). Update HANDOFF.md and close session.
 ```
 
-#### 4f — Authentication
+#### 5f — Authentication
 
 ```text
-Run python scripts/get-phase-load-set.py --phase 4f --mode {full|lite|api-only}.
+Run python scripts/get-phase-load-set.py --phase 5f --mode {full|lite|api-only}.
 Finalize auth: replace stubs with config-driven scaffold principal ({Entra|OAuth2|social|hybrid}).
 Gate: 'dotnet build' + 'dotnet test --filter TestCategory=Endpoint'. Update HANDOFF.md and close session.
 ```
 
-#### 4g — AI Integration
+#### 5g — AI Integration
 
 ```text
-Run python scripts/get-phase-load-set.py --phase 4g --mode {full|lite|api-only} {--include-ai-search} {--include-agents}.
+Run python scripts/get-phase-load-set.py --phase 5g --mode {full|lite|api-only} {--include-ai-search} {--include-agents}.
 Scaffold AI integration: {search indexing/agent service} as enabled.
 Gate: 'dotnet build' + 'dotnet test --filter TestCategory=Unit'. Update HANDOFF.md and close session.
 ```
@@ -282,7 +299,7 @@ Run `python scripts/preflight-instructions.py` before Phase 4 execution and befo
 
 - AI handles code-generation issues in one pass.
 - Engineer handles infra/environment issues (feeds, auth, Docker, ports, certs, cloud auth).
-- During Phase 4 execution, AI creates `HANDOFF.md` when context is high or at session boundaries.
+- During Phase 5 execution, AI creates `HANDOFF.md` when context is high or at session boundaries.
 
 ## Important Guardrails
 
@@ -319,13 +336,13 @@ For default phase flow, start with [START-AI.md](START-AI.md) only, then load ph
 
 #### Included at baseline
 
-- 4-phase workflow: Domain Discovery → Resource Definition → Implementation Planning → Implementation (4a–4g)
+- 5-phase workflow: Domain Discovery → Resource Definition → Implementation Planning → Contract Scaffolding → Implementation (5a–5g)
 - Manifest-driven token-aware phase loading (`_manifest.json`, `phase-load-packs.json`)
 - `modeExclusions` in `_manifest.json` as the source of truth for `full`, `lite`, and `api-only` modes
 - Dependency-aware `get-phase-load-set.py` with transitive `requires`/`dependencies` resolution, topological ordering, and budget reporting
 - `scripts/generate-phase-load-packs.py` as the only driver of phase/mode pack generation
-- `skills/identity-management.md` placed at canonical `phase-4f`
-- `ai/SKILL.md` scoped to Phase 4 execution guidance; prompt starters in README.md
+- `skills/identity-management.md` placed at canonical `phase-5f`
+- `ai/SKILL.md` scoped to Phase 5 execution guidance; prompt starters in README.md
 - TaskFlow pattern catalog with composition wiring snippets
 - `support/HANDOFF.md` for session state preservation across context boundaries
 - Lint checks for manifest load-orchestration invariants

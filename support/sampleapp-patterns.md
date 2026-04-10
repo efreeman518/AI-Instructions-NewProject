@@ -13,9 +13,9 @@ Load only the pattern file relevant to the current phase. Do not preload all.
 
 | File | Contains | Load Before |
 |---|---|---|
-| [../patterns/data-layer-wiring.md](../patterns/data-layer-wiring.md) | DB context pooling, OnModelCreating order, startup tasks, seed data, scaffold migration strategy | Phase 4a, 4b |
-| [../patterns/api-host-wiring.md](../patterns/api-host-wiring.md) | API startup sequence, request context resolution, conditional auth | Phase 4b, 4c |
-| [../patterns/infrastructure-wiring.md](../patterns/infrastructure-wiring.md) | Multi-cache config, Aspire resource wiring | Phase 4c, 4d |
+| [../patterns/data-layer-wiring.md](../patterns/data-layer-wiring.md) | DB context pooling, OnModelCreating order, startup tasks, seed data, scaffold migration strategy | Phase 5a, 5b |
+| [../patterns/api-host-wiring.md](../patterns/api-host-wiring.md) | API startup sequence, request context resolution, conditional auth | Phase 5b, 5c |
+| [../patterns/infrastructure-wiring.md](../patterns/infrastructure-wiring.md) | Multi-cache config, Aspire resource wiring | Phase 5c, 5d |
 | [../patterns/expected-output-index.md](../patterns/expected-output-index.md) | Expected file layout when scaffolding is complete | On-demand (verification) |
 
 ---

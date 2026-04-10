@@ -4,6 +4,42 @@ Use this skill to scaffold tests by profile and phase.
 
 Reference patterns: [../patterns/expected-output-index.md](../patterns/expected-output-index.md) (Testing).
 
+## TDD Protocol
+
+Phases 5a and 5b use **test-driven development**: write tests first (red), then implement to green. Phase 4 generates the contract surface (interfaces, DTOs, entity shells, test infrastructure) that makes this possible. See [../ai/tdd-protocol.md](../ai/tdd-protocol.md) for the step-by-step cycle.
+
+Phases 5c and 5d use **tests-after**: implement infrastructure/hosts first, then write tests at the end of the same session.
+
+Phase 5e adds **quality gate tests** (architecture, load, benchmarks) and runs a **full regression** — it does not author unit/endpoint/integration tests, which already exist from earlier phases.
+
+## BDD Naming Convention
+
+All test methods use `Given_When_Then`:
+
+```csharp
+[TestMethod]
+public async Task Given_ValidInput_When_EntityCreated_Then_ReturnsSuccess() { }
+```
+
+- `Given` — precondition or initial state
+- `When` — action under test
+- `Then` — expected outcome
+- PascalCase segments separated by underscores
+
+## Split Test Templates
+
+Test templates are split by layer for context-budget-friendly phase loading:
+
+| Template | Phase | Contains |
+|---|---|---|
+| [test-templates-domain.md](../templates/test-templates-domain.md) | 5a | Entity tests, rule tests, builder activation |
+| [test-templates-repository.md](../templates/test-templates-repository.md) | 5a | Repository CRUD, search, paging tests |
+| [test-templates-service.md](../templates/test-templates-service.md) | 5b | Service unit tests, mapper tests |
+| [test-templates-endpoint.md](../templates/test-templates-endpoint.md) | 5b | Endpoint integration tests, CustomApiFactory |
+| [test-templates-quality.md](../templates/test-templates-quality.md) | 5e | Architecture, E2E, load, benchmarks |
+
+The unified [test-templates.md](../templates/test-templates.md) remains as a complete reference but should not be loaded during phase work.
+
 ## Profiles
 
 | Profile | Include by default |
@@ -220,6 +256,8 @@ Use these minimum test gates for a completed vertical slice:
 - `comprehensive`: Balanced + E2E/load/benchmark (when scenario is enabled)
 
 If a slice spans multiple entities or stores, run at least one integration path that exercises the full composite flow.
+
+**When tests are written:** Unit and endpoint tests are written during Phase 5a/5b (TDD). Infrastructure tests are written during 5c/5d (tests-after). Architecture/load/benchmark tests are written in Phase 5e (quality gates). Phase 5e runs a full regression across all categories.
 
 ## Contention / Concurrency Scenarios
 

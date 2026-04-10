@@ -2,7 +2,7 @@
 
 The scaffolded project depends on the **EF.Packages** private NuGet feed for infrastructure, patterns, and abstractions. These packages provide base types that the AI must **not regenerate** — use them directly.
 
-> **NuGet feed:** Must be configured in `nuget.config` under `customNugetFeeds` before Phase 4. See [execution-gates.md](execution-gates.md) for preflight checks.
+> **NuGet feed:** Must be configured in `nuget.config` under `customNugetFeeds` before Phase 5. See [execution-gates.md](execution-gates.md) for preflight checks.
 
 ---
 
@@ -70,13 +70,13 @@ These types are consumed throughout scaffolded code. Know where they come from s
 
 | Phase | Packages to Reference |
 |---|---|
-| **4a (Foundation)** | EF.Common, EF.Domain, EF.Domain.Contracts, EF.Data, EF.Data.Contracts, EF.Common.Contracts |
-| **4b (App Core)** | EF.AspNetCore, EF.Host, EF.FilterBuilder |
-| **4c (Runtime/Edge)** | EF.Cache, EF.Auth (if auth configured), EF.KeyVault (if enabled) |
-| **4d (Optional Hosts)** | EF.BackgroundService (scheduler), EF.Messaging (if events) |
-| **4e (Quality)** | EF.Test.Unit, EF.Test.Integration |
-| **4f (Auth)** | EF.Auth, EF.MSGraph (if MS Graph needed) |
-| **4g (AI)** | EF.AzureOpenAI or EF.OpenAI |
+| **5a (Foundation)** | EF.Common, EF.Domain, EF.Domain.Contracts, EF.Data, EF.Data.Contracts, EF.Common.Contracts |
+| **5b (App Core)** | EF.AspNetCore, EF.Host, EF.FilterBuilder |
+| **5c (Runtime/Edge)** | EF.Cache, EF.Auth (if auth configured), EF.KeyVault (if enabled) |
+| **5d (Optional Hosts)** | EF.BackgroundService (scheduler), EF.Messaging (if events) |
+| **5e (Quality)** | EF.Test.Unit, EF.Test.Integration |
+| **5f (Auth)** | EF.Auth, EF.MSGraph (if MS Graph needed) |
+| **5g (AI)** | EF.AzureOpenAI or EF.OpenAI |
 
 ---
 

@@ -1,11 +1,26 @@
-# Test Templates
+# Test Templates (Unified Reference)
+
+> **Phase-specific loading:** Do not load this file during phase work. Use the split templates instead:
+> - Phase 5a: [test-templates-domain.md](test-templates-domain.md) + [test-templates-repository.md](test-templates-repository.md)
+> - Phase 5b: [test-templates-service.md](test-templates-service.md) + [test-templates-endpoint.md](test-templates-endpoint.md)
+> - Phase 5e: [test-templates-quality.md](test-templates-quality.md)
+>
+> This file is the complete reference for all test patterns. It is available on-demand but should not be loaded as part of a phase pack.
 
 | | |
 |---|---|
 | **Generates** | `Test/Test.Unit/**`, `Test/Test.Integration/**`, `Test/Test.PlaywrightUI/**`, `Test/Test.Architecture/**`, `Test/Test.Load/**`, `Test/Test.Benchmarks/**` |
-| **Requires** | [service-template](service-template.md), [repository-template](repository-template.md), [data-mapping-template](data-mapping-template.md), [data-mapping-template](data-mapping-template.md), [endpoint-template](endpoint-template.md) |
+| **Requires** | [service-template](service-template.md), [repository-template](repository-template.md), [data-mapping-template](data-mapping-template.md), [endpoint-template](endpoint-template.md) |
 
-See [skills/testing.md](../skills/testing.md) for testing strategy and profile selection.
+See [skills/testing.md](../skills/testing.md) for testing strategy, TDD protocol, BDD naming convention, and profile selection.
+
+## BDD Naming Convention
+
+All test methods use `Given_When_Then`:
+```csharp
+[TestMethod]
+public async Task Given_ValidInput_When_EntityCreated_Then_ReturnsSuccess() { }
+```
 
 ## Testing Strategy Overview
 
@@ -130,7 +145,7 @@ Unit tests are fast, isolated, and use Moq for dependencies. Inherit from `UnitT
 public class {Entity}ServiceTests : UnitTestBase
 {
     [TestMethod]
-    public async Task CreateAsync_WithValidDto_ReturnsSuccessResult()
+    public async Task Given_ValidDto_When_CreateAsync_Then_ReturnsSuccessResult()
     {
         // Arrange
         var dto = new {Entity}Dto
@@ -164,7 +179,7 @@ public class {Entity}ServiceTests : UnitTestBase
     }
 
     [TestMethod]
-    public async Task Update_NotFound_ReturnsNone()
+    public async Task Given_NonExistentEntity_When_UpdateAsync_Then_ReturnsNone()
     {
         // Arrange
         _repoTrxnMock.Setup(r => r.Get{Entity}Async(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
@@ -180,7 +195,7 @@ public class {Entity}ServiceTests : UnitTestBase
     }
 
     [TestMethod]
-    public async Task Delete_ExistingEntity_ReturnsSuccess()
+    public async Task Given_ExistingEntity_When_DeleteAsync_Then_ReturnsSuccess()
     {
         // Arrange
         var entityId = Guid.NewGuid();
@@ -214,7 +229,7 @@ public class {Entity}ServiceTests : UnitTestBase
 public class {Entity}Tests
 {
     [TestMethod]
-    public void Create_ValidInput_ReturnsSuccess()
+    public void Given_ValidInput_When_EntityCreated_Then_ReturnsSuccess()
     {
         // Arrange & Act
         var result = {Entity}.Create(Guid.NewGuid(), "Valid Name");
@@ -228,7 +243,7 @@ public class {Entity}Tests
     [TestMethod]
     [DataRow(null)]
     [DataRow("")]
-    public void Create_WithEmptyName_ReturnsDomainFailure(string? name)
+    public void Given_EmptyName_When_EntityCreated_Then_ReturnsDomainFailure(string? name)
     {
         // Arrange & Act
         var result = {Entity}.Create(Guid.NewGuid(), name!);
@@ -239,7 +254,7 @@ public class {Entity}Tests
     }
 
     [TestMethod]
-    public void Update_ValidInput_ReturnsSuccess()
+    public void Given_ExistingEntity_When_Updated_Then_ReturnsUpdatedValues()
     {
         // Arrange
         var entity = {Entity}.Create(Guid.NewGuid(), "Original").Value!;
@@ -253,7 +268,7 @@ public class {Entity}Tests
     }
 
     [TestMethod]
-    public void AddChild_Duplicate_ReturnsExisting()
+    public void Given_DuplicateChild_When_ChildAdded_Then_IdempotentReturnsExisting()
     {
         // Arrange
         var entity = {Entity}.Create(Guid.NewGuid(), "Parent").Value!;
@@ -279,7 +294,7 @@ public class {Entity}Tests
 public class {Entity}RulesTests
 {
     [TestMethod]
-    public void TitleRequired_WhenTitleEmpty_IsNotSatisfied()
+    public void Given_EmptyName_When_NameRequiredRuleEvaluated_Then_IsNotSatisfied()
     {
         // Arrange
         var rule = new {Entity}NameRequiredRule();
@@ -294,7 +309,7 @@ public class {Entity}RulesTests
     }
 
     [TestMethod]
-    public void CompositeRule_AllRules_WhenOneFails_ReturnsFalse()
+    public void Given_AllRulesComposite_When_OneFails_Then_ReturnsFalse()
     {
         // Arrange
         var rules = new IRule<{Entity}>[]
@@ -330,7 +345,7 @@ public async Task CRUD_Pass()
 }
 
 [TestMethod]
-public async Task SearchAsync_WithFilter_ReturnsMatchingEntities()
+public async Task Given_SeededEntities_When_SearchWithFilter_Then_ReturnsMatchingEntities()
 {
     // Arrange
     var db = new InMemoryDbBuilder()
@@ -369,7 +384,7 @@ public async Task SearchAsync_WithFilter_ReturnsMatchingEntities()
 public class {Entity}MapperTests
 {
     [TestMethod]
-    public void ToDto_MapsAllProperties()
+    public void Given_ValidEntity_When_MappedToDto_Then_AllPropertiesMapped()
     {
         // Arrange
         var tenantId = Guid.NewGuid();
@@ -388,7 +403,7 @@ public class {Entity}MapperTests
     }
 
     [TestMethod]
-    public void ToEntity_ReturnsValidDomainResult()
+    public void Given_ValidDto_When_MappedToEntity_Then_ReturnsValidDomainResult()
     {
         // Arrange
         var dto = new {Entity}Dto { Name = "From DTO", TenantId = Guid.NewGuid() };
@@ -442,7 +457,7 @@ public class {Entity}EndpointsTests : EndpointTestBase
     [TestCategory("Endpoint")]
     [TestCategory("Integration")]
     [TestMethod]
-    public async Task Search_ReturnsFilteredResults()
+    public async Task Given_ExistingEntities_When_SearchWithFilter_Then_ReturnsFilteredResults()
     {
         // Arrange
         using var client = await GetHttpClient();
@@ -481,7 +496,7 @@ public class {Entity}EndpointsTests : EndpointTestBase
     [TestCategory("Endpoint")]
     [TestCategory("Integration")]
     [TestMethod]
-    public async Task GetById_NotFound_Returns404()
+    public async Task Given_NonExistentId_When_GetEntity_Then_Returns404()
     {
         // Arrange
         using var client = await GetHttpClient();
@@ -501,7 +516,7 @@ public class {Entity}EndpointsTests : EndpointTestBase
     [TestCategory("Endpoint")]
     [TestCategory("Integration")]
     [TestMethod]
-    public async Task CRUD_Pass()
+    public async Task Given_FullCrudCycle_When_AllOperationsExecuted_Then_AllSucceed()
     {
         // Arrange
         using var client = await GetHttpClient();
@@ -541,7 +556,7 @@ public class {Entity}EndpointsTests : EndpointTestBase
     [TestCategory("Endpoint")]
     [TestCategory("Integration")]
     [TestMethod]
-    public async Task GetPage_ReturnsOk()
+    public async Task Given_EmptyDatabase_When_SearchExecuted_Then_ReturnsOk()
     {
         // Arrange
         using var client = await GetHttpClient();
@@ -611,7 +626,7 @@ public class {Entity}CrudTests : PageTest
     [TestMethod]
     [DataRow("item1", "suffix1")]
     [DataRow("item2", "suffix2")]
-    public async Task AddEditDelete_Success(string baseName, string appendName)
+    public async Task Given_NewEntity_When_AddEditDelete_Then_AllOperationsSucceed(string baseName, string appendName)
     {
         // Arrange
         var pageObject = new {Entity}PageObject(Page);
@@ -703,7 +718,7 @@ public abstract class BaseTest
 
 ```csharp
 [TestMethod]
-public void DomainModel_HasNoDependencyOn_Application()
+public void Given_DomainModelAssembly_When_DependenciesChecked_Then_NoDependencyOnApplication()
 {
     var result = Types.InAssembly(DomainModelAssembly)
         .ShouldNot()
@@ -719,7 +734,7 @@ public void DomainModel_HasNoDependencyOn_Application()
 
 ```csharp
 [TestMethod]
-public void SearchEndpoint_LoadProfile()
+public void Given_SearchEndpoint_When_LoadApplied_Then_MeetsPerformanceBaseline()
 {
     var scenario = Scenario.Create("search", async context =>
     {

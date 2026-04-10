@@ -379,7 +379,7 @@ ingestionSemantics:
 
 ## External Dependency Scaffold Modes
 
-**Declare a scaffold mode for every external dependency before Phase 3.** This locks the local-run strategy at design time and prevents inconsistent stub generation in Phase 4.
+**Declare a scaffold mode for every external dependency before Phase 3.** This locks the local-run strategy at design time and prevents inconsistent stub generation in Phase 4 (contract scaffolding) and Phase 5 (implementation).
 
 Valid modes:
 
@@ -407,7 +407,7 @@ externalDependencyModes:
       mode: deployment-only
 ```
 
-> **Rule:** Every `deployment-only` entry requires a `no-op stub` generated in Phase 4 and a blocker recorded in `HANDOFF.md`. The scaffold is not complete until the solution compiles and boots without any manual cloud setup.
+> **Rule:** Every `deployment-only` entry requires a `no-op stub` generated in Phase 5 and a blocker recorded in `HANDOFF.md`. The scaffold is not complete until the solution compiles and boots without any manual cloud setup.
 
 ---
 

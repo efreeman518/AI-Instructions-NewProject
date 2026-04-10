@@ -4,7 +4,7 @@ Load this file first. Do not preload the full instruction set.
 
 ## Session Model
 
-**Each phase — and each Phase 4 sub-phase — runs in its own AI session.**
+**Each phase — and each Phase 5 sub-phase — runs in its own AI session.**
 Do not attempt multiple phases in a single session. When a phase or sub-phase is complete, create/update `HANDOFF.md` in the target project root and close the session. The next session starts fresh from `START-AI.md` + `HANDOFF.md` only.
 
 ## Initial Load Rule
@@ -40,7 +40,7 @@ Status: MATCH | MISMATCH | FIRST-TIME
 
 - **MATCH** → proceed.
 - **MISMATCH** → stop. Warn the user: *"Target project was scaffolded with instruction set v{old}; current is v{new}. Review README.md release notes for breaking changes before continuing."*
-- **FIRST-TIME** → proceed. After Phase 4a completes, create `.instruction-version` in the target project root with the manifest version string.
+- **FIRST-TIME** → proceed. After Phase 4 completes, create `.instruction-version` in the target project root with the manifest version string.
 
 If `HANDOFF.md` contains an `instructionVersion` field, include it in the comparison.
 
@@ -58,12 +58,13 @@ Before loading phase files, verify the AI assistant has appropriate MCP servers 
 |---|---|
 | 1–2 (Domain/Resource) | GitHub MCP (repo context), Sequential Thinking MCP (complex design) |
 | 3 (Planning) | GitHub MCP, Azure MCP (resource validation) |
-| 4a–4b (Foundation/Core) | GitHub MCP |
-| 4c (Runtime/Edge) | GitHub MCP, Azure MCP |
-| 4d (Optional Hosts) | Playwright MCP (if Uno UI), Fetch MCP (external specs) |
-| 4e (Quality/Delivery) | GitHub MCP (CI workflows), Azure MCP (IaC validation), Playwright MCP (E2E) |
-| 4f (Auth) | Azure MCP (Entra config) |
-| 4g (AI Integration) | Azure MCP (Foundry/AI Search) |
+| 4 (Contract Scaffolding) | GitHub MCP |
+| 5a–5b (Foundation/Core TDD) | GitHub MCP |
+| 5c (Runtime/Edge) | GitHub MCP, Azure MCP |
+| 5d (Optional Hosts) | Playwright MCP (if Uno UI), Fetch MCP (external specs) |
+| 5e (Quality/Delivery) | GitHub MCP (CI workflows), Azure MCP (IaC validation), Playwright MCP (E2E) |
+| 5f (Auth) | Azure MCP (Entra config) |
+| 5g (AI Integration) | Azure MCP (Foundry/AI Search) |
 
 If a suggested MCP server is not available, note it in `HANDOFF.md` under Residual Environment Note and continue without it.
 
@@ -78,7 +79,7 @@ Use `phase-load-packs.json` as the primary interface for phase file lists. It is
 
 1. Read `phase-load-packs.json` → `packs.<mode>.<phase>` for the current phase and mode.
 2. Load only the returned files.
-3. For Phase 4g, scope further: load only AI search or agent files as needed.
+3. For Phase 5g, scope further: load only AI search or agent files as needed.
 
 **To regenerate** (after adding/removing instruction files): run `python scripts/get-phase-load-set.py --phase <phase> --mode <full|lite|api-only> [feature flags]`. The resolver expands transitive `requires`/`dependencies` and applies manifest-driven mode exclusions.
 
@@ -108,9 +109,22 @@ Each phase is one session. Load only the files listed for the current phase.
   - Output: `implementation-plan.md` in target project root, open questions resolved
   - Session end: plan reviewed, blockers recorded in `HANDOFF.md` → close session
 
-- **Phase 4 (Implementation)** — One session per sub-phase (4a through 4g)
-  - Base: `ai/SKILL.md` + `ai/placeholder-tokens.md`
+- **Phase 4 (Contract Scaffolding)** — Session 4
+  - `ai/contract-scaffolding.md`
+  - `skills/solution-structure.md`
+  - `skills/package-dependencies.md`
+  - `ai/placeholder-tokens.md`
+  - `support/ef-packages-reference.md`
+  - Generates: solution structure, interfaces, DTOs, entity shells, test infrastructure, no-op DI stubs
+  - Gate: `dotnet build` succeeds on full solution including test projects
+  - Output: compilable skeleton that enables TDD in Phase 5a/5b
+  - Session end: gate passes, `contractsScaffolded: true` in `HANDOFF.md` → close session
+
+- **Phase 5 (Implementation)** — One session per sub-phase (5a through 5g)
+  - Base: `ai/SKILL.md` + `ai/placeholder-tokens.md` + `ai/tdd-protocol.md`
   - Plus only the skill/template files for the current sub-phase (use load set script)
+  - **Phase 5a/5b use TDD:** contracts, entity shells, and test infrastructure already exist from Phase 4. Write tests first (red), then implement (green). See `ai/tdd-protocol.md`.
+  - **Phase 5c/5d use tests-after:** implement infrastructure, then write tests at end of session.
   - Session end: sub-phase gate passes → update `HANDOFF.md` → close session
 
 ## Strict On-Demand Files
@@ -119,11 +133,11 @@ Do not preload these. Load only when the trigger condition is met:
 
 - `support/quick-reference.md` — **load when** scaffolding entities/endpoints and you need naming conventions, DI patterns, or config key lookups
 - `support/sampleapp-patterns.md` — **load when** you need the pattern index to find the right `patterns/` file for the current phase
-- `patterns/data-layer-wiring.md` — **load before Phase 4a/4b** for DB context pooling, OnModelCreating, startup tasks, seed data, scaffold migrations
-- `patterns/api-host-wiring.md` — **load before Phase 4b/4c** for API startup sequence, request context, conditional auth
-- `patterns/infrastructure-wiring.md` — **load before Phase 4c/4d** for multi-cache config, Aspire resource wiring
+- `patterns/data-layer-wiring.md` — **load before Phase 5a/5b** for DB context pooling, OnModelCreating, startup tasks, seed data, scaffold migrations
+- `patterns/api-host-wiring.md` — **load before Phase 5b/5c** for API startup sequence, request context, conditional auth
+- `patterns/infrastructure-wiring.md` — **load before Phase 5c/5d** for multi-cache config, Aspire resource wiring
 - `patterns/expected-output-index.md` — **load when** verifying scaffolded file layout
-- `support/ef-packages-reference.md` — **load before Phase 4a** to know which base types come from EF.Packages (do not regenerate these)
+- `support/ef-packages-reference.md` — **load before Phase 5a** to know which base types come from EF.Packages (do not regenerate these)
 - `support/troubleshooting.md` — **load when** a build/test/run failure occurs that isn't resolved by the one-pass fix attempt
 - `support/execution-gates.md` — **load when** validating phase completion gates or running operator setup checks
 - `templates/index.md` — **load when** you need a quick lookup for "I need to scaffold X → load template Y + skill Z"

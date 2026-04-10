@@ -1,0 +1,189 @@
+# Test Templates — Service (Phase 5b)
+
+| | |
+|---|---|
+| **Generates** | `Test/Test.Unit/Services/{Entity}ServiceTests.cs`, `Test/Test.Unit/Mappers/{Entity}MapperTests.cs` |
+| **Requires** | [service-template](service-template.md), [data-mapping-template](data-mapping-template.md), interfaces from Phase 4 |
+| **Phase** | 5b (App Core TDD) |
+| **Protocol** | Write these tests BEFORE implementing services. See [../ai/tdd-protocol.md](../ai/tdd-protocol.md). |
+
+## BDD Naming Convention
+
+All test methods use `Given_When_Then`:
+```csharp
+[TestMethod]
+public async Task Given_ValidDto_When_CreateAsync_Then_ReturnsSuccessResult() { }
+```
+
+---
+
+## Service Creation Helper
+
+Use a single helper method per test class to avoid repeated mock/bootstrap code:
+
+```csharp
+private {Entity}Service CreateService(
+    I{Entity}RepositoryTrxn? trxn = null,
+    I{Entity}RepositoryQuery? query = null)
+{
+    return new {Entity}Service(
+        new NullLogger<{Entity}Service>(),
+        _requestContextMock.Object,
+        trxn ?? _repoTrxnMock.Object,
+        query ?? _repoQueryMock.Object,
+        _entityCacheMock.Object,
+        _fusionCacheProviderMock.Object,
+        _tenantBoundaryMock.Object);
+}
+```
+
+---
+
+## Service Tests
+
+### File: `Test/Test.Unit/Services/{Entity}ServiceTests.cs`
+
+```csharp
+[TestClass]
+public class {Entity}ServiceTests : UnitTestBase
+{
+    [TestMethod]
+    public async Task Given_ValidDto_When_CreateAsync_Then_ReturnsSuccessResult()
+    {
+        // Arrange
+        var dto = new {Entity}Dto
+        {
+            Name = "Test {Entity}",
+            TenantId = _testTenantId,
+            Description = "A test entity"
+        };
+        var request = new DefaultRequest<{Entity}Dto> { Item = dto };
+
+        var createdEntity = {Entity}.Create(dto.TenantId, dto.Name).Value!;
+        _repoTrxnMock.Setup(r => r.Create(ref It.Ref<{Entity}>.IsAny));
+        _repoTrxnMock.Setup(r => r.UpdateFromDto(It.IsAny<{Entity}>(), It.IsAny<{Entity}Dto>()))
+            .Returns(DomainResult<{Entity}>.Success(createdEntity));
+        _repoTrxnMock.Setup(r => r.SaveChangesAsync(It.IsAny<OptimisticConcurrencyWinner>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        _tenantBoundaryMock.Setup(t => t.EnsureTenantBoundary(
+                It.IsAny<ILogger>(), It.IsAny<Guid?>(), It.IsAny<IReadOnlyCollection<string>>(),
+                It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>()))
+            .Returns(Result.Success());
+
+        var service = CreateService();
+
+        // Act
+        var result = await service.CreateAsync(request);
+
+        // Assert
+        Assert.IsTrue(result.IsSuccess);
+        Assert.IsNotNull(result.Value?.Item);
+        Assert.AreEqual(dto.Name, result.Value.Item.Name);
+    }
+
+    [TestMethod]
+    public async Task Given_NonExistentEntity_When_UpdateAsync_Then_ReturnsNone()
+    {
+        // Arrange
+        _repoTrxnMock.Setup(r => r.Get{Entity}Async(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(({Entity}?)null);
+        var service = CreateService();
+        var request = new DefaultRequest<{Entity}Dto> { Item = new {Entity}Dto { Id = Guid.NewGuid(), Name = "Test" } };
+
+        // Act
+        var result = await service.UpdateAsync(request);
+
+        // Assert
+        Assert.IsTrue(result.IsNone);
+    }
+
+    [TestMethod]
+    public async Task Given_ExistingEntity_When_DeleteAsync_Then_ReturnsSuccessAndCallsDelete()
+    {
+        // Arrange
+        var entityId = Guid.NewGuid();
+        var entity = {Entity}.Create(_testTenantId, "ToDelete").Value!;
+        _repoTrxnMock.Setup(r => r.Get{Entity}Async(entityId, false, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(entity);
+        _repoTrxnMock.Setup(r => r.SaveChangesAsync(It.IsAny<OptimisticConcurrencyWinner>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        _tenantBoundaryMock.Setup(t => t.EnsureTenantBoundary(
+                It.IsAny<ILogger>(), It.IsAny<Guid?>(), It.IsAny<IReadOnlyCollection<string>>(),
+                It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>()))
+            .Returns(Result.Success());
+        var service = CreateService();
+
+        // Act
+        var result = await service.DeleteAsync(entityId);
+
+        // Assert
+        Assert.IsTrue(result.IsSuccess);
+        _repoTrxnMock.Verify(r => r.Delete(entity), Times.Once);
+    }
+
+    [TestMethod]
+    public async Task Given_ExistingEntity_When_GetAsync_Then_ReturnsMappedDto()
+    {
+        // Arrange
+        var entityId = Guid.NewGuid();
+        var entity = {Entity}.Create(_testTenantId, "GetTest").Value!;
+        _repoQueryMock.Setup(r => r.Get{Entity}Async(entityId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(entity);
+        var service = CreateService();
+
+        // Act
+        var result = await service.GetAsync(entityId);
+
+        // Assert
+        Assert.IsTrue(result.IsSuccess);
+        Assert.IsNotNull(result.Value?.Item);
+        Assert.AreEqual("GetTest", result.Value.Item.Name);
+    }
+}
+```
+
+---
+
+## Mapper Tests
+
+### File: `Test/Test.Unit/Mappers/{Entity}MapperTests.cs`
+
+```csharp
+[TestClass]
+public class {Entity}MapperTests
+{
+    [TestMethod]
+    public void Given_ValidEntity_When_MappedToDto_Then_AllPropertiesMapped()
+    {
+        // Arrange
+        var tenantId = Guid.NewGuid();
+        var entity = {Entity}.Create(tenantId, "Test Name").Value!;
+
+        // Act
+        var dto = entity.ToDto();
+
+        // Assert
+        Assert.AreEqual(entity.Id, dto.Id);
+        Assert.AreEqual(entity.Name, dto.Name);
+        Assert.AreEqual(entity.TenantId, dto.TenantId);
+        // Assert each additional mapped property
+        // Note: Audit fields (CreatedDate, etc.) are NOT mapped — managed by AuditInterceptor
+    }
+
+    [TestMethod]
+    public void Given_ValidDto_When_MappedToEntity_Then_ReturnsValidDomainResult()
+    {
+        // Arrange
+        var dto = new {Entity}Dto { Name = "From DTO", TenantId = Guid.NewGuid() };
+
+        // Act
+        var result = dto.ToEntity(dto.TenantId);
+
+        // Assert
+        Assert.IsTrue(result.IsSuccess);
+        Assert.AreEqual(dto.Name, result.Value!.Name);
+    }
+}
+```
+
+> **Note:** Mapper tests require the entity `Create()` to be implemented (Phase 5a). Write mapper tests in Phase 5b after entity logic is available.

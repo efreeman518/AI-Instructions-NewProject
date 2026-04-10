@@ -20,46 +20,61 @@ Checkpoint commands and pass criteria are canonical in [../support/execution-gat
 
 ## Implementation Steps
 
-### Phase 4a — Foundation
-- [ ] Solution structure + .slnx + Directory.Packages.props
-- [ ] Domain model entities + enums + value objects
-- [ ] EF configurations per entity (using Phase 2 datatypes)
-- [ ] Repository interfaces + implementations
-- [ ] Domain rules (co-located in Domain.Model/Rules/) + state machines
-- [ ] **Checkpoint:** `dotnet build` passes
+### Phase 4 — Contract Scaffolding
+- [ ] Solution structure (.slnx, Directory.Packages.props, global.json, nuget.config)
+- [ ] All project files with correct references
+- [ ] Interfaces: I{Entity}Service, I{Entity}RepositoryTrxn, I{Entity}RepositoryQuery (per entity)
+- [ ] DTOs: {Entity}Dto, {Entity}SearchFilter (per entity)
+- [ ] Entity shells (properties + constructors, no domain logic)
+- [ ] Test infrastructure (Test.Support, builders, CustomApiFactory)
+- [ ] No-op DI stubs in RegisterServices.cs
+- [ ] **Checkpoint:** `dotnet build` succeeds on full solution including test projects
 
-### Phase 4b — App Core
-- [ ] DTOs + mappers
-- [ ] Application services
+### Phase 5a — Foundation (TDD)
+- [ ] Write domain entity tests (red) → implement entity logic (green)
+- [ ] Write domain rule tests (red) → implement rules (green)
+- [ ] Write repository tests (red) → implement EF configs + repositories (green)
+- [ ] Activate {Entity}Builder.Build() with real entity Create()
+- [ ] Replace no-op repository stubs with real implementations
+- [ ] Scaffold EF migration
+- [ ] **Checkpoint:** `dotnet build` + `dotnet test --filter "TestCategory=Unit"` passes
+
+### Phase 5b — App Core (TDD)
+- [ ] Write service unit tests (red) → implement services + mappers + validators (green)
+- [ ] Write endpoint integration tests (red) → implement endpoints (green)
+- [ ] Replace no-op service stubs with real implementations
 - [ ] Message handlers (if events defined)
-- [ ] Bootstrapper DI wiring
-- [ ] API endpoints
-- [ ] **Checkpoint:** `dotnet build` passes, endpoint smoke test
+- [ ] Bootstrapper DI wiring finalized
+- [ ] **Checkpoint:** `dotnet build` + `dotnet test --filter "TestCategory=Unit|TestCategory=Endpoint"` passes
 
-### Phase 4c — Runtime/Edge
+### Phase 5c — Runtime/Edge (Tests-After)
 - [ ] Gateway (if enabled)
 - [ ] Aspire orchestration (if enabled)
 - [ ] Configuration + appsettings
 - [ ] Multi-tenant middleware (if enabled)
 - [ ] Caching (if enabled)
-- [ ] **Checkpoint:** app starts via Aspire, basic request succeeds
+- [ ] Write infrastructure tests (health checks, config loading, caching)
+- [ ] **Checkpoint:** app starts via Aspire, `dotnet test` passes
 
-### Phase 4d — Optional Hosts
+### Phase 5d — Optional Hosts (Tests-After)
 - [ ] Background services / scheduler (if enabled)
 - [ ] Function app (if enabled)
 - [ ] Uno UI (if enabled; dedicated session preferred)
 - [ ] Notifications (if enabled)
-- [ ] **Checkpoint:** `dotnet build`, optional host responds
+- [ ] Write per-host smoke tests
+- [ ] **Checkpoint:** `dotnet build`, optional host responds, `dotnet test` passes
 
-### Phase 4e — Quality + Delivery
-- [ ] Unit tests per testing profile
-- [ ] Integration tests
-- [ ] Architecture tests (if enabled)
+### Phase 5e — Quality Gates + Delivery
+- [ ] Architecture tests (NetArchTest layering rules)
+- [ ] Load tests (if comprehensive profile)
+- [ ] Benchmarks (if comprehensive profile)
 - [ ] IaC templates
 - [ ] CI/CD pipeline
+- [ ] Dockerfile
+- [ ] Full regression: `dotnet test` (all categories)
 - [ ] **Checkpoint:** full test suite passes
 
-### Phase 4f — Authentication (Final)
+### Phase 5f — Authentication (Final)
 - [ ] Prompt for identity provider scenario (see options below)
 - [ ] Replace auth stubs with real identity configuration
 - [ ] Wire auth middleware, token validation, and role/scope checks
@@ -71,7 +86,7 @@ Checkpoint commands and pass criteria are canonical in [../support/execution-gat
 - **External / consumer users:** Microsoft Entra External ID, Google, Facebook, Apple, OAuth2/OIDC
 - **Hybrid:** Entra ID for internal + Entra External ID or social providers for external users
 
-### Phase 4g — AI Integration (if `includeAiServices: true`)
+### Phase 5g — AI Integration (if `includeAiServices: true`)
 - [ ] `Infrastructure.AI` project with search/agent service interfaces
 - [ ] Azure AI Search index definitions + client wiring (if search configured)
 - [ ] Embedding pipeline: on-write handler (domain event → vectorize → index) or batch job
@@ -87,7 +102,7 @@ Checkpoint commands and pass criteria are canonical in [../support/execution-gat
 
 ## Open Questions
 
-Resolve before Phase 4 starts:
+Resolve before Phase 5 starts:
 
 1. _[list any unresolved design decisions]_
 2. _[ambiguous requirements]_
@@ -110,14 +125,14 @@ Resolve before Phase 4 starts:
 
 1. AI fills in the template based on Phase 1 + Phase 2 outputs
 2. Human reviews, resolves open questions, confirms decisions
-3. Phase 4 implementation follows the step order above
+3. Phase 5 implementation follows the step order above
 4. Check off items as completed during implementation
 
 ---
 
 ## Phase 3 → 4 Pre-Flight
 
-Before starting Phase 4 implementation, verify all of the following:
+Before starting Phase 4 (contract scaffolding), verify all of the following:
 
 - [ ] `nuget.config` validated (`dotnet restore` exits 0)
 - [ ] All open questions resolved or explicitly deferred with TODO

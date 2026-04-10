@@ -15,7 +15,7 @@ Use for:
 ## Non-Negotiables
 
 - Load pattern files from `patterns/` only when needed for cross-project wiring. Use [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) as the index to find the right file.
-- **Load [../support/ef-packages-reference.md](../support/ef-packages-reference.md) before Phase 4a** to know which base types (DbContextBase, DomainResult, IRequestContext, etc.) come from the EF.Packages private feed. Do not regenerate these types.
+- **Load [../support/ef-packages-reference.md](../support/ef-packages-reference.md) before Phase 5a** to know which base types (DbContextBase, DomainResult, IRequestContext, etc.) come from the EF.Packages private feed. Do not regenerate these types.
 - Generate code only in the user's new project directory.
 - Use `.slnx` (not legacy `.sln`).
 - Use central package management (`Directory.Packages.props`).
@@ -31,9 +31,9 @@ Use for:
 3. Use the **Phase Loading Manifest** (below) for per-phase file lists.
 4. Unload prior phase docs when transitioning.
 5. Do not preload [../support/quick-reference.md](../support/quick-reference.md) or pattern files in early phases.
-6. **Load the phase-relevant pattern file before cross-project wiring:** `patterns/data-layer-wiring.md` before 4a/4b, `patterns/api-host-wiring.md` before 4b/4c, `patterns/infrastructure-wiring.md` before 4c/4d. See [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) for the full index.
+6. **Load the phase-relevant pattern file before cross-project wiring:** `patterns/data-layer-wiring.md` before 5a/5b, `patterns/api-host-wiring.md` before 5b/5c, `patterns/infrastructure-wiring.md` before 5c/5d. See [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) for the full index.
 7. Large files must be loaded selectively:
-   - `templates/test-templates.md`: only needed test type
+   - Test templates are split by layer: `test-templates-domain.md` (5a), `test-templates-repository.md` (5a), `test-templates-service.md` (5b), `test-templates-endpoint.md` (5b), `test-templates-quality.md` (5e). Load only the templates for the current sub-phase.
    - [skills/uno-ui.md](../skills/uno-ui.md): dedicated session preferred
 8. **Context checkpoint rule:** If you have generated **15+ files** in a single session, or the sub-phase has taken more than 3 rounds of build/fix cycles, checkpoint immediately — update `HANDOFF.md` with current state, completed work, and next steps. Do not wait for the gate to pass.
 
@@ -41,11 +41,12 @@ Use for:
 
 Follow [../START-AI.md](../START-AI.md) for session bootstrap, version checks, phase routing, and the session-per-phase model. This file does not repeat those steps.
 
-**Each Phase 4 sub-phase runs in its own session.** At session start for Phase 4:
-1. Load `SKILL.md` + [placeholder-tokens.md](placeholder-tokens.md).
+**Each Phase 5 sub-phase runs in its own session.** At session start for Phase 5:
+1. Load `SKILL.md` + [placeholder-tokens.md](placeholder-tokens.md) + [tdd-protocol.md](tdd-protocol.md).
 2. Read [resource-implementation-schema.md](resource-implementation-schema.md) for `scaffoldMode`, `testingProfile`, host profiles, enabled flags, and canonical defaults.
-3. Resolve the current sub-phase load set: `python scripts/get-phase-load-set.py --phase <4x> --mode <mode>`.
+3. Resolve the current sub-phase load set: `python scripts/get-phase-load-set.py --phase <5x> --mode <mode>`.
 4. Keep only the current sub-phase docs loaded; unload prior sub-phase docs before continuing.
+5. For Phase 5a/5b: verify `contractsScaffolded: true` in `HANDOFF.md` — Phase 4 must have completed before TDD begins.
 
 **Session end — after each sub-phase gate passes:**
 1. Update `HANDOFF.md` with `currentSubPhase`, gate result, and next load set.
@@ -56,23 +57,31 @@ Follow [../START-AI.md](../START-AI.md) for session bootstrap, version checks, p
 
 ## Mode + Load Resolution
 
-Follow the **Phase Load Resolution** procedure in [../START-AI.md](../START-AI.md). Key points for Phase 4:
+Follow the **Phase Load Resolution** procedure in [../START-AI.md](../START-AI.md). Key points for Phase 5:
 
 - [resource-implementation-schema.md](resource-implementation-schema.md) is the source of truth for `scaffoldMode`, `testingProfile`, enabled capabilities, and defaults.
-- Use `-IncludeAiSearch` and/or `-IncludeAgents` for Phase 4g when only one AI capability is in scope.
+- Use `-IncludeAiSearch` and/or `-IncludeAgents` for Phase 5g when only one AI capability is in scope.
 - Load only files returned by the script.
 
-## Phase 4 Sub-Phases (Execution Order)
+## Phase 4 — Contract Scaffolding (Prerequisite for Phase 5)
+
+Phase 4 runs before any Phase 5 sub-phase. It generates the solution structure, interfaces, DTOs, entity shells, test infrastructure, and no-op DI stubs. See [contract-scaffolding.md](contract-scaffolding.md) for full details. Gate: `dotnet build` succeeds on the full solution including test projects.
+
+## Phase 5 Sub-Phases (Execution Order)
 
 Each sub-phase is one session. Gate must pass before the next session begins.
 
-1. **4a — Foundation:** solution structure, domain model, data access, packages, and core entity/config/repository/appsettings templates. Add non-SQL store skills only when the slice uses them. Gate: `dotnet build`.
-2. **4b — App Core:** application layer, bootstrapper, API, and the DTO/mapper/service/endpoint validator templates. Add message handlers only when events exist. Gate: `dotnet build` + endpoint tests.
-3. **4c — Runtime/Edge:** load only enabled gateway, aspire, configuration, multi-tenant, caching, observability, and security concerns. Gate: `dotnet build` + app starts via Aspire.
-4. **4d — Optional Hosts:** load scheduler, Function App, Uno UI, and notifications only when enabled. Uno UI is a dedicated session on its own. Gate: per-host status recorded in `HANDOFF.md` `hostGates`.
-5. **4e — Quality + Delivery:** testing plus only the test templates in scope. Add IaC, CI/CD, and optional integrations when they are part of the current milestone. Gate: full test suite passes.
-6. **4f — Authentication:** finalize identity last. Use stubs in earlier sub-phases when needed for compile-time flow. Gate: authenticated endpoints respond correctly.
-7. **4g — AI Integration:** run only when `includeAiServices: true`, scope further with `-IncludeAiSearch` / `-IncludeAgents`. Gate: search returns results, agent responds to test prompt.
+**Phase 5a and 5b use TDD:** contracts, entity shells, and test infrastructure already exist from Phase 4. Follow [tdd-protocol.md](tdd-protocol.md): write tests first (red), implement to green. Load the phase-specific test templates alongside production templates.
+
+**Phase 5c and 5d use tests-after:** implement infrastructure/hosts first, then write tests at end of session to verify behavior.
+
+1. **5a — Foundation (TDD):** Read entity shells and contracts from Phase 4. Write domain/rule/repository tests first, then implement entities, EF configs, and repositories to make tests pass. Load `test-templates-domain.md` + `test-templates-repository.md`. Gate: `dotnet build` + `dotnet test --filter "TestCategory=Unit"`.
+2. **5b — App Core (TDD):** Read service interfaces and DTOs from Phase 4. Write service tests, implement services; write endpoint tests, implement endpoints. Replace no-op DI stubs with real implementations. Load `test-templates-service.md` + `test-templates-endpoint.md`. Gate: `dotnet build` + `dotnet test --filter "TestCategory=Unit|TestCategory=Endpoint"`.
+3. **5c — Runtime/Edge (tests-after):** load only enabled gateway, aspire, configuration, multi-tenant, caching, observability, and security concerns. After implementation, write health check and configuration tests. Gate: `dotnet build` + `dotnet test` + app starts via Aspire.
+4. **5d — Optional Hosts (tests-after):** load scheduler, Function App, Uno UI, and notifications only when enabled. Uno UI is a dedicated session on its own. After implementation, write per-host smoke tests. Gate: per-host status recorded in `HANDOFF.md` `hostGates` + `dotnet test`.
+5. **5e — Quality Gates + Delivery:** architecture tests, load tests, benchmarks, IaC, CI/CD, Dockerfile. Unit/endpoint/integration tests already exist from 5a/5b/5c/5d — this phase adds quality gates and runs a full regression. Load `test-templates-quality.md`. Gate: `dotnet test` (full suite).
+6. **5f — Authentication:** finalize identity last. Use stubs in earlier sub-phases when needed for compile-time flow. Gate: authenticated endpoints respond correctly.
+7. **5g — AI Integration:** run only when `includeAiServices: true`, scope further with `-IncludeAiSearch` / `-IncludeAgents`. Gate: search returns results, agent responds to test prompt.
 
 ## Template Usage
 
@@ -99,7 +108,7 @@ Generate one complete slice, validate, then move to next slice.
 - Tenant-safe defaults where enabled
 - SQL defaults: `nvarchar(N)`, `decimal(10,4)`, `datetime2`
 - Stub external dependencies for local compile/run — generate compilable no-op implementations with `// TODO: [CONFIGURE]` comments at every integration point (stub class, DI registration, appsettings section)
-- **Every external dependency must declare one scaffold-time mode** before Phase 4 code is generated for it. Valid modes:
+- **Every external dependency must declare one scaffold-time mode** before Phase 5 code is generated for it. Valid modes:
   - `emulator` — Aspire-hosted or local emulator available (SQL, Redis, Azure Storage Emulator, Service Bus emulator)
   - `lazy-optional` — config-driven; service activates only when config section is present/non-empty; absent = no-op passthrough
   - `no-op stub` — compile-time stub that satisfies the interface and returns safe defaults; no cloud call made
@@ -153,12 +162,12 @@ For slices spanning SQL + Cosmos/Table/Blob + messaging:
 
 ## Session State (`HANDOFF.md`)
 
-Create or update in the target project root at the end of **every** phase and sub-phase session — not only when context is high. Phases 1–3 use it to hand off their output artifacts and open questions. Phase 4 sub-phases use it to record gate results, blockers, and the next load set. See [../support/HANDOFF.md](../support/HANDOFF.md) for the template.
+Create or update in the target project root at the end of **every** phase and sub-phase session — not only when context is high. Phases 1–3 use it to hand off their output artifacts and open questions. Phase 5 sub-phases use it to record gate results, blockers, and the next load set. See [../support/HANDOFF.md](../support/HANDOFF.md) for the template.
 
 ---
 
 ## Prompt Starters
 
-Copy-paste prompt starters live in the Prompt Patterns section in [../README.md](../README.md). Load them only when starting or resuming a phase, not as part of the default Phase 4 base context.
+Copy-paste prompt starters live in the Prompt Patterns section in [../README.md](../README.md). Load them only when starting or resuming a phase, not as part of the default Phase 5 base context.
 
 

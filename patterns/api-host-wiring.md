@@ -1,6 +1,6 @@
 # API Host Wiring Patterns
 
-Cross-project wiring for API host startup, request context, and conditional auth. Load before Phase 4b (App Core) and Phase 4c (Runtime/Edge).
+Cross-project wiring for API host startup, request context, and conditional auth. Load before Phase 5b (App Core) and Phase 5c (Runtime/Edge).
 
 For base types used here, see [../support/ef-packages-reference.md](../support/ef-packages-reference.md).
 

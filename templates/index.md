@@ -19,11 +19,23 @@ Quick lookup: "I need to scaffold X" → load these files.
 | Updater | `updater-template.md` | `skills/data-persistence.md` |
 | appsettings | `appsettings-template.md` | `skills/configuration-secrets.md` |
 
-## Tests
+## Tests (Split by Phase)
 
-| Artifact | Template | Required Skill |
+| Artifact | Template | Phase | Required Skill |
+|---|---|---|---|
+| Domain entity + rule tests | `test-templates-domain.md` | 5a | `skills/testing.md` |
+| Repository tests | `test-templates-repository.md` | 5a | `skills/testing.md` |
+| Service + mapper tests | `test-templates-service.md` | 5b | `skills/testing.md` |
+| Endpoint integration tests | `test-templates-endpoint.md` | 5b | `skills/testing.md` |
+| Architecture / E2E / Load / Benchmarks | `test-templates-quality.md` | 5e | `skills/testing.md` |
+| Complete reference (all tests) | `test-templates.md` | on-demand | `skills/testing.md` |
+
+## Contracts + TDD
+
+| Artifact | Instruction File | Phase |
 |---|---|---|
-| Unit / Integration / E2E / Quality | `test-templates.md` | `skills/testing.md` |
+| Contract scaffolding (interfaces, DTOs, shells) | `ai/contract-scaffolding.md` | 4 |
+| TDD red/green protocol | `ai/tdd-protocol.md` | 5a/5b |
 
 ## UI (Uno Platform)
 
@@ -51,11 +63,12 @@ Quick lookup: "I need to scaffold X" → load these files.
 
 | Phase | Templates to Load |
 |---|---|
-| **4a — Foundation** | `entity-template`, `ef-configuration-template`, `repository-template`, `domain-rules-template`, `appsettings-template`, `updater-template` (if needed) |
-| **4b — App Core** | `data-mapping-template`, `service-template`, `endpoint-template`, `structure-validator-template`, `exception-handler-template`, `message-handler-template` (if events) |
-| **4c — Runtime/Edge** | `health-check-template` |
-| **4d — UI** | `ui-client-layer`, `mvux-model-template`, `xaml-page-template` |
-| **4e — Quality** | `test-templates`, `dockerfile-template` |
-| **4g — AI** | `ai-search-template`, `agent-template` |
+| **4 — Contracts** | Solution structure + contracts (see `ai/contract-scaffolding.md`) |
+| **5a — Foundation (TDD)** | `entity-template`, `ef-configuration-template`, `repository-template`, `domain-rules-template`, `appsettings-template`, `updater-template` (if needed), **`test-templates-domain`**, **`test-templates-repository`** |
+| **5b — App Core (TDD)** | `data-mapping-template`, `service-template`, `endpoint-template`, `structure-validator-template`, `exception-handler-template`, `message-handler-template` (if events), **`test-templates-service`**, **`test-templates-endpoint`** |
+| **5c — Runtime/Edge** | `health-check-template` |
+| **5d — UI** | `ui-client-layer`, `mvux-model-template`, `xaml-page-template` |
+| **5e — Quality Gates** | **`test-templates-quality`**, `dockerfile-template` |
+| **5g — AI** | `ai-search-template`, `agent-template` |
 
 > **Note:** Use `phase-load-packs.json` for authoritative per-phase file lists. This index is a human/AI quick-reference.

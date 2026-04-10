@@ -15,17 +15,18 @@
         "phase-1",
         "phase-2",
         "phase-3",
-        "phase-4-base",
-        "phase-4a",
-        "phase-4a-optional",
-        "phase-4b",
-        "phase-4c",
-        "phase-4d",
-        "phase-4d-optional",
-        "phase-4e",
-        "phase-4e-optional",
-        "phase-4f",
-        "phase-4g",
+        "phase-4",
+        "phase-5-base",
+        "phase-5a",
+        "phase-5a-optional",
+        "phase-5b",
+        "phase-5c",
+        "phase-5d",
+        "phase-5d-optional",
+        "phase-5e",
+        "phase-5e-optional",
+        "phase-5f",
+        "phase-5g",
         "support-only",
         "on-demand"
     ],
@@ -74,27 +75,35 @@
             "phase-3": [
                 "ai/implementation-plan.md"
             ],
-            "phase-4-base": [
-                "ai/SKILL.md",
+            "phase-4": [
+                "ai/contract-scaffolding.md",
+                "skills/solution-structure.md",
+                "skills/package-dependencies.md",
                 "ai/placeholder-tokens.md",
                 "support/ef-packages-reference.md"
             ],
-            "phase-4a": [
-                "skills/solution-structure.md",
+            "phase-5-base": [
+                "ai/SKILL.md",
+                "ai/placeholder-tokens.md",
+                "ai/tdd-protocol.md",
+                "support/ef-packages-reference.md"
+            ],
+            "phase-5a": [
                 "skills/domain-model.md",
                 "skills/data-persistence.md",
-                "skills/package-dependencies.md",
                 "templates/entity-template.md",
                 "templates/ef-configuration-template.md",
                 "templates/repository-template.md",
                 "templates/domain-rules-template.md",
-                "templates/appsettings-template.md"
+                "templates/appsettings-template.md",
+                "templates/test-templates-domain.md",
+                "templates/test-templates-repository.md"
             ],
-            "phase-4a-optional": [
+            "phase-5a-optional": [
                 "skills/azure-data-storage.md",
                 "templates/updater-template.md"
             ],
-            "phase-4b": [
+            "phase-5b": [
                 "skills/application-layer.md",
                 "skills/bootstrapper.md",
                 "skills/api.md",
@@ -103,9 +112,11 @@
                 "templates/endpoint-template.md",
                 "templates/message-handler-template.md",
                 "templates/structure-validator-template.md",
-                "templates/exception-handler-template.md"
+                "templates/exception-handler-template.md",
+                "templates/test-templates-service.md",
+                "templates/test-templates-endpoint.md"
             ],
-            "phase-4c": [
+            "phase-5c": [
                 "skills/gateway.md",
                 "skills/multi-tenant.md",
                 "skills/caching.md",
@@ -115,33 +126,33 @@
                 "skills/observability.md",
                 "skills/security.md"
             ],
-            "phase-4d": [
+            "phase-5d": [
                 "skills/background-services.md",
                 "skills/function-app.md",
                 "skills/uno-ui.md",
                 "skills/notifications.md"
             ],
-            "phase-4d-optional": [
+            "phase-5d-optional": [
                 "templates/mvux-model-template.md",
                 "templates/ui-client-layer.md",
                 "templates/xaml-page-template.md"
             ],
-            "phase-4e": [
+            "phase-5e": [
                 "skills/testing.md",
-                "templates/test-templates.md",
+                "templates/test-templates-quality.md",
                 "skills/iac.md",
                 "skills/cicd.md",
                 "templates/dockerfile-template.md"
             ],
-            "phase-4e-optional": [
+            "phase-5e-optional": [
                 "skills/messaging.md",
                 "skills/grpc.md",
                 "skills/external-api.md"
             ],
-            "phase-4f": [
+            "phase-5f": [
                 "skills/identity-management.md"
             ],
-            "phase-4g": [
+            "phase-5g": [
                 "skills/ai-integration.md",
                 "templates/ai-search-template.md",
                 "templates/agent-template.md"
@@ -183,27 +194,35 @@
             "phase-3": [
                 "ai/implementation-plan.md"
             ],
-            "phase-4-base": [
-                "ai/SKILL.md",
+            "phase-4": [
+                "ai/contract-scaffolding.md",
+                "skills/solution-structure.md",
+                "skills/package-dependencies.md",
                 "ai/placeholder-tokens.md",
                 "support/ef-packages-reference.md"
             ],
-            "phase-4a": [
-                "skills/solution-structure.md",
+            "phase-5-base": [
+                "ai/SKILL.md",
+                "ai/placeholder-tokens.md",
+                "ai/tdd-protocol.md",
+                "support/ef-packages-reference.md"
+            ],
+            "phase-5a": [
                 "skills/domain-model.md",
                 "skills/data-persistence.md",
-                "skills/package-dependencies.md",
                 "templates/entity-template.md",
                 "templates/ef-configuration-template.md",
                 "templates/repository-template.md",
                 "templates/domain-rules-template.md",
-                "templates/appsettings-template.md"
+                "templates/appsettings-template.md",
+                "templates/test-templates-domain.md",
+                "templates/test-templates-repository.md"
             ],
-            "phase-4a-optional": [
+            "phase-5a-optional": [
                 "skills/azure-data-storage.md",
                 "templates/updater-template.md"
             ],
-            "phase-4b": [
+            "phase-5b": [
                 "skills/application-layer.md",
                 "skills/bootstrapper.md",
                 "skills/api.md",
@@ -212,34 +231,36 @@
                 "templates/endpoint-template.md",
                 "templates/message-handler-template.md",
                 "templates/structure-validator-template.md",
-                "templates/exception-handler-template.md"
+                "templates/exception-handler-template.md",
+                "templates/test-templates-service.md",
+                "templates/test-templates-endpoint.md"
             ],
-            "phase-4c": [
+            "phase-5c": [
                 "skills/configuration-secrets.md",
                 "templates/health-check-template.md",
                 "skills/observability.md",
                 "skills/security.md"
             ],
-            "phase-4d": [],
-            "phase-4d-optional": [
+            "phase-5d": [],
+            "phase-5d-optional": [
                 "templates/mvux-model-template.md",
                 "templates/ui-client-layer.md",
                 "templates/xaml-page-template.md"
             ],
-            "phase-4e": [
+            "phase-5e": [
                 "skills/testing.md",
-                "templates/test-templates.md",
+                "templates/test-templates-quality.md",
                 "templates/dockerfile-template.md"
             ],
-            "phase-4e-optional": [
+            "phase-5e-optional": [
                 "skills/messaging.md",
                 "skills/grpc.md",
                 "skills/external-api.md"
             ],
-            "phase-4f": [
+            "phase-5f": [
                 "skills/identity-management.md"
             ],
-            "phase-4g": [
+            "phase-5g": [
                 "skills/ai-integration.md",
                 "templates/ai-search-template.md",
                 "templates/agent-template.md"
@@ -281,27 +302,35 @@
             "phase-3": [
                 "ai/implementation-plan.md"
             ],
-            "phase-4-base": [
-                "ai/SKILL.md",
+            "phase-4": [
+                "ai/contract-scaffolding.md",
+                "skills/solution-structure.md",
+                "skills/package-dependencies.md",
                 "ai/placeholder-tokens.md",
                 "support/ef-packages-reference.md"
             ],
-            "phase-4a": [
-                "skills/solution-structure.md",
+            "phase-5-base": [
+                "ai/SKILL.md",
+                "ai/placeholder-tokens.md",
+                "ai/tdd-protocol.md",
+                "support/ef-packages-reference.md"
+            ],
+            "phase-5a": [
                 "skills/domain-model.md",
                 "skills/data-persistence.md",
-                "skills/package-dependencies.md",
                 "templates/entity-template.md",
                 "templates/ef-configuration-template.md",
                 "templates/repository-template.md",
                 "templates/domain-rules-template.md",
-                "templates/appsettings-template.md"
+                "templates/appsettings-template.md",
+                "templates/test-templates-domain.md",
+                "templates/test-templates-repository.md"
             ],
-            "phase-4a-optional": [
+            "phase-5a-optional": [
                 "skills/azure-data-storage.md",
                 "templates/updater-template.md"
             ],
-            "phase-4b": [
+            "phase-5b": [
                 "skills/application-layer.md",
                 "skills/bootstrapper.md",
                 "skills/api.md",
@@ -310,35 +339,37 @@
                 "templates/endpoint-template.md",
                 "templates/message-handler-template.md",
                 "templates/structure-validator-template.md",
-                "templates/exception-handler-template.md"
+                "templates/exception-handler-template.md",
+                "templates/test-templates-service.md",
+                "templates/test-templates-endpoint.md"
             ],
-            "phase-4c": [
+            "phase-5c": [
                 "skills/aspire.md",
                 "skills/configuration-secrets.md",
                 "templates/health-check-template.md",
                 "skills/observability.md",
                 "skills/security.md"
             ],
-            "phase-4d": [],
-            "phase-4d-optional": [
+            "phase-5d": [],
+            "phase-5d-optional": [
                 "templates/mvux-model-template.md",
                 "templates/ui-client-layer.md",
                 "templates/xaml-page-template.md"
             ],
-            "phase-4e": [
+            "phase-5e": [
                 "skills/testing.md",
-                "templates/test-templates.md",
+                "templates/test-templates-quality.md",
                 "templates/dockerfile-template.md"
             ],
-            "phase-4e-optional": [
+            "phase-5e-optional": [
                 "skills/messaging.md",
                 "skills/grpc.md",
                 "skills/external-api.md"
             ],
-            "phase-4f": [
+            "phase-5f": [
                 "skills/identity-management.md"
             ],
-            "phase-4g": [
+            "phase-5g": [
                 "skills/ai-integration.md",
                 "templates/ai-search-template.md",
                 "templates/agent-template.md"

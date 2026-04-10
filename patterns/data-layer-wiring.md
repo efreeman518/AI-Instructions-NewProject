@@ -1,6 +1,6 @@
 # Data Layer Wiring Patterns
 
-Cross-project wiring for database context setup, startup tasks, migrations, and seed data. Load before Phase 4a (Foundation) and Phase 4b (App Core).
+Cross-project wiring for database context setup, startup tasks, migrations, and seed data. Load before Phase 5a (Foundation) and Phase 5b (App Core).
 
 For base types used here (`DbContextBase`, `DbContextScopedFactory`, `AuditInterceptor`, `IStartupTask`), see [../support/ef-packages-reference.md](../support/ef-packages-reference.md).
 
@@ -244,8 +244,8 @@ dotnet ef migrations add InitialCreate `
 ```
 
 **When to run:**
-- After Phase 4a (all entities + DbContext configured)
+- After Phase 5a (all entities + DbContext configured)
 - After any entity/relationship change during scaffolding
-- Before Phase 4e tests that need a database
+- Before Phase 5e tests that need a database
 
 **Post-scaffold:** Once the baseline is established and the project is in production, switch to incremental migrations with descriptive names.

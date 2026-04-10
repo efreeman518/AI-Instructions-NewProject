@@ -1,20 +1,25 @@
 # HANDOFF.md
 
-Create this file in the **target project root** at the end of every phase and each Phase 4 sub-phase session. The next AI session loads `START-AI.md` + this file only — nothing else — and resumes from `currentSubPhase`.
+Create this file in the **target project root** at the end of every phase and each Phase 5 sub-phase session. The next AI session loads `START-AI.md` + this file only — nothing else — and resumes from `currentSubPhase`.
 
 ```yaml
 instructionVersion: ""
-currentPhase: ""           # 1 | 2 | 3 | 4
-currentSubPhase: ""        # 4a | 4b | 4c | 4d | 4e | 4f | 4g (Phase 4 only)
+currentPhase: ""           # 1 | 2 | 3 | 4 | 5
+currentSubPhase: ""        # 5a | 5b | 5c | 5d | 5e | 5f | 5g (Phase 5 only)
 scaffoldMode: ""           # full | lite | api-only
 testingProfile: ""         # minimal | balanced | comprehensive
+contractsScaffolded: false # set true after Phase 4 completes
 enabledFeatures:
   includeGateway: false
   includeScheduler: false
   includeFunctionApp: false
   includeUnoUI: false
   includeAiServices: false
-hostGates:                 # Phase 4d per-host status: not-started | scaffolded | validated
+testStatus:                # updated per sub-phase
+  unitTests: not-started   # not-started | red | green
+  endpointTests: not-started
+  infrastructureTests: not-started
+hostGates:                 # Phase 5d per-host status: not-started | scaffolded | validated
   scheduler: not-started
   functionApp: not-started
   unoUI: not-started       # always a dedicated session
@@ -58,7 +63,9 @@ Out of scope for this session — do not attempt unless explicitly re-scoped:
 
 - Record any non-default paths for `domain-specification.yaml` or `resource-implementation.yaml`.
 - Keep `enabledFeatures` flags in sync with `resource-implementation.yaml`.
-- For Phase 4d, update `hostGates` per-host as each host moves through scaffolded → validated. Do not mark the sub-phase complete until all enabled hosts reach `validated`.
+- For Phase 4, set `contractsScaffolded: true` after the gate passes. Phase 5a/5b require this flag.
+- For Phase 5a/5b, update `testStatus` as tests transition: `not-started` → `red` (tests written, failing) → `green` (implementation complete, tests passing). This tracks TDD progress across sessions.
+- For Phase 5d, update `hostGates` per-host as each host moves through scaffolded → validated. Do not mark the sub-phase complete until all enabled hosts reach `validated`.
 - Note unresolved infra/auth/package-feed issues here rather than retrying them repeatedly.
 - Keep entries short so the next AI turn can resume without reloading unnecessary docs.
 - **Ephemeral URLs:** Do not record Aspire dashboard URLs, proxy ports, or host endpoints. These are assigned at runtime and change between launches. Instead, record the discovery method (e.g., "read dashboard URL from `dotnet run` output, then check resource list for host URLs").
@@ -85,9 +92,9 @@ Issues encountered and fixed this session (so the next session does not re-inves
 - Result:
 - Notes:
 
-### Per-Host Gate Status (Phase 4d)
+### Per-Host Gate Status (Phase 5d)
 
-For each enabled optional host, record its individual gate result. Use "complete", "scaffolded", or "partially validated" — never claim Phase 4d complete if any enabled host is only scaffolded.
+For each enabled optional host, record its individual gate result. Use "complete", "scaffolded", or "partially validated" — never claim Phase 5d complete if any enabled host is only scaffolded.
 
 | Host | Build | Host-Specific Gate | Status | Notes |
 |------|-------|--------------------|--------|-------|
