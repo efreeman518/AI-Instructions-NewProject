@@ -27,12 +27,69 @@ Run once per machine/repo before beginning any scaffolding phase.
 - [ ] Git repo initialized with `.gitignore` for .NET
 - [ ] `.NET SDK` installed (`dotnet --version`)
 - [ ] Docker running (if Aspire uses SQL/Redis containers)
-- [ ] `nuget.config` includes `nuget.org` + all custom/private feeds
+- [ ] `nuget.config` includes `nuget.org` + all custom/private feeds (see Private Feed Auth below)
 - [ ] EF tools installed (`dotnet tool install -g dotnet-ef`)
 - [ ] Functions Core Tools installed (`func --version`) *(if using Functions)*
 - [ ] Uno templates installed (`dotnet new install Uno.Templates`) *(if using Uno UI)*
 - [ ] Uno.Check installed (`dotnet tool install -g uno.check`) *(if using Uno UI)*
 - [ ] Kiota CLI installed (`dotnet tool install -g Microsoft.OpenApi.Kiota`) *(if using Uno UI)*
+
+### Private NuGet Feed Auth (Phase 3 Pre-Flight)
+
+If the project uses private NuGet packages (e.g., EF.Packages), configure feed authentication before Phase 4.
+
+**Step 1:** Ask the user for:
+- Feed URL (e.g., `https://nuget.pkg.github.com/{owner}/index.json`)
+- Auth method: environment variable (recommended) or credential provider
+
+**Step 2:** Generate `nuget.config` with `packageSourceMapping` and `packageSourceCredentials`:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <packageSources>
+    <clear />
+    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+    <add key="privatefeed" value="https://nuget.pkg.github.com/{owner}/index.json" />
+  </packageSources>
+
+  <packageSourceMapping>
+    <packageSource key="nuget.org">
+      <package pattern="*" />
+    </packageSource>
+    <packageSource key="privatefeed">
+      <package pattern="EF.*" />
+    </packageSource>
+  </packageSourceMapping>
+
+  <packageSourceCredentials>
+    <privatefeed>
+      <add key="Username" value="{username}" />
+      <add key="ClearTextPassword" value="%NUGET_AUTH_TOKEN%" />
+    </privatefeed>
+  </packageSourceCredentials>
+</configuration>
+```
+
+**Step 3:** Set the auth token via environment variable:
+
+```powershell
+# PowerShell — session-scoped (recommended for local dev)
+$env:NUGET_AUTH_TOKEN = "ghp_xxxxxxxxxxxxxxxxxxxx"
+
+# Or persist in user profile (PowerShell $PROFILE)
+[Environment]::SetEnvironmentVariable("NUGET_AUTH_TOKEN", "ghp_xxxx", "User")
+```
+
+> **Security:** Never commit PATs to source control. Use `%VARIABLE%` syntax in `nuget.config` (Windows) or `$VARIABLE` (Linux/Mac) for credential interpolation. Add `.env` and `nuget.config.local` to `.gitignore`.
+
+**Step 4:** Verify:
+
+```powershell
+dotnet restore
+```
+
+Gate: exit code 0, all EF.Packages resolve successfully.
 
 ### AI Assistant — MCP Servers
 

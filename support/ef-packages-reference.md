@@ -10,46 +10,82 @@ The scaffolded project depends on the **EF.Packages** private NuGet feed for inf
 
 These types are consumed throughout scaffolded code. Know where they come from so you don't recreate them.
 
+> **Verified against EF.Packages v1.0.55.** If a type is not listed here, it either does not exist in EF.Packages or has not been verified. Check the actual assemblies before assuming a type exists.
+
 ### Domain Layer (EF.Domain, EF.Domain.Contracts)
 
 | Type | Package | Used For |
 |---|---|---|
-| `EntityBase<TKey>` | EF.Domain | Base class for all domain entities (Id, audit fields) |
+| `EntityBase` | EF.Domain | Base class for all domain entities (Id, audit fields) |
+| `AuditableBase<TAuditIdType>` | EF.Domain | Base class with audit trail fields |
+| `CollectionUtility` | EF.Domain | Utility for collection operations |
+| `IEntityBase<TKey>` | EF.Domain.Contracts | Entity base interface |
 | `ITenantEntity<TTenant>` | EF.Domain.Contracts | Tenant-scoped entity marker; enables global query filters |
+| `IAuditable<TAuditIdType>` | EF.Domain.Contracts | Audit trail interface (CreatedBy, ModifiedBy, timestamps) |
 | `DomainResult<T>` | EF.Domain.Contracts | Railway-style result for domain operations (Success/Failure) |
+| `DomainResult` | EF.Domain.Contracts | Non-generic domain result |
 | `DomainError` | EF.Domain.Contracts | Typed error with code + message for domain validation |
-| `IAuditableEntity` | EF.Domain.Contracts | Audit trail interface (CreatedBy, ModifiedBy, timestamps) |
 
 ### Data Access Layer (EF.Data, EF.Data.Contracts)
 
 | Type | Package | Used For |
 |---|---|---|
-| `DbContextBase<TUser, TTenant>` | EF.Data | Base DbContext with tenant filters, audit interceptor hooks, default type config |
-| `RepositoryBase<TEntity, TContext>` | EF.Data | Generic repository with CRUD, paging, search |
-| `IRepositoryQuery<T>` / `IRepositoryTrxn<T>` | EF.Data.Contracts | Read/write repository interfaces |
-| `AuditInterceptor<TUser, TTenant>` | EF.Data | EF SaveChanges interceptor for audit field population |
+| `DbContextBase<TAuditIdType, TTenantIdType>` | EF.Data | Base DbContext with tenant filters, audit interceptor hooks, default type config |
+| `RepositoryBase<TDbContext, TAuditIdType, TTenantIdType>` | EF.Data | Generic repository with CRUD, paging, search. Members: Create, Delete, DeleteAsync, ExistsAsync, GetEntityAsync, GetEntityByKeysAsync, GetEntityProjectionAsync, PrepareForUpdate, QueryPageAsync, QueryPageProjectionAsync, SaveChangesAsync, UpdateFull, UpsertAsync |
+| `IRepositoryBase` | EF.Data.Contracts | Base repository interface (non-generic) |
+| `AuditInterceptor<TAuditIdType, TTenantIdType>` | EF.Data | EF SaveChanges interceptor for audit field population |
 | `ConnectionNoLockInterceptor` | EF.Data | Adds `SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED` for query contexts |
-| `DbContextScopedFactory<TContext, TUser, TTenant>` | EF.Data | Scoped wrapper around `IDbContextFactory<T>` for DI resolution |
-| `SearchRequest<TFilter>` | EF.Data.Contracts | Paged search request (PageSize, PageIndex, Filter, Sort) |
-| `SearchResponse<T>` | EF.Data.Contracts | Paged search response (Items, TotalCount, PageSize, PageIndex) |
+| `ReadUncommittedInterceptor` | EF.Data | Read uncommitted isolation level interceptor |
+| `DbContextScopedFactory<TContext, TAuditIdType, TTenantIdType>` | EF.Data | Scoped wrapper around `IDbContextFactory<T>` for DI resolution |
+| `OptimisticConcurrencyWinner` | EF.Data.Contracts | Enum for SaveChangesAsync conflict resolution strategy |
+| `IQueryableExtensions` | EF.Data.Contracts | Extension methods for IQueryable |
+| `AuditChangeAttribute` | EF.Data.Contracts | Attribute for audit change tracking |
+| `RelatedDeleteBehavior` | EF.Data.Contracts | Enum for related entity delete behavior |
+| `MigrationSupport` | EF.Data | Migration support utilities |
+| `ResilientTransaction` | EF.Data | Resilient transaction wrapper |
 
 ### Common Infrastructure (EF.Common, EF.Common.Contracts)
 
 | Type | Package | Used For |
 |---|---|---|
-| `IRequestContext<TUser, TTenant>` | EF.Common.Contracts | Scoped request context (CorrelationId, AuditId, TenantId, Roles) |
+| `IRequestContext<TUser, TTenant>` | EF.Common.Contracts | Scoped request context (CorrelationId, AuditId, TenantId, Roles, RoleExists()) |
 | `RequestContext<TUser, TTenant>` | EF.Common.Contracts | Default implementation of IRequestContext |
-| `Result<T>` | EF.Common.Contracts | Application-layer result wrapper (Success/Failure/None) |
-| `IStartupTask` | EF.Common.Contracts | Interface for host startup tasks (migrations, cache warming, seeding) |
-| `OptimisticConcurrencyWinner` | EF.Common.Contracts | Enum for SaveChangesAsync conflict resolution strategy |
+| `Result<T>` | EF.Common.Contracts | Application-layer result wrapper (Success/Failure/None). Members: IsSuccess, IsFailure, IsNone, Value, ErrorMessage, Errors, Match, Map, Bind, BindOrContinue, OnSuccess, OnFailure, Tap |
+| `Result` | EF.Common.Contracts | Non-generic result (Success/Failure). Members: IsSuccess, IsFailure, Combine, Match, Map |
+| `PagedResponse<T>` | EF.Common.Contracts | Paged response with Data, Total, PageSize, PageIndex |
+| `SearchRequest<TFilter>` | EF.Common.Contracts | Paged search request with PageSize, PageIndex, Sorts, Filter |
+| `Sort` | EF.Common.Contracts | Sort descriptor (PropertyName, SortOrder) |
+| `SortOrder` | EF.Common.Contracts | Enum: Ascending=0, Descending=1 |
+| `IMessage` | EF.Common.Contracts | Marker interface for domain events/messages |
+| `ISpecification<T>` / `Specification<T>` | EF.Common.Contracts | Specification pattern base |
+| `StaticItem<TKey, TTenantKey>` | EF.Common.Contracts | Lookup item for dropdowns |
+| `StaticList<T>` | EF.Common.Contracts | Typed collection for lookup data |
+| `StaticData` | EF.Common.Contracts | Static data container |
+| `AuditEntry<T>` | EF.Common.Contracts | Audit entry record |
+| `AuditStatus` | EF.Common.Contracts | Audit status enum |
+| `StaticLogging` | EF.Common | Pre-host logger factory for startup/shutdown logging |
+| `PredicateBuilder` | EF.Common | Dynamic LINQ predicate builder |
+
+### Background Services (EF.BackgroundServices)
+
+| Type | Package | Used For |
+|---|---|---|
+| `IInternalMessageBus` | EF.BackgroundServices | In-process message bus for domain event dispatch |
+| `InternalMessageBus` | EF.BackgroundServices | Default implementation of IInternalMessageBus |
+| `IMessageHandler<T>` | EF.BackgroundServices | Handler interface for messages (where T : IMessage) |
+| `ScopedMessageHandlerAttribute` | EF.BackgroundServices | Attribute for scoped message handler discovery |
+| `CronBackgroundService<T>` | EF.BackgroundServices | Cron-scheduled background service |
+| `ICronJobHandler<T>` | EF.BackgroundServices | Handler interface for cron jobs |
+| `IBackgroundTaskQueue` | EF.BackgroundServices | Queue for background task processing |
+| `ScopedBackgroundService` | EF.BackgroundServices | Base class for scoped background services |
 
 ### Application Host (EF.Host, EF.AspNetCore)
 
 | Type | Package | Used For |
 |---|---|---|
-| `StaticLogging` | EF.Host | Pre-host logger factory for startup/shutdown logging |
-| `RunStartupTasks()` | EF.Host | Extension method that resolves and executes all `IStartupTask` implementations |
-| `DefaultExceptionHandler` | EF.AspNetCore | Base `IExceptionHandler` for ProblemDetails mapping |
+| `IConfigurationBuilderExtensions` | EF.Host | Configuration builder extensions |
+| `IHostApplicationBuilderExtensions` | EF.Host | Host builder extensions (includes RunStartupTasks) |
+| `DefaultExceptionHandler` | EF.AspNetCore | Base `IExceptionHandler` for ProblemDetails mapping (requires ASP.NET Core host) |
 
 ### Caching (EF.Cache)
 
@@ -63,6 +99,24 @@ These types are consumed throughout scaffolded code. Know where they come from s
 |---|---|---|
 | `UnitTestBase` | EF.Test.Unit | Base class for unit tests with service provider setup |
 | `IntegrationTestBase` | EF.Test.Integration | Base class with TestContainers + WebApplicationFactory |
+
+---
+
+## App-Level Types (NOT in EF.Packages)
+
+These types appear in the service and endpoint templates but are **not provided by EF.Packages**. They must be created in the target project. Generate them during Phase 5b.
+
+| Type | Where to Create | Used For |
+|---|---|---|
+| `DefaultRequest<T>` | Application.Models | Request wrapper for Create/Update service methods |
+| `DefaultResponse<T>` | Application.Models | Response wrapper for Get/Create/Update service methods |
+| `AppConstants` | Application.Contracts | Role names (ROLE_GLOBAL_ADMIN), cache names (DEFAULT_CACHE) |
+| `ITenantBoundaryValidator` | Application.Contracts | Tenant boundary enforcement interface |
+| `TenantBoundaryValidator` | Application.Services | Default implementation — GlobalAdmin bypass + tenant matching |
+| `IEntityCacheProvider` | Application.Contracts | Abstraction for entity-level caching |
+| `NoOpEntityCacheProvider` | Application.Services | No-op stub used until Phase 5c wires FusionCache |
+
+> **Do not search EF.Packages for these types.** They are intentionally app-level to keep the shared library thin. The service template references them because every scaffolded project needs them.
 
 ---
 

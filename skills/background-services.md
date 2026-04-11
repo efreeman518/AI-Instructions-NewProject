@@ -6,6 +6,7 @@
 - [bootstrapper.md](bootstrapper.md)
 - [aspire.md](aspire.md)
 - [data-persistence.md](data-persistence.md)
+- TickerQ docs & source: [https://github.com/Arcenox-co/TickerQ](https://github.com/Arcenox-co/TickerQ)
 
 ## Purpose
 

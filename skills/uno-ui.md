@@ -13,6 +13,7 @@ References:
 - [../ai/resource-implementation-schema.md](../ai/resource-implementation-schema.md)
 - See [../patterns/expected-output-index.md](../patterns/expected-output-index.md).
 - [../ai/SKILL.md](../ai/SKILL.md)
+- Reference app: [Uno Chefs](https://github.com/unoplatform/uno.chefs) — canonical Uno example for MVUX, navigation, Kiota HTTP, and page structure
 
 ## Profiles
 
@@ -44,6 +45,10 @@ Prefer `starter` until core vertical slices stabilize.
 
 ## Packages (Minimum)
 
+> **Important:** With Uno.Sdk, you do NOT list individual Uno packages. The SDK resolves them
+> automatically from `<UnoFeatures>`. The list below is for reference only — to understand what
+> `UnoFeatures` maps to. Do NOT add these `PackageReference` entries to the csproj.
+
 ```xml
 <PackageReference Include="Uno.WinUI" />
 <PackageReference Include="Uno.Sdk.Private" />
@@ -68,7 +73,156 @@ Prefer `starter` until core vertical slices stabilize.
 
 Use central package management in `Directory.Packages.props`.
 
-## App Host Rules (`App.xaml.host.cs`)
+## Project File Rules (`.csproj`)
+
+Uno Platform uses an **MSBuild SDK package** (`Uno.Sdk`), not a .NET workload. Never run `dotnet workload install uno-*`.
+
+### Canonical csproj Structure
+
+```xml
+<Project Sdk="Uno.Sdk/{VERSION}">
+  <PropertyGroup>
+    <!-- Clear singular TargetFramework inherited from Directory.Build.props -->
+    <TargetFramework />
+    <TargetFrameworks>net10.0-browserwasm</TargetFrameworks>
+    <OutputType>Exe</OutputType>
+    <UnoSingleProject>true</UnoSingleProject>
+    <ApplicationTitle>{AppName}</ApplicationTitle>
+    <ApplicationId>com.{company}.{app}</ApplicationId>
+
+    <UnoFeatures>
+      Material;
+      Hosting;
+      Toolkit;
+      Logging;
+      MVUX;
+      Configuration;
+      HttpKiota;
+      Serialization;
+      Localization;
+      Navigation;
+      ThemeService;
+      Authentication;
+    </UnoFeatures>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Using Include="System.Collections.Immutable" />
+  </ItemGroup>
+</Project>
+```
+
+### Non-Negotiable csproj Rules
+
+1. **SDK version**: Use `Uno.Sdk/6.5.x` or later for .NET 9/10 projects. The 6.0.x line bundles `Uno.Wasm.Bootstrap 8.0.x` which does NOT support .NET 9+.
+2. **TargetFramework clearing**: When `Directory.Build.props` sets `<TargetFramework>net10.0</TargetFramework>` for non-Uno projects, the Uno csproj MUST add `<TargetFramework />` before `<TargetFrameworks>` to clear the inherited singular value. Otherwise MSBuild merges both, causing `NETSDK1005`.
+3. **Entry point**: Uno SDK may not auto-generate `Program.Main` on .NET 10. Always include a manual `Program.cs`:
+
+```csharp
+namespace {Project}.Uno;
+
+public class Program
+{
+    private static App? _app;
+    static int Main(string[] args)
+    {
+        Microsoft.UI.Xaml.Application.Start(_ => _app = new App());
+        return 0;
+    }
+}
+```
+
+4. **Global using for ImmutableList**: MVUX `IListFeed<T>` requires `IImmutableList<T>`. Add `<Using Include="System.Collections.Immutable" />` to the Uno csproj.
+5. **Aspire AppHost reference**: The AppHost may fail to build if it has a direct `ProjectReference` to the Uno project (SDK resolution conflict). If this occurs, remove the reference and register the Uno project as an external executable.
+
+### Testable Core Library
+
+Extract `Business/` (Models, Services) and `Client/` into a separate `{Project}.Uno.Core` class library targeting plain `net10.0`. This allows unit testing without the Uno SDK.
+
+```text
+{Project}.Uno.Core/          <- net10.0 class lib (testable)
+  Business/Models/
+  Business/Services/
+  Client/
+{Project}.Uno/               <- Uno.Sdk (WASM)
+  App.xaml, App.xaml.cs, App.xaml.host.cs
+  Presentation/              <- MVUX models
+  Views/                     <- XAML pages
+  references {Project}.Uno.Core
+```
+
+After extracting, **delete** the original files from the Uno project — do not leave duplicates.
+
+## App.xaml Rules
+
+The `App.xaml` base class is `Application`, NOT `utu:App` (which doesn't exist):
+
+```xml
+<Application x:Class="{Namespace}.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+                <MaterialToolkitTheme xmlns="using:Uno.Toolkit.UI.Material" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>
+```
+
+### App.xaml Non-Negotiables
+
+- Base element: `<Application>` — never `<utu:App>` or `<toolkit:App>`
+- `MaterialToolkitTheme` namespace: `using:Uno.Toolkit.UI.Material` — NOT `using:Uno.Material`
+- Do NOT add `<ToolkitResources xmlns="using:Uno.Toolkit.UI" />` as a separate merged dictionary (included via `MaterialToolkitTheme`)
+
+### App.xaml.cs Pattern
+
+Follow the Uno Chefs reference app pattern:
+
+```csharp
+using Microsoft.Extensions.Hosting;
+using {Project}.Uno.Views;
+
+namespace {Project}.Uno;
+
+public partial class App : Application
+{
+    public static Window? MainWindow;
+    public static IHost? Host { get; private set; }
+
+    public App() => this.InitializeComponent();
+
+    protected override async void OnLaunched(LaunchActivatedEventArgs args)
+    {
+        var builder = this.CreateBuilder(args);
+        ConfigureAppBuilder(builder);
+        MainWindow = builder.Window;
+        Host = await builder.NavigateAsync<Shell>();
+    }
+}
+```
+
+### Shell Control
+
+Create a `Shell.xaml` UserControl with `ExtendedSplashScreen` as the loading container:
+
+```xml
+<UserControl x:Class="{Namespace}.Views.Shell"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:utu="using:Uno.Toolkit.UI">
+    <utu:ExtendedSplashScreen x:Name="Splash" ...>
+        <utu:ExtendedSplashScreen.LoadingContentTemplate>
+            <DataTemplate>
+                <ProgressRing IsActive="True" ... />
+            </DataTemplate>
+        </utu:ExtendedSplashScreen.LoadingContentTemplate>
+    </utu:ExtendedSplashScreen>
+</UserControl>
+```
 
 Configure everything through `IApplicationBuilder`:
 
@@ -124,6 +278,12 @@ Use partial records in `Presentation/`:
 - Navigation: `INavigator`
 - Cross-model refresh: `IMessenger` + `.Observe(...)`
 
+### MVUX Pitfalls
+
+- **`Feed.Async` type inference**: `Feed.Async(service.GetAsync)` may fail with CS0411/CS0453 when the return type is a reference type or the delegate signature is ambiguous. Always use an explicit lambda: `Feed.Async(async ct => await service.GetAsync(ct))`.
+- **`IListFeed` return type**: `ListFeed.Async(...)` callbacks must return `IImmutableList<T>`. Call `.ToImmutableList()` on results. Requires `using System.Collections.Immutable;` (add as global using in csproj, see Project File Rules).
+- **Nullable state**: `IState<T?>` with `State.UpdateAsync` produces CS8714 warnings. Suppress with `#nullable disable` in the record or accept the warning — it's cosmetic.
+
 Example pattern:
 
 ```csharp
@@ -159,6 +319,13 @@ public partial record TodoItemListModel(
 - Put visual tokens and style overrides in `Styles/` dictionaries.
 - Use converters from `Converters/` for presentation-only formatting.
 - Keep reusable UI in `Views/Controls` and shared templates in `Views/Templates`.
+
+### XAML Pitfalls
+
+- **`TreeViewItemTemplateSelector`** does not exist. Use `<DataTemplate>` directly inside `<TreeView.ItemTemplate>`.
+- **`uen:NavigationBar`** (`Uno.Extensions.Navigation.UI.NavigationBar`) does not exist. For top bars use `utu:NavigationBar` from `Uno.Toolkit.UI`, or omit and rely on `NavigationView` header.
+- **`uen:ContentControl`** doesn't exist. For navigation content regions, use `<Frame />` inside a `<Grid uen:Region.Attached="true">`.
+- **`NavigationView` content area**: Place a `<Grid uen:Region.Attached="true"><Frame /></Grid>` as the `NavigationView` content for region-based navigation.
 
 ## Business Service Rules
 

@@ -8,6 +8,21 @@ Phase 4 has already generated the contract surface — interfaces, DTOs, entity 
 
 ---
 
+## TDD Enforcement Rules (Non-Negotiable)
+
+> **STOP-AND-VERIFY gates are mandatory.** The AI must not skip any RED confirmation step. Writing tests and implementations together in the same pass violates this protocol.
+
+1. **Write tests FIRST.** Do not write any production code until the test file(s) for the current slice exist and compile.
+2. **Confirm RED before implementing.** Run `dotnet test` and verify the new tests **fail with assertion errors** (not compilation errors). If tests pass against no-op stubs, tighten assertions until they fail. Record the failing test count.
+3. **Implement ONLY enough to pass.** Write the minimum production code needed to make the failing tests pass. Do not add untested behavior.
+4. **Confirm GREEN immediately.** Run `dotnet test` after implementation. All tests must pass. If any fail, fix before moving to the next slice.
+5. **Never batch multiple slices.** Complete the full RED → GREEN cycle for one entity slice before starting the next.
+6. **No simultaneous test + implementation files.** In a single file-generation pass, produce either test files OR implementation files — not both. The only exception is activating `{Entity}Builder.Build()` alongside entity implementation (Step 5 of Phase 5a).
+
+Violation of these rules produces code that appears test-covered but was never actually validated through the TDD feedback loop.
+
+---
+
 ## BDD Naming Convention
 
 All test methods use the `Given_When_Then` pattern:
@@ -69,13 +84,15 @@ Minimum test methods:
 
 Create `Test/Test.Unit/Domain/{Entity}RulesTests.cs` using `test-templates-domain.md`.
 
-### Step 4: Run Red
+### Step 4: Run Red (MANDATORY GATE)
 
 ```powershell
 dotnet test --filter "TestCategory=Unit"
 ```
 
 **Expected:** Tests fail because entity shell methods throw `NotImplementedException`.
+
+> **STOP.** You MUST run this command and confirm the tests FAIL before proceeding to Step 5. If you skip this step and go directly to implementation, you are violating the TDD protocol. Record the number of failing tests.
 
 > If tests fail to **compile**, fix compilation errors first. The entity shell, interfaces, and DTOs from Phase 4 should provide all types needed. If a type is missing, check Phase 4 output before creating new types.
 
@@ -145,13 +162,15 @@ Minimum test methods:
 - `Given_ExistingEntity_When_GetAsync_Then_ReturnsMappedDto`
 - `Given_SearchFilter_When_SearchAsync_Then_ReturnsFilteredPage`
 
-### Step 2: Run Red
+### Step 2: Run Red (MANDATORY GATE)
 
 ```powershell
 dotnet test --filter "TestCategory=Unit"
 ```
 
 **Expected:** New service tests fail (no-op stub returns empty/default results that don't match assertions).
+
+> **STOP.** You MUST run this command and confirm the new tests FAIL before proceeding to Step 3. If all tests pass, tighten assertions (assert on specific property values, not just non-null). Do not proceed until at least one new test is red.
 
 ### Step 3: Implement Service + Mapper + Validator
 
