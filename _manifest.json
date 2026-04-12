@@ -15,7 +15,7 @@
             "env/**"
         ]
     },
-    "totalEstimatedTokens": 159766,
+    "totalEstimatedTokens": 160026,
     "contextBudget": {
         "default": 30000,
         "extended": 60000,
@@ -96,7 +96,7 @@
         {
             "path": "skills/package-dependencies.md",
             "phase": "phase-4",
-            "estimatedTokens": 1869
+            "estimatedTokens": 1960
         },
         {
             "path": "ai/SKILL.md",
@@ -525,7 +525,7 @@
         {
             "path": "skills/cicd.md",
             "phase": "phase-5e",
-            "estimatedTokens": 1622
+            "estimatedTokens": 1791
         },
         {
             "path": "templates/dockerfile-template.md",
