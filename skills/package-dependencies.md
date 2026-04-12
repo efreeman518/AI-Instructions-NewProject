@@ -15,6 +15,7 @@ Use this file as a compact contract map for private/shared packages.
 2. Use central package versions in `Directory.Packages.props`.
 3. After adding packages, restore and update to latest stable versions.
 4. Re-verify with `dotnet restore` and `dotnet build`.
+5. **Private feed auth:** GitHub Packages and other authenticated feeds require a PAT or token. Local dev stores credentials in `nuget.config` (user-level, not committed). CI/CD must pass credentials via environment variable or `dotnet nuget` auth step — see [cicd.md](cicd.md) for workflow setup. A 401 on restore means the feed credential is missing or expired.
 
 > **CPM + floating versions = NU1011.** When `ManagePackageVersionsCentrally=true`, every `<PackageVersion>` entry must use an exact version (e.g. `Version="1.0.8"`). Wildcard/floating versions (e.g. `1.0.*`, `*`) are prohibited and cause restore to fail with NU1011. To use floating versions, set `ManagePackageVersionsCentrally=false` and add `Version="*"` directly to each `<PackageReference>`.
 

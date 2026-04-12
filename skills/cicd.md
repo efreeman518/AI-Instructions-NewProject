@@ -23,6 +23,7 @@ Use GitHub Actions for:
 3. Deploy artifacts are immutable by commit SHA tag.
 4. Scheduler schema/dependency steps run before scheduler rollout.
 5. PR CI excludes heavy suites (E2E/load/benchmarks unless explicitly gated).
+6. **Private NuGet feed auth:** If the solution references packages from authenticated feeds (e.g., GitHub Packages), the workflow must authenticate before `dotnet restore`. Store a PAT as a repo secret (e.g., `NUGET_PAT`) and add an auth step. Without this, restore fails with `NU1301 / 401 Unauthorized`. See the NuGet auth step below.
 
 ---
 
@@ -75,6 +76,12 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           global-json-file: src/global.json
+
+      # Private NuGet feed auth (if nuget.config references authenticated feeds)
+      - name: Authenticate private NuGet feed
+        if: ${{ secrets.NUGET_PAT != '' }}
+        run: dotnet nuget update source "EF.Packages" --username "ci" --password "${{ secrets.NUGET_PAT }}" --store-password-in-clear-text --configfile src/nuget.config
+
       - run: dotnet restore src/{SolutionName}.slnx
       - run: dotnet build src/{SolutionName}.slnx --no-restore --configuration Release
       - run: dotnet test src/{SolutionName}.slnx --no-build --filter "TestCategory=Unit"
