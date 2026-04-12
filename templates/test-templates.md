@@ -96,6 +96,8 @@ public static class DbSupport
 }
 ```
 
+> **Pooled context swap:** When the Bootstrapper uses `AddPooledDbContextFactory` + `DbContextScopedFactory` + `AuditInterceptor`, `ConfigureServicesTestDB` must remove all pool/factory/interceptor registrations before re-registering in-memory contexts. See [test-templates-endpoint.md](test-templates-endpoint.md) → *Pooled DbContext Swap* for the full removal checklist and `TestDbContextFactory` pattern.
+
 ### Utility
 
 Configuration builder and random-string helper used across all test tiers.

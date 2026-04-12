@@ -135,11 +135,16 @@ For phase gates and validation commands, see [execution-gates.md](execution-gate
 | FK violation in assign/reference tests | FK uses random GUID not existing row | Create related records first |
 | Rate-limited 429 in integration tests | API rate limiter enabled in test host | Override limiter to `GetNoLimiter` in test factory |
 | `CS0104` RequestContext ambiguity | `Test.Support` and `EF.Common.Contracts` both define type | Use fully qualified `EF.Common.Contracts.RequestContext<...>` |
+| `IInternalMessageBus` resolution error in test factory | `AuditInterceptor` registered by Bootstrapper, not removed by test DB swap | Remove `AuditInterceptor<string, Guid?>` and all pool/factory descriptors. See [test-templates-endpoint.md](../templates/test-templates-endpoint.md) → *Pooled DbContext Swap*. |
+| `Cannot consume scoped from singleton IDbContextPool` in tests | `AddDbContext` registers scoped options; original pooled factory registration still present | Remove `IDbContextPool<T>` descriptors (match by `ServiceType.FullName.Contains("DbContextPool")`) before re-registering |
+| `DbContextOptions must be DbContextOptions<T>` in tests | Multiple contexts sharing non-generic `DbContextOptions` constructor | Build typed options per context via `new DbContextOptionsBuilder<T>().UseInMemoryDatabase(name).Options` |
+| `CS9035` required member `AuditId` not set | `DbContextBase` declares `required` members; `new` operator enforces at compile time | Use `ConstructorInfo.Invoke()` via reflection to bypass — see `TestDbContextFactory` in [test-templates-endpoint.md](../templates/test-templates-endpoint.md) |
 | Create returns 201 but validation test expects 400 | DTO fields not applied to entity after create | Call `entity.Update(...)` after factory create |
 | Schema changes not reflected in TestContainer | Previous schema persists | `EnsureDeletedAsync()` before `EnsureCreatedAsync()` |
 | ProblemDetails stack traces leak in CI | Debug diagnostics enabled in all builds | Wrap diagnostic customization in `#if DEBUG` |
 | StructureValidator not found | Missing static validator namespace import | Add `using {Namespace}.Application.Services.Validation;` |
 | WASM build `DirectoryNotFoundException` (`unoresizetizer`) | Resizetizer 1.12.1 manifest-path issue | See fix snippet in `skills/uno-ui.md` → *UnoSplashScreen WASM Build Failure* |
+| `NotSupportedException` deserializing `Result<T>` in tests | `Result<T>` lacks parameterless constructor | Use `JsonDocument` parsing instead of `ReadFromJsonAsync<Result<T>>()`. Search endpoints serialize just the `PagedResponse<T>` value, not the wrapper. |
 
 ### Detailed Fix Patterns
 

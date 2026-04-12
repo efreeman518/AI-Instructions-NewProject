@@ -15,7 +15,7 @@
             "env/**"
         ]
     },
-    "totalEstimatedTokens": 160226,
+    "totalEstimatedTokens": 161481,
     "contextBudget": {
         "default": 30000,
         "extended": 60000,
@@ -116,7 +116,7 @@
         {
             "path": "support/ef-packages-reference.md",
             "phase": "phase-5-base",
-            "estimatedTokens": 2348
+            "estimatedTokens": 2403
         },
         {
             "path": "skills/domain-model.md",
@@ -219,7 +219,7 @@
         {
             "path": "skills/azure-data-storage.md",
             "phase": "phase-5a-optional",
-            "estimatedTokens": 5353,
+            "estimatedTokens": 5458,
             "dependencies": [
                 "skills/domain-model.md",
                 "skills/bootstrapper.md",
@@ -345,7 +345,7 @@
         {
             "path": "templates/test-templates-endpoint.md",
             "phase": "phase-5b",
-            "estimatedTokens": 1910,
+            "estimatedTokens": 2514,
             "generates": [
                 "{Entity}EndpointsTests.cs"
             ],
@@ -381,7 +381,7 @@
         {
             "path": "skills/aspire.md",
             "phase": "phase-5c",
-            "estimatedTokens": 1754
+            "estimatedTokens": 1795
         },
         {
             "path": "skills/configuration-secrets.md",
@@ -603,7 +603,7 @@
         {
             "path": "templates/test-templates.md",
             "phase": "on-demand",
-            "estimatedTokens": 6426,
+            "estimatedTokens": 6528,
             "note": "Unified reference. For phase-specific loading use the split templates below."
         },
         {
@@ -619,7 +619,7 @@
         {
             "path": "support/troubleshooting.md",
             "phase": "on-demand",
-            "estimatedTokens": 2828
+            "estimatedTokens": 3176
         },
         {
             "path": "support/sampleapp-patterns.md",

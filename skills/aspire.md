@@ -95,10 +95,11 @@ var eventHubs = builder.AddAzureEventHubs("eventhubs").RunAsEmulator();
 
 ```csharp
 var sb = builder.AddAzureServiceBus("servicebus").RunAsEmulator();
-sb.AddServiceBusTopic("domain-events")
-  .AddServiceBusSubscription("api")
-  .AddServiceBusSubscription("other-subscriber");
+sb.AddTopic("domain-events", ["api", "other-subscriber"]);
+sb.AddQueue("commands"); // optional queue
 ```
+
+> **API note (Aspire 9.3.0+):** Use `AddTopic(name, subscriptions[])` — the chained `.AddServiceBusTopic().AddServiceBusSubscription()` API does not exist. Queues use `AddQueue(name)`.
 
 Services like `AddSqlServer`, `AddRedis`, `AddPostgres`, `AddRabbitMQ` already run local containers by default.
 

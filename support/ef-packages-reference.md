@@ -50,7 +50,7 @@ These types are consumed throughout scaffolded code. Know where they come from s
 |---|---|---|
 | `IRequestContext<TUser, TTenant>` | EF.Common.Contracts | Scoped request context (CorrelationId, AuditId, TenantId, Roles, RoleExists()) |
 | `RequestContext<TUser, TTenant>` | EF.Common.Contracts | Default implementation of IRequestContext |
-| `Result<T>` | EF.Common.Contracts | Application-layer result wrapper (Success/Failure/None). Members: IsSuccess, IsFailure, IsNone, Value, ErrorMessage, Errors, Match, Map, Bind, BindOrContinue, OnSuccess, OnFailure, Tap |
+| `Result<T>` | EF.Common.Contracts | Application-layer result wrapper (Success/Failure/None). Members: IsSuccess, IsFailure, IsNone, Value, ErrorMessage, Errors, Match, Map, Bind, BindOrContinue, OnSuccess, OnFailure, Tap. **Not JSON-deserializable** — lacks parameterless constructor; use `JsonDocument` parsing in tests. When passed to `Results.Ok(result)` in endpoints, serializes to just the `Value` payload (not the full Result wrapper). |
 | `Result` | EF.Common.Contracts | Non-generic result (Success/Failure). Members: IsSuccess, IsFailure, Combine, Match, Map |
 | `PagedResponse<T>` | EF.Common.Contracts | Paged response with Data, Total, PageSize, PageIndex |
 | `SearchRequest<TFilter>` | EF.Common.Contracts | Paged search request with PageSize, PageIndex, Sorts, Filter |

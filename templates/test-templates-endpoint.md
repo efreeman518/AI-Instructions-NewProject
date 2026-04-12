@@ -39,6 +39,39 @@ public class CustomApiFactory<TProgram>(string? dbConnectionString = null)
 }
 ```
 
+### Pooled DbContext Swap — Required Removals
+
+When the Bootstrapper uses `AddPooledDbContextFactory` + `DbContextScopedFactory` + `AuditInterceptor` (per [data-layer-wiring.md](../patterns/data-layer-wiring.md)), the test factory's `ConfigureServices` (or `DbSupport`) must remove **all** of the following before re-registering in-memory contexts:
+
+| Registration to Remove | Why |
+|---|---|
+| `AuditInterceptor<string, Guid?>` | Depends on `IInternalMessageBus` (EF.BackgroundServices), not registered in test host |
+| `ConnectionNoLockInterceptor` | SQL-only interceptor, incompatible with InMemory provider |
+| `IDbContextPool<T>` (internal) | Pooled factory creates singleton pools that conflict with scoped in-memory options |
+| `DbContextScopedFactory<T, string, Guid?>` | Wraps `IDbContextFactory<T>` — must be removed and re-registered or left for re-resolution |
+| `IDbContextFactory<T>` | Original pooled factory — must be replaced with in-memory factory |
+| `DbContextOptions<T>` + `DbContextOptions` | Pool-registered options conflict with new in-memory options |
+
+**Critical details:**
+1. **Typed options per context.** Use `new DbContextOptionsBuilder<{App}DbContextTrxn>().UseInMemoryDatabase(name).Options` — do NOT use generic `DbContextOptions` when multiple contexts exist. `DbContextBase` constructors take `DbContextOptions` (non-generic base), but EF validates the generic type at runtime.
+2. **Required member bypass.** `DbContextBase<TAuditIdType, TTenantIdType>` declares `required` members (e.g., `AuditId`). Use `ConstructorInfo.Invoke()` via reflection to bypass compile-time `required` enforcement when creating contexts from a test factory.
+3. **Re-provide `IDbContextFactory<T>`.** `DbContextScopedFactory` resolves `IDbContextFactory<T>` — provide a test implementation that creates in-memory contexts.
+
+```csharp
+// Example: reflection-based context factory for required-member bypass
+internal sealed class TestDbContextFactory<TContext>(DbContextOptions options)
+    : IDbContextFactory<TContext> where TContext : DbContext
+{
+    public TContext CreateDbContext()
+    {
+        var genericOptionsType = typeof(DbContextOptions<>).MakeGenericType(typeof(TContext));
+        var ctor = typeof(TContext).GetConstructor([genericOptionsType])
+                ?? typeof(TContext).GetConstructor([typeof(DbContextOptions)]);
+        return (TContext)ctor!.Invoke([options]);
+    }
+}
+```
+
 ---
 
 ## Endpoint Tests
