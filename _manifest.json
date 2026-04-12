@@ -15,7 +15,7 @@
             "env/**"
         ]
     },
-    "totalEstimatedTokens": 160026,
+    "totalEstimatedTokens": 160226,
     "contextBudget": {
         "default": 30000,
         "extended": 60000,
@@ -567,7 +567,7 @@
         {
             "path": "skills/ai-integration.md",
             "phase": "phase-5g",
-            "estimatedTokens": 3662,
+            "estimatedTokens": 3862,
             "dependencies": [
                 "skills/solution-structure.md",
                 "skills/bootstrapper.md",

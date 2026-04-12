@@ -52,8 +52,9 @@ Use this only when the current slice actually needs semantic retrieval, grounded
 - **Agent Framework Workflows:** optional explicit orchestration layer.
 
 Useful primitives:
-- `ChatClientAgent` for the default single-agent path
-- `AIFunctionFactory.Create()` for application-service tools
+- `ChatClientAgent` (`Microsoft.Agents.AI`) for the default single-agent path
+- `AIFunctionFactory.Create()` (`Microsoft.Extensions.AI`) for application-service tools
+- `AsAIAgent()` (`OpenAI.Chat` extension in `Microsoft.Agents.AI.OpenAI` package) to create a `ChatClientAgent` from a `ChatClient`
 - `AgentSession` for per-conversation state
 - `Microsoft.Agents.Workflows` for explicit orchestration only when needed
 
@@ -109,15 +110,23 @@ This is the default agent pattern. Wrap an Azure OpenAI / Foundry model with a s
 ```csharp
 public sealed class SupportTriageAgentService : ISupportTriageAgent
 {
-    private readonly AIAgent _agent;
+    private readonly ChatClientAgent _agent;
 
     public SupportTriageAgentService(
         AzureOpenAIClient openAiClient,
         IOptions<AiSettings> settings,
         ITicketService ticketService)
     {
-        var systemPrompt = EmbeddedResource.Read("Prompts.SupportTriageAgent.system-prompt.txt");
+        // Load system prompt from embedded resource
+        var assembly = Assembly.GetExecutingAssembly();
+        var resourceName = assembly.GetManifestResourceNames()
+            .First(n => n.EndsWith("SupportTriageAgent.system-prompt.txt"));
+        using var stream = assembly.GetManifestResourceStream(resourceName)!;
+        using var reader = new StreamReader(stream);
+        var systemPrompt = reader.ReadToEnd();
 
+        // AsAIAgent is an extension method on OpenAI.Chat.ChatClient
+        // from the Microsoft.Agents.AI.OpenAI package
         _agent = openAiClient
             .GetChatClient(settings.Value.AgentModelDeployment)
             .AsAIAgent(
@@ -125,7 +134,7 @@ public sealed class SupportTriageAgentService : ISupportTriageAgent
                 name: "SupportTriageAgent",
                 tools:
                 [
-                    AIFunctionFactory.Create(
+                    AIFunctionFactory.Create(  // Microsoft.Extensions.AI
                         (string ticketId) =>
                             ticketService.GetTicketHistoryAsync(ticketId, CancellationToken.None),
                         "GetTicketHistory",
@@ -133,10 +142,11 @@ public sealed class SupportTriageAgentService : ISupportTriageAgent
                 ]);
     }
 
-    public async Task<AgentResponse> TriageAsync(string userMessage, AgentSession? session = null, CancellationToken ct = default)
+    public async Task<AgentChatResponse> TriageAsync(string userMessage, AgentSession? session = null, CancellationToken ct = default)
     {
         session ??= await _agent.CreateSessionAsync();
-        return await _agent.RunAsync(userMessage, session, cancellationToken: ct);
+        var response = await _agent.RunAsync(userMessage, session, cancellationToken: ct);
+        return new AgentChatResponse { Message = response.ToString() };
     }
 }
 ```
@@ -339,13 +349,11 @@ Cover the smallest useful surface first:
 ### Agent Tests
 
 ```csharp
-// Use a test IChatClient to return deterministic responses
-var testAgent = new ChatClientAgent(
-    new TestChatClient(fixedResponse: "Classified as: High urgency"),
-    instructions: "test");
-
-var response = await testAgent.RunAsync("Test ticket");
-Assert.Contains("High urgency", response.ToString());
+// ChatClientAgent requires IChatClient — use a mock or test double
+// For function tool tests, test tools directly (they're plain C# methods)
+var tools = new TaskItemTools(NullLogger<TaskItemTools>.Instance, mockService.Object, mockSearch.Object);
+var result = await tools.SearchTasks("overdue");
+Assert.IsTrue(result.Contains("expected text"));
 ```
 
 ### Search Tests
