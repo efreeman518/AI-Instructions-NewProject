@@ -8,7 +8,7 @@ For base types used here, see [../support/ef-packages-reference.md](../support/e
 
 ## Multi-Cache Configuration
 
-**Source:** `{App}.Bootstrapper/Registration/RegisterServices.Caching.cs`
+**Source:** `Host/{App}.Bootstrapper/Registration/RegisterServices.Caching.cs`
 
 FusionCache config loop: bind `CacheSettings[]` from configuration, register each as a named FusionCache with exact entry option defaults (fail-safe, jitter, eager refresh threshold), conditional Redis backplane per cache instance.
 
@@ -81,7 +81,7 @@ private static void ConfigureFusionCacheRedis(IFusionCacheBuilder fcBuilder,
 
 ## ServiceDefaults Configuration
 
-**Source:** `Aspire/ServiceDefaults/Extensions.cs`
+**Source:** `Host/Aspire/ServiceDefaults/Extensions.cs`
 
 Every host project calls `builder.AddServiceDefaults(config, appName)` as the first registration step. This extension lives in the shared ServiceDefaults project and wires OpenTelemetry, health checks, service discovery, and HTTP resilience defaults.
 
@@ -112,7 +112,7 @@ public static IHostApplicationBuilder AddServiceDefaults(
 
 ## Aspire Resource Wiring
 
-**Source:** `Aspire/AppHost/AppHost.cs`
+**Source:** `Host/Aspire/AppHost/AppHost.cs`
 
 SQL with password parameter + data volume, Redis with data volume, per-service endpoints/references/WaitFor, Gateway wired to API only, Scheduler pinned to 1 replica.
 

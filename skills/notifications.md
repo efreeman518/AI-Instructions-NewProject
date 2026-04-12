@@ -42,7 +42,7 @@ src/Infrastructure/{Project}.Infrastructure.Notification/
 ### Standalone host (optional)
 
 ```
-src/{Host}/{Host}.Notification/
+src/Host/{Host}.Notification/
 ├── Program.cs
 ├── RegisterNotificationServices.cs
 ├── Endpoints/

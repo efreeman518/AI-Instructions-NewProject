@@ -7,7 +7,7 @@ Reference patterns: [../patterns/infrastructure-wiring.md](../patterns/infrastru
 ## Structure
 
 ```text
-Aspire/
+Host/Aspire/
   AppHost/
     AppHost.cs
     AppHost.csproj
@@ -179,7 +179,7 @@ If using dev tunnels, add `Aspire.Hosting.DevTunnels`.
 
 ## Preflight (Before First Launch)
 
-Before running `dotnet run --project src/Aspire/AppHost`, confirm the substrate:
+Before running `dotnet run --project src/Host/Aspire/AppHost`, confirm the substrate:
 
 1. **Docker running:** `docker info` succeeds. If not, start Docker — do not debug app code.
 2. **Required env vars set:** `DOTNET_DASHBOARD_OTLP_ENDPOINT_URL`, `ASPIRE_ALLOW_UNSECURED_TRANSPORT` (when running from CLI without launch profile).
@@ -193,7 +193,7 @@ Only after all four pass, proceed to `dotnet run`.
 ## Run
 
 ```bash
-dotnet run --project src/Aspire/AppHost
+dotnet run --project src/Host/Aspire/AppHost
 ```
 
 If running from CLI without launch profile, set required env vars for dashboard/OTLP endpoints.

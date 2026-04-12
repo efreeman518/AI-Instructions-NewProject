@@ -234,12 +234,12 @@ During scaffolding phases, the database schema is evolving rapidly. Use a single
 # Remove all existing migrations
 dotnet ef migrations remove --force `
   --project src/Infrastructure/{Project}.Infrastructure.Data `
-  --startup-project src/{Host}/{Host}.Api
+  --startup-project src/Host/{Host}.Api
 
 # Create a fresh baseline
 dotnet ef migrations add InitialCreate `
   --project src/Infrastructure/{Project}.Infrastructure.Data `
-  --startup-project src/{Host}/{Host}.Api `
+  --startup-project src/Host/{Host}.Api `
   --context {App}DbContextTrxn
 ```
 

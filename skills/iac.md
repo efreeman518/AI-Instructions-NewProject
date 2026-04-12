@@ -217,7 +217,7 @@ infra:
   path: infra
 services:
   api:
-    project: src/{Host}/{Host}.Api
+    project: src/Host/{Host}.Api
     host: containerapp
 ```
 
@@ -228,7 +228,7 @@ services:
 Container deployments require per-host Dockerfiles. Use `src/` as build context.
 
 ```bash
-docker build -f src/{Host}/{Host}.Api/Dockerfile src/
+docker build -f src/Host/{Host}.Api/Dockerfile src/
 ```
 
 ---

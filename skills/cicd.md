@@ -138,11 +138,11 @@ jobs:
       matrix:
         project:
           - name: api
-            dockerfile: src/{Host}/{Host}.Api/Dockerfile
+            dockerfile: src/Host/{Host}.Api/Dockerfile
           - name: gateway
-            dockerfile: src/{Gateway}/{Gateway}.Gateway/Dockerfile
+            dockerfile: src/Host/{Gateway}.Gateway/Dockerfile
           - name: scheduler
-            dockerfile: src/{Host}/{Host}.Scheduler/Dockerfile
+            dockerfile: src/Host/{Host}.Scheduler/Dockerfile
     steps:
       - uses: actions/checkout@v4
       - uses: azure/login@v2

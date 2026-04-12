@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **File** | `{Host}.Api/ExceptionHandlers/DefaultExceptionHandler.cs` |
+| **File** | `Host/{Host}.Api/ExceptionHandlers/DefaultExceptionHandler.cs` |
 | **Depends on** | [api.md](../skills/api.md) |
 | **Referenced by** | [api.md](../skills/api.md), [api-host-wiring.md](../patterns/api-host-wiring.md) |
 
@@ -13,7 +13,7 @@ Global `IExceptionHandler` that maps unexpected/infrastructure exceptions to `Pr
 ## Template
 
 ```csharp
-// File: {Host}.Api/ExceptionHandlers/DefaultExceptionHandler.cs
+// File: Host/{Host}.Api/ExceptionHandlers/DefaultExceptionHandler.cs
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 

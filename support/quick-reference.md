@@ -10,17 +10,17 @@ High-signal lookup for structure, dependencies, DI patterns, and common routes/c
 
 | Project | Namespace | Location |
 |---|---|---|
-| `{Host}.Api` | `{Host}.Api` | `src/{Host}/{Host}.Api/` |
-| `{Gateway}.Gateway` | `{Gateway}.Gateway` | `src/{Gateway}/{Gateway}.Gateway/` |
-| `{Host}.Scheduler` | `{Host}.Scheduler` | `src/{Host}/{Host}.Scheduler/` |
-| `{Host}.Bootstrapper` | `{Host}.Bootstrapper` | `src/{Host}/{Host}.Bootstrapper/` |
-| `{Host}.BackgroundServices` | `{Host}.BackgroundServices` | `src/{Host}/{Host}.BackgroundServices/` |
-| `{Host}.UI` | `{Host}.UI` | `src/{Host}/{Host}.UI/` |
-| `{App}.FunctionApp` | `{App}.FunctionApp` | `src/Functions/{App}.FunctionApp/` |
+| `{Host}.Api` | `{Host}.Api` | `src/Host/{Host}.Api/` |
+| `{Gateway}.Gateway` | `{Gateway}.Gateway` | `src/Host/{Gateway}.Gateway/` |
+| `{Host}.Scheduler` | `{Host}.Scheduler` | `src/Host/{Host}.Scheduler/` |
+| `{Host}.Bootstrapper` | `{Host}.Bootstrapper` | `src/Host/{Host}.Bootstrapper/` |
+| `{Host}.BackgroundServices` | `{Host}.BackgroundServices` | `src/Host/{Host}.BackgroundServices/` |
+| `{Host}.UI` | `{Host}.UI` | `src/UI/{Host}.UI/` |
+| `{App}.Functions` | `{App}.Functions` | `src/Host/{App}.Functions/` |
 | `Domain.*` | `Domain.*` | `src/Domain/` |
 | `Application.*` | `Application.*` | `src/Application/` |
 | `Infrastructure.*` | `Infrastructure.*` | `src/Infrastructure/` |
-| `Aspire.*` | `Aspire.*` | `src/Aspire/` |
+| `Aspire.*` | `Aspire.*` | `src/Host/Aspire/` |
 | `Test.*` | `Test.*` | `src/Test/` |
 
 ---

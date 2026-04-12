@@ -9,7 +9,7 @@ Reference patterns: [../patterns/api-host-wiring.md](../patterns/api-host-wiring
 ## Required Layout
 
 ```
-{Host}.Api/
+Host/{Host}.Api/
 ├── Program.cs
 ├── RegisterApiServices.cs
 ├── WebApplicationBuilderExtensions.cs

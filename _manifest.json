@@ -15,7 +15,7 @@
             "env/**"
         ]
     },
-    "totalEstimatedTokens": 155981,
+    "totalEstimatedTokens": 159766,
     "contextBudget": {
         "default": 30000,
         "extended": 60000,
@@ -91,7 +91,7 @@
         {
             "path": "skills/solution-structure.md",
             "phase": "phase-4",
-            "estimatedTokens": 1695
+            "estimatedTokens": 1723
         },
         {
             "path": "skills/package-dependencies.md",
@@ -111,12 +111,12 @@
         {
             "path": "ai/tdd-protocol.md",
             "phase": "phase-5-base",
-            "estimatedTokens": 2197
+            "estimatedTokens": 2669
         },
         {
             "path": "support/ef-packages-reference.md",
             "phase": "phase-5-base",
-            "estimatedTokens": 1278
+            "estimatedTokens": 2348
         },
         {
             "path": "skills/domain-model.md",
@@ -126,7 +126,7 @@
         {
             "path": "skills/data-persistence.md",
             "phase": "phase-5a",
-            "estimatedTokens": 3954
+            "estimatedTokens": 3952
         },
         {
             "path": "templates/entity-template.md",
@@ -246,12 +246,12 @@
         {
             "path": "skills/bootstrapper.md",
             "phase": "phase-5b",
-            "estimatedTokens": 1440
+            "estimatedTokens": 1441
         },
         {
             "path": "skills/api.md",
             "phase": "phase-5b",
-            "estimatedTokens": 2088,
+            "estimatedTokens": 2089,
             "dependencies": [
                 "skills/application-layer.md",
                 "skills/bootstrapper.md"
@@ -286,7 +286,7 @@
         {
             "path": "templates/endpoint-template.md",
             "phase": "phase-5b",
-            "estimatedTokens": 1412,
+            "estimatedTokens": 1415,
             "generates": [
                 "{Entity}Endpoints.cs"
             ],
@@ -321,7 +321,7 @@
         {
             "path": "templates/exception-handler-template.md",
             "phase": "phase-5b",
-            "estimatedTokens": 1029,
+            "estimatedTokens": 1031,
             "generates": [
                 "DefaultExceptionHandler.cs"
             ],
@@ -357,7 +357,7 @@
         {
             "path": "skills/gateway.md",
             "phase": "phase-5c",
-            "estimatedTokens": 1297,
+            "estimatedTokens": 1298,
             "dependencies": [
                 "skills/api.md",
                 "skills/aspire.md",
@@ -381,12 +381,12 @@
         {
             "path": "skills/aspire.md",
             "phase": "phase-5c",
-            "estimatedTokens": 1750
+            "estimatedTokens": 1754
         },
         {
             "path": "skills/configuration-secrets.md",
             "phase": "phase-5c",
-            "estimatedTokens": 2677
+            "estimatedTokens": 2675
         },
         {
             "path": "skills/observability.md",
@@ -421,7 +421,7 @@
         {
             "path": "skills/background-services.md",
             "phase": "phase-5d",
-            "estimatedTokens": 1493,
+            "estimatedTokens": 1520,
             "dependencies": [
                 "skills/solution-structure.md",
                 "skills/bootstrapper.md",
@@ -432,7 +432,7 @@
         {
             "path": "skills/function-app.md",
             "phase": "phase-5d",
-            "estimatedTokens": 1622,
+            "estimatedTokens": 1620,
             "dependencies": [
                 "skills/solution-structure.md",
                 "skills/bootstrapper.md",
@@ -442,7 +442,7 @@
         {
             "path": "skills/uno-ui.md",
             "phase": "phase-5d",
-            "estimatedTokens": 3550,
+            "estimatedTokens": 5268,
             "dependencies": [
                 "skills/solution-structure.md",
                 "skills/gateway.md",
@@ -454,7 +454,7 @@
         {
             "path": "skills/notifications.md",
             "phase": "phase-5d",
-            "estimatedTokens": 2670
+            "estimatedTokens": 2669
         },
         {
             "path": "templates/mvux-model-template.md",
@@ -520,12 +520,12 @@
         {
             "path": "skills/iac.md",
             "phase": "phase-5e",
-            "estimatedTokens": 1457
+            "estimatedTokens": 1456
         },
         {
             "path": "skills/cicd.md",
             "phase": "phase-5e",
-            "estimatedTokens": 1624
+            "estimatedTokens": 1622
         },
         {
             "path": "templates/dockerfile-template.md",
@@ -562,7 +562,7 @@
         {
             "path": "skills/identity-management.md",
             "phase": "phase-5f",
-            "estimatedTokens": 3549
+            "estimatedTokens": 3553
         },
         {
             "path": "skills/ai-integration.md",
@@ -614,7 +614,7 @@
         {
             "path": "support/quick-reference.md",
             "phase": "on-demand",
-            "estimatedTokens": 1273
+            "estimatedTokens": 1267
         },
         {
             "path": "support/troubleshooting.md",
@@ -629,12 +629,12 @@
         {
             "path": "support/execution-gates.md",
             "phase": "on-demand",
-            "estimatedTokens": 4074
+            "estimatedTokens": 4539
         },
         {
             "path": "support/vertical-slice-checklist.md",
             "phase": "on-demand",
-            "estimatedTokens": 3075
+            "estimatedTokens": 3073
         },
         {
             "path": "support/UPDATE-INSTRUCTIONS.md",
@@ -649,22 +649,22 @@
         {
             "path": "patterns/data-layer-wiring.md",
             "phase": "on-demand",
-            "estimatedTokens": 2393
+            "estimatedTokens": 2392
         },
         {
             "path": "patterns/api-host-wiring.md",
             "phase": "on-demand",
-            "estimatedTokens": 1898
+            "estimatedTokens": 1903
         },
         {
             "path": "patterns/infrastructure-wiring.md",
             "phase": "on-demand",
-            "estimatedTokens": 1483
+            "estimatedTokens": 1487
         },
         {
             "path": "patterns/expected-output-index.md",
             "phase": "on-demand",
-            "estimatedTokens": 658
+            "estimatedTokens": 657
         },
         {
             "path": "README.md",

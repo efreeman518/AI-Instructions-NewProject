@@ -8,7 +8,7 @@ For base types used here, see [../support/ef-packages-reference.md](../support/e
 
 ## API Startup Sequence
 
-**Source:** `{App}.Api/Program.cs`
+**Source:** `Host/{App}.Api/Program.cs`
 
 The startup follows a strict order: early logger, service registration chain, build, pipeline, startup tasks, run. The entire body is wrapped in try/catch/finally using a `StaticLogging` logger created before the host exists.
 
@@ -71,7 +71,7 @@ ILogger<Program> CreateStartupLogger()
 }
 ```
 
-**Middleware pipeline order** (`{App}.Api/WebApplicationBuilderExtensions.cs`):
+**Middleware pipeline order** (`Host/{App}.Api/WebApplicationBuilderExtensions.cs`):
 
 ```csharp
 public static WebApplication ConfigurePipeline(this WebApplication app)
@@ -110,7 +110,7 @@ public static WebApplication ConfigurePipeline(this WebApplication app)
 
 ## Request Context Resolution
 
-**Source:** `{App}.Bootstrapper/Registration/RegisterServices.RequestContext.cs`
+**Source:** `Host/{App}.Bootstrapper/Registration/RegisterServices.RequestContext.cs`
 
 Scoped `IRequestContext<string, Guid?>` factory: correlation ID from `X-Correlation-ID` header, claim precedence (`oid` > `NameIdentifier` > `sub`), tenant from `userTenantId` claim, role extraction, background service fallback.
 
@@ -167,7 +167,7 @@ private static void AddRequestContextServices(IServiceCollection services)
 
 ## Conditional Auth Configuration
 
-**Source:** `{App}.Api/RegisterApiServices.cs`
+**Source:** `Host/{App}.Api/RegisterApiServices.cs`
 
 No-op auth path when config section is missing; full JwtBearer + MicrosoftIdentityWebApi + fallback policy when present.
 

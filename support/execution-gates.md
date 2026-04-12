@@ -171,12 +171,12 @@ Scaffold migration (remove old, create fresh baseline — see [../patterns/data-
 # Remove any existing migrations first
 dotnet ef migrations remove --force `
   --project src/Infrastructure/{Project}.Infrastructure.Data `
-  --startup-project src/{Host}/{Host}.Api
+  --startup-project src/Host/{Host}.Api
 
 # Create a clean baseline
 dotnet ef migrations add InitialCreate `
   --project src/Infrastructure/{Project}.Infrastructure.Data `
-  --startup-project src/{Host}/{Host}.Api `
+  --startup-project src/Host/{Host}.Api `
   --context {App}DbContextTrxn
 ```
 
@@ -222,10 +222,10 @@ Preflight (run before first launch — see [../skills/aspire.md](../skills/aspir
 - [ ] `dotnet restore` on AppHost succeeds
 
 Gate:
-- [ ] `src/Aspire/AppHost/AppHost.csproj` uses `Aspire.AppHost.Sdk` MSBuild SDK
+- [ ] `src/Host/Aspire/AppHost/AppHost.csproj` uses `Aspire.AppHost.Sdk` MSBuild SDK
 - [ ] Required Aspire CLI env vars are set before terminal `dotnet run`
-- [ ] `dotnet build src/Aspire/AppHost` succeeds
-- [ ] `dotnet run --project src/Aspire/AppHost` starts resources
+- [ ] `dotnet build src/Host/Aspire/AppHost` succeeds
+- [ ] `dotnet run --project src/Host/Aspire/AppHost` starts resources
 - [ ] Dashboard reachable (URL from console output — do not reuse prior session URLs)
 - [ ] All registered resources show healthy in dashboard before testing endpoints
 - [ ] Data-plane spot check: at least one backing store (SQL tables exist, Redis reachable, seed rows present) verified directly — not just via dashboard liveness
@@ -240,7 +240,7 @@ Commands:
 ```powershell
 dotnet build
 dotnet test
-dotnet run --project src/Aspire/AppHost
+dotnet run --project src/Host/Aspire/AppHost
 ```
 
 After Aspire verification, write infrastructure tests (health checks, config loading, caching) and re-run `dotnet test` to confirm.
@@ -274,7 +274,7 @@ Uno UI:
 
 ```powershell
 uno-check
-dotnet build --project src/{Project}.UI/{Project}.UI.csproj -f net10.0-browserwasm
+dotnet build --project src/UI/{Project}.Uno/{Project}.Uno.csproj -f net10.0-browserwasm
 ```
 
 If targeting desktop instead of WASM, build the selected desktop target instead of `net10.0-browserwasm`.
@@ -297,7 +297,7 @@ Scheduler:
 - [ ] Scheduler operational tables exist (verify schema ownership — see [troubleshooting.md](troubleshooting.md) § Third-Party Operational Store Schema Triage)
 
 ```powershell
-dotnet run --project src/{Host}/{Host}.Scheduler
+dotnet run --project src/Host/{Host}.Scheduler
 ```
 
 > **AppHost/config dependency:** When the scheduler depends on AppHost-provided resources (e.g., connection strings via service discovery), either run it through AppHost or provide equivalent local connection strings (e.g., `ConnectionStrings:LuminaDb`) before using direct `dotnet run`. Record which path was validated in the handoff.
@@ -451,15 +451,15 @@ dotnet test
 ### 2. Host Startup
 ```powershell
 # API host (required)
-dotnet run --project src/{Host}/{Host}.Api -- --urls "http://localhost:5100"
+dotnet run --project src/Host/{Host}.Api -- --urls "http://localhost:5100"
 # Verify: GET http://localhost:5100/health → 200 OK (Ctrl+C after)
 
 # Aspire (if enabled)
-dotnet run --project src/Aspire/AppHost
+dotnet run --project src/Host/Aspire/AppHost
 # Verify: Aspire dashboard loads, all resources show healthy
 
 # Scheduler (if enabled)
-dotnet run --project src/{Host}/{Host}.Scheduler
+dotnet run --project src/Host/{Host}.Scheduler
 
 # Function App (if enabled)
 func host start --port 7100

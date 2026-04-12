@@ -19,7 +19,7 @@ Reference patterns: [../patterns/api-host-wiring.md](../patterns/api-host-wiring
 ## Project Shape
 
 ```
-{Gateway}.Gateway/
+Host/{Gateway}.Gateway/
 ├── Program.cs
 ├── RegisterServices.cs
 ├── WebApplicationBuilderExtensions.cs

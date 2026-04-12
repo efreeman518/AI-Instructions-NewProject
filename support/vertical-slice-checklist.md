@@ -96,7 +96,7 @@ For entity `{Entity}`:
 | App | `src/Application/{Project}.Application.Contracts/Mappers/{Entity}Mapper.cs` | [data-mapping-template.md](../templates/data-mapping-template.md) | yes |
 | App | `src/Application/{Project}.Application.Services/Services/{Entity}Service.cs` | [service-template.md](../templates/service-template.md) | yes |
 | App (optional) | `src/Application/{Project}.Application.Services/Validators/{Entity}Validator.cs` | — | if custom validator used |
-| API | `src/{Host}/{Host}.Api/Endpoints/{Entity}Endpoints.cs` | [endpoint-template.md](../templates/endpoint-template.md) | yes |
+| API | `src/Host/{Host}.Api/Endpoints/{Entity}Endpoints.cs` | [endpoint-template.md](../templates/endpoint-template.md) | yes |
 
 ---
 
@@ -104,15 +104,15 @@ For entity `{Entity}`:
 
 | File | Required Update |
 |---|---|
-| `src/{Host}/{Host}.Bootstrapper/RegisterServices.cs` | register repos + service (+ validators if used) |
-| `src/{Host}/{Host}.Api/WebApplicationBuilderExtensions.cs` | add `Map{Entity}Endpoints()` |
+| `src/Host/{Host}.Bootstrapper/RegisterServices.cs` | register repos + service (+ validators if used) |
+| `src/Host/{Host}.Api/WebApplicationBuilderExtensions.cs` | add `Map{Entity}Endpoints()` |
 | `src/Infrastructure/{Project}.Infrastructure.Data/{App}DbContextTrxn.cs` | add `DbSet<{Entity}>` |
 | `src/Infrastructure/{Project}.Infrastructure.Data/{App}DbContextQuery.cs` | add `DbSet<{Entity}>` |
 
 Migration command:
 
 ```bash
-dotnet ef migrations add Add{Entity} --project src/Infrastructure/{Project}.Infrastructure.Data --startup-project src/{Host}/{Host}.Api
+dotnet ef migrations add Add{Entity} --project src/Infrastructure/{Project}.Infrastructure.Data --startup-project src/Host/{Host}.Api
 ```
 
 ---
@@ -258,6 +258,6 @@ services.AddScoped<I{Entity}Service, {Entity}Service>();
 ## Quick Runbook
 
 1. `dotnet build`
-2. `dotnet ef migrations add Add{Entity} --project src/Infrastructure/{Project}.Infrastructure.Data --startup-project src/{Host}/{Host}.Api --context {App}DbContextTrxn`
+2. `dotnet ef migrations add Add{Entity} --project src/Infrastructure/{Project}.Infrastructure.Data --startup-project src/Host/{Host}.Api --context {App}DbContextTrxn`
 3. `dotnet test --filter "TestCategory=Unit"`
 4. `dotnet test --filter "TestCategory=Endpoint"`

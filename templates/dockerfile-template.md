@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **File** | `src/{Host}/{Host}.Api/Dockerfile` (or per-host project root) |
+| **File** | `src/Host/{Host}.Api/Dockerfile` (or per-host project root under `Host/`) |
 | **Depends on** | [skills/cicd.md](../skills/cicd.md), [skills/iac.md](../skills/iac.md) |
 | **Referenced by** | [skills/aspire.md](../skills/aspire.md) |
 
@@ -29,15 +29,15 @@ COPY src/Application/{Project}.Application.Mappers/{Project}.Application.Mappers
 COPY src/Application/{Project}.Application.Services/{Project}.Application.Services.csproj src/Application/{Project}.Application.Services/
 COPY src/Infrastructure/{Project}.Infrastructure.Data/{Project}.Infrastructure.Data.csproj src/Infrastructure/{Project}.Infrastructure.Data/
 COPY src/Infrastructure/{Project}.Infrastructure.Repositories/{Project}.Infrastructure.Repositories.csproj src/Infrastructure/{Project}.Infrastructure.Repositories/
-COPY src/{Host}/{Host}.Bootstrapper/{Host}.Bootstrapper.csproj src/{Host}/{Host}.Bootstrapper/
-COPY src/{Host}/{Host}.Api/{Host}.Api.csproj src/{Host}/{Host}.Api/
+COPY src/Host/{Host}.Bootstrapper/{Host}.Bootstrapper.csproj src/Host/{Host}.Bootstrapper/
+COPY src/Host/{Host}.Api/{Host}.Api.csproj src/Host/{Host}.Api/
 
-RUN dotnet restore src/{Host}/{Host}.Api/{Host}.Api.csproj
+RUN dotnet restore src/Host/{Host}.Api/{Host}.Api.csproj
 
 # ===== Stage 2: Build + Publish =====
 FROM restore AS publish
 COPY . .
-RUN dotnet publish src/{Host}/{Host}.Api/{Host}.Api.csproj \
+RUN dotnet publish src/Host/{Host}.Api/{Host}.Api.csproj \
     -c Release \
     -o /app/publish \
     --no-restore

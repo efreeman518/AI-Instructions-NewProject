@@ -34,10 +34,10 @@ Expected file layout when scaffolding is complete. All paths relative to project
 ## API Host
 | Artifact | Path |
 |---|---|
-| Program.cs | `{Host}/{Host}.Api/Program.cs` |
-| Endpoints | `{Host}/{Host}.Api/Endpoints/TodoItemEndpoints.cs` |
-| RegisterApiServices | `{Host}/{Host}.Api/RegisterApiServices.cs` |
-| Bootstrapper | `{Host}/{Host}.Bootstrapper/RegisterServices.cs` |
+| Program.cs | `Host/{Host}.Api/Program.cs` |
+| Endpoints | `Host/{Host}.Api/Endpoints/TodoItemEndpoints.cs` |
+| RegisterApiServices | `Host/{Host}.Api/RegisterApiServices.cs` |
+| Bootstrapper | `Host/{Host}.Bootstrapper/RegisterServices.cs` |
 
 ## Testing
 | Artifact | Path |
@@ -53,11 +53,11 @@ Expected file layout when scaffolding is complete. All paths relative to project
 ## Aspire
 | Artifact | Path |
 |---|---|
-| AppHost | `Aspire/AppHost/AppHost.cs` |
-| Service defaults | `Aspire/ServiceDefaults/Extensions.cs` |
+| AppHost | `Host/Aspire/AppHost/AppHost.cs` |
+| Service defaults | `Host/Aspire/ServiceDefaults/Extensions.cs` |
 
 ## Infrastructure
 | Artifact | Path |
 |---|---|
-| Dockerfile (per host) | `{Host}/{Host}.Api/Dockerfile` |
-| Health checks | `{Host}/{Host}.Api/HealthChecks/SqlHealthCheck.cs` |
+| Dockerfile (per host) | `Host/{Host}.Api/Dockerfile` |
+| Health checks | `Host/{Host}.Api/HealthChecks/SqlHealthCheck.cs` |

@@ -36,7 +36,7 @@ Prefer `starter` when local infra (Azurite, Service Bus, Event Grid route) is no
 ## Minimal Project Shape
 
 ```
-src/Functions/{App}.FunctionApp/
+src/Host/{App}.Functions/
 ├── Program.cs
 ├── {App}.FunctionApp.csproj
 ├── Settings.cs

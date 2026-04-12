@@ -116,9 +116,9 @@ else
 ## User Secrets
 
 ```powershell
-dotnet user-secrets init --project src/{Host}/{Host}.Api
-dotnet user-secrets set "ServiceAuth:api-cluster:ClientSecret" "your-client-secret" --project src/{Host}/{Host}.Api
-dotnet user-secrets set "ConnectionStrings:Redis1" "localhost:6379" --project src/{Host}/{Host}.Api
+dotnet user-secrets init --project src/Host/{Host}.Api
+dotnet user-secrets set "ServiceAuth:api-cluster:ClientSecret" "your-client-secret" --project src/Host/{Host}.Api
+dotnet user-secrets set "ConnectionStrings:Redis1" "localhost:6379" --project src/Host/{Host}.Api
 ```
 
 ---

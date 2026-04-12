@@ -31,7 +31,7 @@ Use `{Host}.Scheduler` for cron/time-based orchestration with persisted scheduli
 ## Minimal Scheduler Structure
 
 ```
-{Host}.Scheduler/
+Host/{Host}.Scheduler/
 ├── Program.cs
 ├── RegisterSchedulerServices.cs
 ├── Abstractions/IScheduledJobHandler.cs
@@ -168,7 +168,7 @@ Skip by default:
 ## Verification
 
 - [ ] Scheduler project builds cleanly
-- [ ] `dotnet run --project src/{Host}/{Host}.Scheduler` starts successfully
+- [ ] `dotnet run --project src/Host/{Host}.Scheduler` starts successfully
 - [ ] At least one `[TickerFunction]` is registered
 - [ ] Jobs delegate through `ExecuteJobAsync<THandler>()`
 - [ ] `SchedulerDbContext` is resolved and reachable

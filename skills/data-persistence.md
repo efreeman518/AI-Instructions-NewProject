@@ -190,19 +190,19 @@ $env:EFCORETOOLSDB = "Server=..."
 # Add migration
 dotnet ef migrations add {MigrationName} `
   --project src/Infrastructure/{Project}.Infrastructure.Repositories `
-  --startup-project src/{Host}/{Host}.Api `
+  --startup-project src/Host/{Host}.Api `
   --context {App}DbContextTrxn
 
 # Apply to local database
 dotnet ef database update `
   --project src/Infrastructure/{Project}.Infrastructure.Repositories `
-  --startup-project src/{Host}/{Host}.Api `
+  --startup-project src/Host/{Host}.Api `
   --context {App}DbContextTrxn
 
 # Generate idempotent script (for production deployments)
 dotnet ef migrations script --idempotent `
   --project src/Infrastructure/{Project}.Infrastructure.Repositories `
-  --startup-project src/{Host}/{Host}.Api `
+  --startup-project src/Host/{Host}.Api `
   --context {App}DbContextTrxn `
   -o migrations.sql
 ```

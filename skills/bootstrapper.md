@@ -10,7 +10,7 @@ The **Bootstrapper project** is the centralized DI registration hub. It wires up
 > Base types (`IStartupTask`, `RunStartupTasks()`, `StaticLogging`): [../support/ef-packages-reference.md](../support/ef-packages-reference.md).
 
 ```
-{Host}.Bootstrapper/
+Host/{Host}.Bootstrapper/
 ├── RegisterServices.cs        # Main static extension methods
 ├── IStartupTask.cs            # Startup task interface
 └── IHostExtensions.cs         # Host extension for running startup tasks

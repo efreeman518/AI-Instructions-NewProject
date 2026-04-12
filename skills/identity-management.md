@@ -28,7 +28,7 @@ Prompt the user at the start of this phase to select the appropriate scenario:
 Until this phase is reached, authentication must be **stubbed** so the project compiles and runs:
 
 ```csharp
-// File: {Host}.Api/Auth/AuthStub.cs
+// File: Host/{Host}.Api/Auth/AuthStub.cs
 // TODO: [CONFIGURE] Authentication — replace this stub with real identity provider configuration (see skills/identity-management.md)
 
 public static class AuthStub
@@ -58,7 +58,7 @@ Replace the pre-auth stub with a config-driven toggle that defaults to scaffold 
 ```
 
 ```csharp
-// File: {Host}.Api/Auth/AuthConfiguration.cs
+// File: Host/{Host}.Api/Auth/AuthConfiguration.cs
 public static class AuthConfiguration
 {
     public static IServiceCollection AddAuth(this IServiceCollection services, IConfiguration config)
@@ -87,7 +87,7 @@ public static class AuthConfiguration
 ```
 
 ```csharp
-// File: {Host}.Api/Auth/ScaffoldAuthHandler.cs
+// File: Host/{Host}.Api/Auth/ScaffoldAuthHandler.cs
 // TODO: [CONFIGURE] Remove or gate this handler when deploying with a real identity provider
 public class ScaffoldAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions>
 {

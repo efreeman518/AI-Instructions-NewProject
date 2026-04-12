@@ -31,16 +31,19 @@ src/
 │   ├── {Project}.Infrastructure.Data/
 │   ├── {Project}.Infrastructure.Repositories/
 │   └── {Project}.Infrastructure.{ServiceName}/
-├── {Host}.Bootstrapper/
-├── {Host}.Api/
-├── {Host}.Scheduler/               # optional
-├── {Host}.BackgroundServices/      # optional
-├── {Gateway}.Gateway/              # optional
-├── {Host}.UI/                      # optional
-├── Functions/{App}.FunctionApp/    # optional
-├── Aspire/
-│   ├── AppHost/
-│   └── ServiceDefaults/
+├── Host/
+│   ├── {Host}.Bootstrapper/
+│   ├── {Host}.Api/
+│   ├── {Host}.Scheduler/               # optional
+│   ├── {Host}.BackgroundServices/      # optional
+│   ├── {Gateway}.Gateway/              # optional
+│   ├── {Host}.Functions/               # optional
+│   └── Aspire/
+│       ├── AppHost/
+│       └── ServiceDefaults/
+├── UI/
+│   ├── {Host}.Uno/                     # optional
+│   └── {Host}.Uno.Core/                # optional
 ├── Test/
 │   ├── Test.Unit/
 │   ├── Test.Integration/
@@ -147,7 +150,7 @@ Do not keep both formats in active use.
 | `Infrastructure.Data` | domain projects |
 | `Infrastructure.Repositories` | `Application.Contracts`, `Infrastructure.Data` |
 | `{Host}.Bootstrapper` | app/infrastructure implementations |
-| `{Host}.Api` / `{Host}.Scheduler` / `FunctionApp` | `{Host}.Bootstrapper` (+ host-specific packages) |
+| `{Host}.Api` / `{Host}.Scheduler` / `{Host}.Functions` | `{Host}.Bootstrapper` (+ host-specific packages) |
 
 Adjust optional dependencies per enabled features without inverting layer direction.
 
