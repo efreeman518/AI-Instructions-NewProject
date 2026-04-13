@@ -47,7 +47,7 @@ public class {Entity}Tests
 
         // Assert
         Assert.IsTrue(result.IsFailure);
-        Assert.Contains(result.ErrorMessage!, "name", StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("name", result.ErrorMessage!, StringComparison.OrdinalIgnoreCase);
     }
 
     [TestMethod]
@@ -154,7 +154,7 @@ public class {Entity}RulesTests
 
         // Assert
         Assert.IsTrue(result.IsFailure);
-        Assert.Contains(result.ErrorMessage!, "name", StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("name", result.ErrorMessage!, StringComparison.OrdinalIgnoreCase);
     }
 }
 ```

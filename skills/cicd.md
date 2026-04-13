@@ -93,11 +93,13 @@ jobs:
 
       - run: dotnet restore src/{SolutionName}.slnx
       - run: dotnet build src/{SolutionName}.slnx --no-restore --configuration Release
-      - run: dotnet test src/{SolutionName}.slnx --no-build --filter "TestCategory=Unit"
-      - run: dotnet test src/{SolutionName}.slnx --no-build --filter "TestCategory=Endpoint"
+
+      # Target specific test projects to avoid "No test matches" noise from unrelated projects
+      - run: dotnet test src/Test/Test.Unit/Test.Unit.csproj --no-build --configuration Release
+      - run: dotnet test src/Test/Test.Endpoints/Test.Endpoints.csproj --no-build --configuration Release
+      - run: dotnet test src/Test/Test.Architecture/Test.Architecture.csproj --no-build --configuration Release
       - if: ${{ github.event_name == 'workflow_dispatch' && inputs.includeIntegration == true }}
-        run: dotnet test src/{SolutionName}.slnx --no-build --filter "TestCategory=Integration&TestCategory!=Endpoint"
-      - run: dotnet test src/{SolutionName}.slnx --no-build --filter "TestCategory=Architecture"
+        run: dotnet test src/Test/Test.Integration/Test.Integration.csproj --no-build --configuration Release
 ```
 
 ### Test Category Policy

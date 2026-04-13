@@ -102,9 +102,9 @@ Use one of the following instead — discuss the choice with the developer befor
 
 - **Default to MSTest built-ins.** They cover the vast majority of assertions without an extra dependency.
 - **Prefer specific MSTest asserts over generic `Assert.IsTrue`.** MSTest v4+ analyzer rule MSTEST0037 flags these. Use:
-  - `Assert.Contains(haystack, needle)` instead of `Assert.IsTrue(x.Contains(...))`
+  - `Assert.Contains(needle, haystack)` instead of `Assert.IsTrue(x.Contains(...))` — note: first arg is the substring to find, second is the string to search in
   - `Assert.IsEmpty(collection)` instead of `Assert.AreEqual(0, collection.Count)`
-  - `Assert.HasCount(collection, n)` instead of `Assert.AreEqual(n, collection.Count)`
+  - `Assert.HasCount(expectedCount, collection)` instead of `Assert.AreEqual(n, collection.Count)` — note: count first, collection second
   - `Assert.IsGreaterThanOrEqualTo(a, b)` / `Assert.IsLessThan(a, b)` instead of `Assert.IsTrue(a >= b)` / `Assert.IsTrue(a < b)`
 - **Recommend Shouldly** when the developer explicitly wants expressive/fluent assertion syntax.
 - **Avoid TUnit assertions standalone** — TUnit is an alternative test runner, not a drop-in assertion library for MSTest projects.
