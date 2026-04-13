@@ -485,6 +485,19 @@ Uno.Resizetizer requires asset filenames to be **lowercase**, containing only al
 - `ExtendedSplashScreen` = Uno Toolkit XAML control in `ShellControl.xaml` for the in-app loading screen. This is the recommended WASM splash approach.
 - The "Didn't find UnoSplashScreen" warning from Resizetizer is **harmless** — it just means no native splash is configured.
 
+## CI Requirements
+
+When the solution includes a Uno WASM project, CI workflows must install the `wasm-tools` workload before build:
+
+```yaml
+- name: Install required workloads
+  run: dotnet workload install wasm-tools
+```
+
+Without this, the build fails with `UNOWA0001: Native WebAssembly assets were detected, but the wasm-tools workload could not be located.`
+
+Add this step after `actions/setup-dotnet@v4` and before `dotnet restore`. See [cicd.md](cicd.md) for the full CI template.
+
 ## Related Skills
 
 - Solution layout: [solution-structure.md](solution-structure.md)

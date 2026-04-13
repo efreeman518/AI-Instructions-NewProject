@@ -77,6 +77,9 @@ jobs:
         with:
           global-json-file: src/global.json
 
+      # Install extra workloads if solution includes WASM/Uno projects
+      # - run: dotnet workload install wasm-tools
+
       # Private NuGet feed auth (if nuget.config references authenticated feeds)
       - name: Authenticate private NuGet feed
         env:

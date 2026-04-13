@@ -15,7 +15,7 @@
             "env/**"
         ]
     },
-    "totalEstimatedTokens": 162835,
+    "totalEstimatedTokens": 163110,
     "contextBudget": {
         "default": 30000,
         "extended": 60000,
@@ -194,7 +194,7 @@
         {
             "path": "templates/test-templates-domain.md",
             "phase": "phase-5a",
-            "estimatedTokens": 1268,
+            "estimatedTokens": 1264,
             "generates": [
                 "{Entity}Tests.cs",
                 "{Entity}RulesTests.cs"
@@ -442,7 +442,7 @@
         {
             "path": "skills/uno-ui.md",
             "phase": "phase-5d",
-            "estimatedTokens": 5268,
+            "estimatedTokens": 5390,
             "dependencies": [
                 "skills/solution-structure.md",
                 "skills/gateway.md",
@@ -499,7 +499,7 @@
         {
             "path": "skills/testing.md",
             "phase": "phase-5e",
-            "estimatedTokens": 3049
+            "estimatedTokens": 3175
         },
         {
             "path": "templates/test-templates-quality.md",
@@ -525,7 +525,7 @@
         {
             "path": "skills/cicd.md",
             "phase": "phase-5e",
-            "estimatedTokens": 1810
+            "estimatedTokens": 1841
         },
         {
             "path": "templates/dockerfile-template.md",
