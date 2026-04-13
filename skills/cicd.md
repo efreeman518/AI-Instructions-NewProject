@@ -79,8 +79,14 @@ jobs:
 
       # Private NuGet feed auth (if nuget.config references authenticated feeds)
       - name: Authenticate private NuGet feed
-        if: ${{ secrets.NUGET_PAT != '' }}
-        run: dotnet nuget update source "EF.Packages" --username "ci" --password "${{ secrets.NUGET_PAT }}" --store-password-in-clear-text --configfile src/nuget.config
+        env:
+          NUGET_PAT: ${{ secrets.NUGET_PAT }}
+        if: env.NUGET_PAT != ''
+        run: >
+          dotnet nuget update source "{FeedName}"
+          --username "ci" --password "$NUGET_PAT"
+          --store-password-in-clear-text
+          --configfile src/nuget.config
 
       - run: dotnet restore src/{SolutionName}.slnx
       - run: dotnet build src/{SolutionName}.slnx --no-restore --configuration Release
