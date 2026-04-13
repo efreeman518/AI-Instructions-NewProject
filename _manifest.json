@@ -15,7 +15,7 @@
             "env/**"
         ]
     },
-    "totalEstimatedTokens": 163173,
+    "totalEstimatedTokens": 163701,
     "contextBudget": {
         "default": 30000,
         "extended": 60000,
@@ -56,7 +56,7 @@
         {
             "path": "START-AI.md",
             "phase": "session-bootstrap",
-            "estimatedTokens": 2021
+            "estimatedTokens": 2246
         },
         {
             "path": "CLAUDE.md",
@@ -669,7 +669,7 @@
         {
             "path": "README.md",
             "phase": "support-only",
-            "estimatedTokens": 3043
+            "estimatedTokens": 3346
         },
         {
             "path": "support/prompt-catalog.md",

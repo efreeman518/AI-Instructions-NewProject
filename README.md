@@ -21,6 +21,22 @@ Implementation knowledge is split into ~27 skill files (how things work) and ~20
 **3. Composition patterns, not documentation alone.**
 A comprehensive pattern catalog (`support/sampleapp-patterns.md`) documents how all generated components wire together — startup sequences, database pooling, request context resolution, cache configuration, and middleware ordering. This grounds the generated output in proven, real-world patterns rather than abstract descriptions.
 
+## Reference Application
+
+A companion reference app — **TaskFlow** — demonstrates every pattern and convention these instructions produce:
+
+**Repository:** <https://github.com/efreeman518/AI-Instructions-ReferenceApp>
+
+TaskFlow is a fully scaffolded task-management application built by following this instruction set end-to-end. It covers dual DbContext pooling, YARP gateway with claims transformation, Aspire orchestration, FusionCache with Redis backplane, TickerQ scheduling, Azure Functions, multitenancy, scaffold-mode auth, and Uno WASM UI.
+
+Use it for:
+
+- **Pattern lookups** — when an instruction or template describes a pattern (e.g., middleware ordering, repository split, cache key format), the reference app contains the working implementation.
+- **Wiring verification** — cross-project DI registration, startup sequences, and Aspire resource definitions are all present and buildable.
+- **Test structure** — unit, integration, architecture, and endpoint test projects are scaffolded with builder patterns.
+
+The AI assistant can access the repo via GitHub MCP or by cloning it locally. When stuck on how a pattern should look in practice, consult the reference app before inventing a new approach.
+
 ## Quick Start
 
 If you want the shortest path from zero context to first scaffold:
