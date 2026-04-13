@@ -55,6 +55,119 @@
             "skills/uno-ui.md"
         ]
     },
+    "slices": {
+        "full": {
+            "phase-5a": {
+                "domain": [
+                    "skills/domain-model.md",
+                    "templates/entity-template.md",
+                    "templates/domain-rules-template.md",
+                    "templates/test-templates-domain.md"
+                ],
+                "repository": [
+                    "skills/domain-model.md",
+                    "skills/data-persistence.md",
+                    "templates/entity-template.md",
+                    "templates/ef-configuration-template.md",
+                    "templates/repository-template.md",
+                    "templates/test-templates-repository.md"
+                ]
+            },
+            "phase-5b": {
+                "service": [
+                    "skills/application-layer.md",
+                    "skills/bootstrapper.md",
+                    "templates/data-mapping-template.md",
+                    "templates/service-template.md",
+                    "templates/structure-validator-template.md",
+                    "templates/test-templates-service.md"
+                ],
+                "endpoint": [
+                    "skills/application-layer.md",
+                    "skills/bootstrapper.md",
+                    "skills/api.md",
+                    "skills/testing.md",
+                    "templates/endpoint-template.md",
+                    "templates/exception-handler-template.md",
+                    "templates/test-templates-endpoint.md"
+                ]
+            }
+        },
+        "lite": {
+            "phase-5a": {
+                "domain": [
+                    "skills/domain-model.md",
+                    "templates/entity-template.md",
+                    "templates/domain-rules-template.md",
+                    "templates/test-templates-domain.md"
+                ],
+                "repository": [
+                    "skills/domain-model.md",
+                    "skills/data-persistence.md",
+                    "templates/entity-template.md",
+                    "templates/ef-configuration-template.md",
+                    "templates/repository-template.md",
+                    "templates/test-templates-repository.md"
+                ]
+            },
+            "phase-5b": {
+                "service": [
+                    "skills/application-layer.md",
+                    "skills/bootstrapper.md",
+                    "templates/data-mapping-template.md",
+                    "templates/service-template.md",
+                    "templates/structure-validator-template.md",
+                    "templates/test-templates-service.md"
+                ],
+                "endpoint": [
+                    "skills/application-layer.md",
+                    "skills/bootstrapper.md",
+                    "skills/api.md",
+                    "skills/testing.md",
+                    "templates/endpoint-template.md",
+                    "templates/exception-handler-template.md",
+                    "templates/test-templates-endpoint.md"
+                ]
+            }
+        },
+        "api-only": {
+            "phase-5a": {
+                "domain": [
+                    "skills/domain-model.md",
+                    "templates/entity-template.md",
+                    "templates/domain-rules-template.md",
+                    "templates/test-templates-domain.md"
+                ],
+                "repository": [
+                    "skills/domain-model.md",
+                    "skills/data-persistence.md",
+                    "templates/entity-template.md",
+                    "templates/ef-configuration-template.md",
+                    "templates/repository-template.md",
+                    "templates/test-templates-repository.md"
+                ]
+            },
+            "phase-5b": {
+                "service": [
+                    "skills/application-layer.md",
+                    "skills/bootstrapper.md",
+                    "templates/data-mapping-template.md",
+                    "templates/service-template.md",
+                    "templates/structure-validator-template.md",
+                    "templates/test-templates-service.md"
+                ],
+                "endpoint": [
+                    "skills/application-layer.md",
+                    "skills/bootstrapper.md",
+                    "skills/api.md",
+                    "skills/testing.md",
+                    "templates/endpoint-template.md",
+                    "templates/exception-handler-template.md",
+                    "templates/test-templates-endpoint.md"
+                ]
+            }
+        }
+    },
     "packs": {
         "full": {
             "metadata": [
@@ -164,6 +277,8 @@
                 "templates/test-templates.md",
                 "templates/index.md",
                 "support/quick-reference.md",
+                "support/data-persistence-advanced.md",
+                "support/taskflow-proof-map.md",
                 "support/troubleshooting.md",
                 "support/sampleapp-patterns.md",
                 "support/execution-gates.md",
@@ -273,6 +388,8 @@
                 "templates/test-templates.md",
                 "templates/index.md",
                 "support/quick-reference.md",
+                "support/data-persistence-advanced.md",
+                "support/taskflow-proof-map.md",
                 "support/troubleshooting.md",
                 "support/sampleapp-patterns.md",
                 "support/execution-gates.md",
@@ -383,6 +500,8 @@
                 "templates/test-templates.md",
                 "templates/index.md",
                 "support/quick-reference.md",
+                "support/data-persistence-advanced.md",
+                "support/taskflow-proof-map.md",
                 "support/troubleshooting.md",
                 "support/sampleapp-patterns.md",
                 "support/execution-gates.md",

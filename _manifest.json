@@ -15,7 +15,7 @@
             "env/**"
         ]
     },
-    "totalEstimatedTokens": 163701,
+    "totalEstimatedTokens": 162128,
     "contextBudget": {
         "default": 30000,
         "extended": 60000,
@@ -51,12 +51,12 @@
         {
             "path": "_manifest.json",
             "phase": "metadata",
-            "estimatedTokens": 5446
+            "estimatedTokens": 5520
         },
         {
             "path": "START-AI.md",
             "phase": "session-bootstrap",
-            "estimatedTokens": 2246
+            "estimatedTokens": 2436
         },
         {
             "path": "CLAUDE.md",
@@ -101,22 +101,22 @@
         {
             "path": "ai/SKILL.md",
             "phase": "phase-5-base",
-            "estimatedTokens": 3412
+            "estimatedTokens": 3236
         },
         {
             "path": "ai/placeholder-tokens.md",
             "phase": "phase-5-base",
-            "estimatedTokens": 2159
+            "estimatedTokens": 1277
         },
         {
             "path": "ai/tdd-protocol.md",
             "phase": "phase-5-base",
-            "estimatedTokens": 2669
+            "estimatedTokens": 1478
         },
         {
             "path": "support/ef-packages-reference.md",
             "phase": "phase-5-base",
-            "estimatedTokens": 2403
+            "estimatedTokens": 2224
         },
         {
             "path": "skills/domain-model.md",
@@ -126,7 +126,7 @@
         {
             "path": "skills/data-persistence.md",
             "phase": "phase-5a",
-            "estimatedTokens": 4047
+            "estimatedTokens": 1806
         },
         {
             "path": "templates/entity-template.md",
@@ -617,6 +617,16 @@
             "estimatedTokens": 1267
         },
         {
+            "path": "support/data-persistence-advanced.md",
+            "phase": "on-demand",
+            "estimatedTokens": 1476
+        },
+        {
+            "path": "support/taskflow-proof-map.md",
+            "phase": "on-demand",
+            "estimatedTokens": 1073
+        },
+        {
             "path": "support/troubleshooting.md",
             "phase": "on-demand",
             "estimatedTokens": 3176
@@ -669,12 +679,12 @@
         {
             "path": "README.md",
             "phase": "support-only",
-            "estimatedTokens": 3346
+            "estimatedTokens": 3523
         },
         {
             "path": "support/prompt-catalog.md",
             "phase": "support-only",
-            "estimatedTokens": 1654
+            "estimatedTokens": 1760
         }
     ],
     "phases": {

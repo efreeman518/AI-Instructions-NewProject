@@ -48,6 +48,32 @@ def filter_requested_paths(paths, requested_phase, requested_mode,
     return filtered
 
 
+def get_requested_paths(packs, phase, mode, slice_name):
+    mode_pack = packs["packs"].get(mode)
+    if not mode_pack:
+        raise SystemExit(f"Unknown mode '{mode}' in phase-load-packs.json.")
+
+    mode_slices = packs.get("slices", {}).get(mode, {})
+    available_slices = list(mode_slices.get(phase, {}).keys())
+
+    if not slice_name:
+        return mode_pack.get(phase, []), available_slices, False
+
+    if not available_slices:
+        raise SystemExit(
+            f"Phase '{phase}' has no slice profiles for mode '{mode}'."
+        )
+
+    if slice_name not in mode_slices[phase]:
+        available = ", ".join(available_slices)
+        raise SystemExit(
+            f"Unknown slice '{slice_name}' for phase '{phase}'. "
+            f"Available slices: {available}."
+        )
+
+    return mode_slices[phase][slice_name], available_slices, True
+
+
 def get_entry_dependencies(entry):
     dependencies = []
     if "dependencies" in entry and entry["dependencies"] is not None:
@@ -85,6 +111,8 @@ def main():
     parser.add_argument("--phase", "-Phase", required=True, help="Phase name (e.g. phase-5a)")
     parser.add_argument("--mode", "-Mode", default="full",
                         choices=["full", "lite", "api-only"], help="Scaffold mode")
+    parser.add_argument("--slice", "-Slice", default=None,
+                        help="Optional compact slice within a phase")
     parser.add_argument("--include-gateway", "-IncludeGateway",
                         action="store_true", default=False)
     parser.add_argument("--include-function-app", "-IncludeFunctionApp",
@@ -134,14 +162,10 @@ def main():
     if phase not in packs["phaseOrder"]:
         raise SystemExit(f"Unknown phase '{phase}'.")
 
-    mode_pack = packs["packs"].get(mode)
-    if not mode_pack:
-        raise SystemExit(f"Unknown mode '{mode}' in phase-load-packs.json.")
-
     if budget_profile not in packs["contextBudget"]:
         raise SystemExit(f"Unknown budget profile '{budget_profile}'.")
 
-    raw_paths = mode_pack.get(phase, [])
+    raw_paths, available_slices, is_slice_request = get_requested_paths(packs, phase, mode, args.slice)
     requested_paths = filter_requested_paths(
         raw_paths, phase, mode,
         args.include_gateway, args.include_function_app,
@@ -165,9 +189,23 @@ def main():
     visiting = set()
     requested_set = set(str(p) for p in requested_paths)
 
-    for path in requested_paths:
-        add_resolved_path(str(path), visited, visiting, ordered_paths,
-                          entry_map, mode_exclusion_set, mode)
+    if is_slice_request:
+        for path in requested_paths:
+            normalized = str(path)
+            if normalized not in entry_map:
+                raise SystemExit(f"Slice path '{normalized}' is not present in _manifest.json.")
+            if normalized in mode_exclusion_set:
+                raise SystemExit(
+                    f"Slice path '{normalized}' is excluded by mode '{mode}'. "
+                    "Adjust modeExclusions or the slice definition."
+                )
+            if normalized not in visited:
+                visited.add(normalized)
+                ordered_paths.append(normalized)
+    else:
+        for path in requested_paths:
+            add_resolved_path(str(path), visited, visiting, ordered_paths,
+                              entry_map, mode_exclusion_set, mode)
 
     token_map = {}
     for entry in manifest["files"]:
@@ -192,11 +230,13 @@ def main():
     if as_json:
         output = {
             "phase": phase,
+            "slice": args.slice,
             "mode": mode,
             "budgetProfile": budget_profile,
             "budgetLimit": budget_limit,
             "withinBudget": within_budget,
             "totalEstimatedTokens": total_tokens,
+            "availableSlices": available_slices,
             "requestedFiles": [i for i in items if i["selection"] == "requested"],
             "dependencyFiles": [i for i in items if i["selection"] == "dependency"],
             "files": items,
@@ -205,6 +245,8 @@ def main():
         sys.exit(0)
 
     print(f"Phase: {phase}")
+    if args.slice:
+        print(f"Slice: {args.slice}")
     print(f"Mode: {mode}")
     print(f"BudgetProfile: {budget_profile}")
     print(f"BudgetLimit: {budget_limit}")

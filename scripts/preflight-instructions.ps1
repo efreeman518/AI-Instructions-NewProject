@@ -36,6 +36,10 @@ try {
         & (Join-Path $Root 'scripts/generate-phase-load-packs.ps1') -Root $Root
     }
 
+    Invoke-Step -Name 'Report context budgets' -Action {
+        & $python.Executable @($python.PrefixArgs) (Join-Path $Root 'scripts/report-context-budgets.py') --root $Root --mode full
+    }
+
     Invoke-Step -Name 'Run instruction lint' -Action {
         & (Join-Path $Root 'scripts/lint-instructions.ps1') -Root $Root
     }

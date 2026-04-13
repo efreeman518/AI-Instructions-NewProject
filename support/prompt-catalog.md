@@ -72,6 +72,7 @@ Then append the relevant sub-phase block below.
 
 ```text
 Run python scripts/get-phase-load-set.py --phase 5a --mode {full|lite|api-only} to resolve the load set.
+If context is tight, use --slice domain for entity/rule work or --slice repository for EF/repository work. These are curated compact bundles inside the same sub-phase; they do not create a new sub-phase.
 Follow .instructions/ai/tdd-protocol.md: write domain/rule/repository tests first (red), then implement to green.
 Contracts and entity shells already exist from Phase 4. Activate builders after entity logic is implemented.
 Gate: 'dotnet build' + 'dotnet test --filter TestCategory=Unit'. When gate passes, update HANDOFF.md (currentSubPhase: 5b) and close session.
@@ -81,6 +82,7 @@ Gate: 'dotnet build' + 'dotnet test --filter TestCategory=Unit'. When gate passe
 
 ```text
 Run python scripts/get-phase-load-set.py --phase 5b --mode {full|lite|api-only}.
+If context is tight, use --slice service for mapping/service work or --slice endpoint for API/exception/endpoint-test work. These are curated compact bundles inside the same sub-phase; they do not create a new sub-phase.
 Follow .instructions/ai/tdd-protocol.md: write service tests (red), implement services (green), write endpoint tests (red), implement endpoints (green).
 Replace no-op DI stubs with real implementations.
 Gate: 'dotnet build' + 'dotnet test --filter TestCategory=Unit|TestCategory=Endpoint'. When gate passes, update HANDOFF.md and close session.

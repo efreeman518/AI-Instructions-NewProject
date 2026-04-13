@@ -35,6 +35,8 @@ Use it for:
 - **Wiring verification** — cross-project DI registration, startup sequences, and Aspire resource definitions are all present and buildable.
 - **Test structure** — unit, integration, architecture, and endpoint test projects are scaffolded with builder patterns.
 
+For a phase-by-phase pointer map into the reference app, use [support/taskflow-proof-map.md](support/taskflow-proof-map.md).
+
 The AI assistant can access the repo via GitHub MCP or by cloning it locally. When stuck on how a pattern should look in practice, consult the reference app before inventing a new approach.
 
 ## Quick Start
@@ -43,7 +45,7 @@ If you want the shortest path from zero context to first scaffold:
 
 1. Create a new app repo and copy this instruction set into `.instructions/`.
 2. Open the app repo in VS Code.
-3. Run `python .instructions/scripts/preflight-instructions.py` once to validate the copied instruction set. This refreshes manifest metadata, regenerates load packs, lints the docs, and runs the Python script test suite. PowerShell equivalent: `./.instructions/scripts/preflight-instructions.ps1`.
+3. Run `python .instructions/scripts/preflight-instructions.py` once to validate the copied instruction set. This refreshes manifest metadata, regenerates load packs, prints the current context-budget report, lints the docs, and runs the Python script test suite. PowerShell equivalent: `./.instructions/scripts/preflight-instructions.ps1`.
 4. Start Phase 1 with the Phase 1 prompt in [support/prompt-catalog.md](support/prompt-catalog.md).
 5. When you reach implementation, begin the AI session with [START-AI.md](START-AI.md).
 
@@ -139,6 +141,7 @@ Before each phase, quickly check for new MCP servers for libraries/services in s
 | **Vertical-slice scaffolding** | Each entity is built end-to-end: domain model → EF config → repository → DTO/mapper → service → endpoint → tests. A [checklist](support/vertical-slice-checklist.md) and [execution gates](support/execution-gates.md) enforce completeness. |
 | **Built-in quality gates** | `dotnet build` + targeted tests after every sub-phase. Architecture tests enforce layer dependencies. Structure validators catch DTO issues before runtime. |
 | **Automated validation scripts** | Python scripts lint instruction files (broken links, placeholder coverage, terminology drift, manifest sync), validate domain/resource YAML schemas, and run preflight checks before scaffolding begins. |
+| **Visible budget proof loop** | `scripts/report-context-budgets.py` reports hot-path phase totals and compact 5a/5b slice totals directly from `_manifest.json` + `phase-load-packs.json`, and preflight prints that report on every run. |
 | **Safe session handoff** | Context budget tracking per sub-phase plus a `HANDOFF.md` template let the AI resume cleanly across sessions without losing progress or re-reading the full instruction set. |
 | **Result pattern error flow** | Domain → Service → Endpoint error mapping is fully documented with a type mapping table, anti-patterns, and end-to-end trace example. No exceptions for business logic. |
 | **Test data builders** | Fluent builder patterns for entities and DTOs ensure tests construct valid objects by default and override only the property under test. |
@@ -176,9 +179,12 @@ For copy-paste phase prompts, see [support/prompt-catalog.md](support/prompt-cat
 - [support/prompt-catalog.md](support/prompt-catalog.md) — copy-paste prompts for starting or resuming a session
 - [support/execution-gates.md](support/execution-gates.md) — canonical validation gates and operator setup checklist
 - [support/troubleshooting.md](support/troubleshooting.md) — failure triage and recurring issue guidance
+- [support/taskflow-proof-map.md](support/taskflow-proof-map.md) — fast reference-app proof map from instruction concern to TaskFlow area
 - [support/UPDATE-INSTRUCTIONS.md](support/UPDATE-INSTRUCTIONS.md) — capture improvements discovered during scaffolding
 
-Run `python scripts/preflight-instructions.py` before Phase 4 execution and before opening validation PRs. It refreshes `_manifest.json`, regenerates `phase-load-packs.json`, lints markdown invariants, and runs the Python unittest suite in `tests/`. PowerShell equivalent: `./scripts/preflight-instructions.ps1`.
+Run `python scripts/preflight-instructions.py` before Phase 4 execution and before opening validation PRs. It refreshes `_manifest.json`, regenerates `phase-load-packs.json`, prints the current context-budget report, lints markdown invariants, and runs the Python unittest suite in `tests/`. PowerShell equivalent: `./scripts/preflight-instructions.ps1`.
+
+For an on-demand budget snapshot without the full preflight, run `python scripts/report-context-budgets.py --mode full`.
 
 ## Document Ownership
 

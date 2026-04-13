@@ -536,6 +536,89 @@ def check_manifest_invariants(root):
     return issues
 
 
+def check_compact_slice_budgets(root):
+    issues = []
+    manifest = load_manifest(root)
+    if manifest is None:
+        return issues
+
+    phase_load_packs_path = root / "phase-load-packs.json"
+    content = read_text(phase_load_packs_path)
+    if content is None:
+        return issues
+
+    phase_load_packs = json.loads(content)
+    compact_budget = phase_load_packs.get("contextBudget", {}).get("compact")
+    if compact_budget is None:
+        issues.append(add_issue(
+            "SliceBudget",
+            "phase-load-packs.json",
+            "Generated phase-load-packs.json is missing contextBudget.compact.",
+        ))
+        return issues
+
+    expected_slices = {
+        "phase-5a": ["domain", "repository"],
+        "phase-5b": ["service", "endpoint"],
+    }
+    token_by_path = {
+        str(entry["path"]): int(entry.get("estimatedTokens", 0))
+        for entry in manifest["files"]
+    }
+    slices_by_mode = phase_load_packs.get("slices", {})
+
+    for mode in ["full", "lite", "api-only"]:
+        mode_slices = slices_by_mode.get(mode)
+        if mode_slices is None:
+            issues.append(add_issue(
+                "SliceBudget",
+                "phase-load-packs.json",
+                f"Generated slices is missing mode '{mode}'.",
+            ))
+            continue
+
+        for phase, slice_names in expected_slices.items():
+            phase_slices = mode_slices.get(phase)
+            if phase_slices is None:
+                issues.append(add_issue(
+                    "SliceBudget",
+                    "phase-load-packs.json",
+                    f"Generated slices is missing phase '{phase}' for mode '{mode}'.",
+                ))
+                continue
+
+            for slice_name in slice_names:
+                slice_paths = phase_slices.get(slice_name)
+                if slice_paths is None:
+                    issues.append(add_issue(
+                        "SliceBudget",
+                        "phase-load-packs.json",
+                        f"Generated slices is missing '{mode}:{phase}:{slice_name}'.",
+                    ))
+                    continue
+
+                missing_paths = [path for path in slice_paths if path not in token_by_path]
+                for path in missing_paths:
+                    issues.append(add_issue(
+                        "SliceBudget",
+                        "phase-load-packs.json",
+                        f"Compact slice '{mode}:{phase}:{slice_name}' references '{path}' which is missing from _manifest.json.",
+                    ))
+
+                if missing_paths:
+                    continue
+
+                total_tokens = sum(token_by_path[path] for path in slice_paths)
+                if total_tokens > compact_budget:
+                    issues.append(add_issue(
+                        "SliceBudget",
+                        "phase-load-packs.json",
+                        f"Compact slice '{mode}:{phase}:{slice_name}' exceeds compact budget ({total_tokens} > {compact_budget}).",
+                    ))
+
+    return issues
+
+
 def collect_issues(root):
     md_files = get_markdown_files(root)
     issues = []
@@ -553,5 +636,6 @@ def collect_issues(root):
     issues.extend(check_manifest_sync(root, md_files))
     issues.extend(check_undefined_template_tokens(root, placeholder_doc_path, known_tokens))
     issues.extend(check_manifest_invariants(root))
+    issues.extend(check_compact_slice_budgets(root))
 
     return issues

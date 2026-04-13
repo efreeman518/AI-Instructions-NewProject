@@ -5,6 +5,8 @@ param(
     [ValidateSet('full', 'lite', 'api-only')]
     [string]$Mode = 'full',
 
+    [string]$Slice,
+
     [switch]$IncludeGateway,
     [switch]$IncludeFunctionApp,
     [switch]$IncludeScheduler,
@@ -110,7 +112,48 @@ function Select-RequestedPaths {
     return $filtered
 }
 
-$requestedPaths = Select-RequestedPaths -Paths @($modePack.$Phase) -RequestedPhase $Phase -RequestedMode $Mode
+function Get-PhaseSlicePaths {
+    param(
+        [string]$RequestedPhase,
+        [string]$RequestedMode,
+        [string]$RequestedSlice
+    )
+
+    $modeSlices = $packs.slices.$RequestedMode
+    if (-not $RequestedSlice) {
+        $available = @()
+        if ($modeSlices -and $modeSlices.PSObject.Properties.Name -contains $RequestedPhase) {
+            $available = @($modeSlices.$RequestedPhase.PSObject.Properties.Name)
+        }
+
+        return [PSCustomObject]@{
+            Paths = @($modePack.$RequestedPhase)
+            AvailableSlices = $available
+            IsSlice = $false
+        }
+    }
+
+    if (-not $modeSlices -or -not ($modeSlices.PSObject.Properties.Name -contains $RequestedPhase)) {
+        throw "Phase '$RequestedPhase' has no slice profiles for mode '$RequestedMode'."
+    }
+
+    $phaseSlices = $modeSlices.$RequestedPhase
+    $availableSlices = @($phaseSlices.PSObject.Properties.Name)
+    if ($RequestedSlice -notin $availableSlices) {
+        throw "Unknown slice '$RequestedSlice' for phase '$RequestedPhase'. Available slices: $($availableSlices -join ', ')."
+    }
+
+    return [PSCustomObject]@{
+        Paths = @($phaseSlices.$RequestedSlice)
+        AvailableSlices = $availableSlices
+        IsSlice = $true
+    }
+}
+
+$sliceSelection = Get-PhaseSlicePaths -RequestedPhase $Phase -RequestedMode $Mode -RequestedSlice $Slice
+$requestedPaths = Select-RequestedPaths -Paths @($sliceSelection.Paths) -RequestedPhase $Phase -RequestedMode $Mode
+$availableSlices = @($sliceSelection.AvailableSlices)
+$isSliceRequest = [bool]$sliceSelection.IsSlice
 
 $entryMap = @{}
 foreach ($entry in $manifest.files) {
@@ -182,8 +225,27 @@ foreach ($path in $requestedPaths) {
     $requestedSet.Add([string]$path) | Out-Null
 }
 
-foreach ($path in $requestedPaths) {
-    Add-ResolvedPath -Path ([string]$path) -Visited $visited -Visiting $visiting -OrderedPaths $orderedPaths
+if ($isSliceRequest) {
+    foreach ($path in $requestedPaths) {
+        $normalizedPath = [string]$path
+        if (-not $entryMap.ContainsKey($normalizedPath)) {
+            throw "Slice path '$normalizedPath' is not present in _manifest.json."
+        }
+
+        if ($modeExclusionSet.ContainsKey($normalizedPath)) {
+            throw "Slice path '$normalizedPath' is excluded by mode '$Mode'. Adjust modeExclusions or the slice definition."
+        }
+
+        if (-not $visited.Contains($normalizedPath)) {
+            $visited.Add($normalizedPath) | Out-Null
+            $orderedPaths.Add($normalizedPath) | Out-Null
+        }
+    }
+}
+else {
+    foreach ($path in $requestedPaths) {
+        Add-ResolvedPath -Path ([string]$path) -Visited $visited -Visiting $visiting -OrderedPaths $orderedPaths
+    }
 }
 
 $tokenMap = @{}
@@ -210,11 +272,13 @@ $withinBudget = $totalTokens -le $budgetLimit
 if ($AsJson) {
     [PSCustomObject]@{
         phase = $Phase
+        slice = if ([string]::IsNullOrWhiteSpace($Slice)) { $null } else { $Slice }
         mode = $Mode
         budgetProfile = $BudgetProfile
         budgetLimit = $budgetLimit
         withinBudget = $withinBudget
         totalEstimatedTokens = $totalTokens
+        availableSlices = $availableSlices
         requestedFiles = @($items | Where-Object { $_.selection -eq 'requested' })
         dependencyFiles = @($items | Where-Object { $_.selection -eq 'dependency' })
         files = $items
@@ -223,6 +287,9 @@ if ($AsJson) {
 }
 
 Write-Output "Phase: $Phase"
+if (-not [string]::IsNullOrWhiteSpace($Slice)) {
+    Write-Output "Slice: $Slice"
+}
 Write-Output "Mode: $Mode"
 Write-Output "BudgetProfile: $BudgetProfile"
 Write-Output "BudgetLimit: $budgetLimit"

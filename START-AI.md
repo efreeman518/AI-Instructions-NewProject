@@ -81,9 +81,12 @@ Use `phase-load-packs.json` as the primary interface for phase file lists. It is
 
 1. Read `phase-load-packs.json` → `packs.<mode>.<phase>` for the current phase and mode.
 2. Load only the returned files.
-3. For Phase 5g, scope further: load only AI search or agent files as needed.
+3. For Phase 5a/5b in constrained sessions, you may scope further with `python scripts/get-phase-load-set.py --phase <5a|5b> --mode <mode> --slice <domain|repository|service|endpoint>`. Slices are curated compact bundles inside the same sub-phase. They narrow context only; they do not create new sub-phases or change gates.
+4. For Phase 5g, scope further: load only AI search or agent files as needed.
 
-**To regenerate** (after adding/removing instruction files): run `python scripts/get-phase-load-set.py --phase <phase> --mode <full|lite|api-only> [feature flags]`. The resolver expands transitive `requires`/`dependencies` and applies manifest-driven mode exclusions.
+**To regenerate** (after adding/removing instruction files): run `python scripts/generate-phase-load-packs.py`.
+
+**To resolve a current load set**: run `python scripts/get-phase-load-set.py --phase <phase> --mode <full|lite|api-only> [--slice <name>] [feature flags]`. The resolver expands transitive `requires`/`dependencies` and applies manifest-driven mode exclusions.
 
 For quick template lookups, see `templates/index.md`.
 
@@ -140,6 +143,8 @@ Do not preload these. Load only when the trigger condition is met:
 - `patterns/infrastructure-wiring.md` — **load before Phase 5c/5d** for multi-cache config, Aspire resource wiring
 - `patterns/expected-output-index.md` — **load when** verifying scaffolded file layout
 - `support/ef-packages-reference.md` — **load before Phase 5a** to know which base types come from EF.Packages (do not regenerate these)
+- `support/data-persistence-advanced.md` — **load when** Phase 5a/5c needs design-time factory setup, migrations, JSON mapping fallback, startup seeding, or zero-downtime schema guidance
+- `support/taskflow-proof-map.md` — **load when** you need a fast reference-app proof map from instruction topic to TaskFlow implementation area
 - `support/troubleshooting.md` — **load when** a build/test/run failure occurs that isn't resolved by the one-pass fix attempt
 - `support/execution-gates.md` — **load when** validating phase completion gates or running operator setup checks
 - `templates/index.md` — **load when** you need a quick lookup for "I need to scaffold X → load template Y + skill Z"

@@ -36,6 +36,10 @@ def main():
         python, str(scripts_dir / "generate-phase-load-packs.py"), "--root", str(root)
     ], root)
 
+    invoke_step("Report context budgets", [
+        python, str(scripts_dir / "report-context-budgets.py"), "--root", str(root), "--mode", "full"
+    ], root)
+
     invoke_step("Run instruction lint", [
         python, str(scripts_dir / "lint-instructions.py"), "--root", str(root)
     ], root)

@@ -2,52 +2,36 @@
 
 ## Purpose
 
-Defines the red/green TDD cycle used during Phase 5a (Foundation) and Phase 5b (App Core), and the tests-after protocol used during Phase 5c/5d (Infrastructure/Hosts).
+Defines the red/green loop for Phase 5a and Phase 5b, plus the tests-after protocol for Phase 5c and Phase 5d.
 
-Phase 4 has already generated the contract surface — interfaces, DTOs, entity shells, test infrastructure, and no-op DI stubs. This protocol tells you how to use those contracts to write tests first, then implement to green.
+Phase 4 already generated interfaces, DTOs, entity shells, test infrastructure, and no-op DI stubs. Use those contracts to write tests first, then implement to green.
 
 ---
 
 ## TDD Enforcement Rules (Non-Negotiable)
 
-> **STOP-AND-VERIFY gates are mandatory.** The AI must not skip any RED confirmation step. Writing tests and implementations together in the same pass violates this protocol.
+> RED confirmation is mandatory. Do not skip it.
 
 1. **Write tests FIRST.** Do not write any production code until the test file(s) for the current slice exist and compile.
-2. **Confirm RED before implementing.** Run `dotnet test` and verify the new tests **fail with assertion errors** (not compilation errors). If tests pass against no-op stubs, tighten assertions until they fail. Record the failing test count.
+2. **Confirm RED before implementing.** Run `dotnet test` and verify the new tests **fail with assertion errors**. If they pass against no-op stubs, tighten assertions until they fail. Record the failing test count.
 3. **Implement ONLY enough to pass.** Write the minimum production code needed to make the failing tests pass. Do not add untested behavior.
 4. **Confirm GREEN immediately.** Run `dotnet test` after implementation. All tests must pass. If any fail, fix before moving to the next slice.
 5. **Never batch multiple slices.** Complete the full RED → GREEN cycle for one entity slice before starting the next.
 6. **No simultaneous test + implementation files.** In a single file-generation pass, produce either test files OR implementation files — not both. The only exception is activating `{Entity}Builder.Build()` alongside entity implementation (Step 5 of Phase 5a).
-
-Violation of these rules produces code that appears test-covered but was never actually validated through the TDD feedback loop.
+7. **Do not accept compile-fail as RED.** Fix compile issues first, then confirm assertion-fail RED.
 
 ---
 
 ## BDD Naming Convention
 
-All test methods use the `Given_When_Then` pattern:
-
-```csharp
-[TestMethod]
-[TestCategory("Unit")]
-public async Task Given_ValidInput_When_EntityCreated_Then_ReturnsSuccess() { }
-
-[TestMethod]
-[TestCategory("Unit")]
-public async Task Given_EmptyName_When_EntityCreated_Then_ReturnsDomainFailure() { }
-
-[TestMethod]
-[TestCategory("Endpoint")]
-[TestCategory("Integration")]
-public async Task Given_ValidPayload_When_PostEntity_Then_Returns201WithLocationHeader() { }
-```
+All test methods use `Given_When_Then`.
 
 Rules:
 - `Given` describes the precondition or initial state
 - `When` describes the action under test
 - `Then` describes the expected outcome
 - Use PascalCase segments separated by underscores
-- Keep names descriptive but concise — the test body provides full detail
+- Keep names descriptive but concise
 
 ---
 
@@ -55,83 +39,40 @@ Rules:
 
 Process each entity in the dependency order established in Phase 4 (parents first, then children).
 
-### Step 1: Activate Entity Builder
-
-Replace the `null!` placeholder in `{Entity}Builder.Build()`:
-
-```csharp
-// Before (shell from Phase 4):
-public {Entity} Build() => null!;
-
-// After (activated — requires entity Create() to work):
-public {Entity} Build() => {Entity}.Create(_tenantId, _name).Value!;
-```
-
-> **Do not activate the builder yet** — it will fail until Step 5. Write it as part of Step 5 after entity logic is implemented.
-
-### Step 2: Write Domain Entity Tests
-
-Create `Test/Test.Unit/Domain/{Entity}Tests.cs` using `test-templates-domain.md`.
-
-Minimum test methods:
-- `Given_ValidInput_When_EntityCreated_Then_ReturnsSuccess`
-- `Given_InvalidInput_When_EntityCreated_Then_ReturnsDomainFailure` (one per validation rule)
-- `Given_ExistingEntity_When_Updated_Then_ReturnsUpdatedValues`
-- `Given_NullUpdate_When_Updated_Then_OriginalValuesPreserved`
-- Child collection tests if the entity has children
-
-### Step 3: Write Domain Rule Tests
-
-Create `Test/Test.Unit/Domain/{Entity}RulesTests.cs` using `test-templates-domain.md`.
-
-### Step 4: Run Red (MANDATORY GATE)
+1. **Write domain entity tests** in `Test/Test.Unit/Domain/{Entity}Tests.cs` from `test-templates-domain.md`.
+2. **Write domain rule tests** in `Test/Test.Unit/Domain/{Entity}RulesTests.cs`.
+3. **Run RED**:
 
 ```powershell
 dotnet test --filter "TestCategory=Unit"
 ```
 
-**Expected:** Tests fail because entity shell methods throw `NotImplementedException`.
+   Expected: tests fail with assertions or `NotImplementedException`, not compile errors.
+4. **Implement entity + rules**:
 
-> **STOP.** You MUST run this command and confirm the tests FAIL before proceeding to Step 5. If you skip this step and go directly to implementation, you are violating the TDD protocol. Record the number of failing tests.
+- Replace `NotImplementedException` bodies in `Create()`, `Update()`, and rule methods.
+- Activate `{Entity}Builder.Build()` only after `Create()` works.
 
-> If tests fail to **compile**, fix compilation errors first. The entity shell, interfaces, and DTOs from Phase 4 should provide all types needed. If a type is missing, check Phase 4 output before creating new types.
-
-### Step 5: Implement Entity + Activate Builder
-
-- Replace `NotImplementedException` bodies in entity `Create()`, `Update()`, and domain rule methods with real logic
-- Implement domain rules in `Domain.Model/Rules/`
-- Activate `{Entity}Builder.Build()` to call real `Create()`
-
-### Step 6: Run Green
+5. **Run GREEN**:
 
 ```powershell
 dotnet test --filter "TestCategory=Unit"
 ```
 
-**Expected:** All domain entity and rule tests pass.
+6. **Write repository tests** from `test-templates-repository.md`.
+7. **Implement EF configuration + repositories**:
 
-### Step 7: Write Repository Tests
+- Create `{Entity}Configuration.cs`.
+- Implement `{Entity}RepositoryTrxn` and `{Entity}RepositoryQuery`.
+- Wire `DbSet<{Entity}>` and swap the no-op DI registrations.
 
-Create `Test/Test.Unit/Repositories/{Entity}RepositoryTrxnTests.cs` and `{Entity}RepositoryQueryTests.cs` using `test-templates-repository.md`.
-
-Repository tests use `InMemoryDbBuilder` from Test.Support (generated in Phase 4).
-
-### Step 8: Implement EF Configuration + Repository
-
-- Create `{Entity}Configuration.cs` (Fluent API)
-- Implement `{Entity}RepositoryTrxn` and `{Entity}RepositoryQuery`
-- Wire `DbSet<{Entity}>` in DbContext `OnModelCreating`
-- Replace no-op repository stubs in `RegisterServices.cs` with real implementations
-
-### Step 9: Run Green
+8. **Run GREEN again**:
 
 ```powershell
 dotnet test --filter "TestCategory=Unit"
 ```
 
-**Expected:** All unit tests pass including repository tests.
-
-### Step 10: Scaffold Migration + Gate
+9. **Gate the slice**:
 
 ```powershell
 dotnet ef migrations add InitialCreate ...
@@ -145,64 +86,24 @@ Git checkpoint after gate passes.
 
 ## Phase 5b — App Core TDD (Per Entity Slice)
 
-### Step 1: Write Service Unit Tests
-
-Create `Test/Test.Unit/Services/{Entity}ServiceTests.cs` using `test-templates-service.md`.
-
-Tests mock interfaces from Phase 4 using Moq:
-```csharp
-var repoTrxnMock = _mockFactory.Create<I{Entity}RepositoryTrxn>();
-var repoQueryMock = _mockFactory.Create<I{Entity}RepositoryQuery>();
-```
-
-Minimum test methods:
-- `Given_ValidDto_When_CreateAsync_Then_ReturnsSuccessResult`
-- `Given_NonExistentEntity_When_UpdateAsync_Then_ReturnsNone`
-- `Given_ExistingEntity_When_DeleteAsync_Then_ReturnsSuccessAndCallsDelete`
-- `Given_ExistingEntity_When_GetAsync_Then_ReturnsMappedDto`
-- `Given_SearchFilter_When_SearchAsync_Then_ReturnsFilteredPage`
-
-### Step 2: Run Red (MANDATORY GATE)
+1. **Write service tests** in `Test/Test.Unit/Services/{Entity}ServiceTests.cs` from `test-templates-service.md`.
+2. **Run RED**:
 
 ```powershell
 dotnet test --filter "TestCategory=Unit"
 ```
 
-**Expected:** New service tests fail (no-op stub returns empty/default results that don't match assertions).
-
-> **STOP.** You MUST run this command and confirm the new tests FAIL before proceeding to Step 3. If all tests pass, tighten assertions (assert on specific property values, not just non-null). Do not proceed until at least one new test is red.
-
-### Step 3: Implement Service + Mapper + Validator
-
-- Create `{Entity}Service` implementing `I{Entity}Service`
-- Create static mapper extensions (`ToDto()`, `ToEntity()`)
-- Create `{Entity}StructureValidator` for input validation
-- Replace no-op service stub in `RegisterServices.cs` with real implementation
-
-### Step 4: Run Green (Unit)
+   Expected: new tests fail because no-op stubs return empty/default values.
+3. **Implement service + mapper + validator** and replace the no-op service registration.
+4. **Run GREEN (Unit)**:
 
 ```powershell
 dotnet test --filter "TestCategory=Unit"
 ```
 
-### Step 5: Write Endpoint Integration Tests
-
-Create `Test/Test.Integration/Endpoints/{Entity}EndpointsTests.cs` using `test-templates-endpoint.md`.
-
-Uses `CustomApiFactory<TProgram>` from Test.Integration (generated in Phase 4).
-
-Minimum test methods:
-- `Given_ValidPayload_When_PostEntity_Then_Returns201`
-- `Given_NonExistentId_When_GetEntity_Then_Returns404`
-- `Given_ExistingEntities_When_SearchWithFilter_Then_ReturnsFilteredPage`
-- `CRUD_Pass` (full create → read → update → delete cycle)
-
-### Step 6: Implement Endpoints
-
-- Create `{Entity}Endpoints.cs` with minimal API endpoint mappings
-- Wire endpoint registration in `WebApplicationBuilderExtensions.cs`
-
-### Step 7: Run Green (Endpoint)
+5. **Write endpoint tests** in `Test/Test.Integration/Endpoints/{Entity}EndpointsTests.cs` from `test-templates-endpoint.md`.
+6. **Implement endpoints** and wire endpoint registration.
+7. **Run GREEN (Endpoint)**:
 
 ```powershell
 dotnet test --filter "TestCategory=Unit|TestCategory=Endpoint"
@@ -216,23 +117,9 @@ Git checkpoint after gate passes.
 
 Infrastructure and optional host phases do not follow TDD. Instead, implement first, then write tests at the end of the session to verify behavior.
 
-### 5c — Runtime/Edge Tests
+5c tests: health checks, configuration/no-op behavior, caching behavior when enabled.
 
-After implementing infrastructure concerns, write:
-- Health check integration tests (verify health endpoint returns 200)
-- Configuration loading tests (verify absent config → no-op passthrough)
-- Caching behavior tests if caching is enabled
-
-```powershell
-dotnet test
-```
-
-### 5d — Optional Hosts Tests
-
-After implementing each optional host, write:
-- Scheduler: job registration and trigger tests
-- Function App: function trigger smoke tests
-- Uno UI: client layer unit tests (if applicable)
+5d tests: scheduler registration/trigger tests, Function trigger smoke tests, Uno client tests when applicable.
 
 ```powershell
 dotnet test
@@ -251,7 +138,7 @@ If tests fail to compile (not just fail assertions):
 
 If tests pass unexpectedly (should be red but are green):
 
-1. **No-op stub returns a value that satisfies the assertion**: Tighten assertions. Assert on specific property values, not just success/non-null.
+1. **No-op stub satisfies the assertion**: Tighten assertions. Assert on specific values, not just success or non-null.
 2. **Wrong test target**: Verify the test is calling the code you think it's calling.
 
 ---
@@ -261,15 +148,8 @@ If tests pass unexpectedly (should be red but are green):
 When implementing a real class that replaces a no-op stub:
 
 1. Create the real implementation class
-2. Update `RegisterServices.cs` — change the no-op registration to the real class:
-   ```csharp
-   // Before (no-op from Phase 4):
-   services.AddScoped<I{Entity}Service, NoOp{Entity}Service>();
-   
-   // After (real implementation):
-   services.AddScoped<I{Entity}Service, {Entity}Service>();
-   ```
-3. The no-op stub class can be left in place (it's harmless) or deleted — your choice
+2. Update `RegisterServices.cs` to swap the no-op registration for the real class
+3. Leave the no-op class in place or delete it
 4. Verify `dotnet build` still succeeds after the swap
 
 ---

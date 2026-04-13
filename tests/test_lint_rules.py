@@ -97,6 +97,236 @@ class LintRuleTests(unittest.TestCase):
             messages,
         )
 
+    def test_check_compact_slice_budgets_reports_missing_required_slice(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            manifest = {
+                "contextBudget": {"default": 30000, "extended": 60000, "compact": 15000},
+                "files": [
+                    {"path": "skills/domain-model.md", "phase": "phase-5a", "estimatedTokens": 1000},
+                    {"path": "templates/entity-template.md", "phase": "phase-5a", "estimatedTokens": 1000},
+                    {"path": "templates/domain-rules-template.md", "phase": "phase-5a", "estimatedTokens": 1000},
+                    {"path": "templates/test-templates-domain.md", "phase": "phase-5a", "estimatedTokens": 1000},
+                    {"path": "skills/data-persistence.md", "phase": "phase-5a", "estimatedTokens": 1000},
+                    {"path": "templates/ef-configuration-template.md", "phase": "phase-5a", "estimatedTokens": 1000},
+                    {"path": "templates/repository-template.md", "phase": "phase-5a", "estimatedTokens": 1000},
+                    {"path": "templates/test-templates-repository.md", "phase": "phase-5a", "estimatedTokens": 1000},
+                    {"path": "skills/application-layer.md", "phase": "phase-5b", "estimatedTokens": 1000},
+                    {"path": "skills/bootstrapper.md", "phase": "phase-5b", "estimatedTokens": 1000},
+                    {"path": "templates/data-mapping-template.md", "phase": "phase-5b", "estimatedTokens": 1000},
+                    {"path": "templates/service-template.md", "phase": "phase-5b", "estimatedTokens": 1000},
+                    {"path": "templates/structure-validator-template.md", "phase": "phase-5b", "estimatedTokens": 1000},
+                    {"path": "templates/test-templates-service.md", "phase": "phase-5b", "estimatedTokens": 1000},
+                    {"path": "skills/api.md", "phase": "phase-5b", "estimatedTokens": 1000},
+                    {"path": "skills/testing.md", "phase": "phase-5e", "estimatedTokens": 1000},
+                    {"path": "templates/endpoint-template.md", "phase": "phase-5b", "estimatedTokens": 1000},
+                    {"path": "templates/exception-handler-template.md", "phase": "phase-5b", "estimatedTokens": 1000},
+                    {"path": "templates/test-templates-endpoint.md", "phase": "phase-5b", "estimatedTokens": 1000},
+                ],
+            }
+            phase_load_packs = {
+                "contextBudget": {"compact": 15000},
+                "slices": {
+                    "full": {
+                        "phase-5a": {
+                            "domain": [
+                                "skills/domain-model.md",
+                                "templates/entity-template.md",
+                                "templates/domain-rules-template.md",
+                                "templates/test-templates-domain.md",
+                            ]
+                        },
+                        "phase-5b": {
+                            "service": [
+                                "skills/application-layer.md",
+                                "skills/bootstrapper.md",
+                                "templates/data-mapping-template.md",
+                                "templates/service-template.md",
+                                "templates/structure-validator-template.md",
+                                "templates/test-templates-service.md",
+                            ],
+                            "endpoint": [
+                                "skills/application-layer.md",
+                                "skills/bootstrapper.md",
+                                "skills/api.md",
+                                "skills/testing.md",
+                                "templates/endpoint-template.md",
+                                "templates/exception-handler-template.md",
+                                "templates/test-templates-endpoint.md",
+                            ],
+                        },
+                    },
+                    "lite": {
+                        "phase-5a": {
+                            "domain": [
+                                "skills/domain-model.md",
+                                "templates/entity-template.md",
+                                "templates/domain-rules-template.md",
+                                "templates/test-templates-domain.md",
+                            ],
+                            "repository": [
+                                "skills/domain-model.md",
+                                "skills/data-persistence.md",
+                                "templates/entity-template.md",
+                                "templates/ef-configuration-template.md",
+                                "templates/repository-template.md",
+                                "templates/test-templates-repository.md",
+                            ],
+                        },
+                        "phase-5b": {
+                            "service": [
+                                "skills/application-layer.md",
+                                "skills/bootstrapper.md",
+                                "templates/data-mapping-template.md",
+                                "templates/service-template.md",
+                                "templates/structure-validator-template.md",
+                                "templates/test-templates-service.md",
+                            ],
+                            "endpoint": [
+                                "skills/application-layer.md",
+                                "skills/bootstrapper.md",
+                                "skills/api.md",
+                                "skills/testing.md",
+                                "templates/endpoint-template.md",
+                                "templates/exception-handler-template.md",
+                                "templates/test-templates-endpoint.md",
+                            ],
+                        },
+                    },
+                    "api-only": {
+                        "phase-5a": {
+                            "domain": [
+                                "skills/domain-model.md",
+                                "templates/entity-template.md",
+                                "templates/domain-rules-template.md",
+                                "templates/test-templates-domain.md",
+                            ],
+                            "repository": [
+                                "skills/domain-model.md",
+                                "skills/data-persistence.md",
+                                "templates/entity-template.md",
+                                "templates/ef-configuration-template.md",
+                                "templates/repository-template.md",
+                                "templates/test-templates-repository.md",
+                            ],
+                        },
+                        "phase-5b": {
+                            "service": [
+                                "skills/application-layer.md",
+                                "skills/bootstrapper.md",
+                                "templates/data-mapping-template.md",
+                                "templates/service-template.md",
+                                "templates/structure-validator-template.md",
+                                "templates/test-templates-service.md",
+                            ],
+                            "endpoint": [
+                                "skills/application-layer.md",
+                                "skills/bootstrapper.md",
+                                "skills/api.md",
+                                "skills/testing.md",
+                                "templates/endpoint-template.md",
+                                "templates/exception-handler-template.md",
+                                "templates/test-templates-endpoint.md",
+                            ],
+                        },
+                    },
+                },
+            }
+
+            write_file(root / "_manifest.json", json.dumps(manifest, indent=4))
+            write_file(root / "phase-load-packs.json", json.dumps(phase_load_packs, indent=4))
+
+            issues = lint_rules.check_compact_slice_budgets(root)
+
+        messages = {issue["Message"] for issue in issues}
+        self.assertIn("Generated slices is missing 'full:phase-5a:repository'.", messages)
+
+    def test_check_compact_slice_budgets_reports_over_budget_slice(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            manifest = {
+                "contextBudget": {"default": 30000, "extended": 60000, "compact": 15000},
+                "files": [
+                    {"path": "skills/domain-model.md", "phase": "phase-5a", "estimatedTokens": 9000},
+                    {"path": "templates/entity-template.md", "phase": "phase-5a", "estimatedTokens": 8000},
+                    {"path": "templates/domain-rules-template.md", "phase": "phase-5a", "estimatedTokens": 1000},
+                    {"path": "templates/test-templates-domain.md", "phase": "phase-5a", "estimatedTokens": 1000},
+                    {"path": "skills/data-persistence.md", "phase": "phase-5a", "estimatedTokens": 1000},
+                    {"path": "templates/ef-configuration-template.md", "phase": "phase-5a", "estimatedTokens": 1000},
+                    {"path": "templates/repository-template.md", "phase": "phase-5a", "estimatedTokens": 1000},
+                    {"path": "templates/test-templates-repository.md", "phase": "phase-5a", "estimatedTokens": 1000},
+                    {"path": "skills/application-layer.md", "phase": "phase-5b", "estimatedTokens": 1000},
+                    {"path": "skills/bootstrapper.md", "phase": "phase-5b", "estimatedTokens": 1000},
+                    {"path": "templates/data-mapping-template.md", "phase": "phase-5b", "estimatedTokens": 1000},
+                    {"path": "templates/service-template.md", "phase": "phase-5b", "estimatedTokens": 1000},
+                    {"path": "templates/structure-validator-template.md", "phase": "phase-5b", "estimatedTokens": 1000},
+                    {"path": "templates/test-templates-service.md", "phase": "phase-5b", "estimatedTokens": 1000},
+                    {"path": "skills/api.md", "phase": "phase-5b", "estimatedTokens": 1000},
+                    {"path": "skills/testing.md", "phase": "phase-5e", "estimatedTokens": 1000},
+                    {"path": "templates/endpoint-template.md", "phase": "phase-5b", "estimatedTokens": 1000},
+                    {"path": "templates/exception-handler-template.md", "phase": "phase-5b", "estimatedTokens": 1000},
+                    {"path": "templates/test-templates-endpoint.md", "phase": "phase-5b", "estimatedTokens": 1000},
+                ],
+            }
+            slices = {
+                "phase-5a": {
+                    "domain": [
+                        "skills/domain-model.md",
+                        "templates/entity-template.md",
+                        "templates/domain-rules-template.md",
+                        "templates/test-templates-domain.md",
+                    ],
+                    "repository": [
+                        "skills/domain-model.md",
+                        "skills/data-persistence.md",
+                        "templates/entity-template.md",
+                        "templates/ef-configuration-template.md",
+                        "templates/repository-template.md",
+                        "templates/test-templates-repository.md",
+                    ],
+                },
+                "phase-5b": {
+                    "service": [
+                        "skills/application-layer.md",
+                        "skills/bootstrapper.md",
+                        "templates/data-mapping-template.md",
+                        "templates/service-template.md",
+                        "templates/structure-validator-template.md",
+                        "templates/test-templates-service.md",
+                    ],
+                    "endpoint": [
+                        "skills/application-layer.md",
+                        "skills/bootstrapper.md",
+                        "skills/api.md",
+                        "skills/testing.md",
+                        "templates/endpoint-template.md",
+                        "templates/exception-handler-template.md",
+                        "templates/test-templates-endpoint.md",
+                    ],
+                },
+            }
+            phase_load_packs = {
+                "contextBudget": {"compact": 15000},
+                "slices": {
+                    "full": slices,
+                    "lite": slices,
+                    "api-only": slices,
+                },
+            }
+
+            write_file(root / "_manifest.json", json.dumps(manifest, indent=4))
+            write_file(root / "phase-load-packs.json", json.dumps(phase_load_packs, indent=4))
+
+            issues = lint_rules.check_compact_slice_budgets(root)
+
+        self.assertTrue(
+            any(
+                issue["Category"] == "SliceBudget"
+                and "Compact slice 'full:phase-5a:domain' exceeds compact budget (19000 > 15000)." in issue["Message"]
+                for issue in issues
+            )
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

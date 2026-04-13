@@ -1,8 +1,8 @@
 # EF.Packages — Shared Library Reference
 
-The scaffolded project depends on the **EF.Packages** private NuGet feed for infrastructure, patterns, and abstractions. These packages provide base types that the AI must **not regenerate** — use them directly.
+The scaffolded project depends on the **EF.Packages** private NuGet feed for infrastructure, patterns, and abstractions. These types are shared-library types. Do not regenerate them.
 
-> **NuGet feed:** Must be configured in `nuget.config` under `customNugetFeeds` before Phase 5. See [execution-gates.md](execution-gates.md) for preflight checks.
+> **NuGet feed:** Configure it in `nuget.config` before Phase 5. See [execution-gates.md](execution-gates.md).
 
 ---
 
@@ -120,30 +120,15 @@ These types appear in the service and endpoint templates but are **not provided 
 
 ---
 
-## Package Selection by Phase
+## Phase Usage
 
-| Phase | Packages to Reference |
-|---|---|
-| **5a (Foundation)** | EF.Common, EF.Domain, EF.Domain.Contracts, EF.Data, EF.Data.Contracts, EF.Common.Contracts |
-| **5b (App Core)** | EF.AspNetCore, EF.Host, EF.FilterBuilder |
-| **5c (Runtime/Edge)** | EF.Cache, EF.Auth (if auth configured), EF.KeyVault (if enabled) |
-| **5d (Optional Hosts)** | EF.BackgroundService (scheduler), EF.Messaging (if events) |
-| **5e (Quality)** | EF.Test.Unit, EF.Test.Integration |
-| **5f (Auth)** | EF.Auth, EF.MSGraph (if MS Graph needed) |
-| **5g (AI)** | EF.AzureOpenAI or EF.OpenAI |
-
----
-
-## Quick Start by Scenario
-
-| Scenario | Start With |
-|---|---|
-| Web API | EF.Common, EF.Domain.Contracts, EF.Domain, EF.Data, EF.AspNetCore |
-| Cloud storage | EF.Storage (Blob), EF.CosmosDb (Document), EF.Table (Key-Value) |
-| Messaging | EF.Messaging + EF.BackgroundService |
-| AI features | EF.AzureOpenAI (enterprise) or EF.OpenAI (standard) |
-| Auth | EF.Auth + EF.KeyVault |
-| Full app | All of the above + EF.Cache, EF.Host, EF.Grpc |
+- **5a:** EF.Common, EF.Domain, EF.Domain.Contracts, EF.Data, EF.Data.Contracts, EF.Common.Contracts
+- **5b:** EF.AspNetCore, EF.Host, EF.FilterBuilder
+- **5c:** EF.Cache and optional auth/key vault packages
+- **5d:** EF.BackgroundServices and messaging packages when enabled
+- **5e:** EF.Test.Unit and EF.Test.Integration
+- **5f:** EF.Auth and optional EF.MSGraph
+- **5g:** EF.AzureOpenAI or EF.OpenAI
 
 ---
 
