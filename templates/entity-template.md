@@ -103,6 +103,10 @@ public enum {Entity}Flags
 }
 ```
 
+## Polymorphic Join Entity Warning
+
+> **CRITICAL:** When an entity participates as a polymorphic owner (e.g., both `TaskItem` and `Comment` can own `Attachment`), do NOT add `ICollection<PolymorphicChild>` navigation properties to the parent entities. EF auto-generates a real FK constraint from each navigation, creating multiple conflicting FKs on the shared `OwnerId` column. Instead, query polymorphic children explicitly via `OwnerType` + `OwnerId`.
+
 ## Polymorphic Ordered Block Note (Optional)
 
 For playlist-driven content entities, model ordered blocks with:

@@ -158,6 +158,11 @@ dotnet new tool-manifest               # if .config/dotnet-tools.json does not e
 dotnet tool install dotnet-ef           # install as local tool
 ```
 
+> **Required package:** The **startup project** (typically `Host/{Host}.Api`) must reference `Microsoft.EntityFrameworkCore.Design`. Without it, `dotnet ef migrations add` fails with `Your startup project doesn't reference Microsoft.EntityFrameworkCore.Design`. Add via:
+> ```xml
+> <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+> ```
+
 > **Package source mapping:** If the project uses `nuget.config` with `<packageSourceMapping>`, add an explicit entry for `dotnet-ef`:
 > ```xml
 > <packageSource key="nuget.org">

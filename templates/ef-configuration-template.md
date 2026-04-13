@@ -80,6 +80,13 @@ public class {Entity}Configuration : EntityBaseConfiguration<{Entity}>
                .HasForeignKey("{Entity}Id")
                .OnDelete(DeleteBehavior.Cascade);
 
+        // ===== Polymorphic children (NO navigation) =====
+        // If this entity participates as a polymorphic owner, do NOT add
+        // ICollection<PolymorphicChild> here. EF would generate a real FK
+        // from each parent navigation, creating conflicting constraints on
+        // the shared OwnerId/EntityId column. Query polymorphic children
+        // explicitly: db.Attachments.Where(a => a.OwnerType == ... && a.OwnerId == id)
+
         // ===== Indexes =====
         builder.HasIndex(e => new { e.TenantId, e.Name })
                .HasDatabaseName("IX_{Entity}_TenantId_Name");

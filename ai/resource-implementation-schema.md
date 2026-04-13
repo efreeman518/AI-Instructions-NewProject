@@ -168,6 +168,8 @@ builder.Property(e => e.EntityId).IsRequired();
 builder.HasIndex(e => new { e.EntityType, e.EntityId });
 ```
 
+> **CRITICAL — No navigation collections on parent entities.** Parent entities that participate in a polymorphic join (e.g., `TaskItem` and `Comment` both owning `Attachment`) must NOT declare `ICollection<PolymorphicChild>` navigation properties. EF convention-generates a real FK from each navigation, creating multiple conflicting FK constraints on the shared `EntityId`/`OwnerId` column. The polymorphic child references its owner via `EntityType` + `EntityId` properties only — no EF relationship is configured. Query polymorphic children explicitly: `db.Attachments.Where(a => a.OwnerType == type && a.OwnerId == id)`.
+
 ## Infrastructure Resources
 
 ### Database & Storage

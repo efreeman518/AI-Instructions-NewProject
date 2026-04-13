@@ -15,7 +15,7 @@
             "env/**"
         ]
     },
-    "totalEstimatedTokens": 161481,
+    "totalEstimatedTokens": 162816,
     "contextBudget": {
         "default": 30000,
         "extended": 60000,
@@ -76,7 +76,7 @@
         {
             "path": "ai/resource-implementation-schema.md",
             "phase": "phase-2",
-            "estimatedTokens": 4017
+            "estimatedTokens": 4173
         },
         {
             "path": "ai/implementation-plan.md",
@@ -126,12 +126,12 @@
         {
             "path": "skills/data-persistence.md",
             "phase": "phase-5a",
-            "estimatedTokens": 3952
+            "estimatedTokens": 4047
         },
         {
             "path": "templates/entity-template.md",
             "phase": "phase-5a",
-            "estimatedTokens": 1425,
+            "estimatedTokens": 1539,
             "generates": [
                 "{Entity}.cs"
             ],
@@ -142,7 +142,7 @@
         {
             "path": "templates/ef-configuration-template.md",
             "phase": "phase-5a",
-            "estimatedTokens": 2026,
+            "estimatedTokens": 2138,
             "generates": [
                 "{Entity}Configuration.cs"
             ],
@@ -504,7 +504,7 @@
         {
             "path": "templates/test-templates-quality.md",
             "phase": "phase-5e",
-            "estimatedTokens": 1614,
+            "estimatedTokens": 2472,
             "generates": [
                 "ArchitectureTests.cs",
                 "BaseTest.cs",
