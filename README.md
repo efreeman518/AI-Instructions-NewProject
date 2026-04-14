@@ -2,6 +2,44 @@
 
 Pragmatic instruction set for AI-assisted scaffolding of C#/.NET business applications and services.
 
+## AI Agents — Quick Start
+
+This instruction set ships with pre-built agents for **VS Code Copilot** and **Claude Code**. After copying the instruction set into your app repo's `.instructions/` folder, the agents are ready to use.
+
+### VS Code Copilot
+
+Agents live in `.instructions/.github/agents/`. Copy (or symlink) the `.github/agents/` folder to your app repo root so Copilot discovers them.
+
+| Agent | How to invoke | Purpose |
+|-------|---------------|---------|
+| `dotnet-scaffold` | Select **dotnet-scaffold** in the Copilot agent picker | Full phased scaffolding (Phases 1–5g), one phase per session |
+| `vertical-slice` | Select **vertical-slice** in the Copilot agent picker | Add a new entity to an existing solution (fast-path) |
+
+### Claude Code
+
+Commands live in `.instructions/.claude/commands/`. Copy (or symlink) the `.claude/` folder to your app repo root.
+
+| Command | How to invoke | Purpose |
+|---------|---------------|---------|
+| `/scaffold` | `/scaffold <business domain description>` | Full phased scaffolding, one phase per session |
+| `/vertical-slice` | `/vertical-slice Product` | Add a new entity slice to an existing solution |
+
+### How they work
+
+Both agents follow the same flow:
+
+1. **Scaffold** — Boots from `.instructions/START-AI.md`, checks `HANDOFF.md` in the project root for resume state, loads only the current phase's files via `.instructions/phase-load-packs.json`, executes one phase, writes `HANDOFF.md` on completion.
+2. **Vertical slice** — Loads `.instructions/support/vertical-slice-checklist.md` fast-path, generates the full entity stack (12 steps: entity → EF config → repos → DTOs → mapper → validator → service → endpoint → DI wiring → migration), validates with `dotnet build` + `dotnet test`.
+
+### Setup checklist
+
+- [ ] Copy instruction set into `.instructions/` in your app repo
+- [ ] Copy `.instructions/.github/agents/` → `.github/agents/` (Copilot)
+- [ ] Copy `.instructions/.claude/commands/` → `.claude/commands/` (Claude Code)
+- [ ] Run `python .instructions/scripts/preflight-instructions.py` to validate
+
+---
+
 ## Purpose
 
 This instruction set turns an AI coding assistant into a guided scaffolding engine for production-grade C#/.NET solutions. Instead of generating throwaway boilerplate, it drives a structured five-phase process — from domain discovery through implementation — producing consistent, buildable, testable code that follows clean architecture and the conventions of a mature engineering team.

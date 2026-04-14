@@ -175,8 +175,7 @@
             ],
             "session-bootstrap": [
                 "START-AI.md",
-                "CLAUDE.md",
-                ".github/copilot-instructions.md"
+                "CLAUDE.md"
             ],
             "phase-1": [
                 "ai/domain-specification-schema.md"
@@ -297,8 +296,7 @@
             ],
             "session-bootstrap": [
                 "START-AI.md",
-                "CLAUDE.md",
-                ".github/copilot-instructions.md"
+                "CLAUDE.md"
             ],
             "phase-1": [
                 "ai/domain-specification-schema.md"
@@ -408,8 +406,7 @@
             ],
             "session-bootstrap": [
                 "START-AI.md",
-                "CLAUDE.md",
-                ".github/copilot-instructions.md"
+                "CLAUDE.md"
             ],
             "phase-1": [
                 "ai/domain-specification-schema.md"
