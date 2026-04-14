@@ -14,7 +14,7 @@
             "env/**"
         ]
     },
-    "totalEstimatedTokens": 163490,
+    "totalEstimatedTokens": 165796,
     "contextBudget": {
         "default": 30000,
         "extended": 60000,
@@ -245,7 +245,7 @@
         {
             "path": "skills/bootstrapper.md",
             "phase": "phase-5b",
-            "estimatedTokens": 1445
+            "estimatedTokens": 1741
         },
         {
             "path": "skills/api.md",
@@ -380,7 +380,7 @@
         {
             "path": "skills/aspire.md",
             "phase": "phase-5c",
-            "estimatedTokens": 1795
+            "estimatedTokens": 2423
         },
         {
             "path": "skills/configuration-secrets.md",
@@ -431,7 +431,7 @@
         {
             "path": "skills/function-app.md",
             "phase": "phase-5d",
-            "estimatedTokens": 1620,
+            "estimatedTokens": 2000,
             "dependencies": [
                 "skills/solution-structure.md",
                 "skills/bootstrapper.md",
@@ -618,7 +618,7 @@
         {
             "path": "support/data-persistence-advanced.md",
             "phase": "on-demand",
-            "estimatedTokens": 1476
+            "estimatedTokens": 2053
         },
         {
             "path": "support/taskflow-proof-map.md",
@@ -628,7 +628,7 @@
         {
             "path": "support/troubleshooting.md",
             "phase": "on-demand",
-            "estimatedTokens": 3176
+            "estimatedTokens": 3602
         },
         {
             "path": "support/execution-gates.md",
@@ -673,7 +673,7 @@
         {
             "path": "README.md",
             "phase": "support-only",
-            "estimatedTokens": 3690
+            "estimatedTokens": 3689
         },
         {
             "path": "support/prompt-catalog.md",

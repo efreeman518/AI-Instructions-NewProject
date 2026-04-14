@@ -95,7 +95,8 @@ When a third-party library (scheduler, queue, dashboard, job runner) uses EF-bac
 1. **Identify the schema owner.** Does the library auto-create its tables at startup? Does it ship migrations or SQL scripts you must run? Does it expect a design-time factory in your project? Or does it assume tables already exist?
 2. **Do not conflate startup success with schema presence.** Many libraries start without error even when their backing tables are missing — failures appear later during seeding, first job execution, or dashboard queries, and are easily misread as connection or configuration issues.
 3. **Verify the schema directly.** Query `INFORMATION_SCHEMA.TABLES` or the database tool of your choice to confirm the expected tables exist before investigating application-level failures.
-4. **Record the schema ownership model** in `HANDOFF.md` and `resource-implementation.yaml` so future sessions do not re-diagnose the same issue.
+4. **Avoid CREATE-on-every-restart patterns.** When using `GenerateCreateScript()` + batch execution to bootstrap third-party schemas, gate it behind an existence check (see [data-persistence-advanced.md](data-persistence-advanced.md) → Third-Party Operational Store Schemas). Running CREATE statements against existing tables produces `fail:` EF log spam on every restart with persistent data volumes.
+5. **Record the schema ownership model** in `HANDOFF.md` and `resource-implementation.yaml` so future sessions do not re-diagnose the same issue.
 
 ---
 
@@ -145,6 +146,12 @@ For phase gates and validation commands, see [execution-gates.md](execution-gate
 | StructureValidator not found | Missing static validator namespace import | Add `using {Namespace}.Application.Services.Validation;` |
 | WASM build `DirectoryNotFoundException` (`unoresizetizer`) | Resizetizer 1.12.1 manifest-path issue | See fix snippet in `skills/uno-ui.md` → *UnoSplashScreen WASM Build Failure* |
 | `NotSupportedException` deserializing `Result<T>` in tests | `Result<T>` lacks parameterless constructor | Use `JsonDocument` parsing instead of `ReadFromJsonAsync<Result<T>>()`. Search endpoints serialize just the `PagedResponse<T>` value, not the wrapper. |
+| Aspire dashboard never opens / blank terminal | Missing `Properties/launchSettings.json` in AppHost | Create launchSettings.json with OTLP endpoints — see [aspire.md](../skills/aspire.md) → Preflight |
+| `MSB4057` "GetTargetPath" target missing | Uno.Sdk project referenced from AppHost | Comment out Uno ProjectReference and AddProject — run Uno WASM separately |
+| Functions "connection refused 127.0.0.1:10000" | `AzureWebJobsStorage` uses `UseDevelopmentStorage=true` but Aspire Azurite runs on dynamic ports | Inject `storage.Resource` as `AzureWebJobsStorage` env var + `.WaitFor(storage)` — see [function-app.md](../skills/function-app.md) → Aspire Integration |
+| EF `fail:` log spam on every scheduler/host restart | `GenerateCreateScript()` runs CREATE against existing tables | Gate with `INFORMATION_SCHEMA.TABLES` existence check — see [data-persistence-advanced.md](data-persistence-advanced.md) → Third-Party Operational Store Schemas |
+| `MSB3027` file lock / build fails with PID holding DLL | Orphaned `dotnet.exe` from prior run | `Get-Process -Name dotnet` then `Stop-Process -Name dotnet -Force` |
+| SQL container starts but auth fails under Aspire | `sql-password` parameter not in user secrets | `dotnet user-secrets set "Parameters:sql-password" "<pw>" --project AppHost` |
 
 ### Detailed Fix Patterns
 

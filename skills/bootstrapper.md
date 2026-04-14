@@ -58,6 +58,31 @@ public static class RegisterServices
 }
 ```
 
+### Support Services (Background Task Queue + Internal Message Bus)
+
+`AuditInterceptor` from the EF packages depends on `IInternalMessageBus`, which in turn depends on `IBackgroundTaskQueue`. These must be registered early, before database services:
+
+```csharp
+private static IServiceCollection AddSupportServices(this IServiceCollection services)
+{
+    services.AddChannelBackgroundTaskQueueWithShutdownHandling();
+    services.AddSingleton<IInternalMessageBus, InternalMessageBus>();
+    return services;
+}
+```
+
+Call `AddSupportServices()` as the **first** registration in the main chain (before `AddDatabaseServices`). Without it, any host that registers `AuditInterceptor` will fail at startup with a DI resolution error.
+
+Required usings:
+```csharp
+using EF.BackgroundServices;
+using EF.BackgroundServices.InternalMessageBus;
+using EF.BackgroundServices.Work;
+```
+
+> **Note:** `AddBackgroundTaskQueue()` and `AddChannelBackgroundTaskQueue()` register different concrete types. If `AuditInterceptor` expects `ChannelBackgroundTaskQueue`, use `AddChannelBackgroundTaskQueueWithShutdownHandling()` — it registers both the queue and the hosted service that drains it on shutdown.
+```
+
 ## Startup Task Pattern
 
 > See [../patterns/data-layer-wiring.md](../patterns/data-layer-wiring.md).

@@ -164,6 +164,35 @@ Project file requirements:
 
 Register Functions as its own project/resource in AppHost and add only required dependencies (`.WithReference(...)`) for enabled triggers and shared infrastructure.
 
+### AzureWebJobsStorage Under Aspire
+
+The Functions runtime uses `AzureWebJobsStorage` internally for blob trigger leases, timer checkpoints, and internal locking. When Aspire manages Azurite, it runs on **dynamic ports** — the hardcoded `UseDevelopmentStorage=true` in `local.settings.json` (which resolves to `127.0.0.1:10000`) will not work.
+
+Fix both problems in AppHost:
+
+```csharp
+var storage = builder.AddAzureStorage("AzureStorage").RunAsEmulator();
+var blobs = storage.AddBlobs("BlobStorage1");
+
+builder.AddProject<Projects.{Host}_Functions>("{host}functions")
+    .WithReference(blobs)
+    .WithReference(serviceBus)
+    .WithEnvironment("AzureWebJobsSecretStorageType", "Files")
+    .WithEnvironment(ctx =>
+    {
+        ctx.EnvironmentVariables["AzureWebJobsStorage"] = storage.Resource;
+    })
+    .WaitFor(storage)
+    .WaitFor(sql);
+```
+
+Key points:
+- **`AzureWebJobsSecretStorageType=Files`** — Prevents the runtime from trying to use Azurite for secret storage (which Aspire doesn't inject automatically).
+- **`AzureWebJobsStorage = storage.Resource`** — Injects the Aspire-managed Azurite connection string with correct dynamic ports.
+- **`.WaitFor(storage)`** — Ensures Azurite is accepting connections before Functions starts. Without this, blob/timer triggers fail with "connection refused" after 6 retries and the host shuts down.
+
+> `local.settings.json` can keep `UseDevelopmentStorage=true` for standalone `func host start` outside Aspire. Aspire environment variables override it at runtime.
+
 ---
 
 ## Local Development
