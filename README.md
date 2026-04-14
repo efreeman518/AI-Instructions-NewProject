@@ -4,19 +4,33 @@ Pragmatic instruction set for AI-assisted scaffolding of C#/.NET business applic
 
 ## Purpose
 
-This instruction set turns an AI coding assistant into a guided scaffolding engine for production-grade C#/.NET solutions. Instead of generating throwaway boilerplate, it drives a structured four-phase process — from domain discovery through implementation — producing consistent, buildable, testable code that follows clean architecture and the conventions of a mature engineering team.
+This instruction set turns an AI coding assistant into a guided scaffolding engine for production-grade C#/.NET solutions. Instead of generating throwaway boilerplate, it drives a structured five-phase process — from domain discovery through implementation — producing consistent, buildable, testable code that follows clean architecture and the conventions of a mature engineering team.
 
 The goal is not to replace engineering judgment but to compress the 2–5 day "green-field to first vertical slice" timeline down to hours, with guardrails that prevent common shortcuts (missing tests, leaky abstractions, inconsistent naming).
+
+## Phases
+
+Each phase runs in its own AI session and produces artifacts the next phase consumes.
+
+| Phase | Purpose | Output |
+|---|---|---|
+| **1 — Domain Discovery** | Structured conversation to define entities, relationships, events, workflows, and business rules in pure business language — no implementation details. | `domain-specification.yaml` |
+| **2 — Resource Definition** | Map each domain concept to concrete technology choices — data stores, messaging, AI capabilities, hosting models. | `resource-implementation.yaml` |
+| **3 — Implementation Planning** | Resolve open questions, verify tooling (NuGet feeds, EF CLI), and produce a sequenced build plan. | `implementation-plan.md` |
+| **4 — Contract Scaffolding** | Generate solution structure, interfaces, DTOs, entity shells, test infrastructure, and no-op DI stubs. Gate: `dotnet build` succeeds on the full solution. | Compilable skeleton |
+| **5 — Implementation (TDD)** | Build vertical slices entity-by-entity across sub-phases 5a–5g. Phases 5a/5b use test-driven development (write tests first → red → implement → green). Phases 5c–5g use tests-after. | Production code + passing tests |
+
+Phase details: [START-AI.md](START-AI.md) § Phase Router.
 
 ## Approach
 
 The instruction set is designed around three core ideas:
 
-**1. Phased workflow, not a single prompt.**
-Work proceeds through four phases — Domain Discovery, Resource Definition, Implementation Planning, and Implementation. Each phase produces a concrete artifact (YAML spec, implementation plan, or code) that the next phase consumes. This prevents hallucinated architecture and ensures the AI has verified context before writing code.
+**1. Phased workflow with TDD.**
+Five phases prevent hallucinated architecture by ensuring verified context before code is written. Phase 4 produces a compilable skeleton so that Phase 5a/5b can follow a strict red/green TDD cycle — tests are written against contracts before any implementation exists. See [ai/tdd-protocol.md](ai/tdd-protocol.md).
 
 **2. Skills and templates as composable units.**
-Implementation knowledge is split into ~27 skill files (how things work) and ~20 template files (what to generate). An AI token manifest (`_manifest.json`) tracks estimated token costs, phase membership, and mode exclusions so the assistant loads only what's needed per phase, staying within context budgets. Templates carry `generates` and `requires` metadata, and the load-set resolver expands transitive dependencies automatically.
+Implementation knowledge is split into ~27 skill files (how things work) and ~25 template files (what to generate). An AI token manifest (`_manifest.json`) tracks estimated token costs, phase membership, and mode exclusions so the assistant loads only what's needed per phase, staying within context budgets. Templates carry `generates` and `requires` metadata, and the load-set resolver expands transitive dependencies automatically.
 
 **3. Composition patterns, not documentation alone.**
 A comprehensive pattern catalog (`support/sampleapp-patterns.md`) documents how all generated components wire together — startup sequences, database pooling, request context resolution, cache configuration, and middleware ordering. This grounds the generated output in proven, real-world patterns rather than abstract descriptions.
@@ -37,7 +51,7 @@ Use it for:
 
 For a phase-by-phase pointer map into the reference app, use [support/taskflow-proof-map.md](support/taskflow-proof-map.md).
 
-The AI assistant can access the repo via GitHub MCP or by cloning it locally. When stuck on how a pattern should look in practice, consult the reference app before inventing a new approach.
+The AI assistant can access the repo via GitHub MCP or by cloning it locally. When stuck on how a pattern should look in practice, consult the reference app before inventing a new approach. The reference app is always available as a live codebase the AI can search, read, and cross-reference during any phase.
 
 ## Quick Start
 
@@ -188,7 +202,7 @@ For an on-demand budget snapshot without the full preflight, run `python scripts
 
 ## Document Ownership
 
-- `README.md` — human onboarding, repository overview, layout, and release notes
+- `README.md` — human onboarding and repository overview
 - `START-AI.md` — canonical AI session bootstrap and phase router
 - `ai/SKILL.md` — Phase 5 execution policy only
 
@@ -199,20 +213,4 @@ For an on-demand budget snapshot without the full preflight, run `python scripts
 - `support/`: operator checklists, troubleshooting, handoff template, prompt catalog, and repo change notes
 - `skills/`, `templates/`, `scripts/`, `schemas/`: domain-specific content and validation schemas
 
-## Release Notes
 
-### [1.0] — 2026-04-01 — Initial baseline release
-
-#### Included at baseline
-
-- 5-phase workflow: Domain Discovery → Resource Definition → Implementation Planning → Contract Scaffolding → Implementation (5a–5g)
-- Manifest-driven token-aware phase loading (`_manifest.json`, `phase-load-packs.json`)
-- `modeExclusions` in `_manifest.json` as the source of truth for `full`, `lite`, and `api-only` modes
-- Dependency-aware `get-phase-load-set.py` with transitive `requires`/`dependencies` resolution, topological ordering, and budget reporting
-- `scripts/generate-phase-load-packs.py` as the only driver of phase/mode pack generation
-- `skills/identity-management.md` placed at canonical `phase-5f`
-- `ai/SKILL.md` scoped to Phase 5 execution guidance; prompt catalog moved to support/prompt-catalog.md
-- TaskFlow pattern catalog with composition wiring snippets
-- `support/HANDOFF.md` for session state preservation across context boundaries
-- Lint checks for manifest load-orchestration invariants
-- CI workflow (`instruction-preflight.yml`) validating manifest, load packs, lint, and YAML schema on every push/PR
