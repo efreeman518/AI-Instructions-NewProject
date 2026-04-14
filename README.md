@@ -16,7 +16,7 @@ Each phase runs in its own AI session and produces artifacts the next phase cons
 |---|---|---|
 | **1 — Domain Discovery** | Structured conversation to define entities, relationships, events, workflows, and business rules in pure business language — no implementation details. | `domain-specification.yaml` |
 | **2 — Resource Definition** | Map each resource requirement to concrete technology choices — data stores, messaging, AI capabilities, hosting models. | `resource-implementation.yaml` |
-| **3 — Implementation Planning** | Resolve open questions, verify tooling (NuGet feeds, CLIs), and produce a sequenced build plan. | `implementation-plan.md` |
+| **3 — Implementation Planning** | Resolve open questions, verify tooling (NuGet feeds, CLIs), discover project-specific CLIs and MCP servers, and produce a sequenced build plan. | `implementation-plan.md` |
 | **4 — Contract Scaffolding** | Generate solution structure, interfaces, DTOs, entity shells, test infrastructure, and no-op DI stubs. Gate: `dotnet build` succeeds on the full solution. | Compilable skeleton |
 | **5 — Implementation (TDD)** | Build vertical slices entity-by-entity across sub-phases 5a–5g. Phases 5a/5b use test-driven development (write tests first → red → implement → green). Phases 5c–5g use tests-after. | Production code + passing tests |
 
@@ -137,12 +137,11 @@ Notes:
 
 Optional additions: Git, Docker, Memory, web-search MCPs, Azure DevOps MCP.
 
-### Dynamic discovery protocol
+### Tooling discovery
 
-Before each phase, quickly check for new MCP servers for libraries/services in scope:
-1. Search npm (`mcp + <library/service>`)
-2. Check MCP registry
-3. If useful, add and note in [support/UPDATE-INSTRUCTIONS.md](support/UPDATE-INSTRUCTIONS.md)
+Phase 3 analyzes `resource-implementation.yaml` technology choices and actively researches available CLIs and MCP servers for the project's specific libraries and services. Results are recorded in the implementation plan's **Tooling & Environment Readiness** section and verified at the start of each subsequent phase.
+
+**CLI → MCP → online resources:** Prefer CLI tools first (lowest token cost), then MCP servers for interactive exploration, then documentation URLs and GitHub repos the AI can fetch during implementation.
 
 ## High-Value Features
 

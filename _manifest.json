@@ -15,7 +15,7 @@
             "env/**"
         ]
     },
-    "totalEstimatedTokens": 162168,
+    "totalEstimatedTokens": 163316,
     "contextBudget": {
         "default": 30000,
         "extended": 60000,
@@ -56,7 +56,7 @@
         {
             "path": "START-AI.md",
             "phase": "session-bootstrap",
-            "estimatedTokens": 2436
+            "estimatedTokens": 2740
         },
         {
             "path": "CLAUDE.md",
@@ -81,7 +81,7 @@
         {
             "path": "ai/implementation-plan.md",
             "phase": "phase-3",
-            "estimatedTokens": 1579
+            "estimatedTokens": 2178
         },
         {
             "path": "ai/contract-scaffolding.md",
@@ -639,7 +639,7 @@
         {
             "path": "support/execution-gates.md",
             "phase": "on-demand",
-            "estimatedTokens": 4539
+            "estimatedTokens": 4678
         },
         {
             "path": "support/vertical-slice-checklist.md",
@@ -654,7 +654,7 @@
         {
             "path": "support/HANDOFF.md",
             "phase": "on-demand",
-            "estimatedTokens": 851
+            "estimatedTokens": 875
         },
         {
             "path": "patterns/data-layer-wiring.md",
@@ -679,7 +679,7 @@
         {
             "path": "README.md",
             "phase": "support-only",
-            "estimatedTokens": 3563
+            "estimatedTokens": 3645
         },
         {
             "path": "support/prompt-catalog.md",

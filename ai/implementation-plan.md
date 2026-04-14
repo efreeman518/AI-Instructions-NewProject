@@ -114,6 +114,46 @@ Resolve before Phase 5 starts:
 |---|---|---|
 | 1 | _e.g., SQL for Orders, CosmosDB for ActivityLog_ | _Relational joins needed for Orders; ActivityLog is append-only_ |
 
+## Tooling & Environment Readiness
+
+Populated during Phase 3 by analyzing `resource-implementation.yaml` technology choices. The AI researches available CLIs, MCP servers, and online resources, then records findings here.
+
+**Preference order: CLI → MCP → online resources.** CLIs are most token-efficient with structured output. MCP servers add value for interactive exploration (docs, repos) when no CLI exists. When neither is available, record documentation URLs and GitHub repos the AI can fetch during later phases.
+
+### Required CLIs
+
+| Tool | Needed for | Phase | Install | Verified |
+|---|---|---|---|---|
+| `dotnet-ef` | EF migrations | 5a | `dotnet tool install dotnet-ef` | [ ] |
+| _e.g., `func`_ | _Azure Functions host_ | _5d_ | _`npm i -g azure-functions-core-tools@4`_ | _[ ]_ |
+| _e.g., `azd`_ | _IaC deployment_ | _5e_ | _`winget install Microsoft.Azd`_ | _[ ]_ |
+| _e.g., `uno-check`_ | _Uno workload validation_ | _5d_ | _`dotnet tool install -g uno.check`_ | _[ ]_ |
+
+### Recommended MCP Servers
+
+| Server | Phases | Why | Available |
+|---|---|---|---|
+| _e.g., Azure MCP_ | _5c, 5e_ | _IaC validation, resource checks_ | _[ ]_ |
+| _e.g., Playwright MCP_ | _5e_ | _E2E test debugging_ | _[ ]_ |
+
+### Online Resources
+
+For libraries/services with no CLI or MCP server, record documentation and repo URLs the AI can fetch during implementation.
+
+| Library/Service | Phase | Resource | URL |
+|---|---|---|---|
+| _e.g., FusionCache_ | _5c_ | _GitHub repo + wiki_ | _`https://github.com/ZiggyCreatures/FusionCache`_ |
+| _e.g., TickerQ_ | _5d_ | _NuGet readme + samples_ | _`https://github.com/user/TickerQ`_ |
+| _e.g., NetArchTest_ | _5e_ | _GitHub README_ | _`https://github.com/BenMorris/NetArchTest`_ |
+
+### Discovery Notes
+
+_During Phase 3, search for CLIs, MCP servers, and online resources matching project-specific libraries/services (npm `mcp + <library>`, MCP registry, GitHub, official docs). Record findings using three-tier preference: CLI → MCP → online resources._
+
+- _e.g., FusionCache — no CLI or MCP; GitHub wiki added to Online Resources_
+- _e.g., TickerQ — no CLI or MCP; NuGet readme added to Online Resources_
+- _e.g., YARP — no dedicated MCP; Microsoft Docs MCP covers it via `microsoft_docs_search`_
+
 ## Risk / Blockers
 
 | Risk | Mitigation |
@@ -139,5 +179,7 @@ Before starting Phase 4 (contract scaffolding), verify all of the following:
 - [ ] `scaffoldMode`, `testingProfile`, and all host flags confirmed
 - [ ] Custom NuGet feed URLs and auth configured (if any)
 - [ ] Domain specification and resource implementation YAML files are complete
+- [ ] Tooling & Environment Readiness section populated (CLIs identified, MCP discovery complete)
+- [ ] All required CLIs verified or install commands provided
 - [ ] Implementation plan reviewed and approved by human
 

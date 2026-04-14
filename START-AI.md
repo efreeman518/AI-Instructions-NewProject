@@ -70,6 +70,16 @@ Before loading phase files, verify the AI assistant has appropriate MCP servers 
 
 If a suggested MCP server is not available, note it in `HANDOFF.md` under Residual Environment Note and continue without it.
 
+### Project-Specific Tooling (Phase 3+)
+
+If `implementation-plan.md` exists in the target project root, load its **Tooling & Environment Readiness** section at the start of every session. Before beginning phase work:
+
+1. Check that all CLIs marked for the current phase are installed (run `--version` or equivalent).
+2. Verify MCP servers listed for the current phase are enabled.
+3. If a required CLI is missing, install it or record the gap in `HANDOFF.md`.
+
+**Prefer CLIs over MCP servers over online resources.** CLIs produce structured output with lower token cost. MCP servers add value for interactive exploration. When neither exists, use documentation URLs and GitHub repos recorded in the implementation plan (fetch via Fetch MCP or direct file read).
+
 ## Conflict Resolution Order
 
 When instructions in different files disagree:
@@ -111,7 +121,8 @@ Each phase is one session. Load only the files listed for the current phase.
   - `ai/resource-implementation-schema.md` (reference)
   - **Pre-flight:** Ask for custom/private NuGet feed URLs and auth method. Update `nuget.config`. Require `dotnet restore` exit 0.
   - **Pre-flight:** Verify `dotnet ef` is available (`dotnet tool list`). If missing: `dotnet new tool-manifest && dotnet tool install dotnet-ef`. If `nuget.config` uses package source mapping, add `<package pattern="dotnet-ef" />` under the `nuget.org` source.
-  - Output: `implementation-plan.md` in target project root, open questions resolved
+  - **Tooling discovery:** Analyze `resource-implementation.yaml` to identify all required CLIs and beneficial MCP servers for Phases 4–5. Search npm (`mcp + <library/service>`) and MCP registries for project-specific servers. For libraries with no CLI or MCP, locate documentation URLs and GitHub repos. Populate the Tooling & Environment Readiness section of the implementation plan. Preference order: CLI → MCP → online resources.
+  - Output: `implementation-plan.md` in target project root, open questions resolved, tooling identified
   - Session end: plan reviewed, blockers recorded in `HANDOFF.md` → close session
 
 - **Phase 4 (Contract Scaffolding)** — Session 4

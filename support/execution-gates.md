@@ -97,6 +97,15 @@ Configure these in your AI client (VS Code `settings.json` or Claude Desktop con
 
 - [ ] MCP servers configured per [../README.md](../README.md) (Essential + phase-relevant)
 
+### Tooling Verification (Phase 3 Gate)
+
+Phase 3 must populate the **Tooling & Environment Readiness** section of `implementation-plan.md`. Before closing Phase 3:
+
+- [ ] All CLIs required by resource YAML technology choices are identified with install commands
+- [ ] MCP server discovery completed (npm search, MCP registry) for project-specific libraries
+- [ ] CLI preference applied: CLIs chosen over MCP servers where both exist (lower token cost)
+- [ ] Each CLI entry has a verified checkbox or an install command the operator can run before Phase 4
+
 ---
 
 ## Core Loop (Run After Each Scaffolding Sub-Phase)

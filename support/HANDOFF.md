@@ -24,6 +24,7 @@ hostGates:                 # Phase 5d per-host status: not-started | scaffolded 
   functionApp: not-started
   unoUI: not-started       # always a dedicated session
 resumeCommand: ""          # exact prompt to paste at the next session start
+toolingNotes: ""           # CLIs/MCPs discovered in Phase 3; note any missing or unavailable
 ```
 
 ## Next Step
