@@ -6,7 +6,7 @@ Pragmatic instruction set for AI-assisted scaffolding of C#/.NET business applic
 
 This instruction set turns an AI coding assistant into a guided scaffolding engine for production-grade C#/.NET solutions. Instead of generating throwaway boilerplate, it drives a structured five-phase process — from domain discovery through implementation — producing consistent, buildable, testable code that follows clean architecture and the conventions of a mature engineering team.
 
-The goal is not to replace engineering judgment but to compress the 2–5 day "green-field to first vertical slice" timeline down to hours, with guardrails that prevent common shortcuts (missing tests, leaky abstractions, inconsistent naming).
+The goal is not to replace engineering judgment but to compress the multi day/week "green-field to first vertical slice" timeline down to hours, with guardrails that prevent common shortcuts (missing tests, leaky abstractions, inconsistent naming).
 
 ## Phases
 
@@ -15,8 +15,8 @@ Each phase runs in its own AI session and produces artifacts the next phase cons
 | Phase | Purpose | Output |
 |---|---|---|
 | **1 — Domain Discovery** | Structured conversation to define entities, relationships, events, workflows, and business rules in pure business language — no implementation details. | `domain-specification.yaml` |
-| **2 — Resource Definition** | Map each domain concept to concrete technology choices — data stores, messaging, AI capabilities, hosting models. | `resource-implementation.yaml` |
-| **3 — Implementation Planning** | Resolve open questions, verify tooling (NuGet feeds, EF CLI), and produce a sequenced build plan. | `implementation-plan.md` |
+| **2 — Resource Definition** | Map each resource requirement to concrete technology choices — data stores, messaging, AI capabilities, hosting models. | `resource-implementation.yaml` |
+| **3 — Implementation Planning** | Resolve open questions, verify tooling (NuGet feeds, CLIs), and produce a sequenced build plan. | `implementation-plan.md` |
 | **4 — Contract Scaffolding** | Generate solution structure, interfaces, DTOs, entity shells, test infrastructure, and no-op DI stubs. Gate: `dotnet build` succeeds on the full solution. | Compilable skeleton |
 | **5 — Implementation (TDD)** | Build vertical slices entity-by-entity across sub-phases 5a–5g. Phases 5a/5b use test-driven development (write tests first → red → implement → green). Phases 5c–5g use tests-after. | Production code + passing tests |
 
