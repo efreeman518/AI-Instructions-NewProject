@@ -14,7 +14,7 @@
             "env/**"
         ]
     },
-    "totalEstimatedTokens": 166038,
+    "totalEstimatedTokens": 166037,
     "contextBudget": {
         "default": 30000,
         "extended": 60000,
@@ -668,7 +668,7 @@
         {
             "path": "README.md",
             "phase": "support-only",
-            "estimatedTokens": 4210
+            "estimatedTokens": 4209
         },
         {
             "path": "support/prompt-catalog.md",
