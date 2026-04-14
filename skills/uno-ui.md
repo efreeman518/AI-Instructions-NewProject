@@ -207,22 +207,81 @@ public partial class App : Application
 
 ### Shell Control
 
-Create a `Shell.xaml` UserControl with `ExtendedSplashScreen` as the loading container:
+Create a `Shell.xaml` UserControl with `ExtendedSplashScreen` as the loading container. The `Content` property MUST hold a `<Frame />` — this is what Uno Extensions Navigation writes page content into. The `LoadingContentTemplate` shows the spinner while the host boots. Both are required.
 
 ```xml
 <UserControl x:Class="{Namespace}.Views.Shell"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:utu="using:Uno.Toolkit.UI">
-    <utu:ExtendedSplashScreen x:Name="Splash" ...>
+    <utu:ExtendedSplashScreen x:Name="Splash"
+                              HorizontalAlignment="Stretch"
+                              VerticalAlignment="Stretch"
+                              HorizontalContentAlignment="Stretch"
+                              VerticalContentAlignment="Stretch">
         <utu:ExtendedSplashScreen.LoadingContentTemplate>
             <DataTemplate>
-                <ProgressRing IsActive="True" ... />
+                <Grid>
+                    <ProgressRing IsActive="True"
+                                  VerticalAlignment="Center"
+                                  HorizontalAlignment="Center"
+                                  Height="60" Width="60" />
+                </Grid>
             </DataTemplate>
         </utu:ExtendedSplashScreen.LoadingContentTemplate>
+
+        <utu:ExtendedSplashScreen.Content>
+            <Frame />
+        </utu:ExtendedSplashScreen.Content>
     </utu:ExtendedSplashScreen>
 </UserControl>
 ```
+
+`Shell.xaml.cs` MUST implement `IContentControlProvider` — this is how `NavigateAsync<Shell>()` locates the `Frame` for page navigation. Without it, the app starts but never renders any page content.
+
+```csharp
+using Microsoft.UI.Xaml.Controls;
+using Uno.Toolkit.UI;
+using Uno.UI.Extensions;
+
+namespace {Namespace}.Views;
+
+public sealed partial class Shell : UserControl, IContentControlProvider
+{
+    public ExtendedSplashScreen SplashScreen => Splash;
+    public ContentControl ContentControl => Splash;
+    public Frame? RootFrame => Splash.FindFirstDescendant<Frame>();
+
+    public Shell() => this.InitializeComponent();
+}
+```
+
+`ShellModel` MUST navigate to the first route on startup. Without this the Frame sits empty after the splash screen clears.
+
+```csharp
+using Uno.Extensions.Navigation;
+
+namespace {Namespace}.Presentation;
+
+public partial record ShellModel
+{
+    private readonly INavigator _navigator;
+
+    public ShellModel(INavigator navigator)
+    {
+        _navigator = navigator;
+        _ = Start();
+    }
+
+    public async Task Start() => await _navigator.NavigateRouteAsync(this, "Main/{FirstPage}");
+}
+```
+
+### Shell Non-Negotiables
+
+- `ExtendedSplashScreen.Content` contains `<Frame />` — **never omit this**. The app will appear to load (spinner disappears) but show a blank screen because there is no navigation target.
+- Shell code-behind implements `IContentControlProvider` — required by `NavigateAsync<Shell>()` to bind the `Frame`.
+- `ShellModel` calls `NavigateRouteAsync` in the constructor (fire-and-forget via `_ = Start()`) — this triggers the first navigation immediately after the host finishes loading.
 
 Configure everything through `IApplicationBuilder`:
 
@@ -361,6 +420,12 @@ Scaffold with `.AddCustom()` (no external identity provider required). When read
 - [ ] `Features:UseMocks` implemented (mock + live path)
 - [ ] Core pages scaffolded: Home, List, Detail, Settings (+ Login when auth enabled)
 - [ ] Route mappings and page-model bindings compile
+- [ ] `Shell.xaml` has `ExtendedSplashScreen.Content` containing `<Frame />`
+- [ ] `Shell.xaml.cs` implements `IContentControlProvider`
+- [ ] `ShellModel` navigates to first route in constructor
+- [ ] `Platforms/WebAssembly/WasmScripts/AppManifest.js` present
+- [ ] `launchSettings.json` HTTP port not in Windows excluded range (use `55553`, not `55552`)
+- [ ] Gateway `CorsSettings.AllowedOrigins` includes `https://localhost:55551` and `http://localhost:55553`
 - [ ] UI uses Gateway endpoints only
 
 ## WASM Debugging Ladder
@@ -374,6 +439,73 @@ When a Uno WASM build or runtime failure occurs, follow this fixed validation or
 5. **Browser console:** Check for JS errors, CORS failures, or WASM instantiation errors. These narrow the fault to runtime init vs asset serving.
 
 Do not apply broad hosting or routing rewrites before completing this sequence.
+
+## WASM Host Launch Requirements
+
+These apply to `WasmAppHost` (the dev host launched by `dotnet run` in Uno WASM projects).
+
+### AppManifest.js — Required Bootstrap File
+
+`Uno.UI.js` does `define(["./AppManifest.js"])` via RequireJS at startup. If the file does not exist the splash screen never clears — no JS error is visible.
+
+Every Uno WASM project MUST contain:
+
+```
+Platforms/WebAssembly/WasmScripts/AppManifest.js
+```
+
+Minimal content:
+
+```js
+var UnoAppManifest = {
+    displayName: "{AppName}",
+    splashScreenColor: "transparent"
+};
+```
+
+Add this file during initial scaffold. Do not leave it absent and rely on the build to generate it — it is not generated automatically.
+
+### Working Directory Sensitivity
+
+`WasmAppHost` resolves the hashed `package_<hash>/` directory relative to CWD. It only produces the correct `index.html` and static-asset paths when run **from the Uno project directory**, not from the solution root or a parent directory.
+
+Always run:
+
+```powershell
+Set-Location 'src\UI\{Project}.Uno'
+dotnet run
+```
+
+Never use `dotnet run --project <path>` from an unrelated working directory — the static asset paths in the output will be wrong and all `package_<hash>/*` requests will 404.
+
+### Port Exclusion on Windows (Hyper-V / WSL)
+
+Windows reserves port ranges for Hyper-V and WSL (shown as PID 4 owning ports in `Listen` state). These ports cannot be bound by user-space processes — attempts fail silently or with error 10013.
+
+Diagnose before changing launchSettings:
+
+```powershell
+netsh int ipv4 show excludedportrange protocol=tcp | Select-String '5555[0-9]'
+```
+
+If a port used in `launchSettings.json` is listed, change it to a port confirmed absent from the exclusion list.
+
+**Known-bad port**: `55552` is routinely in the excluded range on Hyper-V/Docker Desktop hosts.
+**Known-good ports**: `55551` (HTTPS) and `55553` (HTTP) are not excluded on a standard developer machine.
+
+When scaffolding a new Uno project's `launchSettings.json`, use:
+
+```json
+"applicationUrl": "https://localhost:55551;http://localhost:55553"
+```
+
+Also update the Gateway `CorsSettings.AllowedOrigins` to include both `https://localhost:55551` and `http://localhost:55553`.
+
+### Post-Rebuild Browser Refresh
+
+After any rebuild, `WasmAppHost` serves a new `package_<hash>/` directory. The old hash is instantly stale. Always open a **new browser tab** to the HTTPS origin — never reload an existing tab. Existing tabs will 404 all their `package_*` asset requests until a full address-bar navigation occurs.
+
+---
 
 ## Generated Code Intervention Rule
 

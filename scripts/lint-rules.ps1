@@ -19,7 +19,7 @@ function Add-Issue {
 function Test-IgnoredMarkdownPath {
     param([string]$RelativePath)
 
-    return ($RelativePath -match '(^|/)(bin|obj|\.venv|venv|env)/')
+    return ($RelativePath -match '(^|/)(\.git|\.github|\.claude|bin|obj|\.venv|venv|env)/')
 }
 
 function Test-ManifestScopedPath {

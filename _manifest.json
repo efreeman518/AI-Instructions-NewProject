@@ -14,7 +14,7 @@
             "env/**"
         ]
     },
-    "totalEstimatedTokens": 166037,
+    "totalEstimatedTokens": 167393,
     "contextBudget": {
         "default": 30000,
         "extended": 60000,
@@ -436,7 +436,7 @@
         {
             "path": "skills/uno-ui.md",
             "phase": "phase-5d",
-            "estimatedTokens": 5390,
+            "estimatedTokens": 6746,
             "dependencies": [
                 "skills/solution-structure.md",
                 "skills/gateway.md",
