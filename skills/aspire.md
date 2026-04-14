@@ -182,12 +182,46 @@ If using dev tunnels, add `Aspire.Hosting.DevTunnels`.
 
 Before running `dotnet run --project src/Host/Aspire/AppHost`, confirm the substrate:
 
-1. **Docker running:** `docker info` succeeds. If not, start Docker — do not debug app code.
-2. **Required env vars set:** `DOTNET_DASHBOARD_OTLP_ENDPOINT_URL`, `ASPIRE_ALLOW_UNSECURED_TRANSPORT` (when running from CLI without launch profile).
-3. **Ports available:** No stale containers holding SQL/Redis ports. Run `docker ps` to check.
-4. **NuGet restore clean:** `dotnet restore` on the AppHost project succeeds (catches `packageSourceMapping` issues before launch).
+1. **Docker/Podman running:** `docker info` or `podman info` succeeds. If not, start the container runtime — do not debug app code.
+2. **launchSettings.json exists:** AppHost requires `Properties/launchSettings.json` with OTLP/dashboard endpoints. Without it, `dotnet run` starts but the dashboard never opens and the terminal appears blank. Minimal template:
+   ```json
+   {
+     "profiles": {
+       "https": {
+         "commandName": "Project",
+         "dotnetRunMessages": true,
+         "launchBrowser": true,
+         "applicationUrl": "https://localhost:17179;http://localhost:15180",
+         "environmentVariables": {
+           "ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL": "https://localhost:21147",
+           "DOTNET_DASHBOARD_OTLP_ENDPOINT_URL": "https://localhost:21147",
+           "ASPIRE_ALLOW_UNSECURED_TRANSPORT": "true"
+         }
+       },
+       "http": {
+         "commandName": "Project",
+         "dotnetRunMessages": true,
+         "launchBrowser": true,
+         "applicationUrl": "http://localhost:15180",
+         "environmentVariables": {
+           "ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL": "http://localhost:19197",
+           "DOTNET_DASHBOARD_OTLP_ENDPOINT_URL": "http://localhost:19197",
+           "ASPIRE_ALLOW_UNSECURED_TRANSPORT": "true"
+         }
+       }
+     }
+   }
+   ```
+3. **User secrets initialized for SQL password:** If the AppHost uses `builder.AddParameter("sql-password", secret: true)`, the secret must exist in user secrets before launch:
+   ```powershell
+   dotnet user-secrets init --project src/Host/Aspire/AppHost
+   dotnet user-secrets set "Parameters:sql-password" "<YourPassword>" --project src/Host/Aspire/AppHost
+   ```
+   Without this, the SQL container starts but cannot authenticate.
+4. **Ports available:** No stale containers holding SQL/Redis ports. Run `docker ps` / `podman ps` to check.
+5. **NuGet restore clean:** `dotnet restore` on the AppHost project succeeds (catches `packageSourceMapping` issues before launch).
 
-Only after all four pass, proceed to `dotnet run`.
+Only after all five pass, proceed to `dotnet run`.
 
 ---
 
@@ -214,11 +248,34 @@ When writing `HANDOFF.md`, record the **method to discover URLs** (e.g., "check 
 
 ---
 
+## Debugging Individual Hosts
+
+When a multi-host Aspire run fails, isolate the problem by running hosts standalone:
+
+```powershell
+cd src/Host/{Host}.Api
+dotnet run 2>&1
+```
+
+This bypasses Aspire orchestration and surfaces startup exceptions (DI failures, missing config, migration errors) directly in the console. Fix standalone first, then return to AppHost.
+
+**Common gotcha:** Orphaned `dotnet.exe` processes from prior runs can hold file locks and prevent builds. Check with `Get-Process -Name dotnet` and kill if needed.
+
+---
+
+## Uno.Sdk Incompatibility
+
+Uno.Sdk projects (`<Project Sdk="Uno.Sdk/..."`) do not expose the `GetTargetPath` MSBuild target that Aspire uses for project introspection. Adding an Uno project reference to AppHost causes `MSB4057`. **Comment out the Uno ProjectReference and AddProject call in AppHost.** Run Uno WASM separately.
+
+---
+
 ## Verification
 
 - [ ] AppHost starts and dashboard is reachable
+- [ ] All resources show "Running" in dashboard (not just "Starting")
 - [ ] API/Gateway/Scheduler startup order works (`WaitFor`)
 - [ ] SQL/Redis references inject expected connection keys
 - [ ] Scheduler runs with single replica
+- [ ] Functions listeners start without connection refused errors
 - [ ] Aspire resources match IaC resource list
 - [ ] Optional emulators/dev tunnel are wired only when needed

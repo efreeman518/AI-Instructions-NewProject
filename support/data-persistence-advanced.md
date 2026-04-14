@@ -104,6 +104,58 @@ dotnet ef migrations script --idempotent `
 
 Migration files should contain schema changes only. Use one-time background jobs for non-trivial backfill and use `migrationBuilder.Sql()` only for simple, safe updates.
 
+### Applying Migrations at Startup
+
+For development/local environments, apply pending EF migrations automatically during host startup. Guard with a connection string check so the host doesn't crash when DB is unavailable:
+
+```csharp
+var connStr = builder.Configuration.GetConnectionString("{Project}DbContextTrxn");
+if (!string.IsNullOrEmpty(connStr))
+{
+    using var scope = app.Services.CreateScope();
+    var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<{Project}DbContextTrxn>>();
+    await using var db = await factory.CreateDbContextAsync();
+    await db.Database.MigrateAsync();
+}
+```
+
+Alternatively, use the `IStartupTask` pattern from [bootstrapper.md](../skills/bootstrapper.md).
+
+> **Production:** Prefer idempotent migration scripts or CI pipeline-applied migrations over runtime `MigrateAsync`.
+
+### Third-Party Operational Store Schemas
+
+Libraries like TickerQ, Hangfire, or Quartz may use their own EF DbContext for operational tables but do not ship bundled EF migrations. In this case:
+
+1. `MigrateAsync()` is a no-op (no migrations to apply).
+2. `EnsureCreatedAsync()` is a no-op when the database already exists from another context's migrations.
+3. Use `GenerateCreateScript()` + batch execution with existence check:
+
+```csharp
+var conn = db.Database.GetDbConnection();
+await conn.OpenAsync();
+await using var cmd = conn.CreateCommand();
+cmd.CommandText = "SELECT CASE WHEN EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME = '{PrimaryTable}') THEN 1 ELSE 0 END";
+var result = await cmd.ExecuteScalarAsync();
+await conn.CloseAsync();
+
+if (result is not (int)1)
+{
+    var script = db.Database.GenerateCreateScript();
+    var batches = Regex.Split(script, @"^\s*GO\s*$", RegexOptions.Multiline | RegexOptions.IgnoreCase)
+        .Where(b => !string.IsNullOrWhiteSpace(b));
+    foreach (var batch in batches)
+    {
+        await db.Database.ExecuteSqlRawAsync(batch);
+    }
+}
+```
+
+Key points:
+- **Always check existence first** — running CREATE statements against existing tables produces `fail:` log spam on every restart with persistent volumes.
+- `ExecuteSqlRawAsync` cannot handle `GO` batch separators — split first.
+- Swallowing all exceptions in a catch-all hides real failures; prefer the existence check pattern.
+
 ### Zero-Downtime Schema Changes
 
 Use expand/contract:
