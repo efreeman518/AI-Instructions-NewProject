@@ -204,7 +204,7 @@ For an on-demand budget snapshot without the full preflight, run `python scripts
 - `README.md` — human onboarding and repository overview
 - `START-AI.md` — canonical AI session bootstrap and phase router
 - `ai/SKILL.md` — scaffolding policy and conventions (loaded as Phase 5 base)
-
+ 
 ## Layout
 
 - Root: entry points and machine-readable metadata (`README.md`, `START-AI.md`, `_manifest.json`, `phase-load-packs.json`)
