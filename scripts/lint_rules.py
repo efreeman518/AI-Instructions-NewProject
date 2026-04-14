@@ -12,8 +12,7 @@ def add_issue(category, file, message, line=0):
 
 def should_ignore_markdown_path(relative_path):
     return (
-        relative_path.startswith("sample-app/")
-        or re.search(r"(^|/)(bin|obj|\.venv|venv|env)/", relative_path) is not None
+        re.search(r"(^|/)(bin|obj|\.venv|venv|env)/", relative_path) is not None
     )
 
 

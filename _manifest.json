@@ -9,13 +9,12 @@
         ],
         "exclude": [
             ".git/**",
-            "sample-app/**",
             ".venv/**",
             "venv/**",
             "env/**"
         ]
     },
-    "totalEstimatedTokens": 163316,
+    "totalEstimatedTokens": 163490,
     "contextBudget": {
         "default": 30000,
         "extended": 60000,
@@ -51,12 +50,12 @@
         {
             "path": "_manifest.json",
             "phase": "metadata",
-            "estimatedTokens": 5520
+            "estimatedTokens": 5513
         },
         {
             "path": "START-AI.md",
             "phase": "session-bootstrap",
-            "estimatedTokens": 2740
+            "estimatedTokens": 2841
         },
         {
             "path": "CLAUDE.md",
@@ -101,7 +100,7 @@
         {
             "path": "ai/SKILL.md",
             "phase": "phase-5-base",
-            "estimatedTokens": 3236
+            "estimatedTokens": 3268
         },
         {
             "path": "ai/placeholder-tokens.md",
@@ -154,7 +153,7 @@
         {
             "path": "templates/repository-template.md",
             "phase": "phase-5a",
-            "estimatedTokens": 2470,
+            "estimatedTokens": 2469,
             "generates": [
                 "{Entity}RepositoryTrxn.cs",
                 "{Entity}RepositoryQuery.cs",
@@ -246,7 +245,7 @@
         {
             "path": "skills/bootstrapper.md",
             "phase": "phase-5b",
-            "estimatedTokens": 1441
+            "estimatedTokens": 1445
         },
         {
             "path": "skills/api.md",
@@ -632,11 +631,6 @@
             "estimatedTokens": 3176
         },
         {
-            "path": "support/sampleapp-patterns.md",
-            "phase": "on-demand",
-            "estimatedTokens": 461
-        },
-        {
             "path": "support/execution-gates.md",
             "phase": "on-demand",
             "estimatedTokens": 4678
@@ -679,12 +673,17 @@
         {
             "path": "README.md",
             "phase": "support-only",
-            "estimatedTokens": 3645
+            "estimatedTokens": 3690
         },
         {
             "path": "support/prompt-catalog.md",
             "phase": "support-only",
             "estimatedTokens": 1760
+        },
+        {
+            "path": "support/pattern-dispatcher.md",
+            "phase": "on-demand",
+            "estimatedTokens": 461
         }
     ],
     "phases": {

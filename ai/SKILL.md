@@ -14,7 +14,8 @@ Use for:
 
 ## Non-Negotiables
 
-- Load pattern files from `patterns/` only when needed for cross-project wiring. Use [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) as the index to find the right file.
+- **Conflict resolution order:** `support/execution-gates.md` > this file (`ai/SKILL.md`) > individual skill files > templates.
+- Load pattern files from `patterns/` only when needed for cross-project wiring. Use [../support/pattern-dispatcher.md](../support/pattern-dispatcher.md) as the index to find the right file.
 - **Load [../support/ef-packages-reference.md](../support/ef-packages-reference.md) before Phase 5a** to know which base types (DbContextBase, DomainResult, IRequestContext, etc.) come from the EF.Packages private feed. Do not regenerate these types.
 - Generate code only in the user's new project directory.
 - Use `.slnx` (not legacy `.sln`).

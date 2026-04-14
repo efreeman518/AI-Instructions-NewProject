@@ -41,7 +41,7 @@ Status: MATCH | MISMATCH | FIRST-TIME
 ```
 
 - **MATCH** → proceed.
-- **MISMATCH** → stop. Warn the user: *"Target project was scaffolded with instruction set v{old}; current is v{new}. Review README.md release notes for breaking changes before continuing."*
+- **MISMATCH** → stop. Warn the user: *"Target project was scaffolded with instruction set v{old}; current is v{new}. Review the instruction set changes before continuing."*
 - **FIRST-TIME** → proceed. After Phase 4 completes, create `.instruction-version` in the target project root with the manifest version string.
 
 If `HANDOFF.md` contains an `instructionVersion` field, include it in the comparison.
@@ -137,7 +137,7 @@ Each phase is one session. Load only the files listed for the current phase.
   - Session end: gate passes, `contractsScaffolded: true` in `HANDOFF.md` → close session
 
 - **Phase 5 (Implementation)** — One session per sub-phase (5a through 5g)
-  - Base: `ai/SKILL.md` + `ai/placeholder-tokens.md` + `ai/tdd-protocol.md`
+  - Base: `ai/SKILL.md` + `ai/placeholder-tokens.md` + `ai/tdd-protocol.md` + `support/ef-packages-reference.md`
   - Plus only the skill/template files for the current sub-phase (use load set script)
   - **Phase 5a/5b use TDD:** contracts, entity shells, and test infrastructure already exist from Phase 4. Write tests first (red), then implement (green). See `ai/tdd-protocol.md`.
   - **Phase 5c/5d use tests-after:** implement infrastructure, then write tests at end of session.
@@ -148,7 +148,7 @@ Each phase is one session. Load only the files listed for the current phase.
 Do not preload these. Load only when the trigger condition is met:
 
 - `support/quick-reference.md` — **load when** scaffolding entities/endpoints and you need naming conventions, DI patterns, or config key lookups
-- `support/sampleapp-patterns.md` — **load when** you need the pattern index to find the right `patterns/` file for the current phase
+- `support/pattern-dispatcher.md` — **load when** you need the pattern index to find the right `patterns/` file for the current phase
 - `patterns/data-layer-wiring.md` — **load before Phase 5a/5b** for DB context pooling, OnModelCreating, startup tasks, seed data, scaffold migrations
 - `patterns/api-host-wiring.md` — **load before Phase 5b/5c** for API startup sequence, request context, conditional auth
 - `patterns/infrastructure-wiring.md` — **load before Phase 5c/5d** for multi-cache config, Aspire resource wiring
@@ -159,6 +159,9 @@ Do not preload these. Load only when the trigger condition is met:
 - `support/troubleshooting.md` — **load when** a build/test/run failure occurs that isn't resolved by the one-pass fix attempt
 - `support/execution-gates.md` — **load when** validating phase completion gates or running operator setup checks
 - `templates/index.md` — **load when** you need a quick lookup for "I need to scaffold X → load template Y + skill Z"
+- `support/vertical-slice-checklist.md` — **load when** adding a new entity to an existing project (fast-path) or verifying slice completeness
+- `templates/test-templates.md` — **load when** scaffolding test projects and you need the base test class patterns
+- `support/UPDATE-INSTRUCTIONS.md` — **load when** recording instruction gaps or improvements discovered during scaffolding
 
 ## Defaults Source of Truth
 

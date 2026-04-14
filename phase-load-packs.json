@@ -280,7 +280,6 @@
                 "support/data-persistence-advanced.md",
                 "support/taskflow-proof-map.md",
                 "support/troubleshooting.md",
-                "support/sampleapp-patterns.md",
                 "support/execution-gates.md",
                 "support/vertical-slice-checklist.md",
                 "support/UPDATE-INSTRUCTIONS.md",
@@ -288,7 +287,8 @@
                 "patterns/data-layer-wiring.md",
                 "patterns/api-host-wiring.md",
                 "patterns/infrastructure-wiring.md",
-                "patterns/expected-output-index.md"
+                "patterns/expected-output-index.md",
+                "support/pattern-dispatcher.md"
             ]
         },
         "lite": {
@@ -391,7 +391,6 @@
                 "support/data-persistence-advanced.md",
                 "support/taskflow-proof-map.md",
                 "support/troubleshooting.md",
-                "support/sampleapp-patterns.md",
                 "support/execution-gates.md",
                 "support/vertical-slice-checklist.md",
                 "support/UPDATE-INSTRUCTIONS.md",
@@ -399,7 +398,8 @@
                 "patterns/data-layer-wiring.md",
                 "patterns/api-host-wiring.md",
                 "patterns/infrastructure-wiring.md",
-                "patterns/expected-output-index.md"
+                "patterns/expected-output-index.md",
+                "support/pattern-dispatcher.md"
             ]
         },
         "api-only": {
@@ -503,7 +503,6 @@
                 "support/data-persistence-advanced.md",
                 "support/taskflow-proof-map.md",
                 "support/troubleshooting.md",
-                "support/sampleapp-patterns.md",
                 "support/execution-gates.md",
                 "support/vertical-slice-checklist.md",
                 "support/UPDATE-INSTRUCTIONS.md",
@@ -511,7 +510,8 @@
                 "patterns/data-layer-wiring.md",
                 "patterns/api-host-wiring.md",
                 "patterns/infrastructure-wiring.md",
-                "patterns/expected-output-index.md"
+                "patterns/expected-output-index.md",
+                "support/pattern-dispatcher.md"
             ]
         }
     }

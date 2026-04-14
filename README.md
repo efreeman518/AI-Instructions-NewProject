@@ -33,7 +33,7 @@ Five phases prevent hallucinated architecture by ensuring verified context befor
 Implementation knowledge is split into ~27 skill files (how things work) and ~25 template files (what to generate). An AI token manifest (`_manifest.json`) tracks estimated token costs, phase membership, and mode exclusions so the assistant loads only what's needed per phase, staying within context budgets. Templates carry `generates` and `requires` metadata, and the load-set resolver expands transitive dependencies automatically.
 
 **3. Composition patterns, not documentation alone.**
-A comprehensive pattern catalog (`support/sampleapp-patterns.md`) documents how all generated components wire together — startup sequences, database pooling, request context resolution, cache configuration, and middleware ordering. This grounds the generated output in proven, real-world patterns rather than abstract descriptions.
+Pattern files in `patterns/` document how generated components wire together across projects — database context pooling, API startup sequences, request context resolution, cache configuration, and Aspire resource wiring. An index (`support/pattern-dispatcher.md`) maps each pattern file to its relevant phase. This grounds the generated output in proven, real-world patterns rather than abstract descriptions.
 
 ## Reference Application
 
@@ -114,7 +114,7 @@ Expected shape:
 
 Notes:
 - `.instructions/support/HANDOFF.md` is the template.
-- The working `HANDOFF.md` used to resume AI sessions is created in the target project root during Phase 5.
+- A working `HANDOFF.md` is created in the target project root at the end of every phase and updated after each Phase 5 sub-phase.
 
 ## Recommended MCP Servers
 
@@ -158,7 +158,7 @@ Phase 3 analyzes `resource-implementation.yaml` technology choices and actively 
 | **Safe session handoff** | Context budget tracking per sub-phase plus a `HANDOFF.md` template let the AI resume cleanly across sessions without losing progress or re-reading the full instruction set. |
 | **Result pattern error flow** | Domain → Service → Endpoint error mapping is fully documented with a type mapping table, anti-patterns, and end-to-end trace example. No exceptions for business logic. |
 | **Test data builders** | Fluent builder patterns for entities and DTOs ensure tests construct valid objects by default and override only the property under test. |
-| **Composition pattern catalog** | A comprehensive pattern catalog (`support/sampleapp-patterns.md`) documents cross-file wiring — startup sequences, database pooling, request context, cache configuration, middleware ordering — with inline code snippets. |
+| **Composition pattern catalog** | Pattern files in `patterns/` document cross-project wiring — database pooling, API startup sequence, request context, cache configuration, Aspire resource wiring — with inline code snippets. An index (`support/pattern-dispatcher.md`) maps each to its relevant phase. |
 | **Prompt catalog** | Copy-paste prompts for each phase live in [support/prompt-catalog.md](support/prompt-catalog.md), keeping `README.md` focused on human onboarding while [START-AI.md](START-AI.md) stays canonical for execution. |
 
 ## Mode Selection
@@ -203,7 +203,7 @@ For an on-demand budget snapshot without the full preflight, run `python scripts
 
 - `README.md` — human onboarding and repository overview
 - `START-AI.md` — canonical AI session bootstrap and phase router
-- `ai/SKILL.md` — Phase 5 execution policy only
+- `ai/SKILL.md` — scaffolding policy and conventions (loaded as Phase 5 base)
 
 ## Layout
 

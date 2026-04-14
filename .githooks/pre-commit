@@ -3,7 +3,7 @@
 # Install: git config core.hooksPath .githooks
 
 # Check if any instruction .md, .json (non-phase-load-packs), or script files are staged
-STAGED_INSTRUCTION_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(md|ps1)$|_manifest\.json$' | grep -v 'phase-load-packs.json' | grep -v 'sample-app/')
+STAGED_INSTRUCTION_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(md|ps1)$|_manifest\.json$' | grep -v 'phase-load-packs.json')
 
 if [ -z "$STAGED_INSTRUCTION_FILES" ]; then
     exit 0

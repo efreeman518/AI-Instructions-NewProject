@@ -23,7 +23,7 @@ Host/{Host}.Bootstrapper/
 > See [../patterns/data-layer-wiring.md](../patterns/data-layer-wiring.md) for full registration pattern.
 
 ```csharp
-// Compact pattern — see sampleapp for full implementation
+// Compact pattern — see reference app (TaskFlow) for full implementation
 public static class RegisterServices
 {
     public static IServiceCollection RegisterDomainServices(this IServiceCollection services, IConfiguration config)

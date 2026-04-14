@@ -21,8 +21,7 @@ from pathlib import Path
 
 def should_ignore_markdown_path(relative_path):
     return (
-        relative_path.startswith("sample-app/")
-        or re.search(r"(^|/)(\.git|bin|obj|\.venv|venv|env)/", relative_path) is not None
+        re.search(r"(^|/)(\.git|bin|obj|\.venv|venv|env)/", relative_path) is not None
     )
 
 
@@ -58,7 +57,7 @@ def main():
     with open(manifest_path, "r", encoding="utf-8") as f:
         manifest = json.load(f)
 
-    # Scan repo .md files (exclude sample-app, build output, VCS, and local venvs)
+    # Scan repo .md files (exclude build output, VCS, and local venvs)
     md_files = [
         p for p in root.rglob("*.md")
         if not should_ignore_markdown_path(p.relative_to(root).as_posix())

@@ -193,7 +193,7 @@ await repoTrxn.SaveChangesAsync(OptimisticConcurrencyWinner.ClientWins, ct);
 return Result.Success();
 ```
 
-> **BUG PATTERN:** Omitting `repoTrxn.Delete(entity)` causes delete operations to silently no-op. This was found and fixed in all 4 services during sample app TestContainer testing.
+> **BUG PATTERN:** Omitting `repoTrxn.Delete(entity)` causes delete operations to silently no-op. This was found and fixed during reference app (TaskFlow) TestContainer testing.
 
 ## Critical: SaveChangesAsync — NEVER Use 1-Param Overload
 

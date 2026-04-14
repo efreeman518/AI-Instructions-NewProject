@@ -420,7 +420,7 @@ az bicep build --file infra/main.bicep
 - Infra/environment failures: log in `HANDOFF.md`, classify blocker, continue non-blocked scope.
 - Instruction gaps: append to `UPDATE-INSTRUCTIONS.md`.
 - If a step fails, log the blocker in `HANDOFF.md` (see [HANDOFF.md template](HANDOFF.md)) and continue with non-blocked work.
-- Pattern reference: [../support/sampleapp-patterns.md](../support/sampleapp-patterns.md) (pattern index → `patterns/` folder) for composition wiring.
+- Pattern reference: [../support/pattern-dispatcher.md](../support/pattern-dispatcher.md) (pattern index → `patterns/` folder) for composition wiring.
 
 ---
 

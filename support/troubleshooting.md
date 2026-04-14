@@ -10,7 +10,7 @@ This file is intentionally lightweight. Use it to decide **what the AI should do
 
 AI agents generate code. Engineers own environment and runtime setup.
 
-> All code generation and fixes apply to the **new project** only. If an error points to a pattern in `support/sampleapp-patterns.md`, document the issue in `support/UPDATE-INSTRUCTIONS.md`.
+> All code generation and fixes apply to the **new project** only. If an error points to a pattern in `support/pattern-dispatcher.md`, document the issue in `support/UPDATE-INSTRUCTIONS.md`.
 
 When an error appears:
 1. Classify it (code-generation vs infrastructure/tooling)

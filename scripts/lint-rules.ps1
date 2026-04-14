@@ -19,8 +19,7 @@ function Add-Issue {
 function Test-IgnoredMarkdownPath {
     param([string]$RelativePath)
 
-    return ($RelativePath -match '^sample-app/' -or
-        $RelativePath -match '(^|/)(bin|obj|\.venv|venv|env)/')
+    return ($RelativePath -match '(^|/)(bin|obj|\.venv|venv|env)/')
 }
 
 function Test-ManifestScopedPath {
