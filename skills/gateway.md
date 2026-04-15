@@ -154,13 +154,29 @@ Order matters; proxy should execute after auth/routing middleware is ready.
 
 ## Path Prefix Normalization Rule
 
-When using `PathRemovePrefix`, ensure UI base path + gateway transform + backend route prefix are aligned.
+The `PathRemovePrefix` transform removes a prefix **before forwarding to the backend**. Only use it when the backend routes do NOT include that prefix.
 
-If gateway strips `/api`:
+| Backend routes registered at | Gateway route match | Correct transform |
+|---|---|---|
+| `/v1/tasks`, `/v1/categories` | `api/{**catch-all}` | `PathRemovePrefix: "/api"` |
+| `/api/tasks`, `/api/categories` | `api/{**catch-all}` | *(no transform — keep the prefix)* |
 
-- client `/api/v1/todoitems` -> backend `/v1/todoitems`
+**Wrong (causes 404):** stripping `/api` when the downstream routes already include it:
+```
+client: /api/categories  -> gateway strips /api -> backend: /categories  -> 404
+```
 
-Pick one convention and keep it consistent. Avoid dual-prefix probing logic in production.
+**Correct:** omit the transform when backend and gateway share the same prefix:
+```json
+"Routes": {
+  "api-route": {
+    "ClusterId": "api-cluster",
+    "Match": { "Path": "api/{**catch-all}" }
+  }
+}
+```
+
+Pick one convention per project and apply it everywhere. Never use dual-prefix probing logic.
 
 ---
 

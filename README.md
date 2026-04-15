@@ -36,7 +36,7 @@ Both agents follow the same flow:
 - [ ] Copy instruction set into `.instructions/` in your app repo
 - [ ] Copy `.instructions/.github/agents/` → `.github/agents/` (Copilot)
 - [ ] Copy `.instructions/.claude/commands/` → `.claude/commands/` (Claude Code)
-- [ ] Run `python .instructions/scripts/preflight-instructions.py` to validate
+- [ ] Run `python .instructions/scripts/preflight-instructions.py` to validate (PowerShell: `./.instructions/scripts/preflight-instructions.ps1`)
 
 ---
 
@@ -107,6 +107,7 @@ Read the rest of this guide when you need setup details, MCP recommendations, or
 
 - `git`
 - Latest stable `.NET SDK`
+- Docker engine running (Docker Desktop not required) — Aspire relies on it for hosting local container services
 - VS Code + AI assistant
 - Local SQL Server/Azure SQL access for dev scenarios
 - Private feed URLs if using internal packages (`customNugetFeeds`)
@@ -156,24 +157,26 @@ Notes:
 
 ## Recommended MCP Servers
 
+> **Prefer CLI over MCP when both exist.** CLI tools have lower token cost and faster execution. Use MCP servers for interactive exploration or when no CLI equivalent is available.
+
 ### Core (always on)
 
-| Server | Why |
-|---|---|
-| Microsoft Docs MCP | Official .NET/Azure docs, samples, full-page retrieval |
-| Context7 MCP | Third-party library/API docs |
+| Server | Why | CLI alternative |
+|---|---|---|
+| Microsoft Docs MCP | Official .NET/Azure docs, samples, full-page retrieval | — |
+| Context7 MCP | Third-party library/API docs | — |
 
 ### Enable by phase
 
-| Server | Enable when |
-|---|---|
-| GitHub MCP | Repo workflows, issues/PRs, CI visibility |
-| Azure MCP | IaC/deployment/resource validation |
-| Playwright MCP | UI E2E validation/debugging |
-| Fetch MCP | Pull external specs/docs into markdown |
-| Sequential Thinking MCP | Complex design/debug reasoning |
+| Server | Enable when | CLI alternative |
+|---|---|---|
+| GitHub MCP | Repo workflows, issues/PRs, CI visibility | `gh` CLI (preferred) |
+| Azure MCP | IaC/deployment/resource validation | `az` CLI (preferred) |
+| Playwright MCP | UI E2E validation/debugging | — |
+| Fetch MCP | Pull external specs/docs into markdown | `curl` / `Invoke-RestMethod` |
+| Sequential Thinking MCP | Complex design/debug reasoning | — |
 
-Optional additions: Git, Docker, Memory, web-search MCPs, Azure DevOps MCP.
+Optional additions: Git, Docker (`docker` CLI preferred), Memory, web-search MCPs, Azure DevOps MCP (`az devops` CLI preferred).
 
 ### Tooling discovery
 
@@ -226,6 +229,8 @@ For copy-paste phase prompts, see [support/prompt-catalog.md](support/prompt-cat
 
 ## Operational References
 
+These references are for **maintaining and developing the instruction set itself** — not for using it to scaffold a new application. For app scaffolding, see [Quick Start](#quick-start) and [Happy Path](#happy-path).
+
 - [START-AI.md](START-AI.md) — canonical AI bootstrap, version checks, phase routing, and load rules
 - [support/prompt-catalog.md](support/prompt-catalog.md) — copy-paste prompts for starting or resuming a session
 - [support/execution-gates.md](support/execution-gates.md) — canonical validation gates and operator setup checklist
@@ -233,9 +238,9 @@ For copy-paste phase prompts, see [support/prompt-catalog.md](support/prompt-cat
 - [support/taskflow-proof-map.md](support/taskflow-proof-map.md) — fast reference-app proof map from instruction concern to TaskFlow area
 - [support/UPDATE-INSTRUCTIONS.md](support/UPDATE-INSTRUCTIONS.md) — capture improvements discovered during scaffolding
 
-Run `python scripts/preflight-instructions.py` before Phase 4 execution and before opening validation PRs. It refreshes `_manifest.json`, regenerates `phase-load-packs.json`, prints the current context-budget report, lints markdown invariants, and runs the Python unittest suite in `tests/`. PowerShell equivalent: `./scripts/preflight-instructions.ps1`.
+Run `python scripts/preflight-instructions.py` (PowerShell: `./scripts/preflight-instructions.ps1`) before Phase 4 execution and before opening validation PRs. It refreshes `_manifest.json`, regenerates `phase-load-packs.json`, prints the current context-budget report, lints markdown invariants, and runs the Python unittest suite in `tests/`.
 
-For an on-demand budget snapshot without the full preflight, run `python scripts/report-context-budgets.py --mode full`.
+For an on-demand budget snapshot without the full preflight, run `python scripts/report-context-budgets.py --mode full` (no PowerShell equivalent — requires Python).
 
 ## Document Ownership
 

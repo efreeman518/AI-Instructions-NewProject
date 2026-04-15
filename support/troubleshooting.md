@@ -78,6 +78,29 @@ When a multi-host app (Aspire, Gateway, API, Scheduler) fails at runtime, **sepa
 
 If Step 1 fails, the problem is infrastructure — flag for the engineer per [execution-gates.md](execution-gates.md). Do not debug application code when the host substrate is not ready.
 
+---
+
+## Standalone Dev (Without Aspire / Docker)
+
+Aspire AppHost injects connection strings at runtime via environment variables. When running individual host projects directly (`dotnet run` or VS F5 without AppHost), those env vars are absent and the app fails with SQL connectivity errors.
+
+For each host that needs a database, add real values to `appsettings.Development.json`:
+
+```json
+{
+  "ConnectionStrings": {
+    "{App}DbContextTrxn": "Server=(localdb)\\MSSQLLocalDB;Database={App};Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=true",
+    "{App}DbContextQuery": "Server=(localdb)\\MSSQLLocalDB;Database={App};Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=true"
+  }
+}
+```
+
+For Functions, use `local.settings.json` `ConnectionStrings` section (same values).
+
+LocalDB (`MSSQLLocalDB` instance) ships with Visual Studio. Start it with `sqllocaldb start MSSQLLocalDB` if it is not running. EF migrations run automatically on first API startup.
+
+> **Security:** `appsettings.Development.json` with LocalDB strings is safe to commit. Never commit cloud/staging connection strings — use user secrets or environment variables instead.
+
 **Step 3 — After fixing an infrastructure startup issue, verify at the data plane:**
 Process liveness and clean logs are necessary but not sufficient. When a fix targets a component that creates or seeds backing data (migrations, seed tasks, scheduler tables, queue metadata), perform one direct data-plane check before declaring the fix complete:
 - **Database:** query for expected tables, seed rows, or schema objects

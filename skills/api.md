@@ -26,6 +26,12 @@ In `Program.cs`, keep this order: service defaults/config → bootstrapper + API
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
+
+// Accept enum names as strings from all callers (e.g. "High" not 3).
+// Without this, minimal-API endpoints reject string enum values with BadHttpRequestException.
+builder.Services.ConfigureHttpJsonOptions(options =>
+    options.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
+
 builder.AddServiceDefaults(config, appName);
 services
     .RegisterInfrastructureServices(config)
@@ -36,6 +42,24 @@ var app = builder.Build().ConfigurePipeline();
 await app.RunStartupTasks();
 await app.RunAsync();
 ```
+
+### Standalone CORS (Without Aspire)
+
+When the API runs without Aspire orchestration (e.g. `dotnet run --launch-profile https` directly), the browser WASM client cannot reach it without an explicit CORS policy. Add this before authentication middleware:
+
+```csharp
+const string UiPolicy = "UiCors";
+builder.Services.AddCors(options =>
+    options.AddPolicy(UiPolicy, policy =>
+        policy.WithOrigins("https://localhost:{uiPort}", "http://localhost:{uiPort}")
+              .AllowAnyHeader()
+              .AllowAnyMethod()));
+
+// In pipeline, before UseAuthentication:
+app.UseCors(UiPolicy);
+```
+
+Note: Aspire-hosted deployments typically handle CORS through the gateway — only add direct API CORS for standalone dev scenarios.
 
 ## Service Registration
 
