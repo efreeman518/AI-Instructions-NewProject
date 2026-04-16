@@ -94,6 +94,18 @@ public class NotificationOptions
 services.Configure<NotificationOptions>(config.GetSection(NotificationOptions.SectionName));
 ```
 
+### PostConfigure
+
+Use `PostConfigure<T>()` when settings need environment-specific overrides after initial binding — for example, swapping webhook URLs in development:
+
+```csharp
+services.PostConfigure<WebhookSettings>(options =>
+{
+    if (builder.Environment.IsDevelopment())
+        options.CallbackUrl = config["DevTunnel:BaseUrl"] + "/api/webhook";
+});
+```
+
 ### Local Stub Pattern (Required)
 
 Register stubs when credentials are missing so the app builds/runs without external secrets.
@@ -120,6 +132,32 @@ dotnet user-secrets init --project src/Host/{Host}.Api
 dotnet user-secrets set "ServiceAuth:api-cluster:ClientSecret" "your-client-secret" --project src/Host/{Host}.Api
 dotnet user-secrets set "ConnectionStrings:Redis1" "localhost:6379" --project src/Host/{Host}.Api
 ```
+
+---
+
+## Shared Azure Credential (Program.cs)
+
+Create a single `DefaultAzureCredential` instance in `Program.cs` and reuse it for all Azure services (App Configuration, Data Protection, Key Vault config provider). This avoids redundant token cache instances.
+
+```csharp
+var credential = CreateAzureCredential(config);
+
+static DefaultAzureCredential CreateAzureCredential(IConfiguration config)
+{
+    var options = new DefaultAzureCredentialOptions();
+    var managedIdentityClientId = config.GetValue<string?>("ManagedIdentityClientId", null);
+    if (managedIdentityClientId is not null)
+        options.ManagedIdentityClientId = managedIdentityClientId;
+    var sharedTokenCacheTenantId = config.GetValue<string?>("SharedTokenCacheTenantId", null);
+    if (sharedTokenCacheTenantId is not null)
+        options.SharedTokenCacheTenantId = sharedTokenCacheTenantId;
+    return new DefaultAzureCredential(options);
+}
+```
+
+- `ManagedIdentityClientId`: set for user-assigned managed identity in Azure.
+- `SharedTokenCacheTenantId`: set for local dev when the default tenant doesn't match.
+- Omit both in simple Aspire dev — `DefaultAzureCredential` chains through developer credentials automatically.
 
 ---
 

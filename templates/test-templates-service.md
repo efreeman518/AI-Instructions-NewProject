@@ -61,7 +61,7 @@ public class {Entity}ServiceTests : UnitTestBase
 
         var createdEntity = {Entity}.Create(dto.TenantId, dto.Name).Value!;
         _repoTrxnMock.Setup(r => r.Create(ref It.Ref<{Entity}>.IsAny));
-        _repoTrxnMock.Setup(r => r.UpdateFromDto(It.IsAny<{Entity}>(), It.IsAny<{Entity}Dto>()))
+        _repoTrxnMock.Setup(r => r.UpdateFromDto(It.IsAny<{Entity}>(), It.IsAny<{Entity}Dto>(), It.IsAny<RelatedDeleteBehavior>()))
             .Returns(DomainResult<{Entity}>.Success(createdEntity));
         _repoTrxnMock.Setup(r => r.SaveChangesAsync(It.IsAny<OptimisticConcurrencyWinner>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);

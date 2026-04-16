@@ -2,6 +2,8 @@
 
 Reference patterns: [../patterns/api-host-wiring.md](../patterns/api-host-wiring.md) (Request Context Resolution), [../patterns/data-layer-wiring.md](../patterns/data-layer-wiring.md) (Multi-tenant Query Filter).
 
+> **Applicability:** This skill applies only when the domain specification enables multi-tenancy. The TaskFlow reference app demonstrates full multi-tenant patterns. For single-tenant scaffolds, skip this entire file — omit `ITenantEntity<Guid>`, `ITenantBoundaryValidator`, tenant query filters, tenant stamping, and tenant-scoped search enforcement. The service template marks optional sections with `// [MULTI-TENANT]`.
+
 ## Purpose
 
 Enforce tenant isolation through data, service, and request-context layers with explicit global-admin escape paths only where intended.
@@ -87,37 +89,36 @@ Keep centralized service-level checks in `Application.Services/Rules/`.
 Core responsibilities:
 
 1. allow global-admin bypass (`AppConstants.ROLE_GLOBAL_ADMIN`),
-2. fail when request tenant is missing for tenant-scoped operations,
-3. fail on tenant mismatch,
-4. prevent tenant reassignment after entity creation.
+2. fail when caller has no roles (missing authentication context),
+3. fail when non-admin attempts to access a global (null-tenant) entity,
+4. fail on tenant mismatch,
+5. prevent tenant reassignment after entity creation.
 
-Pattern:
+Implementation pattern — `TenantBoundaryValidator` is a thin `internal sealed class` that delegates all logic to static `ValidationHelper`:
 
 ```csharp
-public sealed class TenantBoundaryValidator : ITenantBoundaryValidator
+internal sealed class TenantBoundaryValidator : ITenantBoundaryValidator
 {
-    public Result EnsureTenantBoundary(
-        ILogger logger,
-        Guid? requestTenantId,
-        IReadOnlyCollection<string> requestRoles,
-        Guid? entityTenantId,
-        string operation,
-        string entityName,
-        Guid? entityId = null)
-    {
-        if (requestRoles.Contains(AppConstants.ROLE_GLOBAL_ADMIN))
-            return Result.Success();
+    public Result EnsureTenantBoundary(ILogger logger, Guid? requestTenantId,
+        IReadOnlyCollection<string> roles, Guid? entityTenantId,
+        string operation, string entityName, Guid? entityId = null)
+        => ValidationHelper.EnsureTenantBoundary(logger, requestTenantId, roles,
+            entityTenantId, operation, entityName, entityId);
 
-        if (!requestTenantId.HasValue)
-            return Result.Failure("Request context has no tenant.");
+    public Result EnsureGlobalAdmin(IReadOnlyCollection<string> callerRoles, string operation)
+        => ValidationHelper.EnsureGlobalAdmin(callerRoles, operation);
 
-        if (entityTenantId.HasValue && requestTenantId.Value != entityTenantId.Value)
-            return Result.Failure("Access denied: tenant mismatch.");
-
-        return Result.Success();
-    }
+    public Result PreventTenantChange(ILogger logger, Guid? currentTenantId, Guid? newTenantId,
+        string entityName, Guid entityId)
+        => ValidationHelper.PreventTenantChange(logger, currentTenantId, newTenantId, entityName, entityId);
 }
 ```
+
+Supporting files in `Application.Services/Rules/`:
+
+- **`ValidationHelper`** — static class with the actual boundary logic; uses `[LoggerMessage]` extensions for structured logging.
+- **`TenantBoundaryLoggingExtensions`** — `[LoggerMessage]` source-generated extensions (`LogValidationFailure`, `LogTenantFilterManipulation`, `LogTenantChangeAttempt`).
+- **`TenantRules`** — simple static rule methods (e.g., `PreventTenantChange` without logging for domain-level use).
 
 ---
 
@@ -132,7 +133,12 @@ For entity reads/writes:
 For searches:
 
 - non-admin requests must force filter tenant to request context tenant,
+- log tenant filter manipulation when client supplies a different tenant ID via `LogTenantFilterManipulation`,
 - never trust client-supplied tenant filter as-is.
+
+For updates:
+
+- after boundary check, call `PreventTenantChange(...)` to reject tenant reassignment.
 
 ---
 

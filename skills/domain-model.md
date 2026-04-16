@@ -45,6 +45,9 @@ Reference patterns: [../patterns/expected-output-index.md](../patterns/expected-
    ```csharp
    public Email? PrimaryEmail => Emails.FirstOrDefault(e => e.ContactType == ContactType.Primary)?.Email;
    ```
+9. **DomainConstants for validation limits** — `Valid()` uses constants from `Domain.Shared/Constants/DomainConstants.cs`, not magic numbers. See [DomainConstants](#domainconstants-domainshared) below.
+10. **Remove overloads** — Provide both `Remove{Child}({Child} entity)` and `Remove{Child}(Guid id)` overloads. The Guid overload looks up the entity in the collection and removes it. Both return `DomainResult.Success()` unconditionally (desired-state pattern).
+11. **Idempotent Add** — `Add{Child}` / `AssociateTag` checks for duplicates first and returns `Success(existing)` if already present.
 
 ## Flags Enum Pattern (Domain.Shared)
 
@@ -66,6 +69,25 @@ public class DateRange  // Value object, no EntityBase
 {
     public DateTimeOffset StartDate { get; init; }
     public DateTimeOffset? EndDate { get; init; }
+}
+```
+
+**Value-equality entity pattern** — shared entities like `Tag`, `Phone`, `Email`, `Address` use `sealed class` + `IEquatable<T>` with a `Normalize` helper for consistent comparison:
+
+```csharp
+public sealed class Tag : EntityBase, ITenantEntity<Guid>, IEquatable<Tag>
+{
+    // ... factory, properties ...
+    private static string Normalize(string? value) =>
+        value?.Trim().ToUpperInvariant() ?? string.Empty;
+
+    public bool Equals(Tag? other) =>
+        other is not null
+        && TenantId == other.TenantId
+        && Normalize(Name) == Normalize(other.Name);
+
+    public override bool Equals(object? obj) => Equals(obj as Tag);
+    public override int GetHashCode() => HashCode.Combine(TenantId, Normalize(Name));
 }
 ```
 
@@ -107,7 +129,39 @@ public interface IRequestContext
 
 ## Domain.Shared Exceptions
 
-`NotFoundException` and `BusinessRuleException` in `Domain.Shared.Exceptions`.
+`InvalidEntityException`, `NotFoundException`, and `BusinessRuleException` in `Domain.Shared/Exceptions/`.
+
+```csharp
+namespace Domain.Shared.Exceptions;
+
+public class InvalidEntityException(string message) : Exception(message)
+{
+    public InvalidEntityException(string message, Exception innerException)
+        : base(message, innerException) { }
+}
+```
+
+## DomainConstants (Domain.Shared)
+
+Centralize all validation limit constants in `Domain.Shared/Constants/DomainConstants.cs`. Reference these in entity `Valid()` methods and in EF `MaxLength` configuration — single source of truth.
+
+```csharp
+namespace Domain.Shared.Constants;
+
+public static class DomainConstants
+{
+    public const int RULE_DEFAULT_NAME_LENGTH_MIN = 3;
+    public const int RULE_DEFAULT_NAME_LENGTH_MAX = 200;
+    public const int RULE_DEFAULT_DESCRIPTION_LENGTH_MAX = 2000;
+    // Add entity-specific constants as needed
+}
+```
+
+Entity `Valid()` example:
+```csharp
+if (Name.Length < DomainConstants.RULE_DEFAULT_NAME_LENGTH_MIN)
+    errors.Add(DomainError.Create($"Name must be at least {DomainConstants.RULE_DEFAULT_NAME_LENGTH_MIN} characters."));
+```
 
 ## Domain Rules
 
@@ -135,6 +189,12 @@ After generating domain entities, confirm:
 - [ ] All setters are `private set` — mutations go through named methods
 - [ ] Flags enum is defined with `[Flags]` attribute and `None = 0` value
 - [ ] Child collections use `ICollection<T>` with controlled mutation methods (`Add/Remove`) on the entity
+- [ ] `Remove*()` provides both entity and Guid overloads (desired-state pattern — always returns Success)
+- [ ] `Add*()` checks for duplicates and returns `Success(existing)` if already present (idempotent)
 - [ ] `RowVersion` property exists for concurrency (configured in EF, not in entity)
 - [ ] No infrastructure concerns (no EF attributes, no `DbContext`, no DTOs)
+- [ ] `Valid()` uses `DomainConstants` for length/range limits, not magic numbers
+- [ ] `DomainConstants.cs` exists in `Domain.Shared/Constants/` with all validation limits
+- [ ] `InvalidEntityException` exists in `Domain.Shared/Exceptions/`
+- [ ] Shared entities (Tag, etc.) are `sealed class` with `IEquatable<T>` and `Normalize` helper
 - [ ] Cross-references: Entity properties align with [data-mapping-template.md](../templates/data-mapping-template.md), EF config covers all relationships per [ef-configuration-template.md](../templates/ef-configuration-template.md)

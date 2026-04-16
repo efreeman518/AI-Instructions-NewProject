@@ -164,6 +164,9 @@ For phase gates and validation commands, see [execution-gates.md](execution-gate
 | `DbContextOptions must be DbContextOptions<T>` in tests | Multiple contexts sharing non-generic `DbContextOptions` constructor | Build typed options per context via `new DbContextOptionsBuilder<T>().UseInMemoryDatabase(name).Options` |
 | `CS9035` required member `AuditId` not set | `DbContextBase` declares `required` members; `new` operator enforces at compile time | Use `ConstructorInfo.Invoke()` via reflection to bypass — see `TestDbContextFactory` in [test-templates-endpoint.md](../templates/test-templates-endpoint.md) |
 | Create returns 201 but validation test expects 400 | DTO fields not applied to entity after create | Call `entity.Update(...)` after factory create |
+| Create/Update NullReferenceException in tests | `UpdateFromDto` not mocked | Mock `repoTrxn.UpdateFromDto(...)` to return `DomainResult<T>.Success(entity)` |
+| `CS1929` ReturnsAsync type mismatch on search mock | Query repo interface returns `PagedResponse<EntityDto>` but test uses `PagedResponse<Entity>` | Change mock to use DTO type — repos project to DTOs via `QueryPageProjectionAsync` |
+| Manual Skip/Take/Count in query repo | Not using `QueryPageProjectionAsync` from RepositoryBase | Replace with `QueryPageProjectionAsync` + mapper projector + `BuildFilter`/`BuildOrderBy` methods |
 | Schema changes not reflected in TestContainer | Previous schema persists | `EnsureDeletedAsync()` before `EnsureCreatedAsync()` |
 | ProblemDetails stack traces leak in CI | Debug diagnostics enabled in all builds | Wrap diagnostic customization in `#if DEBUG` |
 | StructureValidator not found | Missing static validator namespace import | Add `using {Namespace}.Application.Services.Validation;` |

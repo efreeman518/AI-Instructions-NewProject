@@ -130,6 +130,50 @@ services.AddCors(options =>
 
 ---
 
+## Data Protection
+
+ASP.NET Core Data Protection handles encryption of cookies, anti-forgery tokens, and other sensitive payloads. In multi-instance deployments, keys must be shared and persisted externally.
+
+### Registration (Program.cs)
+
+```csharp
+var credential = CreateAzureCredential(config);
+
+void ConfigureDataProtection()
+{
+    var keysFileUrl = config.GetValue<string?>("DataProtectionKeysFileUrl", null);
+    var encryptionKeyUrl = config.GetValue<string?>("DataProtectionEncryptionKeyUrl", null);
+    if (!string.IsNullOrEmpty(keysFileUrl) && !string.IsNullOrEmpty(encryptionKeyUrl))
+    {
+        services.AddDataProtection()
+            .PersistKeysToAzureBlobStorage(new Uri(keysFileUrl), credential)
+            .ProtectKeysWithAzureKeyVault(new Uri(encryptionKeyUrl), credential);
+    }
+}
+```
+
+### Config
+
+```json
+{
+  "DataProtectionKeysFileUrl": "https://{storage}.blob.core.windows.net/dataprotection/keys.xml",
+  "DataProtectionEncryptionKeyUrl": "https://{vault}.vault.azure.net/keys/{keyname}"
+}
+```
+
+### Packages
+
+`Azure.Extensions.AspNetCore.DataProtection.Blobs` + `Azure.Extensions.AspNetCore.DataProtection.Keys`.
+
+### Rules
+
+- Omit both config keys in development — Data Protection falls back to local file-based key storage.
+- Use managed identity (`DefaultAzureCredential`) for both Blob and Key Vault access.
+- The Blob container and Key Vault key must exist before first deployment.
+- Key Vault key should have a rotation policy configured.
+
+---
+
 ## Dependency Scanning
 
 ### CI Pipeline
@@ -198,5 +242,6 @@ Secrets must be stored in Azure Key Vault (see [configuration-secrets.md](config
 - [ ] CORS configured in Gateway only — API rejects direct browser requests
 - [ ] `dotnet nuget audit` included in CI pipeline
 - [ ] Dependabot configured for NuGet ecosystem
+- [ ] Data Protection configured with Azure Blob key storage and Key Vault key encryption
 - [ ] Secrets stored in Key Vault with rotation workflow documented
 - [ ] `ValidateOnStart()` used for critical configuration sections

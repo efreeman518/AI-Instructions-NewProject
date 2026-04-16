@@ -55,25 +55,28 @@ public static class {Entity}Endpoints
 
     private static async Task<IResult> Search(
         [FromServices] I{Entity}Service service,
-        [FromBody] SearchRequest<{Entity}SearchFilter> request)
+        [FromBody] SearchRequest<{Entity}SearchFilter> request,
+        CancellationToken ct)
     {
-        var items = await service.SearchAsync(request);
+        var items = await service.SearchAsync(request, ct);
         return TypedResults.Ok(items);
     }
 
     private static async Task<IResult> Lookup(
         [FromServices] I{Entity}Service service,
         [FromQuery] Guid? tenantId,
-        [FromQuery] string? search)
+        [FromQuery] string? search,
+        CancellationToken ct)
     {
-        var items = await service.LookupAsync(tenantId, search);
+        var items = await service.LookupAsync(tenantId, search, ct);
         return TypedResults.Ok(items);
     }
 
     private static async Task<IResult> GetById(
-        [FromServices] I{Entity}Service service, Guid id)
+        [FromServices] I{Entity}Service service, Guid id,
+        CancellationToken ct)
     {
-        var result = await service.GetAsync(id);
+        var result = await service.GetAsync(id, ct);
         return result.Match<IResult>(
             response => TypedResults.Ok(response),
             errors => TypedResults.Problem(ProblemDetailsHelper.BuildProblemDetailsResponseMultiple(
@@ -84,9 +87,10 @@ public static class {Entity}Endpoints
     private static async Task<IResult> Create(
         HttpContext httpContext,
         [FromServices] I{Entity}Service service,
-        [FromBody] DefaultRequest<{Entity}Dto> request)
+        [FromBody] DefaultRequest<{Entity}Dto> request,
+        CancellationToken ct)
     {
-        var result = await service.CreateAsync(request);
+        var result = await service.CreateAsync(request, ct);
         return result.Match<IResult>(
             response => TypedResults.Created(httpContext.Request.Path, response),
             errors => TypedResults.Problem(ProblemDetailsHelper.BuildProblemDetailsResponseMultiple(
@@ -98,14 +102,15 @@ public static class {Entity}Endpoints
         HttpContext httpContext,
         [FromServices] I{Entity}Service service,
         Guid id,
-        [FromBody] DefaultRequest<{Entity}Dto> request)
+        [FromBody] DefaultRequest<{Entity}Dto> request,
+        CancellationToken ct)
     {
         if (request.Item.Id != null && request.Item.Id != id)
             return TypedResults.Problem(ProblemDetailsHelper.BuildProblemDetailsResponse(
                 statusCodeOverride: StatusCodes.Status400BadRequest,
-                message: $"URL/body ID mismatch: {id} <> {request.Item.Id}"));
+                message: ErrorConstants.ERROR_URL_BODY_ID_MISMATCH));
 
-        var result = await service.UpdateAsync(request);
+        var result = await service.UpdateAsync(request, ct);
         return result.Match(
             response => response.Item is null ? Results.NotFound(id) : TypedResults.Ok(response),
             errors => TypedResults.Problem(ProblemDetailsHelper.BuildProblemDetailsResponseMultiple(
@@ -115,9 +120,10 @@ public static class {Entity}Endpoints
 
     private static async Task<IResult> Delete(
         HttpContext httpContext,
-        [FromServices] I{Entity}Service service, Guid id)
+        [FromServices] I{Entity}Service service, Guid id,
+        CancellationToken ct)
     {
-        var result = await service.DeleteAsync(id);
+        var result = await service.DeleteAsync(id, ct);
         return result.Match<IResult>(
             () => TypedResults.NoContent(),
             errors => TypedResults.Problem(ProblemDetailsHelper.BuildProblemDetailsResponseMultiple(
@@ -129,9 +135,16 @@ public static class {Entity}Endpoints
 
 ## Registration in Pipeline
 
-In `WebApplicationBuilderExtensions.cs`, add to `SetupApiVersionedEndpoints`:
+In `WebApplicationBuilderExtensions.cs`, add to `SetupApiEndpoints`:
 
 ```csharp
+// Simple pattern (default)
+app.MapGroup("/api/{entities}")
+    .WithTags("{Entities}")
+    .RequireAuthorization()
+    .Map{Entity}Endpoints(problemDetailsIncludeStackTrace);
+
+// Versioned + tenant-scoped pattern (when needed)
 app.MapGroup("v{apiVersion:apiVersion}/tenant/{tenantId}/{entity}")
     .WithApiVersionSet(apiVersionSet)
     .RequireAuthorization("TenantMatch")

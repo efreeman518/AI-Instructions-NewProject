@@ -12,11 +12,54 @@ Validates DTO structure (required fields, string lengths, enum ranges, child col
 
 Returns `Result<{Entity}Dto>` so services can short-circuit on invalid input without touching the domain layer.
 
+> **Multi-tenant toggle:** `StructureValidators.ValidateCreate<T>` and `ValidateUpdate<T>` constrain on `ITenantEntityDto` to enforce `TenantId != Guid.Empty`. For single-tenant scaffolds, use `ValidateUpdateId<T>` (constrains only on `IEntityBaseDto`) or define non-tenant generic overloads.
+
 ## Template
+
+### Generic Base Validators (Application.Services/Rules/StructureValidators.cs)
+
+Shared validation for all entities — validates presence, TenantId, and Id constraints via generic type constraints. Per-entity validators delegate to these first.
+
+```csharp
+using Application.Models.Shared;
+using EF.Common.Contracts;
+
+namespace Application.Services.Rules;
+
+internal static class StructureValidators
+{
+    internal static Result ValidateCreate<T>(T? dto) where T : class, ITenantEntityDto
+    {
+        if (dto is null) return Result.Failure("Payload is required.");
+        return Require(dto.TenantId != Guid.Empty, "TenantId is required.");
+    }
+
+    internal static Result ValidateUpdate<T>(T? dto) where T : class, IEntityBaseDto, ITenantEntityDto
+    {
+        if (dto is null) return Result.Failure("Payload is required.");
+        if (dto.Id is null || dto.Id == Guid.Empty) return Result.Failure("Id is required for updates.");
+        return Require(dto.TenantId != Guid.Empty, "TenantId is required.");
+    }
+
+    internal static Result ValidateUpdateId<T>(T? dto) where T : class, IEntityBaseDto
+    {
+        if (dto is null) return Result.Failure("Payload is required.");
+        return Require(dto.Id is not null && dto.Id != Guid.Empty, "Id is required for updates.");
+    }
+
+    private static Result Require(bool condition, string errorMessage)
+        => condition ? Result.Success() : Result.Failure(errorMessage);
+}
+```
+
+### Per-Entity Validator (Application.Services/Rules/{Entity}StructureValidator.cs)
+
+Delegates common checks to `StructureValidators`, then adds entity-specific field validation using `DomainConstants`.
 
 ```csharp
 // File: Application.Services/Rules/{Entity}StructureValidator.cs
 using Application.Models;
+using Domain.Shared.Constants;
 
 namespace Application.Services.Rules;
 
@@ -27,29 +70,21 @@ internal static class {Entity}StructureValidator
 {
     public static Result<{Entity}Dto> ValidateCreate({Entity}Dto dto)
     {
+        // Common checks (null, TenantId)
+        var common = StructureValidators.ValidateCreate(dto);
+        if (common.IsFailure) return Result<{Entity}Dto>.Failure(common.Errors);
+
         var errors = new List<string>();
 
-        // Required fields
+        // Entity-specific field checks
         if (string.IsNullOrWhiteSpace(dto.Name))
             errors.Add("{Entity} name is required.");
 
-        if (dto.TenantId == Guid.Empty)
-            errors.Add("TenantId is required.");
+        if (dto.Name?.Length > DomainConstants.RULE_DEFAULT_NAME_LENGTH_MAX)
+            errors.Add($"{Entity} name cannot exceed {DomainConstants.RULE_DEFAULT_NAME_LENGTH_MAX} characters.");
 
-        // String length limits (match EF MaxLength config)
-        if (dto.Name?.Length > {NameMaxLength})
-            errors.Add($"{Entity} name cannot exceed {NameMaxLength} characters.");
-
-        if (dto.Description?.Length > {DescriptionMaxLength})
-            errors.Add($"Description cannot exceed {DescriptionMaxLength} characters.");
-
-        // Enum range
-        // if (!Enum.IsDefined(typeof({Entity}Type), dto.Type))
-        //     errors.Add($"Invalid {Entity} type: {dto.Type}.");
-
-        // Child collection constraints
-        // if (dto.{ChildEntity}s?.Count > {MaxChildren})
-        //     errors.Add($"Cannot exceed {MaxChildren} {ChildEntity}s.");
+        if (dto.Description?.Length > DomainConstants.RULE_DEFAULT_DESCRIPTION_LENGTH_MAX)
+            errors.Add($"Description cannot exceed {DomainConstants.RULE_DEFAULT_DESCRIPTION_LENGTH_MAX} characters.");
 
         return errors.Count > 0
             ? Result<{Entity}Dto>.Failure(errors)
@@ -58,21 +93,21 @@ internal static class {Entity}StructureValidator
 
     public static Result<{Entity}Dto> ValidateUpdate({Entity}Dto dto)
     {
-        var errors = new List<string>();
+        // Common checks (null, Id, TenantId)
+        var common = StructureValidators.ValidateUpdate(dto);
+        if (common.IsFailure) return Result<{Entity}Dto>.Failure(common.Errors);
 
-        // Id required for updates
-        if (dto.Id is null || dto.Id == Guid.Empty)
-            errors.Add("{Entity} Id is required for updates.");
+        var errors = new List<string>();
 
         // Reuse shared field checks
         if (string.IsNullOrWhiteSpace(dto.Name))
             errors.Add("{Entity} name is required.");
 
-        if (dto.Name?.Length > {NameMaxLength})
-            errors.Add($"{Entity} name cannot exceed {NameMaxLength} characters.");
+        if (dto.Name?.Length > DomainConstants.RULE_DEFAULT_NAME_LENGTH_MAX)
+            errors.Add($"{Entity} name cannot exceed {DomainConstants.RULE_DEFAULT_NAME_LENGTH_MAX} characters.");
 
-        if (dto.Description?.Length > {DescriptionMaxLength})
-            errors.Add($"Description cannot exceed {DescriptionMaxLength} characters.");
+        if (dto.Description?.Length > DomainConstants.RULE_DEFAULT_DESCRIPTION_LENGTH_MAX)
+            errors.Add($"Description cannot exceed {DomainConstants.RULE_DEFAULT_DESCRIPTION_LENGTH_MAX} characters.");
 
         return errors.Count > 0
             ? Result<{Entity}Dto>.Failure(errors)
@@ -84,19 +119,20 @@ internal static class {Entity}StructureValidator
 ## Rules
 
 - **Static class** — no DI registration. Call directly: `{Entity}StructureValidator.ValidateCreate(dto)`.
+- **Delegate common checks** — Per-entity validators call `StructureValidators.ValidateCreate/ValidateUpdate` first for null, TenantId, and Id checks. Only add entity-specific rules after.
 - Keep validations purely structural (field presence, length, range). Domain invariants belong in [domain-rules-template](domain-rules-template.md).
-- String `MaxLength` values must match the EF configuration in [ef-configuration-template](ef-configuration-template.md).
-- Provide separate `ValidateCreate` and `ValidateUpdate` methods — update requires `Id`, create may have different required fields.
+- **Use `DomainConstants`** for string length limits — single source of truth shared with EF configuration and domain `Valid()`. Do not use magic numbers or contextual tokens like `{NameMaxLength}`.
+- Provide separate `ValidateCreate` and `ValidateUpdate` methods — update requires `Id` (via generic `ValidateUpdate<T>`), create may have different required fields.
 - Return all errors at once (don't short-circuit on first failure) so the caller gets a complete validation report.
-- Uncomment enum/child constraints as needed per entity.
-- **Contextual tokens:** `{NameMaxLength}`, `{DescriptionMaxLength}`, and `{MaxChildren}` are entity-specific — derive from the `maxLength` values in `resource-implementation.yaml`. These are NOT global placeholder tokens; replace with the literal integer for each entity (e.g., `200`, `2000`).
 - Add or remove validated properties to match the entity's DTO — `dto.Description` is shown as an example; adjust to your entity's actual fields.
 
 ## Verification Checklist
 
+- [ ] `StructureValidators.cs` exists with generic `ValidateCreate<T>`, `ValidateUpdate<T>`, `ValidateUpdateId<T>`
+- [ ] Per-entity validator delegates common checks to `StructureValidators` first
 - [ ] `ValidateCreate` checks all required fields for new entity creation
 - [ ] `ValidateUpdate` requires `Id` and validates mutable fields
-- [ ] String length limits match EF `MaxLength` configuration
+- [ ] String length limits use `DomainConstants` — single source of truth with EF config and domain `Valid()`
 - [ ] Returns `Result<{Entity}Dto>` consistent with service layer pattern
 - [ ] Service template calls `ValidateCreate`/`ValidateUpdate` before domain operations
 - [ ] No domain logic in validator — structural checks only

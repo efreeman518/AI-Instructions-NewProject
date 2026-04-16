@@ -29,6 +29,17 @@ Expected file layout when scaffolding is complete. All paths relative to project
 | Search filter | `Application/Application.Models/TodoItemSearchFilter.cs` |
 | Mapper | `Application/Application.Mappers/TodoItemMapper.cs` |
 | Contracts | `Application/Application.Contracts/` |
+| Error constants | `Application/Application.Contracts/ErrorConstants.cs` |
+| DefaultRequest | `Application/Application.Models/DefaultRequest.cs` (record) |
+| DefaultResponse | `Application/Application.Models/DefaultResponse.cs` (record) |
+| Structure validator | `Application/Application.Services/Rules/{Entity}StructureValidator.cs` |
+| Service error messages | `Application/Application.Services/Rules/ServiceErrorMessages.cs` |
+| Tenant info DTO | `Application/Application.Models/TenantInfoDto.cs` *(multi-tenant only)* |
+| Tenant boundary validator | `Application/Application.Services/TenantBoundaryValidator.cs` *(multi-tenant only)* |
+| Tenant boundary interface | `Application/Application.Contracts/ITenantBoundaryValidator.cs` *(multi-tenant only)* |
+| Validation helper | `Application/Application.Services/Rules/ValidationHelper.cs` *(multi-tenant only)* |
+| Tenant logging extensions | `Application/Application.Services/Rules/TenantBoundaryLoggingExtensions.cs` *(multi-tenant only)* |
+| Tenant rules | `Application/Application.Services/Rules/TenantRules.cs` *(multi-tenant only)* |
 | Message handler | `Application/Application.MessageHandlers/TodoItemCreatedEventHandler.cs` |
 
 ## API Host

@@ -28,6 +28,48 @@ Use `{Host}.Scheduler` for cron/time-based orchestration with persisted scheduli
 - `{Host}.BackgroundServices`: channel consumers, long-running listeners, queue pumps.
 - Use both when needed, but keep their responsibilities and deployment independent.
 
+---
+
+## Channel-Based Background Task Queue
+
+Use `EF.BackgroundServices` for fire-and-forget background work within the API host. The package provides a `Channel<T>`-backed producer/consumer queue.
+
+### Registration (Bootstrapper)
+
+```csharp
+private static IServiceCollection AddSupportServices(this IServiceCollection services)
+{
+    services.AddChannelBackgroundTaskQueueWithShutdownHandling();
+    services.AddSingleton<IInternalMessageBus, InternalMessageBus>();
+    return services;
+}
+```
+
+`AddChannelBackgroundTaskQueueWithShutdownHandling()` registers `IBackgroundTaskQueue` (singleton) + `ChannelBackgroundTaskQueue` hosted service. The "WithShutdownHandling" variant drains the queue on host shutdown.
+
+### Usage (in services/endpoints)
+
+```csharp
+public class SomeService(IBackgroundTaskQueue taskQueue)
+{
+    public void EnqueueWork(Guid itemId)
+    {
+        taskQueue.QueueBackgroundWorkItem(async ct =>
+        {
+            // Fire-and-forget work — runs outside request scope
+            // Create a new DI scope if you need scoped services
+        });
+    }
+}
+```
+
+### Rules
+
+- Use for work that doesn't need persistence or retry — audit logging, cache invalidation, notifications.
+- For work that needs persistence, retry, or scheduling, use TickerQ instead.
+- The queue is in-memory — items are lost if the host crashes before processing.
+- Always create a new DI scope inside the work item if you need scoped services (DbContext, etc.).
+
 ## Minimal Scheduler Structure
 
 ```

@@ -8,10 +8,11 @@ Core read/write repository and EF configuration guidance stays in [../skills/dat
 
 ## Design-Time Factory
 
-Use `IDesignTimeDbContextFactory<{Project}DbContextTrxn>` for CLI migrations.
+Use `IDesignTimeDbContextFactory<T>` for CLI migrations. Two factories — one per context — each sets `AuditId` and `TenantId` for the `DbContextBase` tenant filter and audit infrastructure.
 
 ```csharp
-public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<{Project}DbContextTrxn>
+[ExcludeFromCodeCoverage]
+public class DesignTimeDbContextFactoryTrxn : IDesignTimeDbContextFactory<{Project}DbContextTrxn>
 {
     public {Project}DbContextTrxn CreateDbContext(string[] args)
     {
@@ -20,10 +21,35 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<{Project}D
 
         var optionsBuilder = new DbContextOptionsBuilder<{Project}DbContextTrxn>();
         optionsBuilder.UseSqlServer(connectionString);
-        return new {Project}DbContextTrxn(optionsBuilder.Options);
+
+        var context = new {Project}DbContextTrxn(optionsBuilder.Options);
+        context.AuditId = "design-time";
+        context.TenantId = Guid.Empty;
+        return context;
+    }
+}
+
+[ExcludeFromCodeCoverage]
+public class DesignTimeDbContextFactoryQuery : IDesignTimeDbContextFactory<{Project}DbContextQuery>
+{
+    public {Project}DbContextQuery CreateDbContext(string[] args)
+    {
+        var connectionString = Environment.GetEnvironmentVariable("EFCORETOOLSDB")
+            ?? throw new InvalidOperationException("Set EFCORETOOLSDB env var");
+
+        var optionsBuilder = new DbContextOptionsBuilder<{Project}DbContextQuery>();
+        optionsBuilder.UseSqlServer(connectionString);
+
+        var context = new {Project}DbContextQuery(optionsBuilder.Options);
+        context.AuditId = "design-time";
+        context.TenantId = Guid.Empty;
+        return context;
     }
 }
 ```
+
+> **Why two factories?** EF CLI uses `IDesignTimeDbContextFactory<T>` — each context type needs its own factory. Both must set `AuditId`/`TenantId` because `DbContextBase` uses these for tenant query filters and audit interceptor.
+> **Why `[ExcludeFromCodeCoverage]`?** Design-time factories are only invoked by EF CLI tooling, never in production code paths.
 
 ---
 

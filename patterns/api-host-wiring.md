@@ -26,7 +26,7 @@ startupLogger.LogInformation("{AppName} {Environment} - Startup.", appName, env)
 try
 {
     // 1. Service defaults (OpenTelemetry, health, resilience)
-    builder.AddServiceDefaults(config, appName);
+    builder.AddServiceDefaults();
 
     // 2. Registration chain -- order matters for dependency resolution
     services
@@ -34,7 +34,7 @@ try
         .RegisterDomainServices(config)          // domain-specific registrations
         .RegisterApplicationServices(config)     // message handlers, app services
         .RegisterBackgroundServices(config)      // channel background queue
-        .RegisterApiServices(config, startupLogger); // auth, routing, health checks, rate limiting
+        .AddApiServices(config, startupLogger); // auth, routing, health checks, rate limiting
 
     // 3. Build + pipeline
     var app = builder.Build().ConfigurePipeline();
@@ -55,6 +55,9 @@ finally
 {
     startupLogger.LogInformation("{AppName} {Environment} - Ending application.", appName, env);
 }
+
+// Required for WebApplicationFactory in integration tests
+public partial class Program { }
 ```
 
 **Early logger factory** -- created before the host so startup failures are visible:
@@ -76,15 +79,29 @@ ILogger<Program> CreateStartupLogger()
 ```csharp
 public static WebApplication ConfigurePipeline(this WebApplication app)
 {
-    app.UseExceptionHandler();     // 1. Catch unhandled exceptions first
-    app.UseHttpsRedirection();     // 2. Redirect HTTP -> HTTPS
-    app.UseRouting();              // 3. Route resolution
-    app.UseRateLimiter();          // 4. Rate limiting before auth
-    app.UseAuthentication();       // 5. Authenticate
-    app.UseAuthorization();        // 6. Authorize
+    // 1. Security headers (CSP, X-Frame, etc.)
+    app.UseMiddleware<SecurityHeadersMiddleware>();
 
-    // Dev-only: OpenAPI + Scalar UI
-    if (app.Environment.IsDevelopment())
+    // 2. Correlation tracking
+    app.UseMiddleware<CorrelationIdMiddleware>();
+
+    // 3. Catch unhandled exceptions (before routing)
+    app.UseExceptionHandler();
+
+    // 4. Rate limiting
+    app.UseRateLimiter();
+
+    // 5. CORS
+    app.UseCors("UiCors");
+
+    // 6. Authenticate
+    app.UseAuthentication();
+
+    // 7. Authorize
+    app.UseAuthorization();
+
+    // OpenAPI + Scalar (feature-gated)
+    if (app.Configuration.GetValue<bool>("OpenApiSettings:Enable", true))
     {
         app.MapOpenApi();
         app.MapScalarApiReference(options =>
@@ -94,13 +111,15 @@ public static WebApplication ConfigurePipeline(this WebApplication app)
         });
     }
 
+    // Default Aspire endpoints
+    app.MapDefaultEndpoints();
+
     // Health + liveness
     app.MapHealthChecks("/health");
     app.MapGet("/alive", () => Results.Ok("Alive"));
 
     // API endpoint groups
-    var apiGroup = app.MapGroup("api");
-    apiGroup.Map{Entity}Endpoints();
+    SetupApiEndpoints(app);
 
     return app;
 }
@@ -167,42 +186,20 @@ private static void AddRequestContextServices(IServiceCollection services)
 
 ## Conditional Auth Configuration
 
-**Source:** `Host/{App}.Api/RegisterApiServices.cs`
+**Source:** `Host/{App}.Api/Auth/AuthConfiguration.cs` + `Auth/AuthorizationPolicies.cs`
 
-No-op auth path when config section is missing; full JwtBearer + MicrosoftIdentityWebApi + fallback policy when present.
+Auth is delegated to separate files under `Auth/`. In `RegisterApiServices.cs`:
 
 ```csharp
 private static void AddAuthentication(IServiceCollection services, IConfiguration config, ILogger logger)
 {
-    string authConfigSectionName = "{App}Api_EntraID";
-    var configSection = config.GetSection(authConfigSectionName);
+    services.Add{App}Auth(config);  // delegates to Auth/AuthConfiguration.cs
+}
 
-    // No-op path: auth section absent -- register empty auth so middleware doesn't throw
-    if (!configSection.GetChildren().Any())
-    {
-        logger.LogInformation(
-            "No Auth Config ({ConfigSectionName}) Found; Auth will not be configured.",
-            authConfigSectionName);
-        services.AddAuthentication();
-        services.AddAuthorization();
-        return;
-    }
-
-    // Full auth: JwtBearer default scheme + Microsoft Identity Web
-    logger.LogInformation("Configure auth - {ConfigSectionName}", authConfigSectionName);
-    services.AddAuthentication(options =>
-    {
-        options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-    })
-    .AddMicrosoftIdentityWebApi(config.GetSection(authConfigSectionName));
-
-    // Fallback policy: require authenticated user by default
-    services.AddAuthorizationBuilder()
-        .SetFallbackPolicy(new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
-            .RequireAuthenticatedUser().Build())
-        .AddPolicy(AppConstants.ROLE_GLOBAL_ADMIN,
-            policy => policy.RequireRole(AppConstants.ROLE_GLOBAL_ADMIN))
-        .AddPolicy(AppConstants.ROLE_USER,
-            policy => policy.RequireRole(AppConstants.ROLE_USER));
+private static void AddAuthorization(IServiceCollection services)
+{
+    services.Add{App}Authorization();  // delegates to Auth/AuthorizationPolicies.cs
 }
 ```
+
+The auth configuration implements no-op path when config section is missing; full JwtBearer + MicrosoftIdentityWebApi + fallback policy when present.

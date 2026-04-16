@@ -45,6 +45,7 @@ Use this when adding a new entity to an **already-scaffolded** solution. Skip fu
 - [ ] `DbSet<{Entity}>` added to `{App}DbContextTrxn` and `{App}DbContextQuery`
 - [ ] Repos + service registered in `RegisterServices.cs`
 - [ ] `Map{Entity}Endpoints()` called in `WebApplicationBuilderExtensions.cs`
+- [ ] **[Multi-tenant only]** `ITenantBoundaryValidator` registered (once, not per entity)
 - [ ] Aspire AppHost updated (only if new project added to solution)
 
 ### Validation
@@ -170,6 +171,7 @@ Templates: [ui-client-layer.md](../templates/ui-client-layer.md), [ui-client-lay
 - [ ] `I{Entity}RepositoryQuery` -> `{Entity}RepositoryQuery` registered
 - [ ] `I{Entity}Service` -> `{Entity}Service` registered
 - [ ] `Map{Entity}Endpoints()` wired in API builder extensions
+- [ ] **[Multi-tenant only]** `ITenantBoundaryValidator` -> `TenantBoundaryValidator` registered (once for all entities)
 
 ### Data Access
 

@@ -55,7 +55,7 @@ Keep full registration details in [bootstrapper.md](bootstrapper.md):
 See [repository-template.md](../templates/repository-template.md) for write/query repository implementations and interfaces.
 
 Key rules:
-- Write repo: `{Entity}RepositoryTrxn` with includes and `UpdateFromDto` delegation.
+- Write repo: `{Entity}RepositoryTrxn` with includes and `UpdateFromDto` delegation to DbContext extension.
 - Query repo: `{Entity}RepositoryQuery` with paged search using EF-safe projector expressions.
 - Use transactional repo for writes, query repo for read/projection.
 
@@ -63,13 +63,15 @@ Key rules:
 
 See [updater-template.md](../templates/updater-template.md) for full implementation.
 
-> **Delegation pattern:** The updater is an extension on `DbContextTrxn`, but services call it through the repository. The repository wraps the call: `DB.UpdateFromDto(entity, dto, relatedDeleteBehavior)` where `DB` is the DbContext property inherited from `RepositoryBase`.
+> **Delegation pattern:** The updater is a **static extension method on `{Project}DbContextTrxn`** — this gives it access to `db.Delete()` for explicit EF change-tracker removal. Services call it through the repository: `DB.UpdateFromDto(entity, dto, relatedDeleteBehavior)` where `DB` is the DbContext property inherited from `RepositoryBase`.
 
 Updater rules:
 
-- Keep update chains in `Bind` flow.
-- Centralize add/update/remove in one sync call.
-- Use `RelatedDeleteBehavior` explicitly for relationship semantics.
+- Use railway `.Bind()` flow: `entity.Update(...).Bind(updatedEntity => DomainResult.Combine(...).Map(updatedEntity))` — parent update errors short-circuit child syncs.
+- Centralize add/update/remove in one `SyncCollectionWithResult` call per child collection.
+- Use `RelatedDeleteBehavior` parameter to gate deletion — `None` = no-op in removeFunc, otherwise `db.Delete(toRemove)` + collection remove.
+- **CRITICAL:** Call `db.Delete(toRemove)` in removeFunc, not just `collection.Remove()`. Without explicit EF delete, orphaned children remain in DB when relationship isn't cascade-delete.
+- Null-coalesce DTO collections: `dto.Items ?? []` — null = no changes, empty = remove all.
 - Keep collection diff logic out of services.
 
 ### SearchRequest Defaults (Critical)

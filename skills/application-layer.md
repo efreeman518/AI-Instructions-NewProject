@@ -11,8 +11,14 @@ Base types (`IRequestContext`, `Result<T>`, `IStartupTask`): [../support/ef-pack
 1. Keep contracts separate from implementations.
 2. DTOs live in `Application.Models`; services live in `Application.Services`.
 3. Mappers are static and provide EF-safe projector expressions.
-4. Services enforce validation + tenant boundary checks before writes. See [multi-tenant.md](multi-tenant.md) for `TenantBoundaryValidator` usage and `EnsureTenantBoundary(...)` patterns.
+4. **[Multi-tenant only]** Services enforce validation + tenant boundary checks before writes. See [multi-tenant.md](multi-tenant.md) for `TenantBoundaryValidator` usage and `EnsureTenantBoundary(...)` patterns.
 5. Internal event DTOs and handlers stay in contracts/message-handler projects.
+6. **[Multi-tenant only]** Services MUST stamp `dto.TenantId = RequestTenantId ?? Guid.Empty` on the DTO immediately after `var dto = request.Item;` in both `CreateAsync` and `UpdateAsync`. DTOs arrive from the API layer without TenantId. Use `dto.TenantId` (not `RequestTenantId`) in subsequent boundary-validator and `ToEntity()` calls.
+7. Use `nameof({Entity})` in service logging and validator calls — never hardcoded entity name strings.
+8. Use `ErrorConstants` for shared error keys; use `ServiceErrorMessages` for formatted error messages.
+9. Use `[LoggerMessage]` source-generated extensions for high-frequency structured logging in `Rules/`.
+
+> **TaskFlow demonstrates multi-tenant patterns.** When scaffolding a single-tenant application, omit `ITenantBoundaryValidator`, tenant stamping, tenant filter enforcement, and `TenantInfoDto` from `DefaultResponse`. The service template marks these sections with `// [MULTI-TENANT]`.
 
 Reference patterns: [../patterns/expected-output-index.md](../patterns/expected-output-index.md) (Application Layer).
 
@@ -43,9 +49,10 @@ Entity-specific DTOs and filters go under `Application.Models/{Entity}/`. See [d
 Shared DTO infrastructure (do not duplicate per entity):
 
 - `EntityBaseDto`
-- `ITenantEntityDto`
-- `DefaultRequest<T>`
-- `DefaultResponse<T>`
+- `ITenantEntityDto` — **[multi-tenant only]**
+- `DefaultRequest<T>` — `record`, not `class`
+- `DefaultResponse<T>` — `record`, not `class`; includes `TenantInfoDto?` **[multi-tenant only]**
+- `TenantInfoDto` — `record` with `Id` (Guid) and `Name` (string) — **[multi-tenant only]**
 - `DefaultSearchFilter`
 - `SecurityRoleDto`
 
@@ -72,11 +79,14 @@ Service rules:
 
 1. Primary-constructor DI only.
 2. Validate request structure before domain operations.
-3. Enforce tenant boundary on each operation.
+3. **[Multi-tenant only]** Enforce tenant boundary on each operation.
 4. Use transactional repo for writes, query repo for read/projection.
 5. Keep delete idempotent — for **hard delete**, call `repoTrxn.Delete(entity)` before `SaveChangesAsync`. For **soft delete** (main entities), flip flags: `entity.Update(flags: entity.Flags | {Entity}Flags.IsInactive)` then save. Both patterns wrap `SaveChangesAsync` in try/catch returning `Result.Failure(ex.GetBaseException().Message)`.
 6. **CreateAsync must apply ALL DTO properties** — `Entity.Create()` only takes factory args. Call `entity.Update(...)` afterward to apply remaining DTO fields (e.g., EstimatedHours, ActualHours). If `Update()` triggers `Valid()`, propagate failures.
 7. **SaveChangesAsync overload** — Always use `SaveChangesAsync(OptimisticConcurrencyWinner.ClientWins, ct)`. The parameterless `SaveChangesAsync(ct)` throws `NotImplementedException`.
+8. **`BuildResponse` helper** — Each service should have a private static `BuildResponse({Entity}Dto dto)` that returns `new DefaultResponse<{Entity}Dto> { Item = dto }` (add `TenantInfo` when multi-tenant). Centralizes response construction.
+9. **`ErrorConstants`** — Use `ErrorConstants.ERROR_ITEM_NOTFOUND` in Update not-found paths (not inline strings).
+10. **`nameof({Entity})`** — Use in all boundary-validator calls and error messages.
 
 Flow pattern:
 
@@ -102,12 +112,15 @@ Do not scatter these rules across endpoints/handlers.
 
 Keep structural validation centralized under `Application.Services/Rules/`:
 
-- `StructureValidators`
-- `ValidationHelper`
-- `ServiceErrorMessages`
-- tenant-boundary logging extensions
+- `StructureValidators` — generic `ValidateCreate<T>`, `ValidateUpdate<T>`, `ValidateUpdateId<T>` constrained on `ITenantEntityDto` / `IEntityBaseDto`
+- Per-entity `{Entity}StructureValidator` — delegates common checks to `StructureValidators`, then adds entity-specific field validation using `DomainConstants`
+- `ValidationHelper` — **[multi-tenant only]** static class with `EnsureGlobalAdmin`, `EnsureTenantBoundary`, `PreventTenantChange`
+- `ServiceErrorMessages` — static factory methods for formatted error strings (`PayloadRequired`, `ItemNotFound`, `TenantMismatch`, etc.)
+- `ErrorConstants` — shared string constants in `Application.Contracts` (`ERROR_ITEM_NOTFOUND`, `ERROR_NAME_EXISTS`, etc.)
+- `TenantBoundaryLoggingExtensions` — **[multi-tenant only]** `[LoggerMessage]` source-generated extensions for structured tenant-violation logging
+- `TenantRules` — **[multi-tenant only]** simple static rule methods (e.g., `PreventTenantChange`)
 
-Example:
+Example (generic base):
 
 ```csharp
 public static class StructureValidators
@@ -117,8 +130,17 @@ public static class StructureValidators
         if (dto is null) return Result.Failure("Payload is required.");
         return Require(dto.TenantId != Guid.Empty, "TenantId is required.");
     }
+
+    internal static Result ValidateUpdate<T>(T? dto) where T : class, IEntityBaseDto, ITenantEntityDto
+    {
+        if (dto is null) return Result.Failure("Payload is required.");
+        if (dto.Id is null || dto.Id == Guid.Empty) return Result.Failure("Id is required for updates.");
+        return Require(dto.TenantId != Guid.Empty, "TenantId is required.");
+    }
 }
 ```
+
+Per-entity validators delegate then add field checks — see [structure-validator-template.md](../templates/structure-validator-template.md).
 
 ---
 
@@ -139,10 +161,22 @@ See [message-handler-template.md](../templates/message-handler-template.md) for 
 ## Verification
 
 - [ ] DTO records exist in `Application.Models/{Entity}/`
-- [ ] shared DTO infrastructure is centralized and not duplicated
+- [ ] shared DTO infrastructure is centralized and not duplicated (`EntityBaseDto`, `IEntityBaseDto`, `DefaultSearchFilter`)
+- [ ] `DefaultRequest<T>` and `DefaultResponse<T>` are `record` types
+- [ ] search filters are `record` types inheriting `DefaultSearchFilter`
 - [ ] static mapper includes `ToDto`, `ToEntity`, and projector expressions
 - [ ] projectors are EF-safe expressions
+- [ ] `StructureValidators.cs` exists with generic `ValidateCreate<T>` / `ValidateUpdate<T>`
+- [ ] per-entity validators delegate to `StructureValidators` then add field checks using `DomainConstants`
+- [ ] `ErrorConstants` exists in `Application.Contracts` with shared error keys
+- [ ] `ServiceErrorMessages` exists in `Application.Services/Rules`
 - [ ] service implements `I{Entity}Service` and uses repo split correctly
-- [ ] service executes validation + tenant boundary checks on write/read flows
+- [ ] service has `BuildResponse` helper method
+- [ ] service uses `nameof({Entity})` in boundary-validator and error messages
+- [ ] **[Multi-tenant only]** `ITenantEntityDto` defined, `DefaultResponse` includes `TenantInfoDto?`
+- [ ] **[Multi-tenant only]** service stamps `dto.TenantId = RequestTenantId ?? Guid.Empty` before validation in Create/Update
+- [ ] **[Multi-tenant only]** service executes tenant boundary checks on write/read flows
+- [ ] **[Multi-tenant only]** Search enforces tenant filter for non-admin; logs tenant filter manipulation via `[LoggerMessage]`
+- [ ] **[Multi-tenant only]** Update calls `PreventTenantChange` after boundary check
 - [ ] event DTOs are in contracts and handlers are in message-handlers project
 - [ ] service signatures align with [endpoint-template.md](../templates/endpoint-template.md)

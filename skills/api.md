@@ -2,7 +2,7 @@
 
 ## Overview
 
-Use ASP.NET Core Minimal APIs with endpoint classes (no controllers), API versioning, `ProblemDetails`, and deterministic middleware ordering.
+Use ASP.NET Core Minimal APIs with endpoint classes (no controllers), `ProblemDetails`, and deterministic middleware ordering.
 
 Reference patterns: [../patterns/api-host-wiring.md](../patterns/api-host-wiring.md) (API Startup Sequence, Middleware Pipeline).
 
@@ -15,7 +15,6 @@ Host/{Host}.Api/
 ├── WebApplicationBuilderExtensions.cs
 ├── Endpoints/{Entity}Endpoints.cs
 ├── Auth/
-├── ExceptionHandlers/
 ├── HealthChecks/
 └── Middleware/
 ```
@@ -32,11 +31,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
 
-builder.AddServiceDefaults(config, appName);
+builder.AddServiceDefaults();
 services
     .RegisterInfrastructureServices(config)
+    .RegisterDomainServices(config)
     .RegisterApplicationServices(config)
-    .RegisterApiServices(config, startupLogger);
+    .RegisterBackgroundServices(config)
+    .AddApiServices(config, startupLogger);
 
 var app = builder.Build().ConfigurePipeline();
 await app.RunStartupTasks();
@@ -63,22 +64,29 @@ Note: Aspire-hosted deployments typically handle CORS through the gateway — on
 
 ## Service Registration
 
-`RegisterApiServices.cs` owns API-only concerns:
+`RegisterApiServices.cs` owns API-only concerns (public method: `AddApiServices`):
 
-- Entra auth + authorization policies (`TenantMatch`, admin role)
-- API versioning
-- OpenAPI/Scalar (feature-flagged)
-- health checks, rate limiting, correlation
+- Entra auth + authorization policies (admin role, user role)
+- `DefaultExceptionHandler` + `ProblemDetails`
+- OpenAPI/Scalar (feature-flagged via `OpenApiSettings:Enable`)
+- Rate limiting
 - `IClaimsTransformation` for Gateway-forwarded claims
 
 ## Pipeline + Versioned Groups
 
 `WebApplicationBuilderExtensions.cs` must preserve middleware order:
-HTTPS → routing → rate limiter → authentication → authorization.
+SecurityHeaders → CorrelationId → ExceptionHandler → RateLimiter → CORS → Authentication → Authorization.
 
-Map versioned groups and apply policy at the group level:
+Map versioned groups and apply policy at the group level (adjust route pattern to project needs — tenant-scoped, versioned, or simple `/api/` prefix):
 
 ```csharp
+// Simple pattern (default)
+app.MapGroup("/api/categories")
+    .WithTags("Categories")
+    .RequireAuthorization()
+    .MapCategoryEndpoints(problemDetailsIncludeStackTrace);
+
+// Versioned + tenant-scoped pattern (when needed)
 var apiVersionSet = app.NewApiVersionSet()
     .HasApiVersion(new ApiVersion(1, 0))
     .ReportApiVersions()
@@ -160,14 +168,8 @@ Reference: See [exception-handler-template](../templates/exception-handler-templ
 - **Throwing exceptions for business logic** — Use `DomainResult.Failure()` / `Result.Failure()` instead.
 - **Swallowing errors silently** — Every failure must propagate through the Result chain or be logged explicitly.
 - **Returning raw error strings** — Always wrap in `ProblemDetails` at the API boundary.
-- **Catching generic `Exception` in services** — Catch only specific exceptions (e.g., `DbUpdateConcurrencyException`). Let `DefaultExceptionHandler` handle the rest.
-
-- Include stack traces only outside production.
-- Conventions:
-  - tenant CRUD: `v1/tenant/{tenantId}/{entity}/{id?}` + `TenantMatch`
-  - global admin endpoints: admin role
-  - diagnostics: `/health`, `/alive`
-  - OpenAPI/Scalar: enabled only when `OpenApiSettings:Enable` is `true`
+- **Catching generic `Exception` in services** — Let `DefaultExceptionHandler` handle the rest.
+- **Exposing stack traces in production** — Only include outside production.
 
 ## OpenAPI / Scalar Configuration
 
@@ -201,7 +203,7 @@ if (app.Configuration.GetValue<bool>("OpenApiSettings:Enable"))
     app.MapScalarApiReference(options =>
     {
         options.WithTitle("{App} API");
-        options.WithTheme(ScalarTheme.BluePlanet);
+        options.WithTheme(ScalarTheme.Moon);
     });
 }
 ```
@@ -221,14 +223,6 @@ group.MapGet("/{id:guid}", GetById)
 - Enable XML comments in the `.csproj`: `<GenerateDocumentationFile>true</GenerateDocumentationFile>`.
 - Add `/// <summary>` to handler methods for auto-generated descriptions.
 - Never expose OpenAPI/Scalar in production unless explicitly required.
-
----
-
-## End-to-End Error Flow Example
-
-Validation error trace: `Client POST → Endpoint → Service.Create → Domain.Create → StructureValidator fails → DomainResult.Failure → Result.Failure → Endpoint result.Match → 400 + ProblemDetails`.
-
-`DefaultExceptionHandler` is **never invoked** for business errors — it only catches unexpected exceptions that escape the Result pattern.
 
 ---
 

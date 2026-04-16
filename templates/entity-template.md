@@ -16,12 +16,13 @@
 
 ```csharp
 using Domain.Shared;
+using Domain.Shared.Constants;
 using EF.Domain;
 using EF.Domain.Contracts;
 
 namespace Domain.Model;
 
-public class {Entity} : EntityBase, ITenantEntity<Guid>  // ITenantEntity only if multi-tenant
+public class {Entity} : EntityBase, ITenantEntity<Guid>  // [MULTI-TENANT] omit ITenantEntity<Guid> for single-tenant
 {
     // ===== Factory Create — the ONLY way to create an instance =====
     public static DomainResult<{Entity}> Create(Guid tenantId, string name, /* additional params */)
@@ -69,7 +70,14 @@ public class {Entity} : EntityBase, ITenantEntity<Guid>  // ITenantEntity only i
     public DomainResult Remove{ChildEntity}({ChildEntity} child)
     {
         {ChildEntity}s.Remove(child);
-        return DomainResult.Success();
+        return DomainResult.Success();  // Desired-state: always succeeds
+    }
+
+    public DomainResult Remove{ChildEntity}(Guid id)
+    {
+        var child = {ChildEntity}s.FirstOrDefault(c => c.Id == id);
+        if (child != null) {ChildEntity}s.Remove(child);
+        return DomainResult.Success();  // Desired-state: always succeeds
     }
 
     // ===== Validation — called by Create() and Update() =====
@@ -77,8 +85,12 @@ public class {Entity} : EntityBase, ITenantEntity<Guid>  // ITenantEntity only i
     {
         var errors = new List<DomainError>();
 
-        if (TenantId == Guid.Empty) errors.Add(DomainError.Create("Tenant ID cannot be empty."));
+        if (TenantId == Guid.Empty) errors.Add(DomainError.Create("Tenant ID cannot be empty.")); // [MULTI-TENANT]
         if (string.IsNullOrWhiteSpace(Name)) errors.Add(DomainError.Create("Name is required."));
+        if (Name?.Length < DomainConstants.RULE_DEFAULT_NAME_LENGTH_MIN)
+            errors.Add(DomainError.Create($"Name must be at least {DomainConstants.RULE_DEFAULT_NAME_LENGTH_MIN} characters."));
+        if (Name?.Length > DomainConstants.RULE_DEFAULT_NAME_LENGTH_MAX)
+            errors.Add(DomainError.Create($"Name cannot exceed {DomainConstants.RULE_DEFAULT_NAME_LENGTH_MAX} characters."));
 
         return errors.Count > 0
             ? DomainResult<{Entity}>.Failure(errors)

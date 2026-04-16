@@ -12,6 +12,24 @@ For base types used here (`DbContextBase`, `DbContextScopedFactory`, `AuditInter
 
 Dual-context registration: pooled factories for Trxn and Query contexts, `DbContextScopedFactory` wrappers for scoped resolution, audit interceptor on Trxn only, `ConnectionNoLockInterceptor` on both, Azure vs local SQL detection, `ReadOnly` intent injection for Query.
 
+### DbSet Declarations
+
+Declare all DbSets in the **abstract base context**, not in the concrete Trxn/Query contexts. Use auto-property syntax with `null!` initializer:
+
+```csharp
+public abstract class {App}DbContextBase(DbContextOptions options)
+    : DbContextBase<string, Guid?>(options)
+{
+    public DbSet<{Entity}> {Entity}s { get; set; } = null!;
+    public DbSet<{ChildEntity}> {ChildEntity}s { get; set; } = null!;
+    // ... all entity DbSets here
+}
+```
+
+> **Do NOT** use the expression-body `=> Set<T>()` pattern — it creates a new `DbSet` instance on every access and defeats EF's internal caching.
+
+### Registration
+
 ```csharp
 private static void AddDatabaseServices(IServiceCollection services, IConfiguration config)
 {
@@ -140,19 +158,39 @@ public abstract class {App}DbContextBase(DbContextOptions options)
 ```csharp
     private static void ConfigureDefaultDataTypes(ModelBuilder modelBuilder)
     {
-        var decimalProperties = modelBuilder.Model.GetEntityTypes()
-            .SelectMany(t => t.GetProperties())
-            .Where(p => p.ClrType == typeof(decimal) || p.ClrType == typeof(decimal?))
-            .Where(p => p.GetColumnType() == null);
-        foreach (var property in decimalProperties)
-            property.SetColumnType("decimal(10,4)");
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            foreach (var property in entityType.GetProperties())
+            {
+                // All decimals → decimal(10,4) unless explicitly overridden
+                if (property.ClrType == typeof(decimal) || property.ClrType == typeof(decimal?))
+                {
+                    if (property.GetPrecision() is null)
+                        property.SetPrecision(10);
+                    if (property.GetScale() is null)
+                        property.SetScale(4);
+                }
 
-        var dateProperties = modelBuilder.Model.GetEntityTypes()
-            .SelectMany(t => t.GetProperties())
-            .Where(p => p.ClrType == typeof(DateTime) || p.ClrType == typeof(DateTime?))
-            .Where(p => p.GetColumnType() == null);
-        foreach (var property in dateProperties)
-            property.SetColumnType("datetime2");
+                // All DateTime → datetime2
+                if (property.ClrType == typeof(DateTime) || property.ClrType == typeof(DateTime?))
+                {
+                    property.SetColumnType("datetime2");
+                }
+            }
+        }
+    }
+```
+
+**Singular table names (class name = table name, skip owned types):**
+
+```csharp
+    private static void SetTableNames(ModelBuilder modelBuilder)
+    {
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            if (entityType.IsOwned()) continue;     // owned types share parent table
+            entityType.SetTableName(entityType.ClrType.Name);  // singular, matches class name
+        }
     }
 ```
 

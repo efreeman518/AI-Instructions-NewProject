@@ -63,8 +63,13 @@ With Aspire, destination resolution can be service-discovery driven.
 ## Service Registration Pattern
 
 ```csharp
+using Azure.Core;
+using Azure.Identity;
+
 private static void AddReverseProxy(IServiceCollection services, IConfiguration config)
 {
+    // Register TokenCredential — DefaultAzureCredential handles local dev + managed identity in production
+    services.AddSingleton<TokenCredential>(_ => new DefaultAzureCredential());
     services.AddSingleton<TokenService>();
 
     services.AddReverseProxy()
@@ -73,8 +78,10 @@ private static void AddReverseProxy(IServiceCollection services, IConfiguration 
 }
 ```
 
+> **Package:** Add `Azure.Identity` to the Gateway project. Version managed via `Directory.Packages.props`.
+
 > **Service discovery:** For Aspire-hosted scenarios, use service-discovery URI syntax (`https+http://{app}-api`) in `appsettings.json` cluster destinations. If explicit resolver registration is needed, add the `Microsoft.Extensions.ServiceDiscovery.Yarp` package and call `AddServiceDiscoveryDestinationResolver()`.
-```
+
 
 Transform pattern:
 
@@ -94,19 +101,51 @@ private static void ConfigureProxyTransforms(TransformBuilderContext context)
 
 ## TokenService Contract
 
-`TokenService` acquires and caches client-credential tokens per cluster with an expiry buffer.
+`TokenService` acquires and caches client-credential tokens per cluster with an expiry buffer. Injects `TokenCredential` (not `IConfiguration` or MSAL directly).
 
 ```csharp
-public async Task<string> GetAccessTokenAsync(string clusterId)
-{
-    if (_cache.TryGetValue(clusterId, out var cached) && cached.Expiry > DateTimeOffset.UtcNow.AddMinutes(5))
-        return cached.Token;
+using Azure.Core;
+using System.Collections.Concurrent;
 
-    var tokenResult = await credential.GetTokenAsync(new TokenRequestContext([scope]));
-    _cache[clusterId] = (tokenResult.Token, tokenResult.ExpiresOn);
-    return tokenResult.Token;
+public class TokenService(TokenCredential credential, IConfiguration config)
+{
+    private readonly ConcurrentDictionary<string, (string Token, DateTimeOffset Expiry)> _cache = new();
+
+    public async Task<string> GetAccessTokenAsync(string clusterId, CancellationToken ct = default)
+    {
+        if (_cache.TryGetValue(clusterId, out var cached) && cached.Expiry > DateTimeOffset.UtcNow.AddMinutes(5))
+            return cached.Token;
+
+        var scope = config[$"ReverseProxy:Clusters:{clusterId}:TokenScope"]
+            ?? throw new InvalidOperationException($"TokenScope not configured for cluster '{clusterId}'");
+
+        var tokenResult = await credential.GetTokenAsync(new TokenRequestContext([scope]), ct);
+        _cache[clusterId] = (tokenResult.Token, tokenResult.ExpiresOn);
+        return tokenResult.Token;
+    }
 }
 ```
+
+### Token Configuration
+
+Each cluster declares its token scope in `appsettings.json`:
+
+```json
+{
+  "ReverseProxy": {
+    "Clusters": {
+      "api-cluster": {
+        "TokenScope": "api://your-api-client-id/.default",
+        "Destinations": {
+          "api": { "Address": "https://localhost:7065" }
+        }
+      }
+    }
+  }
+}
+```
+
+> **Why `TokenCredential`?** Abstracts the credential source — `DefaultAzureCredential` auto-chains Azure CLI (local dev), managed identity (deployed), environment variables (CI). No MSAL configuration code needed.
 
 ---
 

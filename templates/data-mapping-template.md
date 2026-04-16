@@ -52,9 +52,8 @@ public record {ChildEntity}Dto : EntityBaseDto
 ```csharp
 namespace Application.Models.{Entity};
 
-public class {Entity}SearchFilter
+public record {Entity}SearchFilter : DefaultSearchFilter
 {
-    public Guid? TenantId { get; set; }
     public string? Name { get; set; }
     public {Entity}Flags? Flags { get; set; }
 }
@@ -63,9 +62,21 @@ public class {Entity}SearchFilter
 ### Base DTO Types (from Application.Models/Shared/)
 
 ```csharp
-public record EntityBaseDto : IEntityBaseDto
+// DefaultSearchFilter — base for all search filters (Application.Models/)
+public record DefaultSearchFilter
+{
+    public string? SearchTerm { get; set; }
+    public Guid? TenantId { get; set; }
+}
+
+public abstract record EntityBaseDto : IEntityBaseDto
 {
     public Guid? Id { get; set; }
+}
+
+public interface IEntityBaseDto
+{
+    Guid? Id { get; set; }
 }
 
 public interface ITenantEntityDto
@@ -80,7 +91,7 @@ public interface ITenantEntityDto
 - DTOs live in `Application.Models/{Entity}/` -- separate project from contracts
 - `Id` is `Guid?` -- null on Create, required on Update (inherited from `EntityBaseDto`)
 - `TenantId` is `Guid` (non-nullable) -- always required
-- Search filters are `class` (not record) so properties can be mutated (e.g., forcing TenantId)
+- Search filters are `record` types inheriting `DefaultSearchFilter` (provides `SearchTerm` and `TenantId`). Add only entity-specific filter properties.
 - Audit fields (CreatedDate, etc.) may be included as read-only properties on response DTOs via `IEntityBaseDto` -- the `AuditInterceptor` on the DbContext manages write-side audit data
 - Child collections default to empty list -- never null
 - Use `{Entity}Flags` (flags enum) instead of a separate Status enum

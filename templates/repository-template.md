@@ -13,7 +13,10 @@ using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
 using EF.Data;
+using EF.Data.Contracts;
 using EF.Domain;
+using EF.Domain.Contracts;
+using Infrastructure.Repositories.Updaters;
 
 namespace Infrastructure.Repositories;
 
@@ -44,7 +47,7 @@ public class {Entity}RepositoryTrxn({Project}DbContextTrxn dbContext)
         ).ConfigureAwait(ConfigureAwaitOptions.None);
     }
 
-    // ===== UpdateFromDto — delegates to Updater extension =====
+    // ===== UpdateFromDto — delegates to DbContext extension method =====
     public DomainResult<{Entity}> UpdateFromDto({Entity} entity, {Entity}Dto dto,
         RelatedDeleteBehavior relatedDeleteBehavior = RelatedDeleteBehavior.None)
     {
@@ -146,7 +149,7 @@ public class {Entity}RepositoryQuery({Project}DbContextQuery dbContext)
 
 ```csharp
 using EF.Data;
-using EF.Domain;
+using EF.Domain.Contracts;
 
 namespace Application.Contracts.Repositories;
 
@@ -179,6 +182,35 @@ public interface I{Entity}RepositoryQuery
     Task<StaticList<StaticItem<Guid, Guid?>>> Lookup{Entity}Async(Guid? tenantId, string? search, CancellationToken ct = default);
 }
 ```
+
+## Critical: Query Repos MUST Use QueryPageProjectionAsync
+
+**Anti-pattern (manual paging):**
+```csharp
+// ❌ WRONG — materializes full entities, no projection, manual paging
+var query = DB.Categories.AsNoTracking().AsQueryable();
+if (filter.Name != null) query = query.Where(...);
+var total = await query.CountAsync(ct);
+var data = await query.OrderBy(...).Skip(...).Take(...).ToListAsync(ct);
+return new PagedResponse<Category> { Data = data, ... };
+```
+
+**Correct pattern (base class projection):**
+```csharp
+// ✅ CORRECT — SQL-level projection, base class handles paging/count
+return await QueryPageProjectionAsync<Category, CategoryDto>(
+    CategoryMapper.ProjectorSearch,
+    readNoLock: true,
+    pageSize: request.PageSize,
+    pageIndex: request.PageIndex,
+    filter: BuildFilter(request.Filter),
+    orderBy: BuildOrderBy(request.Sorts),
+    includeTotal: true,
+    splitQueryThresholdOptions: SplitQueryThresholdOptions.Default,
+    cancellationToken: ct).ConfigureAwait(ConfigureAwaitOptions.None);
+```
+
+Every query repo search method must follow this pattern. The service layer then direct-returns the result without post-mapping.
 
 ## Critical: Delete Pattern (MUST call `Delete(entity)`)
 
@@ -218,7 +250,7 @@ The 2-param overload retries on `DbUpdateConcurrencyException` using the specifi
 - **`SearchRequest<TFilter>`** is a record: `PageSize` (int), `PageIndex` (int), `Sorts` (IEnumerable\<Sort\>?), `Filter` (TFilter?). Does **not** have `Page`, `PageNumber`, `SortBy`, or `SortDirection`
 - **Trxn repository**: Uses `{Project}DbContextTrxn` (tracking, audit interceptor, read-write)
 - **Query repository**: Uses `{Project}DbContextQuery` (NoTracking, read-only replica)
-- **UpdateFromDto** delegates to the static Updater extension method on the DbContext (see updater-template.md)
+- **UpdateFromDto** delegates to `DB.UpdateFromDto(entity, dto, relatedDeleteBehavior)` — a DbContext extension method (see updater-template.md)
 - Projectors (`{Entity}Mapper.ProjectorSearch`) used in query repo for efficient SQL translation
 - No `SaveChangesAsync` override on query repo — read-only by design
 - Entity-specific repositories for complex queries; `GenericRepositoryTrxn/Query` for simple CRUD

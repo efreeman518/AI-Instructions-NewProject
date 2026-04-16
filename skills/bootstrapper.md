@@ -7,24 +7,34 @@ The **Bootstrapper project** is the centralized DI registration hub. It wires up
 ## Project Structure
 
 > Reference patterns: [../patterns/api-host-wiring.md](../patterns/api-host-wiring.md) (API Startup), [../patterns/data-layer-wiring.md](../patterns/data-layer-wiring.md) (DB Wiring).
-> Base types (`IStartupTask`, `RunStartupTasks()`, `StaticLogging`): [../support/ef-packages-reference.md](../support/ef-packages-reference.md).
+> Base types (`IStartupTask`, `RunStartupTasks()`): [../support/ef-packages-reference.md](../support/ef-packages-reference.md).
+> `StaticLogging`: from `EF.Common` package (used in Program.cs for early logger).
 
 ```
 Host/{Host}.Bootstrapper/
-├── RegisterServices.cs        # Main static extension methods
-├── IStartupTask.cs            # Startup task interface
-└── IHostExtensions.cs         # Host extension for running startup tasks
+├── RegisterServices.cs                       # Partial class - public orchestration methods
+├── Registration/
+│   ├── RegisterServices.Application.cs        # App services, message handlers
+│   ├── RegisterServices.Caching.cs            # FusionCache + Redis backplane
+│   ├── RegisterServices.Database.cs           # DbContext pooling, repositories
+│   ├── RegisterServices.Infrastructure.cs     # Blob storage, service bus, health checks
+│   └── RegisterServices.RequestContext.cs     # Scoped IRequestContext factory
+├── IStartupTask.cs                           # Startup task interface
+├── IHostExtensions.cs                        # Host extension for running startup tasks
+└── StartupTasks/
+    ├── ApplyEFMigrationsStartup.cs
+    └── WarmupDependencies.cs
 ```
 
 ## Registration Pattern
 
-`RegisterServices.cs` is a **static class** with extension methods on `IServiceCollection`, organized by layer:
+`RegisterServices.cs` is a **partial static class** with extension methods on `IServiceCollection`, organized by layer. Private helper methods live in partial files under `Registration/`:
 
 > See [../patterns/data-layer-wiring.md](../patterns/data-layer-wiring.md) for full registration pattern.
 
 ```csharp
 // Compact pattern — see reference app (TaskFlow) for full implementation
-public static class RegisterServices
+public static partial class RegisterServices
 {
     public static IServiceCollection RegisterDomainServices(this IServiceCollection services, IConfiguration config)
     {
@@ -138,7 +148,7 @@ builder.Services
     .RegisterDomainServices(config)
     .RegisterApplicationServices(config)
     .RegisterBackgroundServices(config)
-    .RegisterApiServices(config, startupLogger);  // API-specific
+    .AddApiServices(config, startupLogger);  // API-specific
 
 var app = builder.Build().ConfigurePipeline();
 await app.RunStartupTasks();
@@ -170,7 +180,8 @@ builder.Services
 
 After generating the Bootstrapper, confirm:
 
-- [ ] Single `RegisterServices.cs` with public `RegisterDomainServices`, `RegisterApplicationServices`, and `RegisterInfrastructureServices` extension methods
+- [ ] Single `RegisterServices.cs` (partial class) with public `RegisterInfrastructureServices`, `RegisterDomainServices`, `RegisterApplicationServices`, and `RegisterBackgroundServices` extension methods
+- [ ] Private helper methods split into `Registration/RegisterServices.*.cs` partial files
 - [ ] DbContexts registered via pooled factory with scoped wrappers
 - [ ] All `I{Entity}RepositoryTrxn` and `I{Entity}RepositoryQuery` interfaces registered
 - [ ] All `I{Entity}Service` implementations registered
