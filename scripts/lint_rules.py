@@ -409,6 +409,7 @@ def check_undefined_template_tokens(root, placeholder_doc_path, known_tokens):
         "Count", "DocumentId", "EntityId", "ExceptionType",
         "AgentName", "FunctionName", "MessageCount", "ResponseCount",
         "Property1", "Property2", "SomeOtherProp",
+        "Binding",
     }
 
     for template_file in template_dir.rglob("*.md"):

@@ -18,7 +18,7 @@
     "contextBudget": {
         "default": 30000,
         "extended": 60000,
-        "compact": 15000,
+        "compact": 16000,
         "note": "Token ceiling per phase. Use 'extended' for 128K+ context models. Use 'compact' for constrained sessions."
     },
     "modeExclusions": {
