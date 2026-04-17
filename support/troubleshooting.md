@@ -118,6 +118,42 @@ When a third-party library (scheduler, queue, dashboard, job runner) uses EF-bac
 1. **Identify the schema owner.** Does the library auto-create its tables at startup? Does it ship migrations or SQL scripts you must run? Does it expect a design-time factory in your project? Or does it assume tables already exist?
 2. **Do not conflate startup success with schema presence.** Many libraries start without error even when their backing tables are missing — failures appear later during seeding, first job execution, or dashboard queries, and are easily misread as connection or configuration issues.
 3. **Verify the schema directly.** Query `INFORMATION_SCHEMA.TABLES` or the database tool of your choice to confirm the expected tables exist before investigating application-level failures.
+
+---
+
+## WASM Static Web Assets Manifest Crash
+
+**Symptom:** Uno WASM app crashes on startup with `DirectoryNotFoundException` or `FileNotFoundException` referencing a deleted folder (e.g., `playwright-screenshots/`, `test-results/`).
+
+**Root cause:** The static web assets manifest (`staticwebassets.build.json` in `obj/`) caches references to all directories present at build time. If a directory is deleted after a build but before a clean rebuild, the manifest still references it, and `WasmAppHost` crashes trying to serve assets from the missing path.
+
+**Fix:**
+1. Clean `bin/` and `obj/` folders: `Remove-Item -Recurse -Force bin, obj`
+2. Rebuild: `dotnet build`
+3. If the deleted folder was test output or tooling artifacts, add it to `.gitignore` to prevent recurrence.
+
+**Prevention:** Never create transient output directories (test results, screenshots, build artifacts) inside the Uno app project. Configure tools to write outputs into their own project directories (e.g., Playwright `outputDir` pointing to `Test/Test.PlaywrightUI/test-results`).
+
+---
+
+## Aspire Multi-Consumer Database Wiring
+
+**Symptom:** A project that should connect to an Aspire-managed database fails with connection errors, while other consumers of the same database work fine.
+
+**Root cause:** Each Aspire resource consumer needs its own `.WithReference()` call. When two projects need the same database but use different connection string names (e.g., API uses `{App}DbContextTrxn` and Functions uses `{App}DbContextQuery`), each must specify its connection name explicitly:
+
+```csharp
+var taskflowDb = builder.AddSqlServer("sql")
+    .AddDatabase("taskflow-db");
+
+var api = builder.AddProject<Projects.TaskFlow_Api>("api")
+    .WithReference(taskflowDb);  // uses default connection name
+
+var functions = builder.AddProject<Projects.TaskFlow_Functions>("functions")
+    .WithReference(taskflowDb, connectionName: "TaskFlowDbContextQuery");  // explicit name
+```
+
+Without the explicit `connectionName`, the Functions project falls back to `appsettings.json` (which may reference LocalDB or a non-existent server).
 4. **Avoid CREATE-on-every-restart patterns.** When using `GenerateCreateScript()` + batch execution to bootstrap third-party schemas, gate it behind an existence check (see [data-persistence-advanced.md](data-persistence-advanced.md) → Third-Party Operational Store Schemas). Running CREATE statements against existing tables produces `fail:` EF log spam on every restart with persistent data volumes.
 5. **Record the schema ownership model** in `HANDOFF.md` and `resource-implementation.yaml` so future sessions do not re-diagnose the same issue.
 

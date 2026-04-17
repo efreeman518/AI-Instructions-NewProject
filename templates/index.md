@@ -39,11 +39,13 @@ Quick lookup: "I need to scaffold X" → load these files.
 
 ## UI (Uno Platform)
 
+> **Design Standard:** Each main entity gets two pages — `{Entity}ListPage` (list/search) and `{Entity}Page` (unified add/edit + children). No separate detail or create pages. See templates for the pattern.
+
 | Artifact | Template | Required Skill |
 |---|---|---|
 | Models + Services | `ui-client-layer.md` | `skills/uno-ui.md` |
-| MVUX model | `mvux-model-template.md` | `skills/uno-ui.md` |
-| XAML page | `xaml-page-template.md` | `skills/uno-ui.md` |
+| MVUX model (List + Page) | `mvux-model-template.md` | `skills/uno-ui.md` |
+| XAML page (List + Entity) | `xaml-page-template.md` | `skills/uno-ui.md` |
 
 ## AI Integration
 

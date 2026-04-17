@@ -2,9 +2,22 @@
 
 | | |
 |---|---|
-| **Files** | `Presentation/{Entity}ListModel.cs`, `{Entity}DetailModel.cs`, `Create{Entity}Model.cs` |
+| **Files** | `Presentation/{Entity}ListModel.cs`, `{Entity}PageModel.cs` |
 | **Depends on** | [ui-client-layer](ui-client-layer.md), [ui-client-layer](ui-client-layer.md) |
 | **Referenced by** | [xaml-page-template](xaml-page-template.md), [uno-ui.md](../skills/uno-ui.md) |
+
+## Design Standard: Single Entity Page
+
+Each main entity gets **two** presentation models:
+- **`{Entity}ListModel`** — list/search/filter, navigates to the entity page
+- **`{Entity}PageModel`** — unified add/edit page with all CRUD + child collections
+
+This replaces the old 3-model pattern (List + Detail + Create). Benefits:
+- One route per entity (not two)
+- Edit form + children (comments, checklist items, etc.) on a single page
+- `Entity?` parameter: `null` = create mode, non-null = edit mode
+- Save/Delete buttons visible based on mode
+- Children sections (feeds + inline add forms) visible only in edit mode
 
 ## List Model
 
@@ -14,168 +27,132 @@ using {Project}.UI.Business.Services.{Feature};
 
 namespace {Project}.UI.Presentation;
 
-public partial record {Entity}ListModel
+public partial record {Entity}ListModel(
+    INavigator Navigator,
+    I{Entity}ApiService {Entity}Service,
+    IMessenger Messenger)
 {
-    private readonly INavigator _navigator;
-    private readonly I{Entity}Service _{entity}Service;
-    private readonly IMessenger _messenger;
+    public IState<int> ItemsVersion => State<int>.Value(this, () => 0);
 
-    public {Entity}ListModel(
-        INavigator navigator,
-        I{Entity}Service {entity}Service,
-        IMessenger messenger)
+    public IListFeed<{Entity}Model> Items => ListFeed.Async(async ct =>
     {
-        _navigator = navigator;
-        _{entity}Service = {entity}Service;
-        _messenger = messenger;
-    }
+        _ = await ItemsVersion;
+        return (IImmutableList<{Entity}Model>)(await {Entity}Service.SearchAsync(ct: ct)).ToImmutableList();
+    });
 
-    // Read-only list feed — auto-refreshes on messenger updates
-    public IListFeed<{Entity}> Items =>
-        ListFeed.Async(_{entity}Service.GetAll);
+    public IState<string> SearchTerm => State<string>.Value(this, () => string.Empty);
 
-    // Mutable search state
-    public IState<string> SearchTerm =>
-        State<string>.Value(this, () => string.Empty);
+    public async ValueTask OpenItem({Entity}Model item, CancellationToken ct) =>
+        await Navigator.NavigateRouteAsync(this, "{Entity}Item", data: item, cancellation: ct);
 
-    // Filtered results combining search term + items
-    public IListState<{Entity}> FilteredItems => ListState
-        .FromFeed(this, Feed
-            .Combine(SearchTerm, Items.AsFeed())
-            .SelectAsync(Search)
-            .AsListFeed())
-        .Observe(_messenger, item => item.Id);
-
-    // Navigation commands — auto-bound as commands in XAML
-    public async ValueTask NavigateToDetail({Entity} item, CancellationToken ct) =>
-        await _navigator.NavigateRouteAsync(this, "{Entity}Detail", data: item, cancellation: ct);
-
-    public async ValueTask Create(CancellationToken ct) =>
-        await _navigator.NavigateRouteAsync(this, "Create{Entity}", cancellation: ct);
-
-    private async ValueTask<IImmutableList<{Entity}>> Search(
-        (string term, IImmutableList<{Entity}> items) inputs, CancellationToken ct)
-    {
-        if (string.IsNullOrWhiteSpace(inputs.term))
-            return inputs.items;
-
-        return inputs.items
-            .Where(x => x.Name?.Contains(inputs.term, StringComparison.OrdinalIgnoreCase) == true)
-            .ToImmutableList();
-    }
+    public async ValueTask CreateNew(CancellationToken ct) =>
+        await Navigator.NavigateRouteAsync(this, "{Entity}Item", cancellation: ct);
 }
 ```
 
-## Detail Model
+## Entity Page Model (Unified Add/Edit + Children)
 
 ```csharp
+using CommunityToolkit.Mvvm.Messaging;
 using {Project}.UI.Business.Models;
-using {Project}.UI.Business.Services.{Feature};
+using {Project}.UI.Business.Services;
 
 namespace {Project}.UI.Presentation;
 
-public partial record {Entity}DetailModel
+public partial record {Entity}PageModel(
+    {Entity}Model? Entity,
+    INavigator Navigator,
+    I{Entity}ApiService {Entity}Service,
+    // inject child services as needed:
+    // ICommentApiService CommentService,
+    // IChecklistItemApiService ChecklistItemService,
+    IMessenger Messenger)
 {
-    private readonly INavigator _navigator;
-    private readonly I{Entity}Service _{entity}Service;
-    private readonly IMessenger _messenger;
+    // ── Mode ─────────────────────────────────────────────────
+    public IState<bool> IsEditMode => State<bool>.Value(this, () => Entity?.Id is not null);
 
-    public {Entity}DetailModel(
-        {Entity} {entity},             // Injected via navigation data
-        INavigator navigator,
-        I{Entity}Service {entity}Service,
-        IMessenger messenger)
-    {
-        _navigator = navigator;
-        _{entity}Service = {entity}Service;
-        _messenger = messenger;
-        {Entity} = {entity};
-    }
-
-    public {Entity} {Entity} { get; }
-
-    // Child collection feeds
-    public IListFeed<{ChildEntity}> {ChildEntity}Items =>
-        ListFeed.Async(async ct =>
-            await _{entity}Service.Get{ChildEntity}s({Entity}.Id, ct));
-
-    // Mutable state for UI toggle
-    public IState<bool> IsFavorited =>
-        State.Value(this, () => {Entity}.IsFavorite);
-
-    // Commands
-    public async ValueTask ToggleFavorite(CancellationToken ct)
-    {
-        await _{entity}Service.Favorite({Entity}, ct);
-        await IsFavorited.UpdateAsync(s => !s);
-    }
-
-    public async ValueTask Delete(CancellationToken ct)
-    {
-        await _{entity}Service.Delete({Entity}.Id, ct);
-        await _navigator.GoBack(this);
-    }
-}
-```
-
-## Create/Edit Model
-
-```csharp
-using {Project}.UI.Business.Models;
-using {Project}.UI.Business.Services.{Feature};
-
-namespace {Project}.UI.Presentation;
-
-public partial record Create{Entity}Model
-{
-    private readonly INavigator _navigator;
-    private readonly I{Entity}Service _{entity}Service;
-    private readonly IMessenger _messenger;
-
-    public Create{Entity}Model(
-        {Entity}? {entity},            // null = create mode, non-null = edit mode
-        INavigator navigator,
-        I{Entity}Service {entity}Service,
-        IMessenger messenger)
-    {
-        _navigator = navigator;
-        _{entity}Service = {entity}Service;
-        _messenger = messenger;
-        IsEditMode = {entity} is not null;
-    }
-
-    public bool IsEditMode { get; }
-
-    // Form fields as mutable state
-    public IState<string> Name => State<string>.Value(this, () => string.Empty);
+    // ── Form fields (IState per editable property) ───────────
+    public IState<string> Title => State<string>.Value(this, () => Entity?.Title ?? string.Empty);
+    public IState<string> Description => State<string>.Value(this, () => Entity?.Description ?? string.Empty);
     // ... add IState<T> per editable property
 
+    // ── Dynamic header text ──────────────────────────────────
+    public IState<string> FormHeader => State<string>.Value(this, () => Entity?.Id is not null ? "Edit {Entity}" : "New {Entity}");
+    public IState<string> SaveButtonText => State<string>.Value(this, () => Entity?.Id is not null ? "Update" : "Save");
+
+    // ── Children version counters (one per child feed) ───────
+    // public IState<int> CommentsVersion => State<int>.Value(this, () => 0);
+    // public IState<int> ChecklistVersion => State<int>.Value(this, () => 0);
+
+    // ── Children feeds ───────────────────────────────────────
+    // public IListFeed<CommentModel> Comments => ListFeed.Async(async ct =>
+    // {
+    //     _ = await CommentsVersion;
+    //     if (Entity?.Id is null) return ImmutableList<CommentModel>.Empty;
+    //     return (IImmutableList<CommentModel>)(await CommentService.SearchAsync(Entity.Id, ct)).ToImmutableList();
+    // });
+
+    // ── Inline add form states ───────────────────────────────
+    // public IState<string> NewCommentBody => State<string>.Value(this, () => string.Empty);
+
+    // ── Save (create or update) ──────────────────────────────
     public async ValueTask Save(CancellationToken ct)
     {
-        var name = await Name;
-        // Build entity from form state
-        var entity = new {Entity} { Name = name /* ... */ };
+        var title = await Title;
+        if (string.IsNullOrWhiteSpace(title)) return;
 
-        if (IsEditMode)
-            await _{entity}Service.Update(entity, ct);
+        var model = (Entity ?? new {Entity}Model()) with
+        {
+            Title = title,
+            Description = await Description,
+            // ... map all form fields
+        };
+
+        if (model.Id.HasValue)
+            await {Entity}Service.UpdateAsync(model, ct);
         else
-            await _{entity}Service.Create(entity, ct);
+            await {Entity}Service.CreateAsync(model, ct);
 
-        await _navigator.GoBack(this);
+        await Navigator.NavigateBackAsync(this, cancellation: ct);
     }
 
-    public async ValueTask Cancel(CancellationToken ct) =>
-        await _navigator.GoBack(this);
+    // ── Delete ───────────────────────────────────────────────
+    public async ValueTask Delete(CancellationToken ct)
+    {
+        if (Entity?.Id is null) return;
+        await {Entity}Service.DeleteAsync(Entity.Id.Value, ct);
+        await Navigator.NavigateRouteAsync(this, "{Entity}List", cancellation: ct);
+    }
+
+    // ── Child add commands ───────────────────────────────────
+    // public async ValueTask AddComment(CancellationToken ct)
+    // {
+    //     var body = await NewCommentBody;
+    //     if (Entity?.Id is null || string.IsNullOrWhiteSpace(body)) return;
+    //     await CommentService.CreateAsync(new CommentModel { Body = body, {Entity}Id = Entity.Id.Value }, ct);
+    //     await NewCommentBody.UpdateAsync(_ => string.Empty, ct);
+    //     await CommentsVersion.UpdateAsync(v => v + 1, ct);  // triggers feed refresh
+    // }
+
+    // ── Child delete commands ────────────────────────────────
+    // public async ValueTask DeleteComment(CommentModel comment, CancellationToken ct)
+    // {
+    //     if (comment.Id is null) return;
+    //     await CommentService.DeleteAsync(comment.Id.Value, ct);
+    //     await CommentsVersion.UpdateAsync(v => v + 1, ct);
+    // }
 }
 ```
 
 ## Rules
 
 - Always use `partial record` — the MVUX source generator needs it
-- `{Feature}` = **plural entity name** matching the service folder (e.g., `TodoItems`, `Categories`)
-- Constructor parameters are injected via DI (services, `INavigator`, `IMessenger`) or navigation data (the entity for detail pages)
+- Constructor-injected parameters: services via DI, `Entity?` via navigation data (`null` = create, non-null = edit)
 - Use `IFeed`/`IListFeed` for read-only data, `IState`/`IListState` for mutable data
 - Public `ValueTask` methods become bindable commands automatically
-- Use `.Observe(_messenger, keySelector)` to auto-refresh when entity messages arrive
 - Accept `CancellationToken ct` as the last parameter on all async methods
-- Keep models focused — one model per page/dialog
+- **Two models per entity** — List + Page (not three)
+- **Children on the entity page** — not a separate detail page
+- **Version counter per child feed** — increment after mutations to trigger refresh
+- Save navigates back (`NavigateBackAsync`), Delete navigates to list route
+- `IsEditMode` drives visibility of Delete button and children sections in XAML

@@ -76,7 +76,7 @@ public class {Entity}RepositoryQuery({Project}DbContextQuery dbContext)
             {Entity}Mapper.ProjectorSearch,
             readNoLock: true,
             pageSize: request.PageSize,
-            pageIndex: request.PageIndex,
+            pageIndex: Math.Max(1, request.PageIndex),
             filter: BuildFilter(request.Filter),
             orderBy: BuildOrderBy(request.Sorts),
             includeTotal: true,
@@ -202,7 +202,7 @@ return await QueryPageProjectionAsync<Category, CategoryDto>(
     CategoryMapper.ProjectorSearch,
     readNoLock: true,
     pageSize: request.PageSize,
-    pageIndex: request.PageIndex,
+    pageIndex: Math.Max(1, request.PageIndex),
     filter: BuildFilter(request.Filter),
     orderBy: BuildOrderBy(request.Sorts),
     includeTotal: true,
@@ -211,6 +211,8 @@ return await QueryPageProjectionAsync<Category, CategoryDto>(
 ```
 
 Every query repo search method must follow this pattern. The service layer then direct-returns the result without post-mapping.
+
+> **PageIndex pitfall:** `ComposeIQueryable` in EF.Data expects **1-based** `pageIndex` (it does `pageIndex - 1` internally). `SearchRequest<T>.PageIndex` defaults to `0`. Without `Math.Max(1, request.PageIndex)`, a default request produces a negative SQL `OFFSET`, crashing with `SqlException: The offset specified in a OFFSET clause may not be negative`.
 
 ## Critical: Delete Pattern (MUST call `Delete(entity)`)
 

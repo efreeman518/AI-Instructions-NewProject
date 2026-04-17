@@ -108,10 +108,11 @@ Services like `AddSqlServer`, `AddRedis`, `AddPostgres`, `AddRabbitMQ` already r
 ## Key Rules
 
 1. `WithReference(..., connectionName: "X")` must map to runtime key `ConnectionStrings:X`.
-2. Keep scheduler single replica when using TickerQ.
-3. Use `WaitFor(...)` for startup ordering dependencies.
-4. Keep Gateway as public ingress, backend hosts internal.
-5. Keep AppHost resource names aligned with IaC modules in [iac.md](iac.md).
+2. **Every project that needs a resource must have its own `.WithReference()` call.** A common bug: adding a new consumer project (e.g., Functions) that uses the same database as the API but forgetting to add `.WithReference(db, connectionName: "...")`. The project silently falls back to `appsettings.json` connection strings (often LocalDB or nonexistent), causing connection errors that look like infrastructure problems.
+3. Keep scheduler single replica when using TickerQ.
+4. Use `WaitFor(...)` for startup ordering dependencies.
+5. Keep Gateway as public ingress, backend hosts internal.
+6. Keep AppHost resource names aligned with IaC modules in [iac.md](iac.md).
 
 ---
 

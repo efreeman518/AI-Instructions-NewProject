@@ -398,10 +398,11 @@ MigrationBackup/
 FodyWeavers.xsd
 
 # VS Code files for those working on multiple tools
+# NOTE: tasks.json and launch.json are intentionally NOT allowlisted — in an
+# instruction repo those files inevitably hardcode paths to specific generated
+# apps (e.g., a reference app). Keep them local/per-developer.
 .vscode/*
 !.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
 !.vscode/extensions.json
 !.vscode/*.code-snippets
 

@@ -60,9 +60,10 @@ Test/
   Test.Unit/
   Test.Integration/
   Test.Architecture/
-  Test.PlaywrightUI/      (optional)
-  Test.Load/              (optional)
-  Test.Benchmarks/        (optional)
+  Test.E2E/                 (WebApplicationFactory + Testcontainers)
+  Test.PlaywrightUI/        (optional, browser E2E)
+  Test.Load/                (optional)
+  Test.Benchmarks/          (optional)
 ```
 
 ## Templates
@@ -212,6 +213,99 @@ public async Task CRUD_Pass() { }
 - Keep selectors stable (`data-testid` preferred)
 - Isolate data per test (unique names/ids)
 - Cover create/edit/delete/search flows
+
+#### Uno WASM DOM Gotchas
+
+Uno on WASM does not render native HTML controls. A `<Button>` becomes `<div xamltype="Microsoft.UI.Xaml.Controls.Button">`, a `<TextBox>` becomes a `<div>` wrapping a contenteditable element, etc. Stock Playwright selectors like `page.getByRole('button')`, `button:visible`, `page.click('button:has-text("Save")')` all return zero matches.
+
+**Required selector strategy for Uno WASM**:
+
+```typescript
+// ✅ Query by xamltype attribute
+const buttons = await page.locator('[xamltype="Microsoft.UI.Xaml.Controls.Button"]').all();
+
+// ✅ Click by visible text + xamltype (evaluate in page context)
+async function clickUnoButtonByText(page, label: string) {
+  const target = await page.evaluate((text) => {
+    const els = Array.from(document.querySelectorAll(
+      '[xamltype="Microsoft.UI.Xaml.Controls.Button"]'));
+    const visible = els.filter(el => {
+      const r = el.getBoundingClientRect();
+      if (r.width <= 0 || r.height <= 0) return false;
+      const style = getComputedStyle(el);
+      if (style.visibility === "hidden" || style.display === "none") return false;
+      return new RegExp(`(^|[^A-Za-z])${text}([^A-Za-z]|$)`)
+        .test((el.textContent ?? "").trim());
+    });
+    if (!visible.length) return null;
+    const r = visible[0].getBoundingClientRect();
+    return { x: r.x + r.width/2, y: r.y + r.height/2 };
+  }, label);
+  if (!target) return false;
+  await page.mouse.move(target.x, target.y);
+  await page.mouse.down();
+  await page.mouse.up();
+  return true;
+}
+```
+
+- Use `page.mouse.down/up` at the element's bounding-rect center. `element.click()` frequently no-ops on Uno's synthetic pointer pipeline.
+- When the same label appears multiple times (e.g., a label in both side-nav and bottom-tab bar due to responsive mode), pick `first` or `last` deterministically — both exist in the DOM even when one is `Visibility="Collapsed"` (filter with the `getBoundingClientRect().width > 0` check above).
+- For `AutomationProperties.AutomationId` set in XAML, query by `[xamlautomationid="..."]` when available.
+- **`playwright.config.ts` must set `outputDir` inside the test project** — never allow Playwright to write `test-results/` into the app project directory. Place the config in the Uno project root (where `dotnet run` launches) but direct outputs elsewhere:
+
+```typescript
+import { defineConfig } from "@playwright/test";
+
+export default defineConfig({
+  testDir: "../../Test/Test.PlaywrightUI/tests",
+  outputDir: "../../Test/Test.PlaywrightUI/test-results",
+  reporter: [
+    ["list"],
+    ["html", { outputFolder: "../../Test/Test.PlaywrightUI/html-report" }],
+  ],
+  use: { baseURL: "https://localhost:55551" },
+});
+```
+
+### 4b) API E2E (`Test.E2E`) — WebApplicationFactory + Testcontainers
+
+For API-level end-to-end tests that exercise the full stack (routing → endpoint → service → EF → real SQL) without a browser:
+
+- Use `WebApplicationFactory<Program>` with Testcontainers SQL Server
+- Tests run against a real database container — no mocks, no in-memory
+- Separate from Playwright browser tests (those go in `Test.PlaywrightUI`)
+
+```csharp
+public sealed class SqlApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
+{
+    private readonly MsSqlContainer _sql = new MsSqlBuilder()
+        .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
+        .Build();
+
+    public async Task InitializeAsync()
+    {
+        await _sql.StartAsync();
+        // Set connection string env var before host builds
+        Environment.SetEnvironmentVariable(
+            "ConnectionStrings__{App}DbContextTrxn",
+            _sql.GetConnectionString());
+    }
+
+    public async Task DisposeAsync() => await _sql.DisposeAsync();
+
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        builder.ConfigureServices(services =>
+        {
+            // Replace DB registration to use container connection string
+        });
+    }
+}
+```
+
+Pattern: one factory class, `[ClassInitialize]` creates it, tests call `factory.CreateClient()` and exercise real HTTP round-trips.
+
 
 ### 5) Architecture tests (`Test.Architecture`)
 

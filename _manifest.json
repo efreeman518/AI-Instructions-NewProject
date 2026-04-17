@@ -14,7 +14,7 @@
             "env/**"
         ]
     },
-    "totalEstimatedTokens": 177404,
+    "totalEstimatedTokens": 182590,
     "contextBudget": {
         "default": 30000,
         "extended": 60000,
@@ -148,7 +148,7 @@
         {
             "path": "templates/repository-template.md",
             "phase": "phase-5a",
-            "estimatedTokens": 2792,
+            "estimatedTokens": 2888,
             "generates": [
                 "{Entity}RepositoryTrxn.cs",
                 "{Entity}RepositoryQuery.cs",
@@ -375,7 +375,7 @@
         {
             "path": "skills/aspire.md",
             "phase": "phase-5c",
-            "estimatedTokens": 2423
+            "estimatedTokens": 2529
         },
         {
             "path": "skills/configuration-secrets.md",
@@ -436,7 +436,7 @@
         {
             "path": "skills/uno-ui.md",
             "phase": "phase-5d",
-            "estimatedTokens": 6849,
+            "estimatedTokens": 9041,
             "dependencies": [
                 "skills/solution-structure.md",
                 "skills/gateway.md",
@@ -453,7 +453,7 @@
         {
             "path": "templates/mvux-model-template.md",
             "phase": "phase-5d-optional",
-            "estimatedTokens": 1461,
+            "estimatedTokens": 1668,
             "generates": [
                 "{Entity}Model.cs"
             ],
@@ -479,7 +479,7 @@
         {
             "path": "templates/xaml-page-template.md",
             "phase": "phase-5d-optional",
-            "estimatedTokens": 2152,
+            "estimatedTokens": 3630,
             "generates": [
                 "{Entity}Page.xaml",
                 "{Entity}Page.xaml.cs"
@@ -493,7 +493,7 @@
         {
             "path": "skills/testing.md",
             "phase": "phase-5e",
-            "estimatedTokens": 3208
+            "estimatedTokens": 3729
         },
         {
             "path": "templates/test-templates-quality.md",
@@ -603,7 +603,7 @@
         {
             "path": "templates/index.md",
             "phase": "on-demand",
-            "estimatedTokens": 935
+            "estimatedTokens": 995
         },
         {
             "path": "support/quick-reference.md",
@@ -623,7 +623,7 @@
         {
             "path": "support/troubleshooting.md",
             "phase": "on-demand",
-            "estimatedTokens": 4050
+            "estimatedTokens": 4576
         },
         {
             "path": "support/execution-gates.md",
