@@ -406,9 +406,33 @@ Non-negotiables:
 
 When a form can add/check child items (checklist, attachments, comments) before the parent entity has been saved, give each buffered item a client-generated `Guid.NewGuid()` Id so the UI can match items by Id immediately. On Save:
 
-1. Persist the parent and receive its server-assigned Id.
-2. For each buffered child, send a Create call with `item with { Id = null, ParentId = newParentId }` so the server assigns its own Id.
-3. Mutations on buffered items (e.g. toggle checked) must only hit the server if the parent is already persisted. Gate with `if (Entity?.Id is not null)` — otherwise the server returns 404 on a non-existent parent and the UI rolls back.
+1. Bundle the buffered children into the parent DTO (`dto.ChecklistItems`, `dto.Comments`, ...) with `Id = null` on each — the server `Updater` will assign real Ids.
+2. Send **one** POST (create) or PUT (update) for the parent + children together. Do NOT loop separate `ChildService.CreateAsync(...)` calls after the parent create — state on the buffered child (e.g. a pre-checked `IsCompleted`) gets silently dropped when the child's domain `Create()` doesn't accept that field. See [updater-template.md](../templates/updater-template.md) → *createFunc must apply ALL DTO fields*.
+3. Client DTO mapper must include the children. Easy miss: `MapToDto` that only copies scalar fields produces a payload the server parses as "no children".
+4. Mutations on buffered items (e.g. toggle checked) must only hit the server if the parent is already persisted. Gate with `if (Entity?.Id is not null)` — otherwise the server returns 404 on a non-existent parent and the UI rolls back.
+
+```csharp
+// ✅ Correct — single payload, children embedded
+var model = (Entity ?? new TaskItemModel()) with
+{
+    Title = title,
+    /* scalar fields ... */,
+    ChecklistItems = isCreate
+        ? pendingChecklist.Select(c => c with { Id = null, TaskItemId = Guid.Empty }).ToList()
+        : pendingChecklist.ToList(),
+    Comments = isCreate
+        ? pendingComments.Select(c => c with { Id = null, TaskItemId = Guid.Empty }).ToList()
+        : pendingComments.ToList()
+};
+var saved = isCreate
+    ? await TaskItemService.CreateAsync(model, ct)
+    : await TaskItemService.UpdateAsync(model, ct);
+
+// ❌ Wrong — post-create loop silently drops child fields that Create() can't take
+var saved = await TaskItemService.CreateAsync(model, ct);
+foreach (var c in pendingChecklist)
+    await ChecklistItemService.CreateAsync(c with { Id = null, TaskItemId = saved.Id!.Value }, ct);
+```
 
 ```csharp
 public async ValueTask ToggleChecklistItem(ChecklistItemModel item, CancellationToken ct)
@@ -746,6 +770,22 @@ public class SearchRequest<TFilter> where TFilter : class, new()
 ```
 
 When debugging paging that "always returns page 1": inspect the serialized request body in devtools. If you see `"pageNumber"` in the payload, or `"pageIndex": 0`, the contract is wrong — the server is silently coercing both to page 1.
+
+**Response side must also stay 1-based — no offset conversion in `PagedResponse`.** The server echoes the same 1-based `pageIndex` in responses. A client-side `PagedResponse.PageIndex` setter that treats the incoming value as 0-based (`PageNumber = value + 1`) silently desyncs the UI page counter by one — first page shows as "Page 2", "Next" jumps past the actual next page, etc. The response parser must pass `pageIndex` through unchanged:
+
+```csharp
+public class PagedResponse<T>
+{
+    [JsonPropertyName("pageNumber")] public int PageNumber { get; set; }
+
+    // Server emits 1-based pageIndex — keep client PageNumber 1-based too.
+    [JsonPropertyName("pageIndex")]
+    public int PageIndex { get => PageNumber; set => PageNumber = value; }
+    // ...
+}
+```
+
+Symptom to watch for: pager displays the correct total pages but the "current page" number is one higher than the data actually shown, or "Next" returns the same rows as the page just shown. Inspect the raw response JSON — if server returns `"pageIndex": 1` but client state shows `PageNumber = 2`, the setter is adding an offset.
 
 Client-side wrapper classes:
 

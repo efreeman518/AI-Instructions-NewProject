@@ -160,6 +160,25 @@ CollectionUtility.SyncCollectionWithResult<Comment, CommentDto, Guid>(
     });
 ```
 
+> **`createFunc` must apply ALL DTO fields, not just the ones `Create()` accepts.** Domain factory methods often take a minimal field set (e.g., `ChecklistItem.Create(tenantId, taskItemId, title, sortOrder)` — no `IsCompleted`). If the DTO carries additional state (a pre-checked checkbox buffered in a create form, a status flag, a completion date), the `createFunc` must follow the `Create` with an `Update` call to apply those fields. Otherwise the UI's single-payload aggregate save silently drops them on newly-inserted children. Pattern:
+>
+> ```csharp
+> createFunc: incomingDto =>
+> {
+>     var result = ChecklistItem.Create(updatedEntity.TenantId, updatedEntity.Id, incomingDto.Title, incomingDto.SortOrder);
+>     if (result.IsSuccess)
+>     {
+>         // Create() has no IsCompleted arg — apply it via Update() so buffered
+>         // "checked" state isn't lost when the parent + children are POSTed together.
+>         if (incomingDto.IsCompleted) result.Value!.Update(isCompleted: true);
+>         updatedEntity.Comments.Add(result.Value!);
+>     }
+>     return result;
+> }
+> ```
+>
+> Rule: for every field the DTO can carry that the domain factory doesn't accept, the `createFunc` must call the corresponding `Update` / setter path immediately after `Create`.
+
 ### M:N Junction (Tags via TaskItemTag)
 
 Only create + remove needed — junction entities have no updatable properties. Match on the foreign key (TagId), not the junction entity's own Id:

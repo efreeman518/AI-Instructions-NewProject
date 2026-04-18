@@ -37,15 +37,27 @@ Quick lookup: "I need to scaffold X" → load these files.
 | Contract scaffolding (interfaces, DTOs, shells) | `ai/contract-scaffolding.md` | 4 |
 | TDD red/green protocol | `ai/tdd-protocol.md` | 5a/5b |
 
-## UI (Uno Platform)
+## UI (choose one)
+
+Scaffold either Uno Platform (multi-target WASM + mobile + desktop) or Blazor (Server or WebAssembly). Both call the Gateway; both can ship side-by-side under `src/UI/` when needed. See each skill for selection guidance.
+
+### Uno Platform
 
 > **Design Standard:** Each main entity gets two pages — `{Entity}ListPage` (list/search) and `{Entity}Page` (unified add/edit + children). No separate detail or create pages. See templates for the pattern.
 
 | Artifact | Template | Required Skill |
 |---|---|---|
-| Models + Services | `ui-client-layer.md` | `skills/uno-ui.md` |
-| MVUX model (List + Page) | `mvux-model-template.md` | `skills/uno-ui.md` |
-| XAML page (List + Entity) | `xaml-page-template.md` | `skills/uno-ui.md` |
+| Models + Services | `uno-ui-client-layer.md` | `skills/ui-uno.md` |
+| MVUX model (List + Page) | `uno-mvux-model-template.md` | `skills/ui-uno.md` |
+| XAML page (List + Entity) | `uno-xaml-page-template.md` | `skills/ui-uno.md` |
+
+### Blazor
+
+> **Design Standard:** MudBlazor shell + pages in `Components/Pages/`. Scoped `FloatService` for cross-page state and progress (no cascading parameters). Refit client interface for gateway calls. See `skills/ui-blazor.md` for the full pattern.
+
+| Artifact | Instruction File |
+|---|---|
+| Complete pattern (Program.cs, FloatService, Refit interface, MainLayout, pages) | `skills/ui-blazor.md` |
 
 ## AI Integration
 

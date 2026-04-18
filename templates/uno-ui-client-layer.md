@@ -4,7 +4,7 @@
 |---|---|
 | **Files** | `Business/Models/{Entity}.cs`, `Business/Models/IEntityBase.cs`, `Presentation/Messages/EntityMessage.cs`, `Business/Services/{Feature}/I{Entity}Service.cs`, `Business/Services/{Feature}/{Entity}Service.cs` |
 | **Depends on** | [data-mapping-template](data-mapping-template.md) (API DTO structure) |
-| **Referenced by** | [mvux-model-template](mvux-model-template.md), [uno-ui.md](../skills/uno-ui.md) |
+| **Referenced by** | [uno-mvux-model-template](uno-mvux-model-template.md), [ui-uno.md](../skills/ui-uno.md) |
 
 ## Models
 

@@ -206,7 +206,7 @@ For phase gates and validation commands, see [execution-gates.md](execution-gate
 | Schema changes not reflected in TestContainer | Previous schema persists | `EnsureDeletedAsync()` before `EnsureCreatedAsync()` |
 | ProblemDetails stack traces leak in CI | Debug diagnostics enabled in all builds | Wrap diagnostic customization in `#if DEBUG` |
 | StructureValidator not found | Missing static validator namespace import | Add `using {Namespace}.Application.Services.Validation;` |
-| WASM build `DirectoryNotFoundException` (`unoresizetizer`) | Resizetizer 1.12.1 manifest-path issue | See fix snippet in `skills/uno-ui.md` → *UnoSplashScreen WASM Build Failure* |
+| WASM build `DirectoryNotFoundException` (`unoresizetizer`) | Resizetizer 1.12.1 manifest-path issue | See fix snippet in `skills/ui-uno.md` → *UnoSplashScreen WASM Build Failure* |
 | `NotSupportedException` deserializing `Result<T>` in tests | `Result<T>` lacks parameterless constructor | Use `JsonDocument` parsing instead of `ReadFromJsonAsync<Result<T>>()`. Search endpoints serialize just the `PagedResponse<T>` value, not the wrapper. |
 | Aspire dashboard never opens / blank terminal | Missing `Properties/launchSettings.json` in AppHost | Create launchSettings.json with OTLP endpoints — see [aspire.md](../skills/aspire.md) → Preflight |
 | `MSB4057` "GetTargetPath" target missing | Uno.Sdk project referenced from AppHost | Comment out Uno ProjectReference and AddProject — run Uno WASM separately |
@@ -214,6 +214,11 @@ For phase gates and validation commands, see [execution-gates.md](execution-gate
 | EF `fail:` log spam on every scheduler/host restart | `GenerateCreateScript()` runs CREATE against existing tables | Gate with `INFORMATION_SCHEMA.TABLES` existence check — see [data-persistence-advanced.md](data-persistence-advanced.md) → Third-Party Operational Store Schemas |
 | `MSB3027` file lock / build fails with PID holding DLL | Orphaned `dotnet.exe` from prior run | `Get-Process -Name dotnet` then `Stop-Process -Name dotnet -Force` |
 | SQL container starts but auth fails under Aspire | `sql-password` parameter not in user secrets | `dotnet user-secrets set "Parameters:sql-password" "<pw>" --project AppHost` |
+| UI pager shows wrong "current page" / Next returns same rows | Client `PagedResponse.PageIndex` setter adds 0→1 offset on server-echoed 1-based `pageIndex` | Remove offset: setter/getter must pass `pageIndex` through unchanged. See [ui-uno.md](../skills/ui-uno.md) → *Pagination contract* |
+| Checklist/child state (e.g. `IsCompleted`) lost on new-parent save | UI does separate `ParentService.Create` then per-child `ChildService.Create` loop; server's `Child.Create(...)` factory doesn't accept the field | Bundle children into parent DTO for a single-payload save; Updater `createFunc` calls `Update()` after `Create()` for fields not in the factory signature. See [updater-template.md](../templates/updater-template.md) → *createFunc must apply ALL DTO fields* and [ui-uno.md](../skills/ui-uno.md) → *Buffered Child Items* |
+| Menu click stays on stacked sub-page (detail) / no-ops | Relative `NavigateRouteAsync("TaskList")` resolves against currently-visible Visibility-sibling | Use absolute route `/Main/{sibling}` via the parent-page navigator. See [ui-uno.md](../skills/ui-uno.md) → *Menu Navigation* |
+| `Assert.IsGreaterThanOrEqualTo` reports "Actual value <1> is not greater than or equal to expected value <2>" | Args inverted — signature is `(lowerBound, value)` (asserts `value >= lowerBound`) | Reorder: `Assert.IsGreaterThanOrEqualTo(lowerBound: 1, value: summary.OverdueTasks)` |
+| Mock-data assertion break when seed rows are added (`Expected:<3> Actual:<14>`) | Tests hardcode absolute counts/positions against a moving mock seed | Prefer `IsNotEmpty`, `Assert.Contains`, or assertions on a specific entity Id; reserve exact counts for sealed fixtures |
 
 ### Detailed Fix Patterns
 

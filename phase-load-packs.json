@@ -41,7 +41,8 @@
             "skills/iac.md",
             "skills/multi-tenant.md",
             "skills/notifications.md",
-            "skills/uno-ui.md"
+            "skills/ui-blazor.md",
+            "skills/ui-uno.md"
         ],
         "api-only": [
             "skills/background-services.md",
@@ -52,7 +53,8 @@
             "skills/iac.md",
             "skills/multi-tenant.md",
             "skills/notifications.md",
-            "skills/uno-ui.md"
+            "skills/ui-blazor.md",
+            "skills/ui-uno.md"
         ]
     },
     "slices": {
@@ -240,13 +242,14 @@
             "phase-5d": [
                 "skills/background-services.md",
                 "skills/function-app.md",
-                "skills/uno-ui.md",
+                "skills/ui-uno.md",
+                "skills/ui-blazor.md",
                 "skills/notifications.md"
             ],
             "phase-5d-optional": [
-                "templates/mvux-model-template.md",
-                "templates/ui-client-layer.md",
-                "templates/xaml-page-template.md"
+                "templates/uno-mvux-model-template.md",
+                "templates/uno-ui-client-layer.md",
+                "templates/uno-xaml-page-template.md"
             ],
             "phase-5e": [
                 "skills/testing.md",
@@ -356,9 +359,9 @@
             ],
             "phase-5d": [],
             "phase-5d-optional": [
-                "templates/mvux-model-template.md",
-                "templates/ui-client-layer.md",
-                "templates/xaml-page-template.md"
+                "templates/uno-mvux-model-template.md",
+                "templates/uno-ui-client-layer.md",
+                "templates/uno-xaml-page-template.md"
             ],
             "phase-5e": [
                 "skills/testing.md",
@@ -467,9 +470,9 @@
             ],
             "phase-5d": [],
             "phase-5d-optional": [
-                "templates/mvux-model-template.md",
-                "templates/ui-client-layer.md",
-                "templates/xaml-page-template.md"
+                "templates/uno-mvux-model-template.md",
+                "templates/uno-ui-client-layer.md",
+                "templates/uno-xaml-page-template.md"
             ],
             "phase-5e": [
                 "skills/testing.md",

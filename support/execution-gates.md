@@ -289,9 +289,9 @@ dotnet build --project src/UI/{Project}.Uno/{Project}.Uno.csproj -f net10.0-brow
 If targeting desktop instead of WASM, build the selected desktop target instead of `net10.0-browserwasm`.
 
 If targeting Android (`net10.0-android`):
-- [ ] Android SDK path resolved (see `skills/uno-ui.md` § Android SDK Discovery)
+- [ ] Android SDK path resolved (see `skills/ui-uno.md` § Android SDK Discovery)
 - [ ] `<EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>` set if manual ADB sideloading is used
-- [ ] Emulator host networking uses `10.0.2.2` for local backend calls (see `skills/uno-ui.md` § Emulator Host Networking)
+- [ ] Emulator host networking uses `10.0.2.2` for local backend calls (see `skills/ui-uno.md` § Emulator Host Networking)
 
 > **Starter-library escape hatch:** If the repo currently contains only a `net10.0` starter library or shell-contract scaffold instead of a real Uno multi-target app, Phase 5d for Uno must be recorded as **incomplete**. `NETSDK1139` on `net10.0-browserwasm` is expected in that scenario and is evidence that Uno scaffolding is still missing — not an environment glitch. Do not debug/workaround it; record the status as "scaffolded — Uno multi-target not yet created" and move on.
 

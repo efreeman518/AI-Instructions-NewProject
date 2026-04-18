@@ -23,7 +23,8 @@ Use this when adding a new entity to an **already-scaffolded** solution. Skip fu
 3. Backend templates: `entity-template.md`, `ef-configuration-template.md`, `repository-template.md`, `data-mapping-template.md`, `service-template.md`, `endpoint-template.md`, `structure-validator-template.md`
 4. If domain rules needed: `domain-rules-template.md`
 5. If child collections: `updater-template.md`
-6. If UI enabled: `mvux-model-template.md`, `xaml-page-template.md`, `ui-client-layer.md`
+6. If Uno UI enabled: `uno-mvux-model-template.md`, `uno-xaml-page-template.md`, `uno-ui-client-layer.md`
+7. If Blazor UI enabled: `skills/ui-blazor.md` — add a Refit method group, entity list page, and entity new/edit page
 
 ### Slice Execution Order
 
@@ -159,7 +160,7 @@ Also update `App.xaml.host.cs`:
 - register UI services,
 - register navigation routes.
 
-Templates: [ui-client-layer.md](../templates/ui-client-layer.md), [ui-client-layer.md](../templates/ui-client-layer.md), [mvux-model-template.md](../templates/mvux-model-template.md), [xaml-page-template.md](../templates/xaml-page-template.md).
+Templates: [uno-ui-client-layer.md](../templates/uno-ui-client-layer.md), [uno-ui-client-layer.md](../templates/uno-ui-client-layer.md), [uno-mvux-model-template.md](../templates/uno-mvux-model-template.md), [uno-xaml-page-template.md](../templates/uno-xaml-page-template.md).
 
 ---
 

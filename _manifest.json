@@ -14,7 +14,7 @@
             "env/**"
         ]
     },
-    "totalEstimatedTokens": 186255,
+    "totalEstimatedTokens": 193061,
     "contextBudget": {
         "default": 30000,
         "extended": 60000,
@@ -32,7 +32,8 @@
             "skills/iac.md",
             "skills/multi-tenant.md",
             "skills/notifications.md",
-            "skills/uno-ui.md"
+            "skills/ui-uno.md",
+            "skills/ui-blazor.md"
         ],
         "api-only": [
             "skills/background-services.md",
@@ -43,14 +44,15 @@
             "skills/iac.md",
             "skills/multi-tenant.md",
             "skills/notifications.md",
-            "skills/uno-ui.md"
+            "skills/ui-uno.md",
+            "skills/ui-blazor.md"
         ]
     },
     "files": [
         {
             "path": "_manifest.json",
             "phase": "metadata",
-            "estimatedTokens": 5475
+            "estimatedTokens": 5588
         },
         {
             "path": "START-AI.md",
@@ -223,7 +225,7 @@
         {
             "path": "templates/updater-template.md",
             "phase": "phase-5a-optional",
-            "estimatedTokens": 2973,
+            "estimatedTokens": 3292,
             "generates": [
                 "{Entity}Updater.cs"
             ],
@@ -434,9 +436,9 @@
             ]
         },
         {
-            "path": "skills/uno-ui.md",
+            "path": "skills/ui-uno.md",
             "phase": "phase-5d",
-            "estimatedTokens": 12190,
+            "estimatedTokens": 12821,
             "dependencies": [
                 "skills/solution-structure.md",
                 "skills/gateway.md",
@@ -446,26 +448,37 @@
             ]
         },
         {
+            "path": "skills/ui-blazor.md",
+            "phase": "phase-5d",
+            "estimatedTokens": 5120,
+            "dependencies": [
+                "skills/solution-structure.md",
+                "skills/gateway.md",
+                "skills/identity-management.md",
+                "skills/configuration-secrets.md"
+            ]
+        },
+        {
             "path": "skills/notifications.md",
             "phase": "phase-5d",
             "estimatedTokens": 2669
         },
         {
-            "path": "templates/mvux-model-template.md",
+            "path": "templates/uno-mvux-model-template.md",
             "phase": "phase-5d-optional",
-            "estimatedTokens": 1668,
+            "estimatedTokens": 1662,
             "generates": [
                 "{Entity}Model.cs"
             ],
             "requires": [
                 "templates/data-mapping-template.md",
-                "skills/uno-ui.md"
+                "skills/ui-uno.md"
             ]
         },
         {
-            "path": "templates/ui-client-layer.md",
+            "path": "templates/uno-ui-client-layer.md",
             "phase": "phase-5d-optional",
-            "estimatedTokens": 1871,
+            "estimatedTokens": 1873,
             "generates": [
                 "{Entity}UiModel.cs",
                 "I{Feature}Service.cs",
@@ -473,21 +486,21 @@
             ],
             "requires": [
                 "templates/data-mapping-template.md",
-                "skills/uno-ui.md"
+                "skills/ui-uno.md"
             ]
         },
         {
-            "path": "templates/xaml-page-template.md",
+            "path": "templates/uno-xaml-page-template.md",
             "phase": "phase-5d-optional",
-            "estimatedTokens": 3630,
+            "estimatedTokens": 3632,
             "generates": [
                 "{Entity}Page.xaml",
                 "{Entity}Page.xaml.cs"
             ],
             "requires": [
-                "templates/mvux-model-template.md",
-                "templates/ui-client-layer.md",
-                "skills/uno-ui.md"
+                "templates/uno-mvux-model-template.md",
+                "templates/uno-ui-client-layer.md",
+                "skills/ui-uno.md"
             ]
         },
         {
@@ -603,7 +616,7 @@
         {
             "path": "templates/index.md",
             "phase": "on-demand",
-            "estimatedTokens": 995
+            "estimatedTokens": 1159
         },
         {
             "path": "support/quick-reference.md",
@@ -623,7 +636,7 @@
         {
             "path": "support/troubleshooting.md",
             "phase": "on-demand",
-            "estimatedTokens": 4576
+            "estimatedTokens": 4996
         },
         {
             "path": "support/execution-gates.md",
@@ -633,7 +646,7 @@
         {
             "path": "support/vertical-slice-checklist.md",
             "phase": "on-demand",
-            "estimatedTokens": 3126
+            "estimatedTokens": 3167
         },
         {
             "path": "support/UPDATE-INSTRUCTIONS.md",

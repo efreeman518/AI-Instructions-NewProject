@@ -3,8 +3,8 @@
 | | |
 |---|---|
 | **Files** | `Views/{Entity}ListPage.xaml`, `{Entity}Page.xaml` + code-behind |
-| **Depends on** | [mvux-model-template](mvux-model-template.md) |
-| **Referenced by** | [uno-ui.md](../skills/uno-ui.md) |
+| **Depends on** | [uno-mvux-model-template](uno-mvux-model-template.md) |
+| **Referenced by** | [ui-uno.md](../skills/ui-uno.md) |
 
 ## Design Standard: Single Entity Page
 

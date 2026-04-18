@@ -33,7 +33,7 @@ Use for:
 4. Unload prior phase docs when transitioning.
 5. Keep [../support/quick-reference.md](../support/quick-reference.md), pattern files, and advanced support docs on-demand.
 6. Load the phase-relevant pattern file before cross-project wiring: `patterns/data-layer-wiring.md` before 5a/5b, `patterns/api-host-wiring.md` before 5b/5c, `patterns/infrastructure-wiring.md` before 5c/5d.
-7. Load only the current sub-phase test templates. `skills/uno-ui.md` remains a dedicated-session file.
+7. Load only the current sub-phase test templates. `skills/ui-uno.md` remains a dedicated-session file.
 8. Checkpoint immediately after **15+ generated files** or **more than 3 build/fix cycles**. Update `HANDOFF.md`; do not wait for the gate.
 
 ## Session Start (Every AI Turn)

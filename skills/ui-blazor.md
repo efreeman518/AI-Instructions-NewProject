@@ -1,0 +1,499 @@
+# Blazor UI
+
+## Purpose
+
+Scaffold a Blazor UI (Server or WebAssembly) that calls the **Gateway** (YARP), not backend APIs directly. This is the alternative to [ui-uno.md](ui-uno.md) — pick one or offer both as siblings under `src/UI/`.
+
+- **UI**: MudBlazor shell + components
+- **State**: `FloatService` (scoped singleton) shared across layout and pages — **not** cascading parameters
+- **Client**: Refit (`Refit.HttpClientFactory`) against the Gateway base URL
+- **Auth**: MSAL WebAssembly for WASM builds; JWT bearer cookie/claims for Server. Scaffold auth-off and add after first vertical slice works
+
+Reference app: [TaskFlow.Blazor](https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/UI/TaskFlow.Blazor) and the Caller Portal ([Portal.UI1](https://github.com/efreeman518/Portal/tree/main/src/Portal/Portal.UI1)) — canonical source of the FloatService + Refit + MudBlazor layering.
+
+## Render Mode Choice
+
+| Mode | When |
+|---|---|
+| **Blazor Server** (`Microsoft.NET.Sdk.Web` + `AddInteractiveServerComponents`) | Default for internal / LAN apps, fastest to scaffold, single deployable unit, server owns HttpClient → no browser CORS against Gateway |
+| **Blazor WebAssembly** (`Microsoft.NET.Sdk.BlazorWebAssembly`) | Public-facing app that should scale independently of backend, offline-capable, or when you're already shipping assets to a CDN |
+
+The rest of this file applies to both modes unless called out. WebAssembly-only concerns are marked **[WASM]**.
+
+## Required Structure
+
+```text
+{Project}.Blazor/
+  Program.cs
+  App.razor                # <HeadOutlet/> + root Routes + <script src="_framework/blazor.web.js">
+  Components/
+    _Imports.razor
+    Routes.razor           # <Router AppAssembly=...> with DefaultLayout=MainLayout
+    Layout/
+      MainLayout.razor     # MudLayout + AppBar + Drawer + NavMenu, wires FloatService.StateHasChanged
+    Pages/
+      Dashboard.razor
+      {Entity}List.razor
+      {Entity}Page.razor   # unified new/edit via @page "/xs/new" + "/xs/{Id:guid}"
+      Settings.razor
+      Error.razor
+  Services/
+    I{Project}ApiClient.cs # Refit interface, one per backend resource group
+    FloatService.cs        # scoped state/progress/event hub
+  wwwroot/
+    app.css
+    appsettings.json       # [WASM] — configuration is loaded at runtime from here
+```
+
+## Packages (Central Versions)
+
+Add to `Directory.Packages.props`:
+
+```xml
+<PackageVersion Include="MudBlazor" Version="9.2.0" />
+<PackageVersion Include="Refit" Version="10.0.1" />
+<PackageVersion Include="Refit.HttpClientFactory" Version="10.0.1" />
+```
+
+csproj references:
+
+```xml
+<ItemGroup>
+  <PackageReference Include="MudBlazor" />
+  <PackageReference Include="Refit" />
+  <PackageReference Include="Refit.HttpClientFactory" />
+  <PackageReference Include="Microsoft.Extensions.Http.Resilience" />
+</ItemGroup>
+
+<ItemGroup>
+  <!-- Direct project reference to shared DTOs avoids duplicating contracts. -->
+  <ProjectReference Include="..\..\Application\{Project}.Application.Models\{Project}.Application.Models.csproj" />
+  <ProjectReference Include="..\..\Domain\{Project}.Domain.Shared\{Project}.Domain.Shared.csproj" />
+</ItemGroup>
+```
+
+Use the EF.Common.Contracts `SearchRequest<T>` / `PagedResponse<T>` already pulled in by `{Project}.Application.Models` — do not redefine them in the Blazor project.
+
+## Project File Rules (`.csproj`)
+
+- **Server**: `<Project Sdk="Microsoft.NET.Sdk.Web">`
+- **WASM**: `<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">` + `<BlazorWebAssemblyLoadAllGlobalizationData>true</BlazorWebAssemblyLoadAllGlobalizationData>` when localization is in scope
+- `TargetFramework` net10.0 (matches solution `Directory.Build.props`)
+
+## Program.cs — Server
+
+```csharp
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using MudBlazor;
+using MudBlazor.Services;
+using Refit;
+using {Project}.Blazor.Components;
+using {Project}.Blazor.Services;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddRazorComponents().AddInteractiveServerComponents();
+
+builder.Services.AddMudServices(cfg =>
+{
+    cfg.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomRight;
+    cfg.SnackbarConfiguration.PreventDuplicates = true;
+});
+
+builder.Services.AddScoped<FloatService>();
+
+var jsonOptions = new JsonSerializerOptions
+{
+    PropertyNameCaseInsensitive = true,
+    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    Converters = { new JsonStringEnumConverter() }
+};
+
+var gatewayUrl = builder.Configuration["Gateway:BaseUrl"]
+    ?? throw new InvalidOperationException("Gateway:BaseUrl not configured.");
+
+builder.Services
+    .AddRefitClient<I{Project}ApiClient>(new RefitSettings
+    {
+        ContentSerializer = new SystemTextJsonContentSerializer(jsonOptions)
+    })
+    .ConfigureHttpClient(c =>
+    {
+        c.BaseAddress = new Uri(gatewayUrl);
+        c.DefaultRequestHeaders.Add("Accept", "application/json");
+    })
+    // Add auth handler here once auth is wired (see Auth section).
+    .AddStandardResilienceHandler();
+
+var app = builder.Build();
+if (!app.Environment.IsDevelopment()) { app.UseExceptionHandler("/Error", createScopeForErrors: true); app.UseHsts(); }
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+app.UseAntiforgery();
+app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
+app.Run();
+```
+
+## Program.cs — WebAssembly
+
+Differences from Server:
+
+- `builder = WebAssemblyHostBuilder.CreateDefault(args)` — no `ConfigureWebHost`
+- Load `appsettings.json` from `wwwroot` via `HttpClient.GetStringAsync("appsettings.json")`
+- Use `AddMsalAuthentication` for Entra External ID (see Auth section)
+- Register a `DelegatingHandler` that acquires an access token from `IAccessTokenProvider` and sets `Authorization: Bearer <token>`. Attach via `.AddHttpMessageHandler<ApiAuthHandler>()` on the Refit client
+
+No `UseAntiforgery`/`UseHttpsRedirection` — WASM host is a static SPA.
+
+## App.razor & Routes.razor (Server)
+
+```razor
+@* App.razor *@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <link rel="stylesheet" href="_content/MudBlazor/MudBlazor.min.css" />
+    <link rel="stylesheet" href="app.css" />
+    <HeadOutlet @rendermode="InteractiveServer" />
+    <title>{Project}</title>
+</head>
+<body>
+    <Routes @rendermode="InteractiveServer" />
+    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+    <script src="_framework/blazor.web.js"></script>
+</body>
+</html>
+```
+
+```razor
+@* Routes.razor *@
+<Router AppAssembly="typeof(Program).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+</Router>
+```
+
+**Non-negotiable:** `@rendermode="InteractiveServer"` on both `HeadOutlet` and `Routes`. Without it the page renders statically — buttons, forms, MudBlazor dialogs all no-op with no error.
+
+## `_Imports.razor`
+
+```razor
+@using System.Net.Http
+@using System.Net.Http.Json
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Web
+@using static Microsoft.AspNetCore.Components.Web.RenderMode
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+@using Microsoft.JSInterop
+@using MudBlazor
+@using EF.Common.Contracts
+@using {Project}.Application.Models
+@using {Project}.Blazor
+@using {Project}.Blazor.Components
+@using {Project}.Blazor.Components.Layout
+@using {Project}.Blazor.Services
+@using {Project}.Domain.Shared.Enums
+```
+
+## FloatService — Scoped State Hub
+
+Use **FloatService (scoped singleton)** to share state across layout and pages instead of cascading parameters. The layout holds a reference; pages inject it; pages publish cross-page events through it.
+
+### Responsibilities
+
+- **ModuleName** — current area label painted into the AppBar
+- **RequestIsActive** — boolean derived from an interlocked counter; layout binds a progress spinner to it
+- **ExecuteWithProgressAsync\<T\>** — wraps an async call, increments the counter, catches and surfaces exceptions via `ISnackbar.Add(..., Severity.Error)`, returns `default` on failure
+- **Events** — one `Action` per entity family (`TaskItemsChanged`, `CategoriesChanged`, …). Pages that mutate data raise the event; unrelated pages subscribing refresh themselves
+- **StateHasChanged callback** — layout assigns `FloatService.StateHasChanged = StateHasChanged` in `OnInitialized` and clears it in `Dispose`. This lets FloatService tell the AppBar to repaint when the in-flight counter flips
+
+```csharp
+public class FloatService(ISnackbar snackbar)
+{
+    private int _pending;
+    public string ModuleName { get; set; } = "";
+    public bool RequestIsActive => _pending > 0;
+    public Action? StateHasChanged { get; set; }
+    public event Action? TaskItemsChanged;
+    public void NotifyTaskItemsChanged() => TaskItemsChanged?.Invoke();
+
+    public async Task<T?> ExecuteWithProgressAsync<T>(Func<Task<T>> call, string? errorMessage = null)
+    {
+        try
+        {
+            Interlocked.Increment(ref _pending); StateHasChanged?.Invoke();
+            return await call();
+        }
+        catch (Exception ex)
+        {
+            snackbar.Add(errorMessage ?? ex.Message, Severity.Error);
+            return default;
+        }
+        finally { Interlocked.Decrement(ref _pending); StateHasChanged?.Invoke(); }
+    }
+}
+```
+
+**Page pattern:**
+
+```csharp
+[Inject] protected FloatService FloatService { get; set; } = default!;
+[Inject] protected I{Project}ApiClient Api { get; set; } = default!;
+
+protected override async Task OnInitializedAsync()
+{
+    FloatService.ModuleName = "Tasks";
+    FloatService.TaskItemsChanged += OnExternalChange;
+    await LoadAsync();
+}
+
+private async Task LoadAsync()
+{
+    var page = await FloatService.ExecuteWithProgressAsync(
+        () => Api.SearchTaskItemsAsync(new SearchRequest<TaskItemSearchFilter>
+        {
+            Filter = new(), PageIndex = 0, PageSize = 50
+        }),
+        "Failed to load tasks.");
+    _items = page?.Data ?? new();
+}
+
+public void Dispose() => FloatService.TaskItemsChanged -= OnExternalChange;
+```
+
+**Non-negotiables:**
+- Register as **Scoped** — `AddScoped<FloatService>()`. Singleton would bleed state across users (Server) or circuits.
+- Do **not** close over `this` in event subscriptions without `Dispose` unsubscribing — pages leak otherwise.
+- Cross-page updates go through events, not through direct page-to-page calls.
+
+## Refit Client Pattern
+
+One interface per resource group, decorated with `[Post]/[Get]/[Put]/[Delete]` attributes. Use the shared `DefaultRequest<T>`/`DefaultResponse<T>` envelope from `{Project}.Application.Models` and `SearchRequest<T>`/`PagedResponse<T>` from `EF.Common.Contracts`.
+
+```csharp
+public interface I{Project}ApiClient
+{
+    [Post("/api/task-items/search")]
+    Task<PagedResponse<TaskItemDto>> SearchTaskItemsAsync(
+        [Body] SearchRequest<TaskItemSearchFilter> request, CancellationToken ct = default);
+
+    [Get("/api/task-items/{id}")]
+    Task<DefaultResponse<TaskItemDto>> GetTaskItemAsync(Guid id, CancellationToken ct = default);
+
+    [Post("/api/task-items")]
+    Task<DefaultResponse<TaskItemDto>> CreateTaskItemAsync(
+        [Body] DefaultRequest<TaskItemDto> request, CancellationToken ct = default);
+
+    [Put("/api/task-items/{id}")]
+    Task<DefaultResponse<TaskItemDto>> UpdateTaskItemAsync(
+        Guid id, [Body] DefaultRequest<TaskItemDto> request, CancellationToken ct = default);
+
+    [Delete("/api/task-items/{id}")]
+    Task DeleteTaskItemAsync(Guid id, CancellationToken ct = default);
+}
+```
+
+### Request / Response Envelope Rules
+
+(Same contract as the Uno client — keep both clients in lock-step.)
+
+- **Create / Update** expect `{"item": {dto}}`. Wrap: `new DefaultRequest<T> { Item = dto }`. Sending the bare DTO deserializes `Item` as `null` and the server returns an NRE.
+- **Get / Create / Update** return `{"item": {dto}}`. Unwrap: `response.Item`.
+- **Search** accepts `SearchRequest<TFilter>` directly (not wrapped) and returns `PagedResponse<T>` with `data` (items) and `total` (count).
+- **Pagination is 1-based on the wire** — `PageIndex` starts at 1, **not** 0. The server silently coerces 0 to 1 and you get page 1 on every request.
+
+See [ui-uno.md](ui-uno.md) → *Client–API Contract Rules* for the detailed payload diagrams; the same contract applies.
+
+### Refit JSON Serializer
+
+Pass a `SystemTextJsonContentSerializer` with `PropertyNameCaseInsensitive = true`, `JsonIgnoreCondition.WhenWritingNull`, and `JsonStringEnumConverter`. Enums flow over the wire as string names, which matches the API and keeps payloads human-readable.
+
+## MudBlazor 9.x API Gotchas
+
+These are changes from MudBlazor 7/8 → 9.x that bite on scaffold and are cheap to avoid up-front:
+
+| Construct | Old | **9.x (use this)** |
+|---|---|---|
+| Confirm dialog | `DialogService.ShowMessageBox(title, message, yesText:, cancelText:)` | `DialogService.ShowMessageBoxAsync(new MessageBoxOptions { Title, Message, YesText, CancelText })` |
+| Expansion panel initial state | `IsInitiallyExpanded="true"` | `Expanded="true"` |
+| `MudChip` | non-generic | `<MudChip T="string">` — type parameter is now required |
+
+The MudBlazor analyzer emits `MUD0002 Illegal Attribute` warnings for several of these — treat them as errors during scaffolding.
+
+## Server-Side Table Paging
+
+Use `<MudTable ServerData="LoadServerData">` for any list bigger than a couple dozen rows. The callback receives a `TableState` with `Page` and `PageSize` and must return a `TableData<T>`:
+
+```csharp
+private async Task<TableData<TaskItemDto>> LoadServerData(TableState state, CancellationToken ct)
+{
+    var req = new SearchRequest<TaskItemSearchFilter>
+    {
+        PageIndex = state.Page + 1,  // MudTable is 0-based; server API is 1-based
+        PageSize = state.PageSize,
+        Filter = new TaskItemSearchFilter { SearchTerm = _searchTerm }
+    };
+    var page = await FloatService.ExecuteWithProgressAsync(() => Api.SearchTaskItemsAsync(req, ct));
+    return new TableData<TaskItemDto>
+    {
+        Items = page?.Data ?? Enumerable.Empty<TaskItemDto>(),
+        TotalItems = page?.Total ?? 0
+    };
+}
+```
+
+`MudTable.Page` is 0-based, the API is 1-based. Do the `+1` at the boundary here so the rest of the code sees the server's 1-based convention.
+
+## Auth
+
+**Scaffold with auth off.** Gateway dev mode ships a no-op JWT bearer handler that accepts unauthenticated calls — lean on it for the first vertical slice, add auth once CRUD is wired.
+
+### WebAssembly → MSAL
+
+```csharp
+builder.Services.AddMsalAuthentication(options =>
+{
+    builder.Configuration.Bind("EntraExternal", options.ProviderOptions.Authentication);
+    options.ProviderOptions.LoginMode = "redirect";
+    var scopes = builder.Configuration.GetSection("Gateway:Scopes").Get<string[]>() ?? [];
+    foreach (var s in scopes) options.ProviderOptions.DefaultAccessTokenScopes.Add(s);
+});
+
+builder.Services.AddScoped<ApiAuthHandler>();  // DelegatingHandler
+
+builder.Services.AddRefitClient<I{Project}ApiClient>(...)
+    .ConfigureHttpClient(c => c.BaseAddress = new Uri(gatewayUrl))
+    .AddHttpMessageHandler<ApiAuthHandler>();
+```
+
+`ApiAuthHandler` reads the token from `IAccessTokenProvider` in `SendAsync` and sets `Authorization: Bearer <token>`.
+
+### Server → cookie + forward bearer
+
+For Blazor Server, auth at the edge is a cookie (OIDC), and the server forwards a service-principal bearer token to the Gateway. Use Microsoft.Identity.Web server-side; the Gateway's `TokenService` pattern handles the rest.
+
+See [identity-management.md](identity-management.md) for Entra External ID registration details — the UI app registration values slot into the `EntraExternal` section of `appsettings.json`.
+
+## appsettings.json
+
+```json
+{
+  "Gateway": {
+    "BaseUrl": "https://localhost:7120",
+    "Scopes": [ "api://{api-app-id}/DefaultAccess" ]
+  },
+  "EntraExternal": {
+    "Authority": "https://{tenant}.ciamlogin.com/{tenant}.onmicrosoft.com",
+    "ClientId": "__SETTINGS_ENTRA_CLIENTID__",
+    "ValidateAuthority": false
+  }
+}
+```
+
+[WASM] — file lives under `wwwroot/appsettings.json`. Server — at project root (same as an API). Development override is `appsettings.Development.json` in the same folder.
+
+Gateway CORS must include the Blazor origin:
+
+```json
+"CorsSettings": {
+  "AllowedOrigins": [ "https://localhost:7201", "http://localhost:5201" ]
+}
+```
+
+Add both the HTTPS and HTTP dev URLs declared in `launchSettings.json`.
+
+## MainLayout Pattern
+
+```razor
+@inherits LayoutComponentBase
+@inject FloatService FloatService
+@implements IDisposable
+
+<MudThemeProvider IsDarkMode="_dark" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1" Dense="true">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" OnClick="@(() => _open = !_open)" />
+        <MudText Typo="Typo.h6" Class="ml-3">{Project}</MudText>
+        @if (!string.IsNullOrWhiteSpace(FloatService.ModuleName))
+        {
+            <MudText Typo="Typo.subtitle1" Class="ml-3">/ @FloatService.ModuleName</MudText>
+        }
+        @if (FloatService.RequestIsActive)
+        {
+            <MudProgressCircular Indeterminate="true" Size="Size.Small" Class="ml-3" />
+        }
+    </MudAppBar>
+    <MudDrawer @bind-Open="_open" Variant="DrawerVariant.Responsive" ClipMode="DrawerClipMode.Always">
+        <MudNavMenu>
+            <MudNavLink Href="/" Match="NavLinkMatch.All">Dashboard</MudNavLink>
+            <MudNavLink Href="/tasks">Tasks</MudNavLink>
+            @* ... *@
+        </MudNavMenu>
+    </MudDrawer>
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.False" Class="pa-4">@Body</MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private bool _open = true;
+    private bool _dark;
+    protected override void OnInitialized() => FloatService.StateHasChanged = StateHasChanged;
+    public void Dispose()
+    {
+        if (FloatService.StateHasChanged == StateHasChanged)
+            FloatService.StateHasChanged = null;
+    }
+}
+```
+
+**Non-negotiables:**
+- Exactly one of each provider (`MudTheme`, `MudPopover`, `MudDialog`, `MudSnackbar`) — at the layout root
+- Dispose clears `FloatService.StateHasChanged` — without this the layout's delegate survives navigation and fires into a disposed component
+
+## Generation Checklist
+
+- [ ] `includeBlazorUI: true` set in domain inputs
+- [ ] `Gateway:BaseUrl` present in `appsettings*.json`
+- [ ] MudBlazor + Refit + Refit.HttpClientFactory versions in `Directory.Packages.props`
+- [ ] `Program.cs` registers `FloatService` as scoped, MudBlazor services, Refit client with JSON options + resilience
+- [ ] `App.razor` and `Routes.razor` apply `@rendermode="InteractiveServer"` (Server) or use `Router` under the WASM root (WASM)
+- [ ] `MainLayout.razor` wires all four Mud providers, `FloatService.StateHasChanged` bound in `OnInitialized`, cleared in `Dispose`
+- [ ] Refit interface uses `DefaultRequest<T>` for POST/PUT bodies, `DefaultResponse<T>` for single-item returns, `SearchRequest<T>`/`PagedResponse<T>` for search
+- [ ] `SearchRequest.PageIndex` passed 1-based to the API
+- [ ] MudBlazor 9.x: `ShowMessageBoxAsync` (not `ShowMessageBox`), `Expanded` (not `IsInitiallyExpanded`), `<MudChip T="...">`
+- [ ] Gateway `CorsSettings.AllowedOrigins` includes the Blazor dev URLs
+- [ ] Pages: Dashboard, {Entity}List (server paging + filters), {Entity}Page (new/edit), Settings, Error
+- [ ] Blazor UI calls the Gateway only — never the API host directly
+
+## Coexistence With Uno
+
+Both clients can ship side-by-side under `src/UI/`:
+
+```
+src/UI/
+  {Project}.Uno/
+  {Project}.Uno.Core/
+  {Project}.Blazor/
+```
+
+Share the same contract types (`{Project}.Application.Models` project). Do **not** duplicate DTOs in either UI project — the shared project reference is the single source of truth. Keep the Refit interface in the Blazor project isomorphic to the Uno client builder: same resource groups, same parameters, same envelope, so a bug found on one side fixes both by the same rule.
+
+## Related Skills
+
+- Alternative UI: [ui-uno.md](ui-uno.md)
+- Solution layout: [solution-structure.md](solution-structure.md)
+- Gateway integration: [gateway.md](gateway.md)
+- Auth setup: [identity-management.md](identity-management.md)
+- App configuration: [configuration-secrets.md](configuration-secrets.md)

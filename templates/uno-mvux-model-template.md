@@ -3,8 +3,8 @@
 | | |
 |---|---|
 | **Files** | `Presentation/{Entity}ListModel.cs`, `{Entity}PageModel.cs` |
-| **Depends on** | [ui-client-layer](ui-client-layer.md), [ui-client-layer](ui-client-layer.md) |
-| **Referenced by** | [xaml-page-template](xaml-page-template.md), [uno-ui.md](../skills/uno-ui.md) |
+| **Depends on** | [uno-ui-client-layer](uno-ui-client-layer.md) |
+| **Referenced by** | [uno-xaml-page-template](uno-xaml-page-template.md), [ui-uno.md](../skills/ui-uno.md) |
 
 ## Design Standard: Single Entity Page
 
