@@ -36,7 +36,7 @@ Both agents follow the same flow:
 - [ ] Copy instruction set into `.instructions/` in your app repo
 - [ ] Copy `.instructions/.github/agents/` → `.github/agents/` (Copilot)
 - [ ] Copy `.instructions/.claude/commands/` → `.claude/commands/` (Claude Code)
-- [ ] Run `python .instructions/scripts/preflight-instructions.py` to validate (PowerShell: `./.instructions/scripts/preflight-instructions.ps1`)
+- [ ] Run `python .instructions/scripts/preflight-instructions.py` to validate
 
 ---
 
@@ -97,7 +97,7 @@ If you want the shortest path from zero context to first scaffold:
 
 1. Create a new app repo and copy this instruction set into `.instructions/`.
 2. Open the app repo in VS Code.
-3. Run `python .instructions/scripts/preflight-instructions.py` once to validate the copied instruction set. This refreshes manifest metadata, regenerates load packs, prints the current context-budget report, lints the docs, and runs the Python script test suite. PowerShell equivalent: `./.instructions/scripts/preflight-instructions.ps1`.
+3. Run `python .instructions/scripts/preflight-instructions.py` once to validate the copied instruction set. This refreshes manifest metadata, regenerates load packs, prints the current context-budget report, lints the docs, and runs the Python script test suite.
 4. Start Phase 1 with the Phase 1 prompt in [support/prompt-catalog.md](support/prompt-catalog.md).
 5. When you reach implementation, begin the AI session with [START-AI.md](START-AI.md).
 
@@ -238,9 +238,9 @@ These references are for **maintaining and developing the instruction set itself
 - [support/taskflow-proof-map.md](support/taskflow-proof-map.md) — fast reference-app proof map from instruction concern to TaskFlow area
 - [support/UPDATE-INSTRUCTIONS.md](support/UPDATE-INSTRUCTIONS.md) — capture improvements discovered during scaffolding
 
-Run `python scripts/preflight-instructions.py` (PowerShell: `./scripts/preflight-instructions.ps1`) before Phase 4 execution and before opening validation PRs. It refreshes `_manifest.json`, regenerates `phase-load-packs.json`, prints the current context-budget report, lints markdown invariants, and runs the Python unittest suite in `tests/`.
+Run `python scripts/preflight-instructions.py` before Phase 4 execution and before opening validation PRs. It refreshes `_manifest.json`, regenerates `phase-load-packs.json`, prints the current context-budget report, lints markdown invariants, and runs the Python unittest suite in `tests/`.
 
-For an on-demand budget snapshot without the full preflight, run `python scripts/report-context-budgets.py --mode full` (no PowerShell equivalent — requires Python).
+For an on-demand budget snapshot without the full preflight, run `python scripts/report-context-budgets.py --mode full`.
 
 ## Document Ownership
 

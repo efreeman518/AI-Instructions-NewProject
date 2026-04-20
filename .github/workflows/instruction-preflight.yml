@@ -44,9 +44,5 @@ jobs:
       - name: Run instruction preflight
         run: python scripts/preflight-instructions.py
 
-      - name: Run PowerShell instruction preflight
-        shell: pwsh
-        run: ./scripts/preflight-instructions.ps1 -Root .
-
       - name: Verify generated files are committed
         run: git diff --exit-code -- _manifest.json phase-load-packs.json

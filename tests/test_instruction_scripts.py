@@ -1,6 +1,5 @@
 import json
 import math
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -31,46 +30,6 @@ def run_script(script_name, *args, cwd=None):
 def run_script_expect_failure(script_name, *args, cwd=None):
     result = subprocess.run(
         [sys.executable, str(SCRIPTS_DIR / script_name), *args],
-        cwd=str(cwd or REPO_ROOT),
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    if result.returncode == 0:
-        raise AssertionError(
-            f"{script_name} succeeded unexpectedly.\n"
-            f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
-        )
-    return result
-
-
-def run_powershell_script(script_name, *args, cwd=None):
-    powershell = shutil.which("pwsh")
-    if not powershell:
-        raise unittest.SkipTest("pwsh is required")
-
-    result = subprocess.run(
-        [powershell, "-NoProfile", "-File", str(SCRIPTS_DIR / script_name), *args],
-        cwd=str(cwd or REPO_ROOT),
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    if result.returncode != 0:
-        raise AssertionError(
-            f"{script_name} failed with exit code {result.returncode}.\n"
-            f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
-        )
-    return result
-
-
-def run_powershell_script_expect_failure(script_name, *args, cwd=None):
-    powershell = shutil.which("pwsh")
-    if not powershell:
-        raise unittest.SkipTest("pwsh is required")
-
-    result = subprocess.run(
-        [powershell, "-NoProfile", "-File", str(SCRIPTS_DIR / script_name), *args],
         cwd=str(cwd or REPO_ROOT),
         capture_output=True,
         text=True,
@@ -644,61 +603,6 @@ class InstructionScriptTests(unittest.TestCase):
             updated_manifest["totalEstimatedTokens"],
             sum(entry["estimatedTokens"] for entry in updated_manifest["files"]),
         )
-
-    def test_update_manifest_powershell_recalculates_written_manifest_tokens_and_removes_stale_entries(self):
-        readme_content = "# Test Repo\n\nHello from the instruction set.\n"
-        notes_content = "# Notes\n\nThis file should be added to the manifest.\n"
-
-        manifest = {
-            "version": "1.1",
-            "generatedAt": "2026-04-10",
-            "tokenEstimationMethod": "ceil(characters/4)",
-            "totalEstimatedTokens": 0,
-            "contextBudget": {"default": 30000, "extended": 60000, "compact": 15000},
-            "modeExclusions": {"lite": [], "api-only": []},
-            "files": [
-                {"path": "_manifest.json", "phase": "metadata", "estimatedTokens": 0},
-                {"path": "scripts/update-manifest.py", "phase": "metadata", "estimatedTokens": 0},
-                {"path": "README.md", "phase": "support-only", "estimatedTokens": 0},
-                {"path": "docs/stale.md", "phase": "support-only", "estimatedTokens": 999},
-            ],
-        }
-
-        with tempfile.TemporaryDirectory() as temp_dir:
-            root = Path(temp_dir)
-            (root / "README.md").write_text(readme_content, encoding="utf-8", newline="\n")
-            (root / "notes.md").write_text(notes_content, encoding="utf-8", newline="\n")
-            write_json(root / "_manifest.json", manifest)
-
-            run_powershell_script("update-manifest.ps1", "-Root", str(root))
-
-            updated_manifest_text = (root / "_manifest.json").read_text(encoding="utf-8")
-            updated_manifest = json.loads(updated_manifest_text)
-
-        files = {entry["path"]: entry for entry in updated_manifest["files"]}
-        self.assertNotIn("docs/stale.md", files)
-        self.assertNotIn("scripts/update-manifest.py", files)
-        self.assertIn("notes.md", files)
-        self.assertEqual(files["README.md"]["estimatedTokens"], math.ceil(len(readme_content) / 4))
-        self.assertEqual(files["notes.md"]["estimatedTokens"], math.ceil(len(notes_content) / 4))
-        self.assertEqual(files["_manifest.json"]["estimatedTokens"], math.ceil(len(updated_manifest_text) / 4))
-        self.assertEqual(
-            updated_manifest["totalEstimatedTokens"],
-            sum(entry["estimatedTokens"] for entry in updated_manifest["files"]),
-        )
-
-    def test_lint_instructions_powershell_reports_broken_links(self):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            root = Path(temp_dir)
-            docs_dir = root / "docs"
-            docs_dir.mkdir(parents=True, exist_ok=True)
-            (docs_dir / "guide.md").write_text("See [missing](./missing.md).\n", encoding="utf-8", newline="\n")
-
-            result = run_powershell_script_expect_failure("lint-instructions.ps1", "-Root", str(root))
-
-        combined_output = result.stdout + result.stderr
-        self.assertIn("FAIL: instruction lint checks found", combined_output)
-        self.assertIn("Broken local link target: ./missing.md", combined_output)
 
 
 if __name__ == "__main__":

@@ -2,8 +2,8 @@
 # Pre-commit hook: regenerate manifest and phase-load-packs when instruction files change.
 # Install: git config core.hooksPath .githooks
 
-# Check if any instruction .md, .json (non-phase-load-packs), or script files are staged
-STAGED_INSTRUCTION_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(md|ps1)$|_manifest\.json$' | grep -v 'phase-load-packs.json')
+# Check if any instruction .md or manifest files are staged
+STAGED_INSTRUCTION_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.md$|_manifest\.json$' | grep -v 'phase-load-packs.json')
 
 if [ -z "$STAGED_INSTRUCTION_FILES" ]; then
     exit 0
@@ -11,20 +11,19 @@ fi
 
 echo "[pre-commit] Instruction files changed — regenerating manifest and load packs..."
 
-# Check if PowerShell is available
-if command -v pwsh &> /dev/null; then
-    PWSH=pwsh
-elif command -v powershell &> /dev/null; then
-    PWSH=powershell
+# Locate Python (prefer `python`, fall back to `py` on Windows)
+if command -v python &> /dev/null; then
+    PY="python"
+elif command -v py &> /dev/null; then
+    PY="py -3"
 else
-    echo "[pre-commit] WARNING: PowerShell not found. Skipping manifest regeneration."
-    echo "[pre-commit] Run scripts/preflight-instructions.ps1 manually before pushing."
+    echo "[pre-commit] WARNING: Python not found. Skipping manifest regeneration."
+    echo "[pre-commit] Run scripts/preflight-instructions.py manually before pushing."
     exit 0
 fi
 
-# Run manifest update and phase-load-packs generation
-$PWSH -NoProfile -ExecutionPolicy Bypass -File scripts/update-manifest.ps1 2>/dev/null
-$PWSH -NoProfile -ExecutionPolicy Bypass -File scripts/generate-phase-load-packs.ps1 2>/dev/null
+$PY scripts/update-manifest.py 2>/dev/null
+$PY scripts/generate-phase-load-packs.py 2>/dev/null
 
 # Stage the regenerated files if they changed
 git add _manifest.json phase-load-packs.json 2>/dev/null

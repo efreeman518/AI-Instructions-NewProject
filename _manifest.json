@@ -14,7 +14,7 @@
             "env/**"
         ]
     },
-    "totalEstimatedTokens": 193061,
+    "totalEstimatedTokens": 197793,
     "contextBudget": {
         "default": 30000,
         "extended": 60000,
@@ -122,7 +122,7 @@
         {
             "path": "skills/data-persistence.md",
             "phase": "phase-5a",
-            "estimatedTokens": 1962
+            "estimatedTokens": 2143
         },
         {
             "path": "templates/entity-template.md",
@@ -269,7 +269,7 @@
         {
             "path": "templates/service-template.md",
             "phase": "phase-5b",
-            "estimatedTokens": 3114,
+            "estimatedTokens": 3250,
             "generates": [
                 "{Entity}Service.cs",
                 "I{Entity}Service.cs"
@@ -438,7 +438,7 @@
         {
             "path": "skills/ui-uno.md",
             "phase": "phase-5d",
-            "estimatedTokens": 12821,
+            "estimatedTokens": 15318,
             "dependencies": [
                 "skills/solution-structure.md",
                 "skills/gateway.md",
@@ -450,7 +450,7 @@
         {
             "path": "skills/ui-blazor.md",
             "phase": "phase-5d",
-            "estimatedTokens": 5120,
+            "estimatedTokens": 7099,
             "dependencies": [
                 "skills/solution-structure.md",
                 "skills/gateway.md",
@@ -681,7 +681,7 @@
         {
             "path": "README.md",
             "phase": "support-only",
-            "estimatedTokens": 4411
+            "estimatedTokens": 4350
         },
         {
             "path": "support/prompt-catalog.md",

@@ -462,6 +462,151 @@ Add both the HTTPS and HTTP dev URLs declared in `launchSettings.json`.
 - Exactly one of each provider (`MudTheme`, `MudPopover`, `MudDialog`, `MudSnackbar`) — at the layout root
 - Dispose clears `FloatService.StateHasChanged` — without this the layout's delegate survives navigation and fires into a disposed component
 
+## Unsaved-Changes Prompt on Navigation
+
+Detail pages with editable fields must prompt before the user leaves via any navigation — top menu (`MudNavLink`), back button, `Nav.NavigateTo`, or browser back. Use `NavigationManager.RegisterLocationChangingHandler`.
+
+`MudNavLink` renders a standard `<a>` that triggers `NavigationManager.NavigateTo`, so `LocationChanging` fires reliably. **No custom click handler is required on Blazor** (this differs from Uno, which needs a code-behind handler because `PanelVisibilityNavigator` can silently no-op — see [ui-uno.md](ui-uno.md) → Menu Navigation).
+
+```razor
+@page "/tasks/{Id:guid}"
+@implements IDisposable
+@inject NavigationManager Nav
+@inject IDialogService DialogService
+
+@code {
+    private TaskItemDto? _model;
+    private TaskItemDto? _baseline;
+    private DateTime? _startDate, _dueDate;
+    private DateTime? _baselineStart, _baselineDue;
+    private IDisposable? _locationChangingRegistration;
+    private bool _bypassDirtyCheck;
+
+    protected override void OnInitialized()
+    {
+        _locationChangingRegistration = Nav.RegisterLocationChangingHandler(OnLocationChangingAsync);
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // ... load model ...
+        CaptureBaseline();   // snapshot initial state AFTER load
+    }
+
+    private void CaptureBaseline()
+    {
+        _baseline = _model is null ? null : _model with { };
+        _baselineStart = _startDate;
+        _baselineDue = _dueDate;
+    }
+
+    private bool IsDirty()
+    {
+        if (_model is null || _baseline is null) return false;
+        return _model.Title != _baseline.Title
+            || _model.Description != _baseline.Description
+            || _model.Status != _baseline.Status
+            || _model.Priority != _baseline.Priority
+            || _model.CategoryId != _baseline.CategoryId
+            || _startDate != _baselineStart
+            || _dueDate != _baselineDue;
+    }
+
+    private async ValueTask OnLocationChangingAsync(LocationChangingContext ctx)
+    {
+        if (_bypassDirtyCheck || !IsDirty()) return;
+
+        var confirm = await DialogService.ShowMessageBoxAsync(new MessageBoxOptions
+        {
+            Title = "Discard unsaved changes?",
+            Message = "You have unsaved edits. Leave and discard them?",
+            YesText = "Discard", CancelText = "Stay",
+        });
+        if (confirm != true) ctx.PreventNavigation();
+    }
+
+    private async Task SaveAsync()
+    {
+        // ... save ...
+        CaptureBaseline();               // re-baseline after successful update
+        _bypassDirtyCheck = true;         // suppress prompt on post-save redirect
+        Nav.NavigateTo($"/tasks/{id}");
+    }
+
+    private async Task DeleteAsync()
+    {
+        // ... delete ...
+        _bypassDirtyCheck = true;
+        Nav.NavigateTo("/tasks");
+    }
+
+    public void Dispose() => _locationChangingRegistration?.Dispose();
+}
+```
+
+Non-negotiables:
+
+- **Register in `OnInitialized`, dispose in `Dispose`.** A leaked handler fires on every navigation for the rest of the circuit's life — including after the component is gone — producing ghost prompts.
+- **Capture baseline AFTER `OnParametersSetAsync` loads the model**, not in `OnInitialized`. Initial load mutates `_model` and would fire as false-dirty if the baseline were taken earlier.
+- **Re-baseline inside `SaveAsync` on success** so a user who saves and then keeps editing gets a fresh comparison point.
+- **Set `_bypassDirtyCheck = true` before the post-save / post-delete `Nav.NavigateTo`**. Otherwise the prompt fires on your own programmatic redirect.
+- **Diff by scalar fields only** for the base dirty check. Buffered children (new checklist item text, pending comment body) count too if your form has them — include them in `IsDirty()` explicitly.
+- **Record `with { }` copy is enough** to snapshot a `record` DTO; the form only mutates top-level scalar properties.
+
+## Editing Parent Aggregates with Child Collections
+
+When a page edits an aggregate root whose children are synced by the server `Updater` (e.g., `TaskItem` with `ChecklistItems` + `Comments`), the UI holds children as local state on the parent DTO and persists in the **single** Create/Update call. Per-child Create/Update/Delete endpoints exist for direct-access flows — **do not** call them from the aggregate edit page: each click becomes a round trip, Cancel leaves partial persists behind, and the parent's validation / transactional boundary is bypassed.
+
+### Pattern
+
+```razor
+@* Bind list-panels directly to _model.ChildItems and _model.Comments. *@
+@foreach (var item in Checklist) { ... }
+
+@code {
+    private TaskItemDto? _model;
+    private bool _childrenDirty;
+
+    // Convenience accessors — `_model` is non-null by the time the UI renders these.
+    private List<ChecklistItemDto> Checklist => _model!.ChecklistItems ??= new();
+    private List<CommentDto> Comments => _model!.Comments ??= new();
+
+    // IsNew branch seeds empty child lists so the Updater sees an empty
+    // collection (not null) and knows there's nothing to insert.
+    _model = new TaskItemDto
+    {
+        Title = string.Empty,
+        ChecklistItems = new(),
+        Comments = new()
+    };
+
+    // Add/Toggle/Delete are local-only — no API call.
+    private void AddChecklist() { Checklist.Add(new ChecklistItemDto { ... }); _childrenDirty = true; }
+    private void ToggleChecklist(ChecklistItemDto item, bool done)
+    {
+        var i = Checklist.IndexOf(item);
+        if (i >= 0) { Checklist[i] = item with { IsCompleted = done }; _childrenDirty = true; }
+    }
+    private void DeleteChecklist(ChecklistItemDto item) { if (Checklist.Remove(item)) _childrenDirty = true; }
+}
+```
+
+### Non-negotiables
+
+- **Local mutation only** — Add/Toggle/Delete mutate the parent DTO's list; they do not call the API. `SaveAsync` sends the full tree via `Create{Entity}Async` / `Update{Entity}Async`.
+- **Seed empty lists on IsNew** — initialize `ChecklistItems = new()` / `Comments = new()` so the Updater has a collection to iterate (null ≠ empty for some sync utilities, and null-coalesce is defensive, not definitive).
+- **GET must `.Include()` children.** The edit page must not need a separate child search. If children are missing on load, fix the query repo's includes (see [data-persistence.md](data-persistence.md)).
+- **Include `_childrenDirty` in `IsDirty()`** so the unsaved-changes prompt fires on child-only edits. A dirty flag is simpler than deep-comparing record collections.
+- **Re-sort / normalize children after save.** The response DTO reflects the new persisted state (fresh IDs, server-assigned sort orders) — re-apply client-side ordering (`OrderBy(c => c.SortOrder)`) before re-baselining.
+- **Server-side counterpart**: `UpdateAsync` must call `repoTrxn.UpdateFromDto(entity, dto, RelatedDeleteBehavior.RelationshipAndEntity)`. The default `None` silently drops client-side removals. See [data-persistence.md](data-persistence.md) → Updater Pattern.
+- **Toggle via list index, not reference**, when replacing a `record` in-place (`Checklist[i] = item with { IsCompleted = done }`). Records are reference types but `with` returns a new instance — `FindIndex(c => c == item)` works via value equality, but `IndexOf(item)` against the current list entry is simpler and safer.
+
+### Anti-patterns
+
+- Calling `Api.CreateChecklistItemAsync` / `Api.DeleteCommentAsync` from the parent edit page.
+- Keeping parallel `_checklist` / `_comments` fields alongside `_model.ChecklistItems` / `_model.Comments` — they drift, and one of them ends up being the payload while the other drives the UI.
+- Leaving `TaskItemService.UpdateAsync` with `UpdateFromDto(entity, dto)` — child removals never persist.
+
 ## Generation Checklist
 
 - [ ] `includeBlazorUI: true` set in domain inputs
@@ -476,6 +621,7 @@ Add both the HTTPS and HTTP dev URLs declared in `launchSettings.json`.
 - [ ] Gateway `CorsSettings.AllowedOrigins` includes the Blazor dev URLs
 - [ ] Pages: Dashboard, {Entity}List (server paging + filters), {Entity}Page (new/edit), Settings, Error
 - [ ] Blazor UI calls the Gateway only — never the API host directly
+- [ ] Aggregate edit pages bind children to `_model.<Collection>` and persist via the single Create/Update call (no per-child API calls) — see *Editing Parent Aggregates with Child Collections*
 
 ## Coexistence With Uno
 
