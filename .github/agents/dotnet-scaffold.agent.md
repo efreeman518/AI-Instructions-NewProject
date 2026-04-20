@@ -27,19 +27,7 @@ All instruction files (skills, templates, support docs, schemas, scripts) live u
 
 ## Phase Summary
 
-| Phase | Purpose | Key Output |
-|-------|---------|------------|
-| 1 | Domain Discovery | `domain-specification.yaml` |
-| 2 | Resource Definition | `resource-implementation.yaml` |
-| 3 | Implementation Plan | `implementation-plan.md` in target root |
-| 4 | Contract Scaffolding | Compilable skeleton (`dotnet build` gate) |
-| 5a | Foundation (TDD) | Entities, EF configs, repositories |
-| 5b | App Core (TDD) | Services, endpoints, DI wiring |
-| 5c | Runtime/Edge | Infrastructure, health checks |
-| 5d | Optional Hosts | Scheduler, Functions, Uno UI |
-| 5e | Quality Gates | Architecture tests, CI/CD |
-| 5f | Authentication | Identity finalization |
-| 5g | AI Integration | AI Search, agents (if enabled) |
+See `.instructions/START-AI.md` § Phase Router for the canonical per-phase file list, outputs, and gates. Do not duplicate them here.
 
 ## Workflow
 

@@ -30,12 +30,6 @@ You are executing the phased scaffolding workflow. Follow these steps exactly:
 
 ## Phases
 
-| Phase | Purpose | Key Output |
-|-------|---------|------------|
-| 1 | Domain Discovery | `domain-specification.yaml` |
-| 2 | Resource Definition | `resource-implementation.yaml` |
-| 3 | Implementation Plan | `implementation-plan.md` |
-| 4 | Contract Scaffolding | Compilable skeleton |
-| 5a-5g | Implementation | TDD → infrastructure → hosts → quality → auth → AI |
+Canonical phase list (files, outputs, gates) lives in `.instructions/START-AI.md` § Phase Router. Do not duplicate it here.
 
 Run the Session Start Router now.

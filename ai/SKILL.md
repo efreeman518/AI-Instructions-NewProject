@@ -17,6 +17,7 @@ Use for:
 - **Conflict resolution order:** `support/execution-gates.md` > this file (`ai/SKILL.md`) > individual skill files > templates.
 - Load pattern files from `patterns/` only when needed for cross-project wiring. Use [../support/pattern-dispatcher.md](../support/pattern-dispatcher.md) as the index to find the right file.
 - **Load [../support/ef-packages-reference.md](../support/ef-packages-reference.md) before Phase 5a** to know which base types (DbContextBase, DomainResult, IRequestContext, etc.) come from the EF.Packages private feed. Do not regenerate these types.
+- **Reference app — TaskFlow** (<https://github.com/efreeman518/AI-Instructions-ReferenceApp>) is a fully scaffolded example of every pattern these instructions produce. When a skill or template is ambiguous, consult it via GitHub MCP before inventing a pattern. Use [../support/taskflow-proof-map.md](../support/taskflow-proof-map.md) for the phase → area index. Do not copy files wholesale.
 - Generate code only in the user's new project directory.
 - Use `.slnx` (not legacy `.sln`).
 - Use central package management (`Directory.Packages.props`).

@@ -12,4 +12,6 @@ Use [START-AI.md](../START-AI.md) as the canonical operational bootstrap. Keep t
 - Generate code only in the target project directory, never in this instruction repo.
 - Conflict precedence is [support/execution-gates.md](../support/execution-gates.md) > [ai/SKILL.md](../ai/SKILL.md) > individual skills > templates.
 
+Copilot agents live in [.github/agents/](agents/) — `dotnet-scaffold` runs the full phased workflow, `vertical-slice` adds a single entity.
+
 For broader repository context, use [README.md](../README.md). For execution rules, fall back to [START-AI.md](../START-AI.md).

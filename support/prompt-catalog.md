@@ -11,6 +11,10 @@ Use this file as a convenience layer only. [START-AI.md](../START-AI.md) remains
 3. Replace `{...}` placeholders with real values.
 4. Keep the one-phase-per-session rule from [START-AI.md](../START-AI.md).
 
+## Reference Application
+
+A fully scaffolded example — **TaskFlow** — lives at <https://github.com/efreeman518/AI-Instructions-ReferenceApp>. When a prompt result looks off or a pattern is ambiguous, point the AI at it via GitHub MCP and use [taskflow-proof-map.md](taskflow-proof-map.md) for the phase → area index.
+
 ## Phase 1 — Domain Discovery (Session 1)
 
 ```text

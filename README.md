@@ -33,9 +33,11 @@ Both agents follow the same flow:
 
 ### Setup checklist
 
-- [ ] Copy instruction set into `.instructions/` in your app repo
-- [ ] Copy `.instructions/.github/agents/` → `.github/agents/` (Copilot)
-- [ ] Copy `.instructions/.claude/commands/` → `.claude/commands/` (Claude Code)
+The agent and command files ship inside this instruction repo. When you copy it into a consumer app repo, the `.github/agents/` and `.claude/commands/` folders need to live at the **app repo root** (not inside `.instructions/`) so the tools discover them.
+
+- [ ] Copy this instruction set into `.instructions/` in your app repo
+- [ ] Copy (or symlink) `.instructions/.github/agents/` → `<app-repo>/.github/agents/` so Copilot finds the agents
+- [ ] Copy (or symlink) `.instructions/.claude/commands/` → `<app-repo>/.claude/commands/` so Claude Code finds the slash commands
 - [ ] Run `python .instructions/scripts/preflight-instructions.py` to validate
 
 ---
@@ -124,10 +126,18 @@ Version policy: prefer latest stable packages and SDKs.
 2. Copy this instruction set into `.instructions/` in that repo.
 3. Open the app repo in VS Code.
 
-Expected shape:
+Expected shape (note `.github/agents/` and `.claude/commands/` live at the app repo root, not inside `.instructions/`):
 
 ```text
 <YourApp>/
+  .github/
+    agents/                        # copied from .instructions/.github/agents/ — Copilot discovers here
+      dotnet-scaffold.agent.md
+      vertical-slice.agent.md
+  .claude/
+    commands/                      # copied from .instructions/.claude/commands/ — Claude Code discovers here
+      scaffold.md
+      vertical-slice.md
   .instructions/
     README.md
     START-AI.md

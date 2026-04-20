@@ -14,7 +14,7 @@
             "env/**"
         ]
     },
-    "totalEstimatedTokens": 197793,
+    "totalEstimatedTokens": 198272,
     "contextBudget": {
         "default": 30000,
         "extended": 60000,
@@ -57,12 +57,12 @@
         {
             "path": "START-AI.md",
             "phase": "session-bootstrap",
-            "estimatedTokens": 2841
+            "estimatedTokens": 2902
         },
         {
             "path": "CLAUDE.md",
             "phase": "session-bootstrap",
-            "estimatedTokens": 236
+            "estimatedTokens": 276
         },
         {
             "path": "ai/domain-specification-schema.md",
@@ -97,7 +97,7 @@
         {
             "path": "ai/SKILL.md",
             "phase": "phase-5-base",
-            "estimatedTokens": 3268
+            "estimatedTokens": 3367
         },
         {
             "path": "ai/placeholder-tokens.md",
@@ -681,12 +681,12 @@
         {
             "path": "README.md",
             "phase": "support-only",
-            "estimatedTokens": 4350
+            "estimatedTokens": 4549
         },
         {
             "path": "support/prompt-catalog.md",
             "phase": "support-only",
-            "estimatedTokens": 1760
+            "estimatedTokens": 1840
         },
         {
             "path": "support/pattern-dispatcher.md",

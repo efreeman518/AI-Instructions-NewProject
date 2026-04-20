@@ -178,9 +178,10 @@ A companion reference app (**TaskFlow**) demonstrates every pattern these instru
 - Pattern ambiguity — when a skill or template describes a pattern but the concrete implementation is unclear
 - Test structure — builder patterns, test base classes, InMemoryDbBuilder usage
 
-**How to access:**
+**How to access** (in preference order):
 - GitHub MCP (`github_repo` tools) — preferred; fetch specific files on demand without cloning
-- Local clone — if GitHub MCP is unavailable, clone into a scratch directory outside the target project
+- Fetch MCP or WebFetch against raw GitHub URLs (`https://raw.githubusercontent.com/efreeman518/AI-Instructions-ReferenceApp/main/...`) — use when GitHub MCP is unavailable and you only need one or two files
+- Local clone — last resort for broad multi-file exploration; clone into a scratch directory outside the target project
 
 Do not copy files wholesale from the reference app. Use it as a verified example, then generate code that matches the target project's domain and naming.
 
