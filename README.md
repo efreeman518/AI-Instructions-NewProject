@@ -31,14 +31,42 @@ Both agents follow the same flow:
 1. **Scaffold** — Boots from `.instructions/START-AI.md`, checks `HANDOFF.md` in the project root for resume state, loads only the current phase's files via `.instructions/phase-load-packs.json`, executes one phase, writes `HANDOFF.md` on completion.
 2. **Vertical slice** — Loads `.instructions/support/vertical-slice-checklist.md` fast-path, generates the full entity stack (12 steps: entity → EF config → repos → DTOs → mapper → validator → service → endpoint → DI wiring → migration), validates with `dotnet build` + `dotnet test`.
 
-### Setup checklist
+### Install into a new app
 
-The agent and command files ship inside this instruction repo. When you copy it into a consumer app repo, the `.github/agents/` and `.claude/commands/` folders need to live at the **app repo root** (not inside `.instructions/`) so the tools discover them.
+Use `install-to-project.py` from a local clone of this repo. It copies only the runtime payload — instruction files, agents, and slash commands — into your app, and skips repo-maintenance files (tests, CI workflows, git hooks, virtualenvs, README).
 
-- [ ] Copy this instruction set into `.instructions/` in your app repo
-- [ ] Copy (or symlink) `.instructions/.github/agents/` → `<app-repo>/.github/agents/` so Copilot finds the agents
-- [ ] Copy (or symlink) `.instructions/.claude/commands/` → `<app-repo>/.claude/commands/` so Claude Code finds the slash commands
-- [ ] Run `python .instructions/scripts/preflight-instructions.py` to validate
+`--target` is the **app repo root** (not the `.instructions/` folder). The script creates `<target>/.instructions/` if it does not exist, and writes `.claude/commands/` and `.github/agents/` at the target root so Claude Code and Copilot discover them.
+
+```bash
+# from a clone of this repo
+python scripts/install-to-project.py --target /path/to/your-app-repo
+# tip: run with --dry-run first to preview what gets copied
+```
+
+What it places:
+
+| Source in this repo | Destination in your app |
+|---|---|
+| `CLAUDE.md`, `START-AI.md`, `phase-load-packs.json`, `_manifest.json` | `<app>/.instructions/` |
+| `ai/`, `patterns/`, `schemas/`, `skills/`, `support/`, `templates/`, `scripts/` | `<app>/.instructions/` |
+| `.claude/commands/` | `<app>/.claude/commands/` (app repo root, so Claude Code discovers them) |
+| `.github/agents/`, `.github/copilot-instructions.md` | `<app>/.github/` (app repo root, so Copilot discovers them) |
+
+Flags:
+
+| Flag | Purpose |
+|---|---|
+| `--dry-run` | Print planned copies without writing anything. |
+| `--update` | Re-run against an existing install; preserves any target file with a newer mtime than the source. Leaves `HANDOFF.md` untouched. |
+| `--instructions-only` | Copy only `<app>/.instructions/`; skip `.claude/commands/` and `.github/agents/` placement (useful if you manage those separately). |
+
+After install:
+
+- [ ] Run `python .instructions/scripts/preflight-instructions.py` in the app repo to validate the copied set.
+
+### Manual copy (alternative)
+
+If you prefer to copy by hand, remember: `.github/agents/` and `.claude/commands/` must live at the **app repo root**, not inside `.instructions/`, so the tools discover them. Everything else goes under `.instructions/`. The install script above does this automatically.
 
 ---
 

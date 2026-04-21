@@ -104,6 +104,9 @@ StyleCopReport.xml
 *.tlh
 *.tmp
 *.tmp_proj
+.tmp/
+.venv/
+__pycache__/
 *_wpftmp.csproj
 *.log
 *.tlog
