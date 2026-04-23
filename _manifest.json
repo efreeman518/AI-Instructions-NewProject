@@ -14,7 +14,7 @@
             "env/**"
         ]
     },
-    "totalEstimatedTokens": 200635,
+    "totalEstimatedTokens": 201842,
     "contextBudget": {
         "default": 30000,
         "extended": 60000,
@@ -57,7 +57,7 @@
         {
             "path": "START-AI.md",
             "phase": "session-bootstrap",
-            "estimatedTokens": 3095
+            "estimatedTokens": 3941
         },
         {
             "path": "CLAUDE.md",
@@ -97,7 +97,7 @@
         {
             "path": "ai/SKILL.md",
             "phase": "phase-5-base",
-            "estimatedTokens": 3367
+            "estimatedTokens": 3728
         },
         {
             "path": "ai/placeholder-tokens.md",

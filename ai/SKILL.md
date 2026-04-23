@@ -41,6 +41,8 @@ Use for:
 
 Follow [../START-AI.md](../START-AI.md) for session bootstrap, version checks, phase routing, and the session-per-phase model. This file does not repeat those steps.
 
+**Developer Clarification Rule:** Before generating code or configuration in any phase, ask the developer any and all necessary clarification questions required to scaffold correctly. Do not infer or assume missing details. Gather complete context first.
+
 **Each Phase 5 sub-phase runs in its own session.** At session start for Phase 5:
 1. Load `SKILL.md` + [placeholder-tokens.md](placeholder-tokens.md) + [tdd-protocol.md](tdd-protocol.md).
 2. Read [resource-implementation-schema.md](resource-implementation-schema.md) for `scaffoldMode`, `testingProfile`, host profiles, enabled flags, and canonical defaults.
@@ -77,13 +79,33 @@ Each sub-phase is one session. Gate must pass before the next session begins.
 
 **Phase 5c and 5d use tests-after:** implement infrastructure/hosts first, then write tests at end of session to verify behavior.
 
-1. **5a — Foundation (TDD):** write domain/rule/repository tests first, then implement entities, EF configs, and repositories. Load `test-templates-domain.md` + `test-templates-repository.md`. Gate: `dotnet build` + `dotnet test --filter "TestCategory=Unit"`.
-2. **5b — App Core (TDD):** write service tests, implement services, then write endpoint tests and implement endpoints. Replace no-op DI stubs with real implementations. Load `test-templates-service.md` + `test-templates-endpoint.md`. Gate: `dotnet build` + `dotnet test --filter "TestCategory=Unit|TestCategory=Endpoint"`.
-3. **5c — Runtime/Edge (tests-after):** load only enabled runtime concerns, then add health/config tests. Gate: `dotnet build` + `dotnet test` + app starts via Aspire.
-4. **5d — Optional Hosts (tests-after):** load scheduler, Function App, Uno UI, and notifications only when enabled. Uno UI stays dedicated. Gate: per-host status in `HANDOFF.md` + `dotnet test`.
-5. **5e — Quality Gates + Delivery:** add architecture/load/benchmark/CI-CD gates and run full regression. Load `test-templates-quality.md`. Gate: `dotnet test`.
-6. **5f — Authentication:** finalize identity last. Use stubs in earlier sub-phases when needed for compile-time flow. Gate: authenticated endpoints respond correctly.
-7. **5g — AI Integration:** run only when `includeAiServices: true`, scope further with `-IncludeAiSearch` / `-IncludeAgents`. Gate: search returns results, agent responds to test prompt.
+1. **5a — Foundation (TDD):** 
+   - **Ask clarification questions first:** domain rule specifics, invariant constraints, inheritance patterns, special validations, audit/versioning needs
+   - Write domain/rule/repository tests first, then implement entities, EF configs, and repositories. Load `test-templates-domain.md` + `test-templates-repository.md`. Gate: `dotnet build` + `dotnet test --filter "TestCategory=Unit"`.
+
+2. **5b — App Core (TDD):** 
+   - **Ask clarification questions first:** service business logic details, API pagination/filtering strategy, response formats, error handling approach, idempotency needs
+   - Write service tests, implement services, then write endpoint tests and implement endpoints. Replace no-op DI stubs with real implementations. Load `test-templates-service.md` + `test-templates-endpoint.md`. Gate: `dotnet build` + `dotnet test --filter "TestCategory=Unit|TestCategory=Endpoint"`.
+
+3. **5c — Runtime/Edge (tests-after):** 
+   - **Ask clarification questions first:** observability/tracing preferences, health check specific needs, rate limiting strategy, caching specifics
+   - Load only enabled runtime concerns, then add health/config tests. Gate: `dotnet build` + `dotnet test` + app starts via Aspire.
+
+4. **5d — Optional Hosts (tests-after):** 
+   - **Ask clarification questions first:** for each enabled host, ask host-specific details (Function App triggers/bindings/outputs, Scheduler job types/schedules, Notification channels/templates, Uno UI target platforms/responsive needs)
+   - Load scheduler, Function App, Uno UI, and notifications only when enabled. Uno UI stays dedicated. Gate: per-host status in `HANDOFF.md` + `dotnet test`.
+
+5. **5e — Quality Gates + Delivery:** 
+   - **Ask clarification questions first:** code quality thresholds, load test requirements, benchmark baselines, CI-CD pipeline specifics
+   - Add architecture/load/benchmark/CI-CD gates and run full regression. Load `test-templates-quality.md`. Gate: `dotnet test`.
+
+6. **5f — Authentication:** 
+   - **Ask clarification questions first:** authentication provider details, custom claims/roles, B2B vs B2C needs, token expiry policies
+   - Finalize identity last. Use stubs in earlier sub-phases when needed for compile-time flow. Gate: authenticated endpoints respond correctly.
+
+7. **5g — AI Integration:** 
+   - **Ask clarification questions first:** AI search scope/filters, agent capabilities/tools, content ingestion strategy, cost/latency constraints
+   - Run only when `includeAiServices: true`, scope further with `-IncludeAiSearch` / `-IncludeAgents`. Gate: search returns results, agent responds to test prompt.
 
 ## Template Usage
 

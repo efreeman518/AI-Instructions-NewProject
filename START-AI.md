@@ -106,14 +106,18 @@ For quick template lookups, see `templates/index.md`.
 
 Each phase is one session. Load only the files listed for the current phase.
 
+**Developer Clarification Rule:** At the start of each phase, ask the developer any and all necessary clarification questions required to scaffold correctly. Do not infer or assume missing details. Gather complete context before generating code or configuration.
+
 - **Phase 1 (Domain Discovery)** — Session 1
   - `ai/domain-specification-schema.md`
+  - **Ask clarification questions first:** domain description, business rules, key entities, constraints, tenant isolation mode, audit/compliance needs, growth projections, performance constraints
   - Output: `domain-specification.yaml` in target project root
   - Session end: YAML is complete and human-reviewed → write `HANDOFF.md` → close session
 
 - **Phase 2 (Resource Definition)** — Session 2
   - `ai/resource-implementation-schema.md`
   - `ai/domain-specification-schema.md` (reference)
+  - **Ask clarification questions first:** resource types, API surface, external integrations, data volumes, scaling needs, caching strategy, messaging patterns, optional workloads (Function App, Scheduler, Gateway)
   - Output: `resource-implementation.yaml` in target project root
   - Session end: YAML complete, `externalDependencyModes` declared for every external dep → write `HANDOFF.md` → close session
 
@@ -121,6 +125,7 @@ Each phase is one session. Load only the files listed for the current phase.
   - `ai/implementation-plan.md`
   - `ai/domain-specification-schema.md` (reference)
   - `ai/resource-implementation-schema.md` (reference)
+  - **Ask clarification questions first:** any remaining design questions, tooling preferences (ORM specifics, caching lib, messaging transport), deployment regions, cost constraints, team constraints
   - **Pre-flight:** Ask for custom/private NuGet feed URLs and auth method. Update `nuget.config`. Require `dotnet restore` exit 0.
   - **Pre-flight:** Verify `dotnet ef` is available (`dotnet tool list`). If missing: `dotnet new tool-manifest && dotnet tool install dotnet-ef`. If `nuget.config` uses package source mapping, add `<package pattern="dotnet-ef" />` under the `nuget.org` source.
   - **Tooling discovery:** Analyze `resource-implementation.yaml` to identify all required CLIs and beneficial MCP servers for Phases 4–5. Search npm (`mcp + <library/service>`) and MCP registries for project-specific servers. For libraries with no CLI or MCP, locate documentation URLs and GitHub repos. Populate the Tooling & Environment Readiness section of the implementation plan. Preference order: CLI → MCP → online resources.
@@ -141,8 +146,35 @@ Each phase is one session. Load only the files listed for the current phase.
 - **Phase 5 (Implementation)** — One session per sub-phase (5a through 5g)
   - Base: `ai/SKILL.md` + `ai/placeholder-tokens.md` + `ai/tdd-protocol.md` + `support/ef-packages-reference.md`
   - Plus only the skill/template files for the current sub-phase (use load set script)
-  - **Phase 5a/5b use TDD:** contracts, entity shells, and test infrastructure already exist from Phase 4. Write tests first (red), then implement (green). See `ai/tdd-protocol.md`.
-  - **Phase 5c/5d use tests-after:** implement infrastructure, then write tests at end of session.
+  
+  1. **5a — Foundation (TDD):** 
+     - **Ask clarification questions first:** domain rule specifics, invariant constraints, inheritance patterns, special validations, audit/versioning needs
+     - Write domain/rule/repository tests first, then implement entities, EF configs, and repositories. Load `test-templates-domain.md` + `test-templates-repository.md`. Gate: `dotnet build` + `dotnet test --filter "TestCategory=Unit"`.
+  
+  2. **5b — App Core (TDD):** 
+     - **Ask clarification questions first:** service business logic details, API pagination/filtering strategy, response formats, error handling approach, idempotency needs
+     - Write service tests, implement services, then write endpoint tests and implement endpoints. Replace no-op DI stubs with real implementations. Load `test-templates-service.md` + `test-templates-endpoint.md`. Gate: `dotnet build` + `dotnet test --filter "TestCategory=Unit|TestCategory=Endpoint"`.
+  
+  3. **5c — Runtime/Edge (tests-after):** 
+     - **Ask clarification questions first:** observability/tracing preferences, health check specific needs, rate limiting strategy, caching specifics
+     - Implement runtime infrastructure (health checks, observability, caching, middleware). Add tests at session end. Gate: `dotnet build` + `dotnet test` + app starts via Aspire.
+  
+  4. **5d — Optional Hosts (tests-after):** 
+     - **Ask clarification questions first:** for each enabled host, ask host-specific details (Function App triggers/bindings/outputs, Scheduler job types/schedules, Notification channels/templates, Uno UI target platforms/responsive needs)
+     - Load scheduler, Function App, Uno UI, and notifications only when enabled. Uno UI stays dedicated session. Gate: per-host status in `HANDOFF.md` + `dotnet test`.
+  
+  5. **5e — Quality Gates + Delivery:** 
+     - **Ask clarification questions first:** code quality thresholds, load test requirements, benchmark baselines, CI-CD pipeline specifics
+     - Add architecture/load/benchmark/CI-CD gates and run full regression. Load `test-templates-quality.md`. Gate: `dotnet test`.
+  
+  6. **5f — Authentication:** 
+     - **Ask clarification questions first:** authentication provider details, custom claims/roles, B2B vs B2C needs, token expiry policies
+     - Finalize identity configuration last. Use stubs in earlier sub-phases when needed for compile-time flow. Gate: authenticated endpoints respond correctly.
+  
+  7. **5g — AI Integration:** 
+     - **Ask clarification questions first:** AI search scope/filters, agent capabilities/tools, content ingestion strategy, cost/latency constraints
+     - Run only when `includeAiServices: true`, scope further with `-IncludeAiSearch` / `-IncludeAgents`. Gate: search returns results, agent responds to test prompt.
+  
   - Session end: sub-phase gate passes → update `HANDOFF.md` → close session
 
 ## Strict On-Demand Files
