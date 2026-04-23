@@ -62,7 +62,8 @@ public static partial class RegisterServices
 
     public static IServiceCollection RegisterBackgroundServices(this IServiceCollection services, IConfiguration config)
     {
-        services.AddChannelBackgroundTaskQueue();
+        // Host-specific listeners / cron services go here.
+        // The shared channel queue + internal message bus live in AddSupportServices().
         return services;
     }
 }
@@ -82,6 +83,8 @@ private static IServiceCollection AddSupportServices(this IServiceCollection ser
 ```
 
 Call `AddSupportServices()` as the **first** registration in the main chain (before `AddDatabaseServices`). Without it, any host that registers `AuditInterceptor` will fail at startup with a DI resolution error.
+
+`InternalMessageBus` does **not** execute handlers inline. It enqueues work onto `IBackgroundTaskQueue`, which is drained by the channel hosted service. If you skip `AddChannelBackgroundTaskQueueWithShutdownHandling()`, audited saves can succeed while message-handler side effects never execute.
 
 Required usings:
 ```csharp
@@ -109,15 +112,22 @@ public interface IStartupTask
 ### Host Extension
 
 ```csharp
-public static async Task RunStartupTasks(this IHost host)
+public static void AutoRegisterMessageHandlers(this IHost host)
 {
     var msgBus = host.Services.GetRequiredService<IInternalMessageBus>();
-    msgBus.AutoRegisterHandlers();
+    msgBus.AutoRegisterHandlers(host.Services, typeof(SomeMessageHandler).Assembly);
+}
+
+public static async Task RunStartupTasks(this IHost host)
+{
+    host.AutoRegisterMessageHandlers();
     using var scope = host.Services.CreateScope();
     foreach (var task in scope.ServiceProvider.GetServices<IStartupTask>())
         await task.ExecuteAsync();
 }
 ```
+
+`[ScopedMessageHandler]` marks the handler for scoped resolution during dispatch. It does **not** add the handler to DI. Register each `IMessageHandler<T>` implementation explicitly in `RegisterApplicationServices()`.
 
 ### Example Startup Tasks
 
@@ -161,8 +171,13 @@ await app.RunAsync();
 builder.Services
     .RegisterInfrastructureServices(builder.Configuration)
     .RegisterDomainServices(builder.Configuration)
-    .RegisterApplicationServices(builder.Configuration);
+    .RegisterApplicationServices(builder.Configuration)
+    .RegisterBackgroundServices(builder.Configuration);
     // No RegisterApiServices — functions don't need endpoints/auth pipeline
+
+var app = builder.Build();
+app.AutoRegisterMessageHandlers();
+await app.RunAsync();
 ```
 
 ## Key Principles
@@ -185,7 +200,8 @@ After generating the Bootstrapper, confirm:
 - [ ] DbContexts registered via pooled factory with scoped wrappers
 - [ ] All `I{Entity}RepositoryTrxn` and `I{Entity}RepositoryQuery` interfaces registered
 - [ ] All `I{Entity}Service` implementations registered
-- [ ] `IInternalMessageBus.AutoRegisterHandlers()` called to pick up all `IMessageHandler<T>` types
+- [ ] All `IMessageHandler<T>` implementations are registered in DI (typically scoped)
+- [ ] `AutoRegisterMessageHandlers()` called after `Build()` to bind handler assemblies into `IInternalMessageBus`
 - [ ] FusionCache registered with Redis backplane (if caching is enabled)
 - [ ] Startup tasks registered as `IStartupTask` (migrations, cache warmup)
 - [ ] No host-specific concerns (no endpoints, no triggers, no YARP) — those belong in the host project

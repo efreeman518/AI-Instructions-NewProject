@@ -6,7 +6,7 @@
 |-------|-------|
 | **File** | `src/Application/{Project}.Application.MessageHandlers/{EventName}Handler.cs` |
 | **Depends on** | `Application.Contracts` (for event DTOs in `Events/`), `EF.BackgroundServices` (for `IMessageHandler<T>`, `IInternalMessageBus` in namespace `EF.BackgroundServices.InternalMessageBus`) |
-| **Referenced by** | Auto-registered by `IInternalMessageBus.AutoRegisterHandlers()` in Bootstrapper |
+| **Referenced by** | Registered in DI under Bootstrapper, then wired into `IInternalMessageBus` after host build |
 
 ---
 
@@ -67,7 +67,7 @@ public class {EventName}Handler(
 
 Events are published through `IInternalMessageBus` from service methods.
 
-> **CRITICAL:** `IInternalMessageBus.Publish()` is **synchronous** — it takes `(InternalMessageBusProcessMode, IMessage[])`. There is NO `PublishAsync` method.
+> **CRITICAL:** `IInternalMessageBus.Publish()` is a synchronous fire-and-forget API over the background queue. It takes a process mode plus a **collection** of messages. There is NO `PublishAsync` method and no single-message overload.
 
 ```csharp
 // In a service class (e.g., {Entity}Service.cs)
@@ -83,9 +83,13 @@ public class {Entity}Service(
 
         await repoTrxn.SaveChangesAsync(OptimisticConcurrencyWinner.ClientWins, ct);
 
-        // Publish event after successful save (synchronous call)
-        messageBus.Publish(InternalMessageBusProcessMode.FireAndForget,
-            new {EventName}(newEntity.Id, newEntity.TenantId, "Entity created"));
+        // Publish event after successful save.
+        // Use Topic for fan-out handlers.
+        messageBus.Publish(
+            InternalMessageBusProcessMode.Topic,
+            [
+                new {EventName}(newEntity.Id, newEntity.TenantId, "Entity created")
+            ]);
 
         return Result<DefaultResponse<{Entity}Dto>>.Success(
             new() { Item = newEntity.ToDto() });
@@ -97,14 +101,21 @@ public class {Entity}Service(
 
 ## Handler Registration
 
-Handlers are auto-discovered. In the Bootstrapper:
+Handlers need **two steps**: DI registration and bus wiring after host build.
 
 ```csharp
 // In RegisterApplicationServices():
-services.AutoRegisterHandlers(typeof({EventName}Handler).Assembly);
+services.AddScoped<IMessageHandler<{EventName}>, {EventName}Handler>();
+
+// After host Build():
+public static void AutoRegisterMessageHandlers(this IHost host)
+{
+    var msgBus = host.Services.GetRequiredService<IInternalMessageBus>();
+    msgBus.AutoRegisterHandlers(host.Services, typeof({EventName}Handler).Assembly);
+}
 ```
 
-The `AutoRegisterHandlers` extension scans the assembly for all `IMessageHandler<T>` implementations and registers them as scoped services.
+`[ScopedMessageHandler]` controls scoped execution. It does **not** replace the DI registration shown above.
 
 ---
 
@@ -171,6 +182,7 @@ public class ProviderWebhookReceivedHandler(
 - Handlers should be **thin** — delegate complex logic to services or domain methods.
 - Each handler handles **one event type**. Use separate handler classes for different events.
 - Handlers run **in-process** via `IInternalMessageBus`. For cross-service messaging, use Azure Service Bus (see [function-app.md](../skills/function-app.md) for Service Bus triggers).
+- `AuditInterceptor` publishes `AuditEntry<...>` through this same bus after `SaveChangesAsync`. If queue/bus/handler wiring is incomplete, entity saves succeed but audit/side-effect handlers never run.
 - Keep handlers **idempotent** — the same event may be delivered more than once in retry scenarios.
 - Use `CancellationToken` and honor cancellation in all async operations.
 - If workflow compensation metadata exists, keep rollback handlers explicit and ordered according to workflow policy.

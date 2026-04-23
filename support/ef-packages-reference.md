@@ -10,7 +10,7 @@ The scaffolded project depends on the **EF.Packages** private NuGet feed for inf
 
 These types are consumed throughout scaffolded code. Know where they come from so you don't recreate them.
 
-> **Verified against EF.Packages v1.0.55.** If a type is not listed here, it either does not exist in EF.Packages or has not been verified. Check the actual assemblies before assuming a type exists.
+> **Verified against EF.Packages v1.0.58.** If a type is not listed here, it either does not exist in EF.Packages or has not been verified. Check the actual assemblies before assuming a type exists.
 
 ### Domain Layer (EF.Domain, EF.Domain.Contracts)
 
@@ -33,7 +33,7 @@ These types are consumed throughout scaffolded code. Know where they come from s
 | `DbContextBase<TAuditIdType, TTenantIdType>` | EF.Data | Base DbContext with tenant filters, audit interceptor hooks, default type config |
 | `RepositoryBase<TDbContext, TAuditIdType, TTenantIdType>` | EF.Data | Generic repository with CRUD, paging, search. Members: Create, Delete, DeleteAsync, ExistsAsync, GetEntityAsync, GetEntityByKeysAsync, GetEntityProjectionAsync, PrepareForUpdate, QueryPageAsync, QueryPageProjectionAsync, SaveChangesAsync, UpdateFull, UpsertAsync |
 | `IRepositoryBase` | EF.Data.Contracts | Base repository interface (non-generic) |
-| `AuditInterceptor<TAuditIdType, TTenantIdType>` | EF.Data | EF SaveChanges interceptor for audit field population |
+| `AuditInterceptor<TAuditIdType, TTenantIdType>` | EF.Data | EF SaveChanges interceptor for audit field population; on `SavedChangesAsync` it publishes collected audit entries through `IInternalMessageBus` |
 | `ConnectionNoLockInterceptor` | EF.Data | Adds `SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED` for query contexts |
 | `ReadUncommittedInterceptor` | EF.Data | Read uncommitted isolation level interceptor |
 | `DbContextScopedFactory<TContext, TAuditIdType, TTenantIdType>` | EF.Data | Scoped wrapper around `IDbContextFactory<T>` for DI resolution |
@@ -49,7 +49,7 @@ These types are consumed throughout scaffolded code. Know where they come from s
 | Type | Package | Used For |
 |---|---|---|
 | `IRequestContext<TUser, TTenant>` | EF.Common.Contracts | Scoped request context (CorrelationId, AuditId, TenantId, Roles, RoleExists()) |
-| `RequestContext<TUser, TTenant>` | EF.Common.Contracts | Default implementation of IRequestContext |
+| `RequestContext<TUser, TTenant>` | EF.Common.Contracts | Default implementation of IRequestContext. Constructor order: `(correlationId, auditId, tenantId, roles)` |
 | `Result<T>` | EF.Common.Contracts | Application-layer result wrapper (Success/Failure/None). Members: IsSuccess, IsFailure, IsNone, Value, ErrorMessage, Errors, Match, Map, Bind, BindOrContinue, OnSuccess, OnFailure, Tap. **Not JSON-deserializable** — lacks parameterless constructor; use `JsonDocument` parsing in tests. When passed to `Results.Ok(result)` in endpoints, serializes to just the `Value` payload (not the full Result wrapper). |
 | `Result` | EF.Common.Contracts | Non-generic result (Success/Failure). Members: IsSuccess, IsFailure, Combine, Match, Map |
 | `PagedResponse<T>` | EF.Common.Contracts | Paged response with Data, Total, PageSize, PageIndex |
@@ -61,7 +61,7 @@ These types are consumed throughout scaffolded code. Know where they come from s
 | `StaticItem<TKey, TTenantKey>` | EF.Common.Contracts | Lookup item for dropdowns |
 | `StaticList<T>` | EF.Common.Contracts | Typed collection for lookup data |
 | `StaticData` | EF.Common.Contracts | Static data container |
-| `AuditEntry<T>` | EF.Common.Contracts | Audit entry record |
+| `AuditEntry<TAuditIdType, TTenantIdType>` | EF.Common.Contracts | Audit entry record carrying both audit identity and tenant identity |
 | `AuditStatus` | EF.Common.Contracts | Audit status enum |
 | `StaticLogging` | EF.Common | Pre-host logger factory for startup/shutdown logging |
 | `PredicateBuilder` | EF.Common | Dynamic LINQ predicate builder |
@@ -71,13 +71,21 @@ These types are consumed throughout scaffolded code. Know where they come from s
 | Type | Package | Used For |
 |---|---|---|
 | `IInternalMessageBus` | EF.BackgroundServices | In-process message bus for domain event dispatch |
-| `InternalMessageBus` | EF.BackgroundServices | Default implementation of IInternalMessageBus |
+| `InternalMessageBus` | EF.BackgroundServices | Default implementation of IInternalMessageBus; dispatches through `IBackgroundTaskQueue`, not inline |
 | `IMessageHandler<T>` | EF.BackgroundServices | Handler interface for messages (where T : IMessage) |
 | `ScopedMessageHandlerAttribute` | EF.BackgroundServices | Attribute for scoped message handler discovery |
+| `InternalMessageBusProcessMode` | EF.BackgroundServices | Dispatch mode for in-process bus fan-out / queue semantics |
 | `CronBackgroundService<T>` | EF.BackgroundServices | Cron-scheduled background service |
 | `ICronJobHandler<T>` | EF.BackgroundServices | Handler interface for cron jobs |
 | `IBackgroundTaskQueue` | EF.BackgroundServices | Queue for background task processing |
 | `ScopedBackgroundService` | EF.BackgroundServices | Base class for scoped background services |
+
+#### Critical Wiring Notes
+
+- `AuditInterceptor` does **not** persist audit rows itself. It publishes `AuditEntry<...>` messages through `IInternalMessageBus` after `SaveChangesAsync` succeeds.
+- `InternalMessageBus.Publish(...)` is a synchronous fire-and-forget API over the channel queue. Do not invent `PublishAsync` or single-message overloads.
+- `InternalMessageBus` depends on the channel-based `IBackgroundTaskQueue`; if the queue/hosted service is missing, `Publish(...)` succeeds but handlers never run.
+- `[ScopedMessageHandler]` controls handler scope during dispatch only. Handlers still must be registered in DI and then wired into the bus after host build.
 
 ### Application Host (EF.Host, EF.AspNetCore)
 

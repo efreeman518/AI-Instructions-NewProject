@@ -38,7 +38,6 @@ SLICE_DEFINITIONS = OrderedDict([
             "skills/application-layer.md",
             "skills/bootstrapper.md",
             "skills/api.md",
-            "skills/testing.md",
             "templates/endpoint-template.md",
             "templates/exception-handler-template.md",
             "templates/test-templates-endpoint.md",

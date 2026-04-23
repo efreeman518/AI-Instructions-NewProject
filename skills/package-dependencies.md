@@ -116,13 +116,13 @@ Other key types:
 
 - `Result` / `Result<T>` (same shape as domain result, but `Errors: IReadOnlyList<string>`)
 - `IRequestContext<TAuditIdType, TTenantIdType>`
-- `RequestContext<...>` implementation
+- `RequestContext<...>` implementation — constructor order is `(correlationId, auditId, tenantId, roles)`
 - `PagedResponse<T>` — properties: `PageSize` (int), `PageIndex` (int), `Total` (int), `Data` (IReadOnlyList&lt;T&gt;)
 - `SearchRequest<TFilter>` — record with: `PageSize` (int), `PageIndex` (int), `Sorts` (IEnumerable&lt;Sort&gt;?), `Filter` (TFilter?)
 - `Sort` — constructor: `Sort(string propertyName, SortOrder sortOrder)` — properties: `PropertyName`, `SortOrder`
 - `SortOrder` — enum: `Ascending = 0`, `Descending = 1`
 - `IMessage`
-- `AuditEntry<TAuditIdType>` + `AuditStatus`
+- `AuditEntry<TAuditIdType, TTenantIdType>` + `AuditStatus`
 
 ### `EF.Common`
 
@@ -153,7 +153,7 @@ public interface IInternalMessageBus
 {
     void AutoRegisterHandlers(IServiceProvider serviceProvider, params Assembly[] assemblies);
     void RegisterMessageHandler<T>(IMessageHandler<T> handler) where T : IMessage;
-    Task Publish<T>(InternalMessageBusProcessMode mode, ICollection<T> messages, CancellationToken cancellationToken = default) where T : IMessage;
+    void Publish<T>(InternalMessageBusProcessMode mode, ICollection<T> messages) where T : IMessage;
 }
 
 public interface IMessageHandler<in T> where T : IMessage
@@ -163,6 +163,8 @@ public interface IMessageHandler<in T> where T : IMessage
 ```
 
 **Namespace warning:** `IInternalMessageBus` / `IMessageHandler<T>` come from `EF.BackgroundServices.InternalMessageBus`.
+
+**Dispatch warning:** `Publish(...)` queues work onto the registered `IBackgroundTaskQueue`; it is not an inline handler invocation, and there is no `PublishAsync` / single-message overload.
 
 ### `EF.Messaging`
 

@@ -76,3 +76,25 @@ Canonical file name patterns for generated artifacts. Use these consistently acr
 | Structure validator | `{Entity}StructureValidator.cs` |
 | Domain rules | `Rules/{RuleName}Rule.cs` |
 | Dockerfile | `Dockerfile` |
+
+---
+
+## Canonical Event And Publisher Naming
+
+Use these defaults when scaffolding event-driven flows:
+
+1. Cross-process event payloads are integration contracts.
+2. Place transport payload records in `Application.Contracts.Events`.
+3. Use `IIntegrationEventPublisher` as the publish abstraction for external buses.
+4. Name publisher implementations by transport, for example `ServiceBusIntegrationEventPublisher` and `NoOpIntegrationEventPublisher`.
+5. Reserve `Domain.*` events for aggregate-local invariants and in-process domain dispatch.
+6. Do not name external publisher abstractions as `IDomainEventPublisher`.
+
+Default naming patterns:
+
+| Artifact | Pattern |
+|---|---|
+| Integration event contract | `{Entity}{Action}Event` (in `Application.Contracts.Events`) |
+| Integration publisher interface | `IIntegrationEventPublisher` |
+| Service Bus publisher | `ServiceBusIntegrationEventPublisher` |
+| No-op publisher | `NoOpIntegrationEventPublisher` |

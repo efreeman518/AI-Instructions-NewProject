@@ -66,12 +66,14 @@ builder.ConfigureFunctionsWebApplication();
 builder.Services
     .RegisterDomainServices(config)
     .RegisterInfrastructureServices(config)
-    .RegisterApplicationServices(config);
+    .RegisterApplicationServices(config)
+    .RegisterBackgroundServices(config);
 
 builder.UseMiddleware<GlobalExceptionHandler>();
 builder.UseMiddleware<GlobalLogger>();
 
 var app = builder.Build();
+app.AutoRegisterMessageHandlers();
 await app.RunAsync();
 ```
 
@@ -79,6 +81,7 @@ Key constraints:
 
 - `appsettings.json` is loaded explicitly for app options.
 - runtime binding values come from `local.settings.json`/environment.
+- If the host uses `AuditInterceptor` or in-process message handlers, Functions still needs the shared background queue + internal bus wiring from the Bootstrapper.
 - startup should surface failures through structured logging.
 
 ---
@@ -192,6 +195,8 @@ Key points:
 - **`.WaitFor(storage)`** — Ensures Azurite is accepting connections before Functions starts. Without this, blob/timer triggers fail with "connection refused" after 6 retries and the host shuts down.
 
 > `local.settings.json` can keep `UseDevelopmentStorage=true` for standalone `func host start` outside Aspire. Aspire environment variables override it at runtime.
+
+If the Functions host also consumes shared `BlobStorage1`, `TableStorage1`, or `ServiceBus1` clients through the Bootstrapper, make those registrations prefer env/AppHost-injected values over `local.settings.json` fallbacks. Otherwise the host can still connect to stale `UseDevelopmentStorage=true` / empty local settings even when Aspire injected the correct dynamic-port connection strings.
 
 ---
 

@@ -39,6 +39,20 @@ High-signal lookup for structure, dependencies, DI patterns, and common routes/c
 
 ---
 
+## Event Taxonomy (Do Not Mix)
+
+| Event Type | Layer | Transport | Naming/Contract |
+|---|---|---|---|
+| Domain event | `Domain.*` | In-process only | Raised from aggregate invariants |
+| Integration event | `Application.Contracts.Events` | Cross-process bus (Service Bus/Event Grid) | Published through `IIntegrationEventPublisher` |
+
+Rules:
+- If a message crosses process boundaries, define it in `Application.Contracts.Events`.
+- Do not keep bus payload records under `Domain.*.Events`.
+- Keep event serializer payloads transport-stable (avoid domain-only navigation/value object coupling).
+
+---
+
 ## Base Type Lookup
 
 | Type | Purpose |
@@ -52,31 +66,37 @@ High-signal lookup for structure, dependencies, DI patterns, and common routes/c
 | `IInternalMessageBus` | internal publish/subscribe pipeline |
 | `IMessageHandler<T>` | event handler contract |
 
+**RequestContext constructor order:** `new RequestContext<string, Guid?>(correlationId, auditId, tenantId, roles)`.
+
 ---
 
-## DI Registration Pattern
+## DI + Bus Wiring Pattern
 
 Keep registrations in `RegisterServices.cs` under Bootstrapper:
 
 ```csharp
-public static IServiceCollection RegisterInfrastructureServices(this IServiceCollection services, IConfiguration config)
+private static IServiceCollection AddSupportServices(this IServiceCollection services)
 {
-    services.AddDbContextPool<{App}DbContextTrxn>(/* ... */);
-    services.AddDbContextPool<{App}DbContextQuery>(/* ... */);
-
-    services.AddScoped<I{Entity}RepositoryTrxn, {Entity}RepositoryTrxn>();
-    services.AddScoped<I{Entity}RepositoryQuery, {Entity}RepositoryQuery>();
-    services.AddScoped<I{Entity}Service, {Entity}Service>();
-
-    services.AddSingleton<IInternalMessageBus>(sp =>
-    {
-        var bus = new InternalMessageBus(sp);
-        bus.AutoRegisterHandlers(typeof({Entity}Service).Assembly);
-        return bus;
-    });
-
+    services.AddChannelBackgroundTaskQueueWithShutdownHandling();
+    services.AddSingleton<IInternalMessageBus, InternalMessageBus>();
     return services;
 }
+
+private static void AddApplicationServices(IServiceCollection services)
+{
+    services.AddScoped<I{Entity}Service, {Entity}Service>();
+    services.AddScoped<IMessageHandler<{EventName}>, {EventName}Handler>();
+    services.AddSingleton<IIntegrationEventPublisher, ServiceBusIntegrationEventPublisher>();
+}
+
+public static void AutoRegisterMessageHandlers(this IHost host)
+{
+    var msgBus = host.Services.GetRequiredService<IInternalMessageBus>();
+    msgBus.AutoRegisterHandlers(host.Services, typeof({EventName}Handler).Assembly);
+}
+```
+
+Call `AutoRegisterMessageHandlers()` after `Build()`. `AuditInterceptor` publishes through `IInternalMessageBus`, and that bus dispatches through the channel background queue rather than inline.
 ```
 
 ---

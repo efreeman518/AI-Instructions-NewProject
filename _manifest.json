@@ -14,7 +14,7 @@
             "env/**"
         ]
     },
-    "totalEstimatedTokens": 198615,
+    "totalEstimatedTokens": 200635,
     "contextBudget": {
         "default": 30000,
         "extended": 60000,
@@ -57,7 +57,7 @@
         {
             "path": "START-AI.md",
             "phase": "session-bootstrap",
-            "estimatedTokens": 2902
+            "estimatedTokens": 3095
         },
         {
             "path": "CLAUDE.md",
@@ -92,7 +92,7 @@
         {
             "path": "skills/package-dependencies.md",
             "phase": "phase-4",
-            "estimatedTokens": 1960
+            "estimatedTokens": 2017
         },
         {
             "path": "ai/SKILL.md",
@@ -102,7 +102,7 @@
         {
             "path": "ai/placeholder-tokens.md",
             "phase": "phase-5-base",
-            "estimatedTokens": 1277
+            "estimatedTokens": 1517
         },
         {
             "path": "ai/tdd-protocol.md",
@@ -112,7 +112,7 @@
         {
             "path": "support/ef-packages-reference.md",
             "phase": "phase-5-base",
-            "estimatedTokens": 2224
+            "estimatedTokens": 2494
         },
         {
             "path": "skills/domain-model.md",
@@ -242,7 +242,7 @@
         {
             "path": "skills/bootstrapper.md",
             "phase": "phase-5b",
-            "estimatedTokens": 1955
+            "estimatedTokens": 2209
         },
         {
             "path": "skills/api.md",
@@ -294,7 +294,7 @@
         {
             "path": "templates/message-handler-template.md",
             "phase": "phase-5b",
-            "estimatedTokens": 1401,
+            "estimatedTokens": 1552,
             "generates": [
                 "{Event}Handler.cs"
             ],
@@ -428,7 +428,7 @@
         {
             "path": "skills/function-app.md",
             "phase": "phase-5d",
-            "estimatedTokens": 2000,
+            "estimatedTokens": 2159,
             "dependencies": [
                 "skills/solution-structure.md",
                 "skills/bootstrapper.md",
@@ -621,7 +621,7 @@
         {
             "path": "support/quick-reference.md",
             "phase": "on-demand",
-            "estimatedTokens": 1267
+            "estimatedTokens": 1520
         },
         {
             "path": "support/data-persistence-advanced.md",
@@ -636,7 +636,7 @@
         {
             "path": "support/troubleshooting.md",
             "phase": "on-demand",
-            "estimatedTokens": 4996
+            "estimatedTokens": 5374
         },
         {
             "path": "support/execution-gates.md",
@@ -681,7 +681,7 @@
         {
             "path": "README.md",
             "phase": "support-only",
-            "estimatedTokens": 4892
+            "estimatedTokens": 4957
         },
         {
             "path": "support/prompt-catalog.md",

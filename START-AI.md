@@ -94,6 +94,8 @@ Use `phase-load-packs.json` as the primary interface for phase file lists. It is
 3. For Phase 5a/5b in constrained sessions, you may scope further with `python scripts/get-phase-load-set.py --phase <5a|5b> --mode <mode> --slice <domain|repository|service|endpoint>`. Slices are curated compact bundles inside the same sub-phase. They narrow context only; they do not create new sub-phases or change gates.
 4. For Phase 5g, scope further: load only AI search or agent files as needed.
 
+Compact slice note: the `phase-5b:endpoint` compact slice intentionally omits `skills/testing.md` to stay within compact budget. For endpoint test implementation in compact sessions, rely on `templates/test-templates-endpoint.md` and phase-specific endpoint/service templates.
+
 **To regenerate** (after adding/removing instruction files): run `python scripts/generate-phase-load-packs.py`.
 
 **To resolve a current load set**: run `python scripts/get-phase-load-set.py --phase <phase> --mode <full|lite|api-only> [--slice <name>] [feature flags]`. The resolver expands transitive `requires`/`dependencies` and applies manifest-driven mode exclusions.
@@ -189,3 +191,12 @@ Do not copy files wholesale from the reference app. Use it as a verified example
 
 - Generate code only in the target project.
 - Keep context minimal per phase; unload prior-phase docs when transitioning.
+
+## Event Boundary Rule (High Priority)
+
+Treat cross-process bus payloads as application/integration contracts, not domain model artifacts.
+
+- Place externally published event records in `Application.Contracts.Events`.
+- Use `IIntegrationEventPublisher` for Service Bus/Event Grid publication.
+- Keep domain events in Domain only when they are raised from aggregate invariants and handled in-process before integration mapping.
+- Do not publish Domain namespace events directly over transport.

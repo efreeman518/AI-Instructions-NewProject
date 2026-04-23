@@ -239,6 +239,7 @@ Phase 3 analyzes `resource-implementation.yaml` technology choices and actively 
 | **Test data builders** | Fluent builder patterns for entities and DTOs ensure tests construct valid objects by default and override only the property under test. |
 | **Composition pattern catalog** | Pattern files in `patterns/` document cross-project wiring — database pooling, API startup sequence, request context, cache configuration, Aspire resource wiring — with inline code snippets. An index (`support/pattern-dispatcher.md`) maps each to its relevant phase. |
 | **Prompt catalog** | Copy-paste prompts for each phase live in [support/prompt-catalog.md](support/prompt-catalog.md), keeping `README.md` focused on human onboarding while [START-AI.md](START-AI.md) stays canonical for execution. |
+| **Event boundary enforcement** | Cross-process events are modeled as integration contracts in `Application.Contracts.Events` and published via `IIntegrationEventPublisher`; Domain events remain aggregate-local. This avoids layered leakage and naming drift. |
 
 ## Mode Selection
 
