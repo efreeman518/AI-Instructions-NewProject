@@ -44,7 +44,7 @@ When the YAML is complete and the Phase 2→3 transition gate passes, update HAN
 Load .instructions/START-AI.md and HANDOFF.md from the project root.
 Run the MCP Server Check — enable GitHub MCP and Azure MCP for this phase.
 Generate an implementation plan per .instructions/ai/implementation-plan.md template.
-Run Phase 3 pre-flights: NuGet feeds configured (dotnet restore exits 0), dotnet ef available.
+Run Phase 3 pre-flights: EF.Packages feed configured, NUGET_AUTH_TOKEN/PAT available, dotnet restore exits 0, dotnet ef available, validate-ef-packages-feed.py --config-only --require-auth-env passes.
 Flag open questions before writing implementation-plan.md to the project root.
 When the plan is reviewed and open questions resolved, update HANDOFF.md and close the session.
 ```
@@ -54,10 +54,10 @@ When the plan is reviewed and open questions resolved, update HANDOFF.md and clo
 ```text
 Load .instructions/START-AI.md and HANDOFF.md from the project root.
 Run the MCP Server Check — ensure GitHub MCP is active.
-Run python scripts/get-phase-load-set.py --phase 4 --mode {full|lite|api-only} to resolve the load set.
+Run python .instructions/scripts/get-phase-load-set.py --phase 4 --mode {full|lite|api-only} to resolve the load set.
 Generate the contract scaffold per .instructions/ai/contract-scaffolding.md:
   solution structure, interfaces, DTOs, entity shells, test infrastructure, no-op DI stubs.
-Gate: 'dotnet build' succeeds on the full solution including test projects.
+Gate: 'dotnet build' succeeds, validate-ef-packages-feed.py passes, and validate-scaffold-output.py --phase 4 passes.
 When gate passes, set contractsScaffolded: true in HANDOFF.md and close the session.
 ```
 
@@ -75,7 +75,7 @@ Then append the relevant sub-phase block below.
 ### 5a — Foundation (TDD)
 
 ```text
-Run python scripts/get-phase-load-set.py --phase 5a --mode {full|lite|api-only} to resolve the load set.
+Run python .instructions/scripts/get-phase-load-set.py --phase 5a --mode {full|lite|api-only} to resolve the load set.
 If context is tight, use --slice domain for entity/rule work or --slice repository for EF/repository work. These are curated compact bundles inside the same sub-phase; they do not create a new sub-phase.
 Follow .instructions/ai/tdd-protocol.md: write domain/rule/repository tests first (red), then implement to green.
 Contracts and entity shells already exist from Phase 4. Activate builders after entity logic is implemented.
@@ -85,7 +85,7 @@ Gate: 'dotnet build' + 'dotnet test --filter TestCategory=Unit'. When gate passe
 ### 5b — App Core (TDD)
 
 ```text
-Run python scripts/get-phase-load-set.py --phase 5b --mode {full|lite|api-only}.
+Run python .instructions/scripts/get-phase-load-set.py --phase 5b --mode {full|lite|api-only}.
 If context is tight, use --slice service for mapping/service work or --slice endpoint for API/exception/endpoint-test work. These are curated compact bundles inside the same sub-phase; they do not create a new sub-phase.
 Follow .instructions/ai/tdd-protocol.md: write service tests (red), implement services (green), write endpoint tests (red), implement endpoints (green).
 Replace no-op DI stubs with real implementations.
@@ -95,7 +95,7 @@ Gate: 'dotnet build' + 'dotnet test --filter TestCategory=Unit|TestCategory=Endp
 ### 5c — Runtime / Edge (Tests-After)
 
 ```text
-Run python scripts/get-phase-load-set.py --phase 5c --mode {full|lite|api-only}.
+Run python .instructions/scripts/get-phase-load-set.py --phase 5c --mode {full|lite|api-only}.
 Scaffold only the enabled runtime concerns: {gateway/aspire/caching/observability/security}.
 After implementation, write infrastructure tests (health checks, config loading, caching).
 Gate: 'dotnet build' + 'dotnet test' + app starts via Aspire. When gate passes, update HANDOFF.md and close session.
@@ -104,8 +104,8 @@ Gate: 'dotnet build' + 'dotnet test' + app starts via Aspire. When gate passes, 
 ### 5d — Optional Hosts
 
 ```text
-Run python scripts/get-phase-load-set.py --phase 5d --mode {full|lite|api-only}.
-Scaffold only the enabled optional hosts: {scheduler/functionapp/notifications}.
+Run python .instructions/scripts/get-phase-load-set.py --phase 5d --mode {full|lite|api-only} {--include-scheduler} {--include-function-app} {--include-uno-ui} {--include-blazor-ui} {--include-notifications}.
+Scaffold only the enabled optional hosts: {scheduler/functionapp/uno-ui/blazor-ui/notifications}.
 Update hostGates in HANDOFF.md per host as each reaches scaffolded → validated.
 Close session when all enabled hosts are validated (or blockers are recorded for deployment-only deps).
 ```
@@ -115,7 +115,7 @@ Note: Uno UI is always a dedicated session within 5d. Use the same session start
 ### 5e — Quality Gates + Delivery
 
 ```text
-Run python scripts/get-phase-load-set.py --phase 5e --mode {full|lite|api-only}.
+Run python .instructions/scripts/get-phase-load-set.py --phase 5e --mode {full|lite|api-only}.
 Unit/endpoint/integration tests already exist from 5a/5b/5c/5d.
 Scaffold quality gate tests (architecture, load, benchmarks per profile: {minimal|balanced|comprehensive}), IaC, CI/CD, Dockerfile.
 Run full regression: 'dotnet test'. Also 'az bicep build --file infra/main.bicep' (if IaC enabled). Update HANDOFF.md and close session.
@@ -124,7 +124,7 @@ Run full regression: 'dotnet test'. Also 'az bicep build --file infra/main.bicep
 ### 5f — Authentication
 
 ```text
-Run python scripts/get-phase-load-set.py --phase 5f --mode {full|lite|api-only}.
+Run python .instructions/scripts/get-phase-load-set.py --phase 5f --mode {full|lite|api-only}.
 Finalize auth: replace stubs with config-driven scaffold principal ({Entra|OAuth2|social|hybrid}).
 Gate: 'dotnet build' + 'dotnet test --filter TestCategory=Endpoint'. Update HANDOFF.md and close session.
 ```
@@ -132,9 +132,19 @@ Gate: 'dotnet build' + 'dotnet test --filter TestCategory=Endpoint'. Update HAND
 ### 5g — AI Integration
 
 ```text
-Run python scripts/get-phase-load-set.py --phase 5g --mode {full|lite|api-only} {--include-ai-search} {--include-agents}.
+Run python .instructions/scripts/get-phase-load-set.py --phase 5g --mode {full|lite|api-only} {--include-ai-services} {--include-ai-search} {--include-agents}.
 Scaffold AI integration: {search indexing/agent service} as enabled.
 Gate: 'dotnet build' + 'dotnet test --filter TestCategory=Unit'. Update HANDOFF.md and close session.
+```
+
+## Final Scaffold Validation
+
+```text
+Load .instructions/support/final-scaffold-checklist.md.
+Run final scaffold validation from the app root:
+  python .instructions/scripts/run-final-scaffold-check.py --root . --require-auth-env
+Run enabled host smoke checks from final-scaffold-checklist.md.
+Record exact results, blockers, and deployment-only residuals in HANDOFF.md.
 ```
 
 ## Resume From HANDOFF

@@ -287,7 +287,9 @@
                 "patterns/api-host-wiring.md",
                 "patterns/infrastructure-wiring.md",
                 "patterns/expected-output-index.md",
-                "support/pattern-dispatcher.md"
+                "support/pattern-dispatcher.md",
+                "support/final-scaffold-checklist.md",
+                "support/golden-path-sample.md"
             ]
         },
         "lite": {
@@ -397,7 +399,9 @@
                 "patterns/api-host-wiring.md",
                 "patterns/infrastructure-wiring.md",
                 "patterns/expected-output-index.md",
-                "support/pattern-dispatcher.md"
+                "support/pattern-dispatcher.md",
+                "support/final-scaffold-checklist.md",
+                "support/golden-path-sample.md"
             ]
         },
         "api-only": {
@@ -508,7 +512,9 @@
                 "patterns/api-host-wiring.md",
                 "patterns/infrastructure-wiring.md",
                 "patterns/expected-output-index.md",
-                "support/pattern-dispatcher.md"
+                "support/pattern-dispatcher.md",
+                "support/final-scaffold-checklist.md",
+                "support/golden-path-sample.md"
             ]
         }
     }

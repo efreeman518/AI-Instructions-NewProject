@@ -26,6 +26,8 @@ includeGateway: false
 includeFunctionApp: false
 includeScheduler: false
 includeUnoUI: false
+includeBlazorUI: false
+includeNotifications: false
 
 includeIaC: true
 includeGitHubActions: false
@@ -204,6 +206,8 @@ Options: Azure Service Bus, Event Grid, Event Hubs. See [skills/messaging.md](..
 | `includeFunctionApp` | `false` | |
 | `includeScheduler` | `false` | |
 | `includeUnoUI` | `false` | |
+| `includeBlazorUI` | `false` | |
+| `includeNotifications` | `false` | |
 
 ### UI Hosting (if applicable)
 

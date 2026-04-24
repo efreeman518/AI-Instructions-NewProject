@@ -1,17 +1,15 @@
 # AI-Instructions-NewProject
 
-This repository is an AI instruction set for scaffolding C#/.NET business applications. It is not a .NET project itself.
+This repository maintains an AI instruction set for scaffolding C#/.NET business applications. It is not a .NET project itself.
 
-Use [START-AI.md](START-AI.md) as the canonical operational bootstrap. Keep this file short and defer detailed routing, version checks, and phase-loading rules to that file.
+This file is a neutral repository-level pointer for Claude Code. Do not activate the scaffold workflow automatically from this file.
 
-## Minimum Rules
+## Scope
 
-- Load [START-AI.md](START-AI.md) first.
-- If `HANDOFF.md` exists in the target project root, read it next and resume from its recorded phase/sub-phase.
-- Use [phase-load-packs.json](phase-load-packs.json) to load only the current phase files.
-- Generate code only in the target project directory, never in this instruction repo.
-- Conflict precedence is [support/execution-gates.md](support/execution-gates.md) > [ai/SKILL.md](ai/SKILL.md) > individual skills > templates.
+- For ordinary repo maintenance, use [README.md](README.md) for context.
+- For author-side validation, use the scripts documented in [README.md](README.md).
+- For actual app scaffolding, use the scoped Claude slash commands in [.claude/commands/](.claude/commands/).
+- `/scaffold` runs the full phased workflow.
+- `/vertical-slice` adds a single entity to an existing scaffolded app.
 
-Claude Code slash commands live in [.claude/commands/](.claude/commands/) — `/scaffold` runs the full phased workflow, `/vertical-slice` adds a single entity.
-
-For broader repository context, use [README.md](README.md). For execution rules, fall back to [START-AI.md](START-AI.md).
+Scaffold-specific rules, phase routing, reference-app guidance, and context-loading policy belong in [START-AI.md](START-AI.md), [ai/SKILL.md](ai/SKILL.md), and the scoped command/agent files only.

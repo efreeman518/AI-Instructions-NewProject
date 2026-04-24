@@ -22,7 +22,7 @@ Use for:
 - Use `.slnx` (not legacy `.sln`).
 - Use central package management (`Directory.Packages.props`).
 - After adding packages, update to latest stable and verify restore/build.
-- Record instruction gaps in [../support/UPDATE-INSTRUCTIONS.md](../support/UPDATE-INSTRUCTIONS.md) (do not hot-edit baseline instructions mid-scaffold).
+- Record instruction gaps in `INSTRUCTION-GAPS.md` at the target project root (do not hot-edit installed `.instructions/` files mid-scaffold). Instruction maintainers can later copy approved findings into [../support/UPDATE-INSTRUCTIONS.md](../support/UPDATE-INSTRUCTIONS.md).
 - Prefer latest stable .NET SDK and package releases. MCP server setup: see [../README.md](../README.md).
 - All mode/profile/flag defaults come from [resource-implementation-schema.md](resource-implementation-schema.md) (**Canonical Defaults**).
 
@@ -41,12 +41,12 @@ Use for:
 
 Follow [../START-AI.md](../START-AI.md) for session bootstrap, version checks, phase routing, and the session-per-phase model. This file does not repeat those steps.
 
-**Developer Clarification Rule:** Before generating code or configuration in any phase, ask the developer any and all necessary clarification questions required to scaffold correctly. Do not infer or assume missing details. Gather complete context first.
+**Developer Clarification Rule:** Before generating code or configuration in any phase, ask for required or unsafe-missing inputs. For values covered by canonical defaults, apply the default, state the assumption, and record it in `HANDOFF.md`.
 
 **Each Phase 5 sub-phase runs in its own session.** At session start for Phase 5:
 1. Load `SKILL.md` + [placeholder-tokens.md](placeholder-tokens.md) + [tdd-protocol.md](tdd-protocol.md).
 2. Read [resource-implementation-schema.md](resource-implementation-schema.md) for `scaffoldMode`, `testingProfile`, host profiles, enabled flags, and canonical defaults.
-3. Resolve the current sub-phase load set: `python scripts/get-phase-load-set.py --phase <5x> --mode <mode>`.
+3. Resolve the current sub-phase load set: `python scripts/get-phase-load-set.py --phase <5x> --mode <mode>` (or `python .instructions/scripts/get-phase-load-set.py ...` from a target project root).
 4. For compact 5a/5b execution, keep the same sub-phase but optionally resolve a narrower curated slice: `--slice domain|repository|service|endpoint`.
 5. Keep only the current sub-phase docs loaded; unload prior sub-phase docs before continuing.
 6. For Phase 5a/5b: verify `contractsScaffolded: true` in `HANDOFF.md` — Phase 4 must have completed before TDD begins.
@@ -93,7 +93,7 @@ Each sub-phase is one session. Gate must pass before the next session begins.
 
 4. **5d — Optional Hosts (tests-after):** 
    - **Ask clarification questions first:** for each enabled host, ask host-specific details (Function App triggers/bindings/outputs, Scheduler job types/schedules, Notification channels/templates, Uno UI target platforms/responsive needs)
-   - Load scheduler, Function App, Uno UI, and notifications only when enabled. Uno UI stays dedicated. Gate: per-host status in `HANDOFF.md` + `dotnet test`.
+   - Resolve with explicit feature flags (`--include-scheduler`, `--include-function-app`, `--include-uno-ui`, `--include-blazor-ui`, `--include-notifications`) and load only returned files. Uno UI stays dedicated. Gate: per-host status in `HANDOFF.md` + `dotnet test`.
 
 5. **5e — Quality Gates + Delivery:** 
    - **Ask clarification questions first:** code quality thresholds, load test requirements, benchmark baselines, CI-CD pipeline specifics
@@ -155,7 +155,7 @@ After every build:
 
 ## Git Checkpoint Protocol
 
-Cut a git commit after each successful sub-phase gate. This is **not optional** — checkpoints are required for the mid-session rollback protocol in [../support/execution-gates.md](../support/execution-gates.md) to work.
+Create a checkpoint after each successful sub-phase gate. Prefer a git commit when the developer has approved committing; otherwise record the exact suggested commit command in `HANDOFF.md` and ensure the working tree state is clearly described. Do not run destructive git commands without explicit developer approval.
 
 If a sub-phase fails after the one-pass fix attempt:
 - isolate the broken changes from the last clean state,

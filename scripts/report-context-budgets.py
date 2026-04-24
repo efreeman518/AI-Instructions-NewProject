@@ -8,6 +8,16 @@ from pathlib import Path
 
 
 CORE_PHASES = ["phase-4", "phase-5-base"]
+RESOLVED_PHASES = [
+    "phase-4",
+    "phase-5a",
+    "phase-5b",
+    "phase-5c",
+    "phase-5d",
+    "phase-5e",
+    "phase-5f",
+    "phase-5g",
+]
 COMPACT_SLICES = {
     "phase-5a": ["domain", "repository"],
     "phase-5b": ["service", "endpoint"],
@@ -28,6 +38,42 @@ def build_budget_flags(total_tokens, budgets):
         "withinDefault": total_tokens <= budgets["default"],
         "withinExtended": total_tokens <= budgets["extended"],
     }
+
+
+def get_dependencies(entry):
+    dependencies = []
+    dependencies.extend(entry.get("dependencies") or [])
+    dependencies.extend(entry.get("requires") or [])
+    return list(dict.fromkeys(str(dep) for dep in dependencies if str(dep).strip()))
+
+
+def resolve_paths(paths, entry_by_path, mode_exclusions, expand_dependencies=True):
+    ordered = []
+    visited = set()
+    visiting = set()
+
+    def add(path):
+        if path in visited:
+            return
+        if path in visiting:
+            raise SystemExit(f"Dependency cycle detected while resolving '{path}'.")
+        if path not in entry_by_path:
+            raise SystemExit(f"Load set references path missing from _manifest.json: {path}")
+        if path in mode_exclusions:
+            return
+
+        visiting.add(path)
+        if expand_dependencies:
+            for dep in get_dependencies(entry_by_path[path]):
+                add(dep)
+        visiting.remove(path)
+        visited.add(path)
+        ordered.append(path)
+
+    for path in paths:
+        add(str(path))
+
+    return ordered
 
 
 def main():
@@ -60,6 +106,11 @@ def main():
         str(entry["path"]): int(entry.get("estimatedTokens", 0))
         for entry in manifest["files"]
     }
+    entry_by_path = {
+        str(entry["path"]): entry
+        for entry in manifest["files"]
+    }
+    mode_exclusions = set(str(path) for path in packs.get("modeExclusions", {}).get(args.mode, []))
 
     core_phases = {}
     for phase in CORE_PHASES:
@@ -87,11 +138,28 @@ def main():
             }
         slice_totals[phase] = current
 
+    resolved_phase_totals = {}
+    for phase in RESOLVED_PHASES:
+        paths = mode_packs.get(phase, [])
+        resolved_paths = resolve_paths(
+            paths,
+            entry_by_path,
+            mode_exclusions,
+            expand_dependencies=(phase != "phase-5d"),
+        )
+        total_tokens = sum_paths(resolved_paths, token_by_path, phase)
+        resolved_phase_totals[phase] = {
+            "files": resolved_paths,
+            "totalEstimatedTokens": total_tokens,
+            **build_budget_flags(total_tokens, budgets),
+        }
+
     output = {
         "mode": args.mode,
         "contextBudget": budgets,
         "corePhases": core_phases,
         "sliceTotals": slice_totals,
+        "resolvedPhaseTotals": resolved_phase_totals,
     }
 
     if args.as_json:
@@ -116,6 +184,13 @@ def main():
                 f"  {phase}:{slice_name}: {info['totalEstimatedTokens']} "
                 f"(compact={info['withinCompact']}, default={info['withinDefault']}, extended={info['withinExtended']})"
             )
+
+    print("Resolved phase load sets (unfiltered feature flags):")
+    for phase, info in resolved_phase_totals.items():
+        print(
+            f"  {phase}: {info['totalEstimatedTokens']} "
+            f"(compact={info['withinCompact']}, default={info['withinDefault']}, extended={info['withinExtended']})"
+        )
 
 
 if __name__ == "__main__":

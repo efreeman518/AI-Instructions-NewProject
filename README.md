@@ -2,40 +2,38 @@
 
 Pragmatic instruction set for AI-assisted scaffolding of C#/.NET business applications and services.
 
-## AI Agents — Quick Start
+## AI Agents & Harnesses — Quick Start
 
-This instruction set ships with pre-built agents for **VS Code Copilot** and **Claude Code**. After copying the instruction set into your app repo's `.instructions/` folder, the agents are ready to use.
+Install this repo into each app repository. The installer copies runtime instructions into `<app>/.instructions/` and places thin harness entrypoints at the app root. Scaffold rules stay app-scoped; do not put phase routing, TaskFlow rules, or generated-code conventions in global Codex, Claude, or Copilot instruction files.
 
-### VS Code Copilot
+### Supported harnesses
 
-Agents live in `.instructions/.github/agents/`. Copy (or symlink) the `.github/agents/` folder to your app repo root so Copilot discovers them.
+| Harness | Installed entrypoint | How to start |
+|---|---|---|
+| Codex CLI / CLI agents that read `AGENTS.md` | `<app>/AGENTS.md` | Ask the agent to scaffold or continue a phase; it loads `.instructions/START-AI.md` only after that explicit request. |
+| GitHub Copilot in VS Code | `<app>/.github/agents/` | Select `dotnet-scaffold` or `vertical-slice` in the Copilot agent picker. |
+| Claude Code / Claude VS Code extension | `<app>/.claude/commands/` when slash commands are supported | Run `/scaffold <domain>` or `/vertical-slice Product`. If commands are unavailable, prompt: `Load .instructions/START-AI.md and run the scaffold router.` |
+| Generic AI assistant | `<app>/.instructions/START-AI.md` | Use [support/prompt-catalog.md](support/prompt-catalog.md), or directly ask the agent to load `.instructions/START-AI.md`. |
 
-| Agent | How to invoke | Purpose |
-|-------|---------------|---------|
-| `dotnet-scaffold` | Select **dotnet-scaffold** in the Copilot agent picker | Full phased scaffolding (Phases 1–5g), one phase per session |
-| `vertical-slice` | Select **vertical-slice** in the Copilot agent picker | Add a new entity to an existing solution (fast-path) |
+### Scaffold entrypoints
 
-### Claude Code
-
-Commands live in `.instructions/.claude/commands/`. Copy (or symlink) the `.claude/` folder to your app repo root.
-
-| Command | How to invoke | Purpose |
-|---------|---------------|---------|
-| `/scaffold` | `/scaffold <business domain description>` | Full phased scaffolding, one phase per session |
-| `/vertical-slice` | `/vertical-slice Product` | Add a new entity slice to an existing solution |
+| Entrypoint | Purpose |
+|---|---|
+| `dotnet-scaffold` / `/scaffold` / explicit CLI prompt | Full phased scaffolding, Phases 1–5g, one phase per session. |
+| `vertical-slice` / `/vertical-slice` / explicit CLI prompt | Add one entity to an existing scaffolded solution using the fast-path checklist. |
 
 ### How they work
 
-Both agents follow the same flow:
+All harnesses follow the same flow:
 
-1. **Scaffold** — Boots from `.instructions/START-AI.md`, checks `HANDOFF.md` in the project root for resume state, loads only the current phase's files via `.instructions/phase-load-packs.json`, executes one phase, writes `HANDOFF.md` on completion.
-2. **Vertical slice** — Loads `.instructions/support/vertical-slice-checklist.md` fast-path, generates the full entity stack (12 steps: entity → EF config → repos → DTOs → mapper → validator → service → endpoint → DI wiring → migration), validates with `dotnet build` + `dotnet test`.
+1. **Scaffold** — Boot from `.instructions/START-AI.md`, check `HANDOFF.md` in the project root, load only the current phase files via `.instructions/phase-load-packs.json`, execute one phase, write `HANDOFF.md`, stop.
+2. **Vertical slice** — Load `.instructions/support/vertical-slice-checklist.md`, generate the full entity stack (entity → EF config → repos → DTOs → mapper → validator → service → endpoint → DI wiring → migration), validate with `dotnet build` + `dotnet test`.
 
 ### Install into a new app
 
-Use `install-to-project.py` from a local clone of this repo. It copies only the runtime payload — instruction files, agents, and slash commands — into your app, and skips repo-maintenance files (tests, CI workflows, git hooks, virtualenvs, README).
+Use `install-to-project.py` from a local clone of this repo. It copies only the runtime payload — instruction files, scoped agents, CLI entrypoint, and slash commands — into your app, and skips repo-maintenance files (tests, CI workflows, global assistant instruction files, git hooks, virtualenvs).
 
-`--target` is the **app repo root** (not the `.instructions/` folder). The script creates `<target>/.instructions/` if it does not exist, and writes `.claude/commands/` and `.github/agents/` at the target root so Claude Code and Copilot discover them.
+`--target` is the **app repo root** (not the `.instructions/` folder). The script creates `<target>/.instructions/` if it does not exist, and writes `AGENTS.md`, `.claude/commands/`, and `.github/agents/` at the target root so CLI agents, Claude, and Copilot discover the scoped scaffold entrypoints.
 
 ```bash
 # from a clone of this repo
@@ -47,10 +45,11 @@ What it places:
 
 | Source in this repo | Destination in your app |
 |---|---|
-| `CLAUDE.md`, `START-AI.md`, `phase-load-packs.json`, `_manifest.json` | `<app>/.instructions/` |
+| `README.md`, `CLAUDE.md`, `START-AI.md`, `phase-load-packs.json`, `_manifest.json`, `payload-manifest.json` | `<app>/.instructions/` |
 | `ai/`, `patterns/`, `schemas/`, `skills/`, `support/`, `templates/`, `scripts/` | `<app>/.instructions/` |
+| `AGENTS.md` | `<app>/AGENTS.md` (app repo root, so Codex-style CLI agents discover it) |
 | `.claude/commands/` | `<app>/.claude/commands/` (app repo root, so Claude Code discovers them) |
-| `.github/agents/`, `.github/copilot-instructions.md` | `<app>/.github/` (app repo root, so Copilot discovers them) |
+| `.github/agents/` | `<app>/.github/agents/` (app repo root, so Copilot discovers the scoped agents) |
 
 Flags:
 
@@ -58,15 +57,19 @@ Flags:
 |---|---|
 | `--dry-run` | Print planned copies without writing anything. |
 | `--update` | Re-run against an existing install; preserves any target file with a newer mtime than the source. Leaves `HANDOFF.md` untouched. |
-| `--instructions-only` | Copy only `<app>/.instructions/`; skip `.claude/commands/` and `.github/agents/` placement (useful if you manage those separately). |
+| `--instructions-only` | Copy only `<app>/.instructions/`; skip `AGENTS.md`, `.claude/commands/`, and `.github/agents/` placement (useful if you manage those separately). |
 
 After install:
 
-- [ ] Run `python .instructions/scripts/preflight-instructions.py` in the app repo to validate the copied set.
+- [ ] Run `python .instructions/scripts/preflight-installed.py` in the app repo to validate the copied set without modifying instruction files.
+- [ ] Configure the private EF.Packages feed with `python .instructions/scripts/configure-ef-packages-feed.py --root . --feed-url https://nuget.pkg.github.com/{owner}/index.json --username {github-user}`.
+- [ ] During Phase 3, run `python .instructions/scripts/validate-ef-packages-feed.py --root . --config-only --require-auth-env`.
+- [ ] After Phase 4, run `python .instructions/scripts/validate-scaffold-output.py --root . --phase 4`.
+- [ ] After the final enabled Phase 5 sub-phase, run `python .instructions/scripts/run-final-scaffold-check.py --root . --require-auth-env`.
 
 ### Manual copy (alternative)
 
-If you prefer to copy by hand, remember: `.github/agents/` and `.claude/commands/` must live at the **app repo root**, not inside `.instructions/`, so the tools discover them. Everything else goes under `.instructions/`. The install script above does this automatically.
+If you prefer to copy by hand, remember: `AGENTS.md`, `.github/agents/`, and `.claude/commands/` must live at the **app repo root**, not inside `.instructions/`, so the tools discover them. Everything else goes under `.instructions/`. Do not copy scaffold routing into global assistant instruction files. The install script above does this automatically.
 
 ---
 
@@ -125,22 +128,22 @@ The AI assistant can access the repo via GitHub MCP or by cloning it locally. Wh
 
 If you want the shortest path from zero context to first scaffold:
 
-1. Create a new app repo and copy this instruction set into `.instructions/`.
-2. Open the app repo in VS Code.
-3. Run `python .instructions/scripts/preflight-instructions.py` once to validate the copied instruction set. This refreshes manifest metadata, regenerates load packs, prints the current context-budget report, lints the docs, and runs the Python script test suite.
-4. Start Phase 1 with the Phase 1 prompt in [support/prompt-catalog.md](support/prompt-catalog.md).
-5. When you reach implementation, begin the AI session with [START-AI.md](START-AI.md).
+1. Create a new app repo.
+2. Run `python scripts/install-to-project.py --target /path/to/your-app-repo` from this repo.
+3. Run `python .instructions/scripts/preflight-installed.py` in the app repo. This check is read-only and does not require the author-side `tests/` folder.
+4. Start through the harness table above: `AGENTS.md`, Copilot agent, Claude command, or a prompt that loads `.instructions/START-AI.md`.
 
 Read the rest of this guide when you need setup details, MCP recommendations, or troubleshooting rules.
 
 ## Prerequisites
 
 - `git`
+- Python 3.11+ for instruction validation scripts
 - Latest stable `.NET SDK`
 - Docker engine running (Docker Desktop not required) — Aspire relies on it for hosting local container services
 - VS Code + AI assistant
 - Local SQL Server/Azure SQL access for dev scenarios
-- Private feed URLs if using internal packages (`customNugetFeeds`)
+- GitHub Packages PAT for the private EF.Packages NuGet feed; local environments must set it before Phase 3/4 restore
 - If using Uno UI:
   - `dotnet new install Uno.Templates`
   - `dotnet tool install -g uno.check` then `uno-check`
@@ -148,29 +151,52 @@ Read the rest of this guide when you need setup details, MCP recommendations, or
 
 Version policy: prefer latest stable packages and SDKs.
 
+### EF.Packages Feed Setup
+
+The scaffold depends on private `EF.*` packages. Local restore requires a GitHub PAT with package read access.
+
+Use an environment variable rather than committing secrets:
+
+```powershell
+$env:NUGET_AUTH_TOKEN = "ghp_xxxxxxxxxxxxxxxxxxxx"
+```
+
+Then ensure `nuget.config` maps `EF.*` to the private feed and uses `%NUGET_AUTH_TOKEN%` for the feed password. Validate before Phase 4:
+
+```powershell
+python .instructions/scripts/configure-ef-packages-feed.py --root . --feed-url https://nuget.pkg.github.com/{owner}/index.json --username {github-user}
+python .instructions/scripts/validate-ef-packages-feed.py --root . --config-only --require-auth-env
+dotnet restore
+```
+
+Never commit a PAT. CI should inject the same token through secret variables.
+
 ## Repository Setup
 
 1. Create a new empty app repo.
-2. Copy this instruction set into `.instructions/` in that repo.
-3. Open the app repo in VS Code.
+2. Install this instruction set with `python scripts/install-to-project.py --target /path/to/your-app-repo`.
+3. Open the app repo in VS Code or your CLI harness.
 
-Expected shape (note `.github/agents/` and `.claude/commands/` live at the app repo root, not inside `.instructions/`):
+Expected shape (note `AGENTS.md`, `.github/agents/`, and `.claude/commands/` live at the app repo root, not inside `.instructions/`):
 
 ```text
 <YourApp>/
+  AGENTS.md                       # CLI agents discover here; loads .instructions/START-AI.md only on explicit scaffold request
   .github/
-    agents/                        # copied from .instructions/.github/agents/ — Copilot discovers here
+    agents/                        # Copilot discovers scoped agents here
       dotnet-scaffold.agent.md
       vertical-slice.agent.md
   .claude/
-    commands/                      # copied from .instructions/.claude/commands/ — Claude Code discovers here
+    commands/                      # Claude discovers scoped commands here
       scaffold.md
       vertical-slice.md
   .instructions/
     README.md
+    CLAUDE.md
     START-AI.md
     _manifest.json
     phase-load-packs.json
+    payload-manifest.json
     ai/
       SKILL.md
       domain-specification-schema.md
@@ -182,7 +208,6 @@ Expected shape (note `.github/agents/` and `.claude/commands/` live at the app r
       execution-gates.md
       troubleshooting.md
     skills/
-    tests/
     scripts/
     templates/
     schemas/
@@ -232,7 +257,8 @@ Phase 3 analyzes `resource-implementation.yaml` technology choices and actively 
 | **Three scaffolding modes** | `full` (production w/ gateway, scheduler, UI, IaC), `lite` (clean architecture without infra), `api-only` (single API host). Set once in resource YAML, all downstream loading adapts. |
 | **Vertical-slice scaffolding** | Each entity is built end-to-end: domain model → EF config → repository → DTO/mapper → service → endpoint → tests. A [checklist](support/vertical-slice-checklist.md) and [execution gates](support/execution-gates.md) enforce completeness. |
 | **Built-in quality gates** | `dotnet build` + targeted tests after every sub-phase. Architecture tests enforce layer dependencies. Structure validators catch DTO issues before runtime. |
-| **Automated validation scripts** | Python scripts lint instruction files (broken links, placeholder coverage, terminology drift, manifest sync), validate domain/resource YAML schemas, and run preflight checks before scaffolding begins. |
+| **Automated validation scripts** | Python scripts lint instruction files, validate domain/resource YAML, verify EF.Packages feed/package hygiene, validate generated scaffold shape, and run preflight checks before scaffolding begins. |
+| **Golden-path sample** | [support/golden-path-sample.md](support/golden-path-sample.md) provides a small WorkBoard scaffold scenario for regression-checking instruction changes without productizing the repo. |
 | **Visible budget proof loop** | `scripts/report-context-budgets.py` reports hot-path phase totals and compact 5a/5b slice totals directly from `_manifest.json` + `phase-load-packs.json`, and preflight prints that report on every run. |
 | **Safe session handoff** | Context budget tracking per sub-phase plus a `HANDOFF.md` template let the AI resume cleanly across sessions without losing progress or re-reading the full instruction set. |
 | **Result pattern error flow** | Domain → Service → Endpoint error mapping is fully documented with a type mapping table, anti-patterns, and end-to-end trace example. No exceptions for business logic. |
@@ -260,7 +286,8 @@ Defaults: [ai/resource-implementation-schema.md](ai/resource-implementation-sche
 5. Phase 4: Contract scaffolding → [ai/contract-scaffolding.md](ai/contract-scaffolding.md)
 6. Phase 5: Implementation (TDD) → [ai/SKILL.md](ai/SKILL.md) + [ai/tdd-protocol.md](ai/tdd-protocol.md)
 7. Validate gates → [support/execution-gates.md](support/execution-gates.md)
-8. Troubleshoot → [support/troubleshooting.md](support/troubleshooting.md)
+8. Final scaffold check → [support/final-scaffold-checklist.md](support/final-scaffold-checklist.md)
+9. Troubleshoot → [support/troubleshooting.md](support/troubleshooting.md)
 
 ## Prompt Catalog
 
@@ -273,23 +300,34 @@ These references are for **maintaining and developing the instruction set itself
 - [START-AI.md](START-AI.md) — canonical AI bootstrap, version checks, phase routing, and load rules
 - [support/prompt-catalog.md](support/prompt-catalog.md) — copy-paste prompts for starting or resuming a session
 - [support/execution-gates.md](support/execution-gates.md) — canonical validation gates and operator setup checklist
+- [support/golden-path-sample.md](support/golden-path-sample.md) — canonical small sample for regression-checking scaffold instructions
+- [support/final-scaffold-checklist.md](support/final-scaffold-checklist.md) — final generated-app scaffold acceptance checklist
 - [support/troubleshooting.md](support/troubleshooting.md) — failure triage and recurring issue guidance
 - [support/taskflow-proof-map.md](support/taskflow-proof-map.md) — fast reference-app proof map from instruction concern to TaskFlow area
 - [support/UPDATE-INSTRUCTIONS.md](support/UPDATE-INSTRUCTIONS.md) — capture improvements discovered during scaffolding
 
-Run `python scripts/preflight-instructions.py` before Phase 4 execution and before opening validation PRs. It refreshes `_manifest.json`, regenerates `phase-load-packs.json`, prints the current context-budget report, lints markdown invariants, and runs the Python unittest suite in `tests/`.
+Useful script entrypoints:
+
+- `scripts/setup-local.py` — recreate `.venv` and run author preflight in this repo or installed-payload preflight under `.instructions/`.
+- `scripts/configure-ef-packages-feed.py` — create/update target-app `nuget.config` for EF.Packages without writing PATs.
+- `scripts/validate-handoff.py` — validate target-app `HANDOFF.md` resume state.
+- `scripts/validate-implementation-plan.py` — validate Phase 3 readiness before contract scaffolding.
+- `scripts/run-final-scaffold-check.py` — run restore/build/test plus static scaffold validators in a generated app.
+
+Run `python scripts/preflight-instructions.py` before Phase 4 execution and before opening validation PRs in this instruction repository. It refreshes `_manifest.json`, regenerates `phase-load-packs.json`, prints the current context-budget report, lints markdown invariants, and runs the Python unittest suite in `tests/`. In a consumer app with an installed `.instructions/` payload, use `python .instructions/scripts/preflight-installed.py` instead.
 
 For an on-demand budget snapshot without the full preflight, run `python scripts/report-context-budgets.py --mode full`.
 
 ## Document Ownership
 
 - `README.md` — human onboarding and repository overview
+- `AGENTS.md` — root CLI-agent scaffold entrypoint for installed app repos
 - `START-AI.md` — canonical AI session bootstrap and phase router
 - `ai/SKILL.md` — scaffolding policy and conventions (loaded as Phase 5 base)
  
 ## Layout
 
-- Root: entry points and machine-readable metadata (`README.md`, `START-AI.md`, `_manifest.json`, `phase-load-packs.json`)
+- Root: entry points and machine-readable metadata (`AGENTS.md`, `README.md`, `CLAUDE.md`, `START-AI.md`, `_manifest.json`, `phase-load-packs.json`)
 - `ai/`: phase schemas, execution guidance, and AI-loaded base docs
 - `support/`: operator checklists, troubleshooting, handoff template, prompt catalog, and repo change notes
 - `skills/`, `templates/`, `scripts/`, `schemas/`: domain-specific content and validation schemas

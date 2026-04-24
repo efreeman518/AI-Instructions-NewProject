@@ -1,13 +1,23 @@
 # START-AI
 
-This file is the canonical AI session bootstrap for this repository. Keep `CLAUDE.md` and `.github/copilot-instructions.md` as thin entry-point summaries that point back here.
+This file is the canonical scaffold bootstrap for installed `.instructions/` payloads and for this instruction repository. Keep harness entrypoints (`AGENTS.md`, `.claude/commands/*`, `.github/agents/*`, `CLAUDE.md`, `.github/copilot-instructions.md`) thin and scoped; they point here but do not duplicate phase routing.
 
-Load this file first. Do not preload the full instruction set.
+Load this file first when scaffold workflow has been explicitly requested. Do not preload the full instruction set.
+
+## Harness Adapter Rule
+
+Use this rule before the Session Start Router when arriving through a harness-specific entrypoint:
+
+- **CLI agents via `AGENTS.md`:** proceed only when the user explicitly asks to scaffold, continue a phase, or add a vertical slice. For normal coding/review/docs tasks, ignore scaffold phase rules.
+- **GitHub Copilot agents:** `dotnet-scaffold` runs the full phase router; `vertical-slice` loads `support/vertical-slice-checklist.md` fast-path.
+- **Claude commands/extensions:** `/scaffold` runs the full phase router; `/vertical-slice` loads `support/vertical-slice-checklist.md` fast-path. If slash commands are unavailable, the user can prompt: `Load .instructions/START-AI.md and run the scaffold router.`
+- **Generic assistants:** require no special harness features. A plain prompt that names `.instructions/START-AI.md` is sufficient.
+- **Path rule:** in an installed app, instruction paths are under `.instructions/`; in this instruction repository, paths are root-relative.
 
 ## Session Model
 
 **Each phase — and each Phase 5 sub-phase — runs in its own AI session.**
-Do not attempt multiple phases in a single session. When a phase or sub-phase is complete, create/update `HANDOFF.md` in the target project root and close the session. The next session starts fresh from `START-AI.md` + `HANDOFF.md` only.
+Do not attempt multiple phases in a single session. When a phase or sub-phase is complete, create/update `HANDOFF.md` in the target project root, run `python .instructions/scripts/validate-handoff.py --root .`, and close the session. The next session starts fresh from `START-AI.md` + `HANDOFF.md` only.
 
 ## Initial Load Rule
 
@@ -96,9 +106,11 @@ Use `phase-load-packs.json` as the primary interface for phase file lists. It is
 
 Compact slice note: the `phase-5b:endpoint` compact slice intentionally omits `skills/testing.md` to stay within compact budget. For endpoint test implementation in compact sessions, rely on `templates/test-templates-endpoint.md` and phase-specific endpoint/service templates.
 
-**To regenerate** (after adding/removing instruction files): run `python scripts/generate-phase-load-packs.py`.
+When this instruction set is installed under `.instructions/` and commands are run from the target project root, prefix script paths with `.instructions/` (for example `python .instructions/scripts/get-phase-load-set.py ...`).
 
-**To resolve a current load set**: run `python scripts/get-phase-load-set.py --phase <phase> --mode <full|lite|api-only> [--slice <name>] [feature flags]`. The resolver expands transitive `requires`/`dependencies` and applies manifest-driven mode exclusions.
+**To regenerate** (after adding/removing instruction files in this instruction repository only): run `python scripts/generate-phase-load-packs.py`.
+
+**To resolve a current load set**: run `python scripts/get-phase-load-set.py --phase <phase> --mode <full|lite|api-only> [--slice <name>] [feature flags]`. The resolver expands transitive `requires`/`dependencies` and applies manifest-driven mode exclusions. Exception: Phase 5d optional-host sessions return only the enabled host guidance so prior-phase docs remain on-demand and Uno/UI sessions stay within budget.
 
 For quick template lookups, see `templates/index.md`.
 
@@ -106,29 +118,34 @@ For quick template lookups, see `templates/index.md`.
 
 Each phase is one session. Load only the files listed for the current phase.
 
-**Developer Clarification Rule:** At the start of each phase, ask the developer any and all necessary clarification questions required to scaffold correctly. Do not infer or assume missing details. Gather complete context before generating code or configuration.
+**Developer Clarification Rule:** At the start of each phase, ask for required or unsafe-missing inputs before generating code or configuration. Do not block on values covered by canonical defaults; apply the default, state the assumption, and record it in `HANDOFF.md`.
 
 - **Phase 1 (Domain Discovery)** — Session 1
   - `ai/domain-specification-schema.md`
   - **Ask clarification questions first:** domain description, business rules, key entities, constraints, tenant isolation mode, audit/compliance needs, growth projections, performance constraints
   - Output: `domain-specification.yaml` in target project root
-  - Session end: YAML is complete and human-reviewed → write `HANDOFF.md` → close session
+  - Gate: `python .instructions/scripts/validate-domain-spec.py --file-path domain-specification.yaml` passes (or `python scripts/validate-domain-spec.py ...` when running from the instruction repo root)
+  - Session end: YAML is complete, validated, and human-reviewed → write `HANDOFF.md` → close session
 
 - **Phase 2 (Resource Definition)** — Session 2
   - `ai/resource-implementation-schema.md`
   - `ai/domain-specification-schema.md` (reference)
   - **Ask clarification questions first:** resource types, API surface, external integrations, data volumes, scaling needs, caching strategy, messaging patterns, optional workloads (Function App, Scheduler, Gateway)
   - Output: `resource-implementation.yaml` in target project root
-  - Session end: YAML complete, `externalDependencyModes` declared for every external dep → write `HANDOFF.md` → close session
+  - Gate: `python .instructions/scripts/validate-resource-impl.py --file-path resource-implementation.yaml --domain-spec-path domain-specification.yaml` passes (or `python scripts/validate-resource-impl.py ...` when running from the instruction repo root)
+  - Session end: YAML complete, validated, `externalDependencyModes` declared for every external dep → write `HANDOFF.md` → close session
 
 - **Phase 3 (Implementation Plan)** — Session 3
   - `ai/implementation-plan.md`
   - `ai/domain-specification-schema.md` (reference)
   - `ai/resource-implementation-schema.md` (reference)
   - **Ask clarification questions first:** any remaining design questions, tooling preferences (ORM specifics, caching lib, messaging transport), deployment regions, cost constraints, team constraints
-  - **Pre-flight:** Ask for custom/private NuGet feed URLs and auth method. Update `nuget.config`. Require `dotnet restore` exit 0.
+  - **Pre-flight:** Ask for custom/private NuGet feed URL and confirm the developer has a GitHub PAT with package read access exposed via `NUGET_AUTH_TOKEN` or an approved credential provider. Update `nuget.config`. Require `dotnet restore` exit 0.
+  - **Feed setup helper:** Prefer `python .instructions/scripts/configure-ef-packages-feed.py --root . --feed-url <feed-url> --username <github-user>` so `nuget.config` uses `%NUGET_AUTH_TOKEN%` and never stores the PAT.
   - **Pre-flight:** Verify `dotnet ef` is available (`dotnet tool list`). If missing: `dotnet new tool-manifest && dotnet tool install dotnet-ef`. If `nuget.config` uses package source mapping, add `<package pattern="dotnet-ef" />` under the `nuget.org` source.
   - **Tooling discovery:** Analyze `resource-implementation.yaml` to identify all required CLIs and beneficial MCP servers for Phases 4–5. Search npm (`mcp + <library/service>`) and MCP registries for project-specific servers. For libraries with no CLI or MCP, locate documentation URLs and GitHub repos. Populate the Tooling & Environment Readiness section of the implementation plan. Preference order: CLI → MCP → online resources.
+  - **Feed validation:** Run `python .instructions/scripts/validate-ef-packages-feed.py --root . --config-only --require-auth-env` (or `python scripts/validate-ef-packages-feed.py ...` from the instruction repo root) before closing Phase 3.
+  - **Plan validation:** Run `python .instructions/scripts/validate-implementation-plan.py --root .` before closing Phase 3.
   - Output: `implementation-plan.md` in target project root, open questions resolved, tooling identified
   - Session end: plan reviewed, blockers recorded in `HANDOFF.md` → close session
 
@@ -139,7 +156,7 @@ Each phase is one session. Load only the files listed for the current phase.
   - `ai/placeholder-tokens.md`
   - `support/ef-packages-reference.md`
   - Generates: solution structure, interfaces, DTOs, entity shells, test infrastructure, no-op DI stubs
-  - Gate: `dotnet build` succeeds on full solution including test projects
+  - Gate: `dotnet build` succeeds on full solution including test projects; `python .instructions/scripts/validate-ef-packages-feed.py --root .` passes; `python .instructions/scripts/validate-scaffold-output.py --root . --phase 4` passes
   - Output: compilable skeleton that enables TDD in Phase 5a/5b
   - Session end: gate passes, `contractsScaffolded: true` in `HANDOFF.md` → close session
 
@@ -161,7 +178,7 @@ Each phase is one session. Load only the files listed for the current phase.
   
   4. **5d — Optional Hosts (tests-after):** 
      - **Ask clarification questions first:** for each enabled host, ask host-specific details (Function App triggers/bindings/outputs, Scheduler job types/schedules, Notification channels/templates, Uno UI target platforms/responsive needs)
-     - Load scheduler, Function App, Uno UI, and notifications only when enabled. Uno UI stays dedicated session. Gate: per-host status in `HANDOFF.md` + `dotnet test`.
+     - Resolve the load set with explicit feature flags (`--include-scheduler`, `--include-function-app`, `--include-uno-ui`, `--include-blazor-ui`, `--include-notifications`) and load only returned files. Uno UI stays a dedicated session. Gate: per-host status in `HANDOFF.md` + `dotnet test`.
   
   5. **5e — Quality Gates + Delivery:** 
      - **Ask clarification questions first:** code quality thresholds, load test requirements, benchmark baselines, CI-CD pipeline specifics
@@ -176,6 +193,7 @@ Each phase is one session. Load only the files listed for the current phase.
      - Run only when `includeAiServices: true`, scope further with `-IncludeAiSearch` / `-IncludeAgents`. Gate: search returns results, agent responds to test prompt.
   
   - Session end: sub-phase gate passes → update `HANDOFF.md` → close session
+  - After the final enabled Phase 5 sub-phase, load `support/final-scaffold-checklist.md` and run `python .instructions/scripts/run-final-scaffold-check.py --root . --require-auth-env`.
 
 ## Strict On-Demand Files
 
@@ -183,6 +201,8 @@ Do not preload these. Load only when the trigger condition is met:
 
 - `support/quick-reference.md` — **load when** scaffolding entities/endpoints and you need naming conventions, DI patterns, or config key lookups
 - `support/pattern-dispatcher.md` — **load when** you need the pattern index to find the right `patterns/` file for the current phase
+- `support/golden-path-sample.md` — **load when** validating instruction changes against a small canonical sample scaffold
+- `support/final-scaffold-checklist.md` — **load when** the final enabled Phase 5 sub-phase completes and the app needs end-to-end scaffold validation
 - `patterns/data-layer-wiring.md` — **load before Phase 5a/5b** for DB context pooling, OnModelCreating, startup tasks, seed data, scaffold migrations
 - `patterns/api-host-wiring.md` — **load before Phase 5b/5c** for API startup sequence, request context, conditional auth
 - `patterns/infrastructure-wiring.md` — **load before Phase 5c/5d** for multi-cache config, Aspire resource wiring

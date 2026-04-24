@@ -36,13 +36,22 @@ Run once per machine/repo before beginning any scaffolding phase.
 
 ### Private NuGet Feed Auth (Phase 3 Pre-Flight)
 
-If the project uses private NuGet packages (e.g., EF.Packages), configure feed authentication before Phase 4.
+The scaffold uses private EF.Packages NuGet packages. Every local developer environment needs a GitHub PAT with package read access before Phase 4 restore/build can pass.
 
 **Step 1:** Ask the user for:
 - Feed URL (e.g., `https://nuget.pkg.github.com/{owner}/index.json`)
+- GitHub PAT with package read access
 - Auth method: environment variable (recommended) or credential provider
 
-**Step 2:** Generate `nuget.config` with `packageSourceMapping` and `packageSourceCredentials`:
+**Step 2:** Generate `nuget.config` with the feed helper:
+
+```powershell
+python .instructions/scripts/configure-ef-packages-feed.py --root . --feed-url https://nuget.pkg.github.com/{owner}/index.json --username {username}
+```
+
+The helper writes `%NUGET_AUTH_TOKEN%` only; it must never write the PAT value.
+
+Manual equivalent:
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -87,9 +96,10 @@ $env:NUGET_AUTH_TOKEN = "ghp_xxxxxxxxxxxxxxxxxxxx"
 
 ```powershell
 dotnet restore
+python .instructions/scripts/validate-ef-packages-feed.py --root . --config-only --require-auth-env
 ```
 
-Gate: exit code 0, all EF.Packages resolve successfully.
+Gate: both commands exit 0. All EF.Packages resolve successfully, `EF.*` maps to the private feed, and `dotnet-ef` maps to `nuget.org` when package source mapping is enabled.
 
 ### AI Assistant — MCP Servers
 
@@ -105,6 +115,8 @@ Phase 3 must populate the **Tooling & Environment Readiness** section of `implem
 - [ ] MCP server discovery completed (npm search, MCP registry) for project-specific libraries
 - [ ] CLI preference applied: CLIs chosen over MCP servers where both exist (lower token cost)
 - [ ] Each CLI entry has a verified checkbox or an install command the operator can run before Phase 4
+- [ ] EF.Packages feed validation passes: `python .instructions/scripts/validate-ef-packages-feed.py --root . --config-only --require-auth-env`
+- [ ] Implementation plan validation passes: `python .instructions/scripts/validate-implementation-plan.py --root .`
 
 ---
 
@@ -141,11 +153,15 @@ Exit criteria:
 - [ ] Test.Support contains `UnitTestBase`, `InMemoryDbBuilder`, `DbSupport`, `Utility`, `TestConstants`
 - [ ] `{Entity}DtoBuilder` returns valid DTOs
 - [ ] No domain logic in entity shells (only `throw new NotImplementedException`)
+- [ ] EF.Packages shared types are consumed from packages, not reimplemented locally
+- [ ] Phase 4 scaffold structure validator passes
 
 Commands:
 
 ```powershell
 dotnet build
+python .instructions/scripts/validate-ef-packages-feed.py --root . --require-auth-env
+python .instructions/scripts/validate-scaffold-output.py --root . --phase 4
 ```
 
 No `dotnet test` required — test projects are empty or contain no test methods.
@@ -404,6 +420,16 @@ Must pass before merge:
 dotnet restore
 dotnet build
 dotnet test
+python .instructions/scripts/validate-ef-packages-feed.py --root . --require-auth-env
+python .instructions/scripts/validate-scaffold-output.py --root . --phase final
+python .instructions/scripts/validate-handoff.py --root .
+python .instructions/scripts/validate-implementation-plan.py --root .
+```
+
+Equivalent wrapper:
+
+```powershell
+python .instructions/scripts/run-final-scaffold-check.py --root . --require-auth-env
 ```
 
 If IaC is part of scope:
@@ -418,7 +444,7 @@ az bicep build --file infra/main.bicep
 
 - Code-generation failures: one focused AI fix pass, then re-run failing gate.
 - Infra/environment failures: log in `HANDOFF.md`, classify blocker, continue non-blocked scope.
-- Instruction gaps: append to `UPDATE-INSTRUCTIONS.md`.
+- Instruction gaps: in a consumer app, append to root `INSTRUCTION-GAPS.md`; in this instruction repository, append to `support/UPDATE-INSTRUCTIONS.md`.
 - If a step fails, log the blocker in `HANDOFF.md` (see [HANDOFF.md template](HANDOFF.md)) and continue with non-blocked work.
 - Pattern reference: [../support/pattern-dispatcher.md](../support/pattern-dispatcher.md) (pattern index → `patterns/` folder) for composition wiring.
 
@@ -430,14 +456,14 @@ When the AI discovers a fundamental assumption error (wrong entity design, incor
 
 1. **Stop generating.** Do not continue building on a flawed assumption.
 2. **Assess scope:** Identify all files generated since the last git checkpoint that are affected by the error.
-3. **Rollback to checkpoint:**
+3. **Checkpoint recovery prep:**
    ```powershell
    git stash          # save current work
    git log --oneline -5  # find last clean checkpoint
    ```
 4. **Decide recovery path:**
    - **Isolated error** (affects 1-2 files): `git stash pop`, fix the affected files, rebuild and re-test.
-   - **Structural error** (wrong entity shape, missing relationship, bad inheritance): `git checkout <last-checkpoint>` to discard, then correct the domain/resource YAML before re-scaffolding.
+   - **Structural error** (wrong entity shape, missing relationship, bad inheritance): ask the developer before discarding work. Prefer `git stash branch recovery/<short-name>` or a targeted revert over `git checkout <last-checkpoint>`.
    - **Domain misunderstanding** (entity purpose is wrong): go back to Phase 1 output, clarify with the user, update `domain-specification.md`, and re-scaffold the slice from scratch.
 5. **Document in HANDOFF.md:** Record what was rolled back and why, so the next session doesn't repeat the mistake.
 6. **Re-enter at the corrected sub-phase** using the standard phase loading manifest.
@@ -450,11 +476,17 @@ When the AI discovers a fundamental assumption error (wrong entity design, incor
 
 Run after all Phase 5 sub-phases complete (before the Pre-Merge Gate) to validate the scaffold works end-to-end:
 
+Load [final-scaffold-checklist.md](final-scaffold-checklist.md) for the canonical final acceptance checklist.
+
 ### 1. Build & Test
 ```powershell
 dotnet restore
 dotnet build
 dotnet test
+python .instructions/scripts/validate-ef-packages-feed.py --root . --require-auth-env
+python .instructions/scripts/validate-scaffold-output.py --root . --phase final
+python .instructions/scripts/validate-handoff.py --root .
+python .instructions/scripts/validate-implementation-plan.py --root .
 ```
 
 ### 2. Host Startup

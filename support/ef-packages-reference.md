@@ -2,7 +2,7 @@
 
 The scaffolded project depends on the **EF.Packages** private NuGet feed for infrastructure, patterns, and abstractions. These types are shared-library types. Do not regenerate them.
 
-> **NuGet feed:** Configure it in `nuget.config` before Phase 5. See [execution-gates.md](execution-gates.md).
+> **NuGet feed:** Configure it in `nuget.config` before Phase 4. Local environments need a GitHub PAT exposed through `NUGET_AUTH_TOKEN` or equivalent credential provider. Validate it with `python .instructions/scripts/validate-ef-packages-feed.py --root . --config-only --require-auth-env` in Phase 3 and `python .instructions/scripts/validate-ef-packages-feed.py --root .` from Phase 4 onward. See [execution-gates.md](execution-gates.md).
 
 ---
 
@@ -146,3 +146,5 @@ These types appear in the service and endpoint templates but are **not provided 
 - All EF.Packages target **.NET 10.0**.
 - Packages use **central package management** — add versions to `Directory.Packages.props`.
 - Private feed must be in `nuget.config` with `<packageSourceMapping>` entries for `EF.*` packages.
+- Project files must not put `Version="..."` on `EF.*` `<PackageReference>` entries.
+- If source contains local definitions for `EntityBase`, `RepositoryBase`, `DbContextBase`, `Result`, `PagedResponse`, `SearchRequest`, `IRequestContext`, `IInternalMessageBus`, or `IMessageHandler`, stop and replace them with package references.

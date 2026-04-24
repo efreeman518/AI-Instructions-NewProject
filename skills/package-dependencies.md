@@ -228,10 +228,14 @@ Pattern reference: [external-api.md](external-api.md)
 ## Generation Checklist
 
 - [ ] `nuget.config` includes `nuget.org` + all custom feeds
+- [ ] Local `NUGET_AUTH_TOKEN` or approved credential provider is configured for the private EF.Packages feed
+- [ ] `python .instructions/scripts/configure-ef-packages-feed.py --root . --feed-url <feed-url> --username <github-user>` has been run or equivalent config has been manually verified
+- [ ] `python .instructions/scripts/validate-ef-packages-feed.py --root . --config-only --require-auth-env` passes before Phase 4
 - [ ] `Directory.Packages.props` owns versions
 - [ ] `global.json` pins SDK with roll-forward policy
 - [ ] Correct package placement across Domain/Data/Application/Infrastructure hosts
 - [ ] Latest stable versions resolved successfully
+- [ ] `python .instructions/scripts/validate-ef-packages-feed.py --root .` passes after projects are generated
 - [ ] `EntityBase.Id` behavior preserved (`Guid.CreateVersion7()`)
 - [ ] Domain/application error types are not mixed:
   - `DomainResult.Errors` → `IReadOnlyList<DomainError>`

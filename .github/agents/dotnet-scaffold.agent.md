@@ -24,6 +24,7 @@ All instruction files (skills, templates, support docs, schemas, scripts) live u
 - Context budget: ≤30K tokens of instruction files per phase. Unload prior-phase docs when transitioning.
 - Checkpoint after 15+ generated files or 3+ build/fix cycles — update `HANDOFF.md` (in project root).
 - After each phase/sub-phase gate passes, update `HANDOFF.md` and end the session.
+- Reference app: TaskFlow (<https://github.com/efreeman518/AI-Instructions-ReferenceApp>) is the canonical working example for generated patterns. When a pattern is ambiguous, consult it via GitHub MCP and `.instructions/support/taskflow-proof-map.md` before inventing a new approach. Do not copy files wholesale.
 
 ## Phase Summary
 
@@ -40,5 +41,5 @@ See `.instructions/START-AI.md` § Phase Router for the canonical per-phase file
 
 - DO NOT skip phases or combine multiple phases in one session.
 - DO NOT preload files listed under "Strict On-Demand Files" unless their trigger condition is met.
-- DO NOT modify files under `.instructions/` — record gaps in `.instructions/support/UPDATE-INSTRUCTIONS.md`.
+- DO NOT modify files under `.instructions/` — record gaps in `INSTRUCTION-GAPS.md` at the project root.
 - DO NOT infer defaults — read them from `.instructions/ai/resource-implementation-schema.md` (Canonical Defaults).

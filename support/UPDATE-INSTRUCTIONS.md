@@ -6,8 +6,9 @@
 
 ### For the Scaffolding Agent (writer)
 
-- **Append findings as you encounter them** — don't wait until the end of a session.
-- **Don't modify instruction files directly** during scaffolding. Capture the finding here instead.
+- **In an installed consumer app:** append findings to `INSTRUCTION-GAPS.md` in the target project root. Do not modify files under `.instructions/`.
+- **In this instruction repository:** append findings here as you encounter them — don't wait until the end of a session.
+- **Don't modify instruction files directly** during scaffolding. Capture the finding instead.
 - Each finding should be **actionable** — reference specific file paths, section names, and line ranges when possible.
 - Use the priority levels to help the maintenance agent triage work.
 - **During MCP discovery** (before each phase), log any new, deprecated, or changed MCP servers here so the maintenance agent can update the static MCP tables in `SKILL.md`. Tag MCP findings with `[MCP]` in the title.

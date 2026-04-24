@@ -11,6 +11,7 @@ from pathlib import Path
 def filter_requested_paths(paths, requested_phase, requested_mode,
                            include_gateway, include_function_app,
                            include_scheduler, include_uno_ui,
+                           include_blazor_ui, include_notifications,
                            include_aspire, include_ai_services,
                            include_ai_search, include_agents):
     filtered = list(paths)
@@ -27,7 +28,11 @@ def filter_requested_paths(paths, requested_phase, requested_mode,
         if not include_function_app:
             filtered = [p for p in filtered if p != "skills/function-app.md"]
         if not include_uno_ui:
-            filtered = [p for p in filtered if p != "skills/uno-ui.md"]
+            filtered = [p for p in filtered if p != "skills/ui-uno.md"]
+        if not include_blazor_ui:
+            filtered = [p for p in filtered if p != "skills/ui-blazor.md"]
+        if not include_notifications:
+            filtered = [p for p in filtered if p != "skills/notifications.md"]
 
     if requested_phase == "phase-5d-optional" and not include_uno_ui:
         return []
@@ -121,6 +126,10 @@ def main():
                         action="store_true", default=False)
     parser.add_argument("--include-uno-ui", "-IncludeUnoUI",
                         action="store_true", default=False)
+    parser.add_argument("--include-blazor-ui", "-IncludeBlazorUI",
+                        action="store_true", default=False)
+    parser.add_argument("--include-notifications", "-IncludeNotifications",
+                        action="store_true", default=False)
     parser.add_argument("--include-aspire", "-IncludeAspire",
                         action="store_true", default=False)
     parser.add_argument("--include-ai-services", "-IncludeAiServices",
@@ -170,6 +179,7 @@ def main():
         raw_paths, phase, mode,
         args.include_gateway, args.include_function_app,
         args.include_scheduler, args.include_uno_ui,
+        args.include_blazor_ui, args.include_notifications,
         args.include_aspire, args.include_ai_services,
         args.include_ai_search, args.include_agents,
     )
@@ -189,14 +199,17 @@ def main():
     visiting = set()
     requested_set = set(str(p) for p in requested_paths)
 
-    if is_slice_request:
+    # Optional host sessions happen after core phases are already scaffolded.
+    # Keep these load sets dedicated to the enabled host guidance; prior-phase
+    # skills remain on-demand instead of being forced back into context.
+    if is_slice_request or phase == "phase-5d":
         for path in requested_paths:
             normalized = str(path)
             if normalized not in entry_map:
-                raise SystemExit(f"Slice path '{normalized}' is not present in _manifest.json.")
+                raise SystemExit(f"Requested path '{normalized}' is not present in _manifest.json.")
             if normalized in mode_exclusion_set:
                 raise SystemExit(
-                    f"Slice path '{normalized}' is excluded by mode '{mode}'. "
+                    f"Requested path '{normalized}' is excluded by mode '{mode}'. "
                     "Adjust modeExclusions or the slice definition."
                 )
             if normalized not in visited:

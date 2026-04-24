@@ -2,6 +2,7 @@
 """Validate a domain specification YAML file."""
 
 import argparse
+import json
 import re
 import sys
 from collections import Counter
@@ -12,13 +13,45 @@ def add_issue(category, file_path, message, line=0):
     return {"Category": category, "File": file_path, "Line": line, "Message": message}
 
 
+def load_schema(schema_path):
+    return json.loads(Path(schema_path).read_text(encoding="utf-8"))
+
+
+def get_entities_section(content):
+    # Support both markdown-embedded specs (## Entities header) and raw YAML.
+    section_match = re.search(r"(?ms)^## Entities\s*\r?\n(.*?)(?=\r?\n## |\Z)", content)
+    if section_match:
+        return section_match.group(1)
+
+    start_match = re.search(r"(?m)^entities:\s*$", content)
+    if not start_match:
+        return ""
+
+    start = start_match.start()
+    next_top_level = re.search(r"(?m)^[A-Za-z][A-Za-z0-9]*:", content[start_match.end():])
+    if next_top_level:
+        return content[start:start_match.end() + next_top_level.start()]
+    return content[start:]
+
+
+def get_entity_names(entities_section):
+    return re.findall(r"(?m)^  -\s*name:\s*([A-Za-z][A-Za-z0-9]*)\b", entities_section)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Validate a domain specification file")
     parser.add_argument("--file-path", "-FilePath", required=True,
                         help="Path to the domain specification file")
+    parser.add_argument("--schema-path", "-SchemaPath", default=None,
+                        help="Path to domain-specification.schema.json")
     args = parser.parse_args()
 
     file_path = args.file_path
+    schema_path = (
+        Path(args.schema_path)
+        if args.schema_path
+        else Path(__file__).resolve().parent.parent / "schemas" / "domain-specification.schema.json"
+    )
 
     if not Path(file_path).exists():
         print(f"File not found: {file_path}", file=sys.stderr)
@@ -26,38 +59,36 @@ def main():
 
     issues = []
     content = Path(file_path).read_text(encoding="utf-8")
-    lines = content.splitlines()
+    schema = load_schema(schema_path)
 
     # -------------------------------------------------------------------------
     # 0) Extract the Entities section
     # -------------------------------------------------------------------------
-    # Support both markdown-embedded specs (## Entities header) and raw YAML
-    entities_section = ""
-    section_match = re.search(r"(?ms)^## Entities\s*\r?\n(.*?)(?=\r?\n## |\Z)", content)
-    if section_match:
-        entities_section = section_match.group(1)
-    elif re.search(r"(?m)^entities:", content):
-        # Raw YAML — use everything from `entities:` onward
-        ent_start = re.search(r"(?m)^entities:", content).start()
-        entities_section = content[ent_start:]
+    entities_section = get_entities_section(content)
 
     # -------------------------------------------------------------------------
     # 1) Required top-level keys
     # -------------------------------------------------------------------------
-    required_keys = ["projectName", "entities"]
+    required_keys = schema.get("required", [])
     for key in required_keys:
-        if not re.search(rf"(?mi)^{key}:", content):
+        if not re.search(rf"(?m)^{re.escape(key)}:", content):
             issues.append(add_issue("MissingKey", file_path,
                                     f"Required top-level key missing: {key}"))
+
+    project_name_match = re.search(r"(?m)^ProjectName:\s*([A-Za-z][A-Za-z0-9]*)\s*$", content)
+    project_name_pattern = schema["properties"]["ProjectName"].get("pattern")
+    if project_name_match and project_name_pattern:
+        if not re.match(project_name_pattern, project_name_match.group(1)):
+            issues.append(add_issue(
+                "InvalidValue", file_path,
+                "ProjectName must be PascalCase alphanumeric with no spaces."
+            ))
 
     # -------------------------------------------------------------------------
     # 2) Entity name conflict check (C# reserved type names)
     # -------------------------------------------------------------------------
-    reserved_names = [
-        "Task", "Thread", "Timer", "Type", "String", "Object",
-        "Action", "Attribute", "File", "Path", "Event", "Delegate",
-    ]
-    entity_matches = re.findall(r"(?m)^\s+-?\s*name:\s*(\w+)", entities_section)
+    reserved_names = schema["$defs"]["entity"]["properties"]["name"]["not"]["enum"]
+    entity_matches = get_entity_names(entities_section)
 
     for entity_name in entity_matches:
         if entity_name in reserved_names:
@@ -70,7 +101,7 @@ def main():
     # -------------------------------------------------------------------------
     # 3) Entity must have at least one property defined
     # -------------------------------------------------------------------------
-    entity_block_pattern = r"(?m)^\s+-?\s*name:\s*\w+"
+    entity_block_pattern = r"(?m)^  -\s*name:\s*[A-Za-z][A-Za-z0-9]*\b"
     entity_blocks = list(re.finditer(entity_block_pattern, entities_section))
 
     for i, match in enumerate(entity_blocks):
@@ -80,7 +111,7 @@ def main():
         else:
             block_end = len(entities_section)
         block = entities_section[start_index:block_end]
-        if "properties:" not in block:
+        if not re.search(r"(?m)^    properties:\s*$", block):
             entity_name_match = re.search(r"name:\s*(\w+)", match.group())
             if entity_name_match:
                 entity_name = entity_name_match.group(1)

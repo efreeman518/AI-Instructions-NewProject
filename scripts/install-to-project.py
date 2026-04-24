@@ -4,12 +4,12 @@ Installs the runtime payload of this instruction repo into a consumer app.
 
 Copies:
     <repo>/<runtime files>    -> <target>/.instructions/
+    <repo>/AGENTS.md          -> <target>/AGENTS.md              (unless --instructions-only)
     <repo>/.claude/commands/  -> <target>/.claude/commands/      (unless --instructions-only)
     <repo>/.github/agents/    -> <target>/.github/agents/        (unless --instructions-only)
-    <repo>/.github/copilot-instructions.md -> <target>/.github/  (unless --instructions-only)
 
 Excludes author-side files: scripts/__pycache__, tests/, .git/, .github/workflows/,
-.githooks/, .vscode/, .venv/, .tmp/, README.md, .gitignore.
+.github/copilot-instructions.md, .githooks/, .vscode/, .venv/, .tmp/, .gitignore.
 
 Usage:
     python scripts/install-to-project.py --target <app-repo-root>
@@ -26,10 +26,12 @@ from pathlib import Path
 
 # Runtime payload copied into <target>/.instructions/
 INSTRUCTIONS_FILES = [
+    "README.md",
     "CLAUDE.md",
     "START-AI.md",
     "phase-load-packs.json",
     "_manifest.json",
+    "payload-manifest.json",
 ]
 
 INSTRUCTIONS_DIRS = [
@@ -57,9 +59,9 @@ EXCLUDE_PARTS = {
 
 # Agent/command placements that land at the app repo root, not under .instructions/.
 AGENT_COPIES = [
+    ("AGENTS.md", "AGENTS.md", "file"),
     (".claude/commands", ".claude/commands", "dir"),
     (".github/agents", ".github/agents", "dir"),
-    (".github/copilot-instructions.md", ".github/copilot-instructions.md", "file"),
 ]
 
 

@@ -129,6 +129,31 @@ Populated during Phase 3 by analyzing `resource-implementation.yaml` technology 
 | _e.g., `azd`_ | _IaC deployment_ | _5e_ | _`winget install Microsoft.Azd`_ | _[ ]_ |
 | _e.g., `uno-check`_ | _Uno workload validation_ | _5d_ | _`dotnet tool install -g uno.check`_ | _[ ]_ |
 
+### EF.Packages Feed Readiness
+
+Required before Phase 4:
+
+- [ ] `nuget.config` contains `nuget.org`.
+- [ ] `nuget.config` contains every `customNugetFeeds` entry from `resource-implementation.yaml`.
+- [ ] `packageSourceMapping` maps `EF.*` to the private feed.
+- [ ] `packageSourceMapping` maps `dotnet-ef` or `*` to `nuget.org`.
+- [ ] Local developer has a GitHub PAT with package read access exposed through `NUGET_AUTH_TOKEN` or an approved credential provider.
+- [ ] `Directory.Packages.props` owns all `EF.*` package versions.
+- [ ] Project-level `EF.*` `<PackageReference>` entries have no `Version` attribute.
+- [ ] No EF.Packages shared type is generated locally.
+
+Validation:
+
+```powershell
+python .instructions/scripts/validate-ef-packages-feed.py --root . --config-only --require-auth-env
+```
+
+After Phase 4 creates projects:
+
+```powershell
+python .instructions/scripts/validate-ef-packages-feed.py --root .
+```
+
 ### Recommended MCP Servers
 
 | Server | Phases | Why | Available |
@@ -178,6 +203,9 @@ Before starting Phase 4 (contract scaffolding), verify all of the following:
 - [ ] All open questions resolved or explicitly deferred with TODO
 - [ ] `scaffoldMode`, `testingProfile`, and all host flags confirmed
 - [ ] Custom NuGet feed URLs and auth configured (if any)
+- [ ] EF.Packages feed helper run or manually verified (`configure-ef-packages-feed.py`)
+- [ ] EF.Packages feed validation passes (`validate-ef-packages-feed.py --config-only --require-auth-env`)
+- [ ] Implementation plan validation passes (`validate-implementation-plan.py --root .`)
 - [ ] Domain specification and resource implementation YAML files are complete
 - [ ] Tooling & Environment Readiness section populated (CLIs identified, MCP discovery complete)
 - [ ] All required CLIs verified or install commands provided

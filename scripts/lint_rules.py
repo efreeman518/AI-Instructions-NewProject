@@ -12,7 +12,9 @@ def add_issue(category, file, message, line=0):
 
 def should_ignore_markdown_path(relative_path):
     return (
-        re.search(r"(^|/)(\.git|\.github|\.claude|bin|obj|\.venv|venv|env)/", relative_path) is not None
+        relative_path == "AGENTS.md"
+        or
+        re.search(r"(^|/)(\.git|\.github|\.claude|\.tmp|bin|obj|\.venv|venv|env)/", relative_path) is not None
     )
 
 

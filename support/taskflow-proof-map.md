@@ -41,6 +41,32 @@ Load this file on demand. Keep it out of the default phase context.
 
 ---
 
+## Direct Proof Links
+
+Use these links first. If a branch or path has moved, search inside the same repository for the path suffix or type name; do not invent a new pattern.
+
+| Concern | Direct link |
+|---|---|
+| Domain model | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Domain/TaskFlow.Domain.Model> |
+| Application contracts | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Application/TaskFlow.Application.Contracts> |
+| Application models | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Application/TaskFlow.Application.Models> |
+| Application services | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Application/TaskFlow.Application.Services> |
+| Application mappers | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Application/TaskFlow.Application.Mappers> |
+| Data infrastructure | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Infrastructure/TaskFlow.Infrastructure.Data> |
+| Repositories | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Infrastructure/TaskFlow.Infrastructure.Repositories> |
+| API host | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Host/TaskFlow.Api> |
+| Bootstrapper | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Host/TaskFlow.Bootstrapper> |
+| Aspire AppHost | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Aspire/AppHost> |
+| Gateway | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Host/TaskFlow.Gateway> |
+| Scheduler | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Host/TaskFlow.Scheduler> |
+| Functions | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Host/TaskFlow.Functions> |
+| Uno UI | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/UI/TaskFlow.Uno> |
+| Test support | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Test/Test.Support> |
+| Unit tests | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Test/Test.Unit> |
+| Architecture tests | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Test/Test.Architecture> |
+
+---
+
 ## High-Value Proof Checks
 
 - **Multi-tenant proof:** TaskFlow demonstrates full multi-tenancy — `ITenantEntity<Guid>`, `ITenantBoundaryValidator`, `ValidationHelper`, `TenantBoundaryLoggingExtensions`, tenant query filters, tenant stamping, and global-admin bypass. Not all scaffolds require multi-tenancy.

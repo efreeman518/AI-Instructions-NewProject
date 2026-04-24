@@ -36,6 +36,8 @@
     "includeFunctionApp": { "type": "boolean", "default": false },
     "includeScheduler": { "type": "boolean", "default": false },
     "includeUnoUI": { "type": "boolean", "default": false },
+    "includeBlazorUI": { "type": "boolean", "default": false },
+    "includeNotifications": { "type": "boolean", "default": false },
     "includeIaC": { "type": "boolean", "default": true },
     "includeGitHubActions": { "type": "boolean", "default": false },
     "includeAzd": { "type": "boolean", "default": false },

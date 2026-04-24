@@ -48,6 +48,11 @@ def write_json(path, payload):
     path.write_text(json.dumps(payload, indent=4), encoding="utf-8", newline="\n")
 
 
+def write_text(path, content):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8", newline="\n")
+
+
 class InstructionScriptTests(unittest.TestCase):
     def test_generate_phase_load_packs_applies_overlay_and_mode_exclusions(self):
         manifest = {
@@ -560,6 +565,640 @@ class InstructionScriptTests(unittest.TestCase):
         self.assertIn("Unknown slice 'missing'", result.stderr)
         self.assertIn("Available slices: domain, repository.", result.stderr)
 
+    def test_get_phase_load_set_filters_phase_5d_optional_hosts_by_flag(self):
+        manifest = {
+            "contextBudget": {"default": 200, "extended": 400, "compact": 100},
+            "modeExclusions": {"lite": [], "api-only": []},
+            "files": [
+                {"path": "_manifest.json", "phase": "metadata", "estimatedTokens": 1},
+                {"path": "ai/placeholder-tokens.md", "phase": "phase-5-base", "estimatedTokens": 1},
+                {"path": "support/ef-packages-reference.md", "phase": "phase-5-base", "estimatedTokens": 1},
+                {"path": "skills/background-services.md", "phase": "phase-5d", "estimatedTokens": 1},
+                {"path": "skills/function-app.md", "phase": "phase-5d", "estimatedTokens": 1},
+                {
+                    "path": "skills/ui-uno.md",
+                    "phase": "phase-5d",
+                    "estimatedTokens": 1,
+                    "dependencies": ["skills/bootstrapper.md"],
+                },
+                {"path": "skills/bootstrapper.md", "phase": "phase-5b", "estimatedTokens": 1},
+                {"path": "skills/ui-blazor.md", "phase": "phase-5d", "estimatedTokens": 1},
+                {"path": "skills/notifications.md", "phase": "phase-5d", "estimatedTokens": 1},
+            ],
+        }
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            write_json(root / "_manifest.json", manifest)
+
+            run_script("generate-phase-load-packs.py", "--root", str(root))
+
+            no_flags = run_script(
+                "get-phase-load-set.py",
+                "--root",
+                str(root),
+                "--phase",
+                "5d",
+                "--mode",
+                "full",
+                "--as-json",
+            )
+            uno_only = run_script(
+                "get-phase-load-set.py",
+                "--root",
+                str(root),
+                "--phase",
+                "5d",
+                "--mode",
+                "full",
+                "--include-uno-ui",
+                "--as-json",
+            )
+
+        self.assertEqual(json.loads(no_flags.stdout)["files"], [])
+        self.assertEqual(
+            [item["path"] for item in json.loads(uno_only.stdout)["requestedFiles"]],
+            ["skills/ui-uno.md"],
+        )
+        self.assertEqual(json.loads(uno_only.stdout)["dependencyFiles"], [])
+
+    def test_validate_domain_spec_uses_schema_cased_project_name(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            spec = root / "domain-specification.yaml"
+            spec.write_text(
+                "projectName: DemoApp\n"
+                "entities:\n"
+                "  - name: Customer\n"
+                "    properties:\n"
+                "      - name: Name\n",
+                encoding="utf-8",
+                newline="\n",
+            )
+
+            result = run_script_expect_failure(
+                "validate-domain-spec.py",
+                "--file-path",
+                str(spec),
+            )
+
+        self.assertIn("Required top-level key missing: ProjectName", result.stdout)
+
+    def test_validate_resource_impl_uses_schema_store_names(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            resource = root / "resource-implementation.yaml"
+            resource.write_text(
+                "scaffoldMode: full\n"
+                "testingProfile: balanced\n"
+                "entities:\n"
+                "  - name: Customer\n"
+                "    dataStore: cosmosDb\n"
+                "externalDependencyModes:\n"
+                "  sql: emulator\n",
+                encoding="utf-8",
+                newline="\n",
+            )
+
+            result = run_script_expect_failure(
+                "validate-resource-impl.py",
+                "--file-path",
+                str(resource),
+            )
+
+        self.assertIn("dataStore 'cosmosDb' is not a recognized store type", result.stdout)
+
+    def test_preflight_installed_does_not_require_author_tests(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir) / ".instructions"
+            for rel in ["ai", "patterns", "schemas", "skills", "support", "templates", "scripts"]:
+                (root / rel).mkdir(parents=True, exist_ok=True)
+
+            for rel in ["README.md", "CLAUDE.md", "START-AI.md"]:
+                (root / rel).write_text(f"# {rel}\n", encoding="utf-8", newline="\n")
+            for rel in [
+                "scripts/configure-ef-packages-feed.py",
+                "scripts/preflight-installed.py",
+                "scripts/run-final-scaffold-check.py",
+                "scripts/setup-local.py",
+                "scripts/validate-domain-spec.py",
+                "scripts/validate-resource-impl.py",
+                "scripts/validate-ef-packages-feed.py",
+                "scripts/validate-handoff.py",
+                "scripts/validate-implementation-plan.py",
+                "scripts/validate-scaffold-output.py",
+            ]:
+                write_text(root / rel, "# script\n")
+
+            manifest = {
+                "files": [
+                    {"path": "_manifest.json", "phase": "metadata", "estimatedTokens": 1},
+                    {"path": "START-AI.md", "phase": "session-bootstrap", "estimatedTokens": 1},
+                    {"path": "CLAUDE.md", "phase": "session-bootstrap", "estimatedTokens": 1},
+                ]
+            }
+            phase_load_packs = {
+                "contextBudget": {"default": 30000, "extended": 60000, "compact": 16000},
+                "phaseOrder": [],
+                "packs": {"full": {}, "lite": {}, "api-only": {}},
+            }
+            write_json(root / "_manifest.json", manifest)
+            write_json(root / "phase-load-packs.json", phase_load_packs)
+            write_json(root / "payload-manifest.json", {"version": "test"})
+
+            result = run_script(
+                "preflight-installed.py",
+                "--root",
+                str(root),
+                "--instructions-only",
+            )
+
+        self.assertIn("PASS: installed instruction payload is valid.", result.stdout)
+
+    def test_preflight_installed_does_not_require_global_copilot_instructions(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            app_root = Path(temp_dir)
+            root = app_root / ".instructions"
+            for rel in ["ai", "patterns", "schemas", "skills", "support", "templates", "scripts"]:
+                (root / rel).mkdir(parents=True, exist_ok=True)
+
+            for rel in ["README.md", "CLAUDE.md", "START-AI.md"]:
+                (root / rel).write_text(f"# {rel}\n", encoding="utf-8", newline="\n")
+            for rel in [
+                "scripts/configure-ef-packages-feed.py",
+                "scripts/preflight-installed.py",
+                "scripts/run-final-scaffold-check.py",
+                "scripts/setup-local.py",
+                "scripts/validate-domain-spec.py",
+                "scripts/validate-resource-impl.py",
+                "scripts/validate-ef-packages-feed.py",
+                "scripts/validate-handoff.py",
+                "scripts/validate-implementation-plan.py",
+                "scripts/validate-scaffold-output.py",
+            ]:
+                write_text(root / rel, "# script\n")
+
+            for rel in [
+                "AGENTS.md",
+                ".claude/commands/scaffold.md",
+                ".claude/commands/vertical-slice.md",
+                ".github/agents/dotnet-scaffold.agent.md",
+                ".github/agents/vertical-slice.agent.md",
+            ]:
+                (app_root / rel).parent.mkdir(parents=True, exist_ok=True)
+                (app_root / rel).write_text("# scoped entrypoint\n", encoding="utf-8", newline="\n")
+
+            manifest = {
+                "files": [
+                    {"path": "_manifest.json", "phase": "metadata", "estimatedTokens": 1},
+                    {"path": "START-AI.md", "phase": "session-bootstrap", "estimatedTokens": 1},
+                    {"path": "CLAUDE.md", "phase": "session-bootstrap", "estimatedTokens": 1},
+                ]
+            }
+            phase_load_packs = {
+                "contextBudget": {"default": 30000, "extended": 60000, "compact": 16000},
+                "phaseOrder": [],
+                "packs": {"full": {}, "lite": {}, "api-only": {}},
+            }
+            write_json(root / "_manifest.json", manifest)
+            write_json(root / "phase-load-packs.json", phase_load_packs)
+            write_json(root / "payload-manifest.json", {"version": "test"})
+
+            result = run_script("preflight-installed.py", "--root", str(root))
+
+        self.assertIn("PASS: installed instruction payload is valid.", result.stdout)
+
+    def test_validate_ef_packages_feed_passes_valid_project(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            write_text(
+                root / "nuget.config",
+                """<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <packageSources>
+    <clear />
+    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+    <add key="efpackages" value="https://nuget.pkg.github.com/example/index.json" />
+  </packageSources>
+  <packageSourceMapping>
+    <packageSource key="nuget.org">
+      <package pattern="dotnet-ef" />
+      <package pattern="Microsoft.*" />
+    </packageSource>
+    <packageSource key="efpackages">
+      <package pattern="EF.*" />
+    </packageSource>
+  </packageSourceMapping>
+  <packageSourceCredentials>
+    <efpackages>
+      <add key="Username" value="example" />
+      <add key="ClearTextPassword" value="%NUGET_AUTH_TOKEN%" />
+    </efpackages>
+  </packageSourceCredentials>
+</configuration>
+""",
+            )
+            write_text(
+                root / "Directory.Packages.props",
+                """<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageVersion Include="EF.Domain" Version="1.0.58" />
+  </ItemGroup>
+</Project>
+""",
+            )
+            write_text(
+                root / "src/Domain/Demo.Domain.Model/Demo.Domain.Model.csproj",
+                """<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="EF.Domain" />
+  </ItemGroup>
+</Project>
+""",
+            )
+            write_text(
+                root / "src/Domain/Demo.Domain.Model/Product.cs",
+                "public class Product : EntityBase { }\n",
+            )
+
+            result = run_script("validate-ef-packages-feed.py", "--root", str(root))
+
+        self.assertIn("PASS: EF.Packages project validation passed", result.stdout)
+
+    def test_validate_ef_packages_feed_requires_pat_env_when_requested(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            write_text(
+                root / "nuget.config",
+                """<configuration>
+  <packageSources>
+    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+    <add key="efpackages" value="https://nuget.pkg.github.com/example/index.json" />
+  </packageSources>
+  <packageSourceMapping>
+    <packageSource key="nuget.org"><package pattern="dotnet-ef" /></packageSource>
+    <packageSource key="efpackages"><package pattern="EF.*" /></packageSource>
+  </packageSourceMapping>
+  <packageSourceCredentials>
+    <efpackages>
+      <add key="Username" value="example" />
+      <add key="ClearTextPassword" value="%MISSING_NUGET_AUTH_TOKEN%" />
+    </efpackages>
+  </packageSourceCredentials>
+</configuration>
+""",
+            )
+
+            result = run_script_expect_failure(
+                "validate-ef-packages-feed.py",
+                "--root",
+                str(root),
+                "--config-only",
+                "--require-auth-env",
+            )
+
+        self.assertIn("Environment variable 'MISSING_NUGET_AUTH_TOKEN' is not set", result.stdout)
+
+    def test_validate_ef_packages_feed_blocks_hardcoded_pat(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            write_text(
+                root / "nuget.config",
+                """<configuration>
+  <packageSources>
+    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+    <add key="efpackages" value="https://nuget.pkg.github.com/example/index.json" />
+  </packageSources>
+  <packageSourceCredentials>
+    <efpackages>
+      <add key="Username" value="example" />
+      <add key="ClearTextPassword" value="ghp_exampleHardcodedToken" />
+    </efpackages>
+  </packageSourceCredentials>
+</configuration>
+""",
+            )
+
+            result = run_script_expect_failure(
+                "validate-ef-packages-feed.py",
+                "--root",
+                str(root),
+                "--config-only",
+            )
+
+        self.assertIn("nuget.config contains a hardcoded GitHub PAT", result.stdout)
+
+    def test_validate_ef_packages_feed_blocks_shared_type_reimplementation(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            write_text(
+                root / "nuget.config",
+                """<configuration>
+  <packageSources>
+    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+    <add key="efpackages" value="https://nuget.pkg.github.com/example/index.json" />
+  </packageSources>
+  <packageSourceMapping>
+    <packageSource key="nuget.org"><package pattern="dotnet-ef" /></packageSource>
+    <packageSource key="efpackages"><package pattern="EF.*" /></packageSource>
+  </packageSourceMapping>
+</configuration>
+""",
+            )
+            write_text(
+                root / "Directory.Packages.props",
+                """<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageVersion Include="EF.Domain" Version="1.0.58" />
+  </ItemGroup>
+</Project>
+""",
+            )
+            write_text(root / "src/Domain/EntityBase.cs", "public abstract class EntityBase { }\n")
+
+            result = run_script_expect_failure("validate-ef-packages-feed.py", "--root", str(root))
+
+        self.assertIn("EntityBase is provided by EF.Packages", result.stdout)
+
+    def test_validate_scaffold_output_phase4_passes_minimal_shape(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            for rel in [
+                "Demo.slnx",
+                "Directory.Packages.props",
+                "global.json",
+                "nuget.config",
+                "domain-specification.yaml",
+                "implementation-plan.md",
+                ".instruction-version",
+                "src/Domain/Demo.Domain.Model/Product.cs",
+                "src/Application/Demo.Application.Contracts/IProductService.cs",
+                "src/Application/Demo.Application.Contracts/IProductRepositoryTrxn.cs",
+                "src/Application/Demo.Application.Contracts/IProductRepositoryQuery.cs",
+                "src/Application/Demo.Application.Models/ProductDto.cs",
+                "src/Application/Demo.Application.Models/ProductSearchFilter.cs",
+                "src/Test/Test.Support/ProductBuilder.cs",
+                "src/Test/Test.Support/ProductDtoBuilder.cs",
+            ]:
+                write_text(root / rel, "// scaffold\n")
+            write_text(
+                root / "resource-implementation.yaml",
+                """scaffoldMode: api-only
+includeIaC: false
+useAspire: false
+entities:
+  - name: Product
+    dataStore: sql
+externalDependencyModes:
+  sql: emulator
+""",
+            )
+
+            result = run_script("validate-scaffold-output.py", "--root", str(root), "--phase", "4")
+
+        self.assertIn("PASS: scaffold output validation (4) passed", result.stdout)
+
+    def test_validate_scaffold_output_fails_missing_entity_contract(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            for rel in [
+                "Demo.slnx",
+                "Directory.Packages.props",
+                "global.json",
+                "nuget.config",
+                "domain-specification.yaml",
+                "implementation-plan.md",
+                ".instruction-version",
+            ]:
+                write_text(root / rel, "// scaffold\n")
+            write_text(
+                root / "resource-implementation.yaml",
+                """scaffoldMode: api-only
+includeIaC: false
+useAspire: false
+entities:
+  - name: Product
+    dataStore: sql
+externalDependencyModes:
+  sql: emulator
+""",
+            )
+
+            result = run_script_expect_failure("validate-scaffold-output.py", "--root", str(root), "--phase", "4")
+
+        self.assertIn("IProductService contract is missing", result.stdout)
+
+    def test_configure_ef_packages_feed_writes_env_based_config(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+
+            result = run_script(
+                "configure-ef-packages-feed.py",
+                "--root",
+                str(root),
+                "--feed-url",
+                "https://nuget.pkg.github.com/example/index.json",
+                "--username",
+                "example",
+            )
+
+            config = (root / "nuget.config").read_text(encoding="utf-8")
+
+        self.assertIn("Created", result.stdout)
+        self.assertIn("https://nuget.pkg.github.com/example/index.json", config)
+        self.assertIn("%NUGET_AUTH_TOKEN%", config)
+        self.assertIn('pattern="EF.*"', config)
+        self.assertNotIn("ghp_", config)
+
+    def test_validate_handoff_passes_complete_phase5_record(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            write_text(
+                root / "HANDOFF.md",
+                """# HANDOFF.md
+
+```yaml
+instructionVersion: "1.2"
+currentPhase: "5"
+currentSubPhase: "5b"
+scaffoldMode: "api-only"
+testingProfile: "balanced"
+contractsScaffolded: true
+enabledFeatures:
+  includeGateway: false
+  includeScheduler: false
+  includeFunctionApp: false
+  includeUnoUI: false
+  includeBlazorUI: false
+  includeNotifications: false
+  includeAiServices: false
+testStatus:
+  unitTests: green
+  endpointTests: green
+  infrastructureTests: not-started
+hostGates:
+  scheduler: not-started
+  functionApp: not-started
+  unoUI: not-started
+resumeCommand: "Load START-AI.md and HANDOFF.md, then continue Phase 5b."
+toolingNotes: "dotnet-ef verified"
+instructionGapsPath: "INSTRUCTION-GAPS.md"
+```
+
+## Next Step
+- Continue service implementation.
+
+## Next Load Set
+- `START-AI.md`
+- `HANDOFF.md`
+
+## Environment Setup
+- Set NUGET_AUTH_TOKEN.
+
+## Current Objective
+- Goal: finish endpoints.
+
+## Deferred
+- None.
+
+## Blockers
+- None.
+
+## Completed
+- Contracts.
+
+## Validation
+- Command: dotnet test
+- Result: pass
+""",
+            )
+
+            result = run_script("validate-handoff.py", "--root", str(root))
+
+        self.assertIn("PASS: HANDOFF validation passed", result.stdout)
+
+    def test_validate_handoff_requires_contracts_before_phase5(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            write_text(
+                root / "HANDOFF.md",
+                """# HANDOFF.md
+
+```yaml
+instructionVersion: "1.2"
+currentPhase: "5"
+currentSubPhase: "5a"
+scaffoldMode: "full"
+testingProfile: "minimal"
+contractsScaffolded: false
+enabledFeatures:
+  includeGateway: true
+testStatus:
+  unitTests: not-started
+hostGates:
+  scheduler: not-started
+resumeCommand: "Load START-AI.md and HANDOFF.md."
+toolingNotes: "none"
+instructionGapsPath: "INSTRUCTION-GAPS.md"
+```
+
+## Next Step
+## Next Load Set
+START-AI.md HANDOFF.md
+## Environment Setup
+## Current Objective
+## Deferred
+## Blockers
+## Completed
+## Validation
+""",
+            )
+
+            result = run_script_expect_failure("validate-handoff.py", "--root", str(root))
+
+        self.assertIn("Phase 5 requires contractsScaffolded: true", result.stdout)
+
+    def test_validate_implementation_plan_passes_ready_plan(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            write_text(
+                root / "resource-implementation.yaml",
+                """scaffoldMode: api-only
+testingProfile: balanced
+includeGateway: true
+entities:
+  - name: Product
+""",
+            )
+            write_text(
+                root / "implementation-plan.md",
+                """# Implementation Plan - Demo
+
+## Inputs Summary
+- scaffoldMode: api-only
+- testingProfile: balanced
+- includeGateway: true
+
+## Implementation Steps
+
+### Phase 4 - Contract Scaffolding
+- Build contracts.
+
+### Phase 5a - Foundation
+- Build domain.
+
+### Phase 5b - App Core
+- Build services.
+
+### Phase 5c - Runtime
+- Build runtime.
+
+## Open Questions
+None.
+
+## Decisions Log
+| Decision | Rationale |
+|---|---|
+| API-only | Small service |
+
+## Tooling & Environment Readiness
+CLI preferred before MCP when both exist.
+
+### Required CLIs
+| Tool | Needed for | Verified |
+|---|---|---|
+| dotnet-ef | migrations | [ ] |
+
+### EF.Packages Feed Readiness
+- nuget.config includes packageSourceMapping.
+- NUGET_AUTH_TOKEN is required.
+- Directory.Packages.props owns versions.
+- validate-ef-packages-feed.py must run with --config-only --require-auth-env.
+
+## Risk / Blockers
+None.
+""",
+            )
+
+            result = run_script("validate-implementation-plan.py", "--root", str(root))
+
+        self.assertIn("PASS: implementation plan validation passed", result.stdout)
+
+    def test_validate_implementation_plan_blocks_template_placeholders(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            write_text(root / "implementation-plan.md", "# Implementation Plan — {{ProjectName}}\n")
+
+            result = run_script_expect_failure("validate-implementation-plan.py", "--root", str(root))
+
+        self.assertIn("Unresolved template placeholder remains", result.stdout)
+
     def test_update_manifest_recalculates_written_manifest_tokens_and_removes_stale_entries(self):
         readme_content = "# Test Repo\n\nHello from the instruction set.\n"
         notes_content = "# Notes\n\nThis file should be added to the manifest.\n"
@@ -582,6 +1221,7 @@ class InstructionScriptTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             (root / "README.md").write_text(readme_content, encoding="utf-8", newline="\n")
+            (root / "AGENTS.md").write_text("# Agent Entrypoint\n", encoding="utf-8", newline="\n")
             (root / "notes.md").write_text(notes_content, encoding="utf-8", newline="\n")
             write_json(root / "_manifest.json", manifest)
 
@@ -591,6 +1231,7 @@ class InstructionScriptTests(unittest.TestCase):
             updated_manifest = json.loads(updated_manifest_text)
 
         files = {entry["path"]: entry for entry in updated_manifest["files"]}
+        self.assertNotIn("AGENTS.md", files)
         self.assertNotIn("docs/stale.md", files)
         self.assertNotIn("scripts/update-manifest.py", files)
         self.assertIn("notes.md", files)

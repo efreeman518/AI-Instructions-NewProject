@@ -14,7 +14,7 @@
             "env/**"
         ]
     },
-    "totalEstimatedTokens": 202761,
+    "totalEstimatedTokens": 209156,
     "contextBudget": {
         "default": 30000,
         "extended": 60000,
@@ -52,17 +52,17 @@
         {
             "path": "_manifest.json",
             "phase": "metadata",
-            "estimatedTokens": 5588
+            "estimatedTokens": 5661
         },
         {
             "path": "START-AI.md",
             "phase": "session-bootstrap",
-            "estimatedTokens": 3941
+            "estimatedTokens": 4851
         },
         {
             "path": "CLAUDE.md",
             "phase": "session-bootstrap",
-            "estimatedTokens": 276
+            "estimatedTokens": 222
         },
         {
             "path": "ai/domain-specification-schema.md",
@@ -72,17 +72,17 @@
         {
             "path": "ai/resource-implementation-schema.md",
             "phase": "phase-2",
-            "estimatedTokens": 4173
+            "estimatedTokens": 4204
         },
         {
             "path": "ai/implementation-plan.md",
             "phase": "phase-3",
-            "estimatedTokens": 2178
+            "estimatedTokens": 2481
         },
         {
             "path": "ai/contract-scaffolding.md",
             "phase": "phase-4",
-            "estimatedTokens": 2339
+            "estimatedTokens": 2518
         },
         {
             "path": "skills/solution-structure.md",
@@ -92,12 +92,12 @@
         {
             "path": "skills/package-dependencies.md",
             "phase": "phase-4",
-            "estimatedTokens": 2017
+            "estimatedTokens": 2151
         },
         {
             "path": "ai/SKILL.md",
             "phase": "phase-5-base",
-            "estimatedTokens": 3728
+            "estimatedTokens": 3831
         },
         {
             "path": "ai/placeholder-tokens.md",
@@ -112,7 +112,7 @@
         {
             "path": "support/ef-packages-reference.md",
             "phase": "phase-5-base",
-            "estimatedTokens": 2494
+            "estimatedTokens": 2660
         },
         {
             "path": "skills/domain-model.md",
@@ -631,7 +631,7 @@
         {
             "path": "support/taskflow-proof-map.md",
             "phase": "on-demand",
-            "estimatedTokens": 1362
+            "estimatedTokens": 1949
         },
         {
             "path": "support/troubleshooting.md",
@@ -641,7 +641,7 @@
         {
             "path": "support/execution-gates.md",
             "phase": "on-demand",
-            "estimatedTokens": 4678
+            "estimatedTokens": 5197
         },
         {
             "path": "support/vertical-slice-checklist.md",
@@ -651,12 +651,12 @@
         {
             "path": "support/UPDATE-INSTRUCTIONS.md",
             "phase": "on-demand",
-            "estimatedTokens": 1008
+            "estimatedTokens": 1053
         },
         {
             "path": "support/HANDOFF.md",
             "phase": "on-demand",
-            "estimatedTokens": 875
+            "estimatedTokens": 953
         },
         {
             "path": "patterns/data-layer-wiring.md",
@@ -681,17 +681,27 @@
         {
             "path": "README.md",
             "phase": "support-only",
-            "estimatedTokens": 4957
+            "estimatedTokens": 5853
         },
         {
             "path": "support/prompt-catalog.md",
             "phase": "support-only",
-            "estimatedTokens": 1840
+            "estimatedTokens": 2038
         },
         {
             "path": "support/pattern-dispatcher.md",
             "phase": "on-demand",
             "estimatedTokens": 461
+        },
+        {
+            "path": "support/final-scaffold-checklist.md",
+            "phase": "on-demand",
+            "estimatedTokens": 792
+        },
+        {
+            "path": "support/golden-path-sample.md",
+            "phase": "on-demand",
+            "estimatedTokens": 1435
         }
     ],
     "phases": {

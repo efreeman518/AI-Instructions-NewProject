@@ -14,6 +14,8 @@ enabledFeatures:
   includeScheduler: false
   includeFunctionApp: false
   includeUnoUI: false
+  includeBlazorUI: false
+  includeNotifications: false
   includeAiServices: false
 testStatus:                # updated per sub-phase
   unitTests: not-started   # not-started | red | green
@@ -25,6 +27,7 @@ hostGates:                 # Phase 5d per-host status: not-started | scaffolded 
   unoUI: not-started       # always a dedicated session
 resumeCommand: ""          # exact prompt to paste at the next session start
 toolingNotes: ""           # CLIs/MCPs discovered in Phase 3; note any missing or unavailable
+instructionGapsPath: "INSTRUCTION-GAPS.md"
 ```
 
 ## Next Step
@@ -68,7 +71,9 @@ Out of scope for this session — do not attempt unless explicitly re-scoped:
 - For Phase 5a/5b, update `testStatus` as tests transition: `not-started` → `red` (tests written, failing) → `green` (implementation complete, tests passing). This tracks TDD progress across sessions.
 - For Phase 5d, update `hostGates` per-host as each host moves through scaffolded → validated. Do not mark the sub-phase complete until all enabled hosts reach `validated`.
 - Note unresolved infra/auth/package-feed issues here rather than retrying them repeatedly.
+- Record instruction gaps in root `INSTRUCTION-GAPS.md`, not inside `.instructions/`, during consumer app scaffolding.
 - Keep entries short so the next AI turn can resume without reloading unnecessary docs.
+- Run `python .instructions/scripts/validate-handoff.py --root .` before ending a phase session.
 - **Ephemeral URLs:** Do not record Aspire dashboard URLs, proxy ports, or host endpoints. These are assigned at runtime and change between launches. Instead, record the discovery method (e.g., "read dashboard URL from `dotnet run` output, then check resource list for host URLs").
 
 ## Residual Environment Note

@@ -43,7 +43,7 @@ Follow the Slice Execution Order from `support/vertical-slice-checklist.md`:
 
 ## Validation Gate
 
-```powershell
+```bash
 dotnet build
 dotnet test --filter "TestCategory={Entity}"
 ```

@@ -12,6 +12,16 @@ This phase produces the compilable skeleton that enables TDD red/green cycles in
 - `resource-implementation.yaml` (from Phase 2)
 - `implementation-plan.md` (from Phase 3)
 
+## Pre-Gate
+
+Before generating projects, verify EF.Packages feed readiness:
+
+```powershell
+python .instructions/scripts/validate-ef-packages-feed.py --root . --config-only --require-auth-env
+```
+
+If it fails, fix `nuget.config` before generating code. Do not scaffold local replacements for EF.Packages types.
+
 ## Loaded Skills
 
 - [solution-structure.md](../skills/solution-structure.md) — canonical folder layout, `.slnx`, dependency direction
@@ -209,9 +219,11 @@ Generate entities in dependency order: parent entities first, then children. Use
 
 ```powershell
 dotnet build
+python .instructions/scripts/validate-ef-packages-feed.py --root .
+python .instructions/scripts/validate-scaffold-output.py --root . --phase 4
 ```
 
-The entire solution — including all test projects — must compile successfully. All tests are either absent (empty projects) or trivially pass. No `dotnet test` run is required at this gate.
+The entire solution — including all test projects — must compile successfully. EF.Packages feed/package validation and Phase 4 scaffold structure validation must pass. All tests are either absent (empty projects) or trivially pass. No `dotnet test` run is required at this gate.
 
 ---
 
@@ -248,4 +260,7 @@ The entire solution — including all test projects — must compile successfull
 - [ ] Test data `{Entity}DtoBuilder` returns valid DTOs
 - [ ] `RegisterServices.cs` wires all no-op stubs
 - [ ] No domain logic in entity shells (only `throw new NotImplementedException`)
+- [ ] No local reimplementation of EF.Packages shared types
+- [ ] `validate-ef-packages-feed.py --root .` passes
+- [ ] `validate-scaffold-output.py --root . --phase 4` passes
 - [ ] Token placeholders follow [placeholder-tokens.md](placeholder-tokens.md)
