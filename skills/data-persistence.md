@@ -11,6 +11,29 @@ Load [../support/data-persistence-advanced.md](../support/data-persistence-advan
 
 ---
 
+## Audit Strategy
+
+`AuditInterceptor<string, Guid?>` (from `EF.Data.Interceptors`) intercepts `SaveChangesAsync` on the transactional DbContext and publishes audit records via `IInternalMessageBus` (fire-and-forget). The interceptor does **not** block the save — it enqueues an `AuditMessage` to a background `System.Threading.Channels` consumer.
+
+**Pipeline:** `EF SaveChanges` → `AuditInterceptor` captures changed entities → publishes to `IInternalMessageBus` (returns immediately) → background `AuditHandler` dequeues → `IAuditLogRepository.AppendAsync()` → Azure Table Storage (`{project}audit` table).
+
+**Key design points:**
+- `EntityBase` does **not** define audit properties (`CreatedAt`, `CreatedBy`, `UpdatedAt`, `UpdatedBy`). Do NOT inherit `AuditableBase<T>` unless audit fields must live on the entity itself.
+- Audit metadata is stored externally in Azure Table Storage, keyed by `PartitionKey` = tenant ID (or `"_system"`) and `RowKey` = reverse-ticks (newest-first).
+- Fields tracked: `EntityType`, `EntityKey`, `Action` (Insert/Update/Delete), `RecordedUtc`, `Metadata` (serialized property changes).
+- **Fallback:** When Table Storage is unavailable (local dev without emulator), register `NoOpAuditLogRepository` — silently discards audit entries.
+
+**Source files:**
+| File | Purpose |
+|------|--------|
+| `Bootstrapper/Registration/RegisterServices.Database.cs` | Registers `AuditInterceptor` on Trxn DbContext |
+| `Application.MessageHandlers/AuditHandler.cs` | Handles audit messages from internal bus |
+| `Application.Contracts/Storage/IAuditLogRepository.cs` | Repository contract |
+| `Infrastructure.Storage/AuditLogRepository.cs` | Azure Table Storage implementation |
+| `Infrastructure.Storage/NoOpAuditLogRepository.cs` | No-op fallback |
+
+---
+
 ## DbContext Design
 
 ### Split Pattern

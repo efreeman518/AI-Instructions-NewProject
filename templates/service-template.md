@@ -107,6 +107,18 @@ internal class {Entity}Service(
 
         await _cache.SetAsync($"{Entity}:{entity.Id}", entity.ToDto(), token: ct);
 
+        // Publish integration event (fire-and-forget — entity is already saved)
+        try
+        {
+            await messageBus.PublishAsync(
+                new {Entity}CreatedEvent(entity.Id, entity.TenantId),
+                requestContext.CorrelationId, ct);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to publish {Entity}CreatedEvent for {Id}; entity was saved successfully", entity.Id);
+        }
+
         return Result<DefaultResponse<{Entity}Dto>>.Success(BuildResponse(entity.ToDto()));
     }
 

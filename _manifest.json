@@ -14,7 +14,7 @@
             "env/**"
         ]
     },
-    "totalEstimatedTokens": 201842,
+    "totalEstimatedTokens": 202761,
     "contextBudget": {
         "default": 30000,
         "extended": 60000,
@@ -122,7 +122,7 @@
         {
             "path": "skills/data-persistence.md",
             "phase": "phase-5a",
-            "estimatedTokens": 2143
+            "estimatedTokens": 2587
         },
         {
             "path": "templates/entity-template.md",
@@ -237,7 +237,7 @@
         {
             "path": "skills/application-layer.md",
             "phase": "phase-5b",
-            "estimatedTokens": 2423
+            "estimatedTokens": 2671
         },
         {
             "path": "skills/bootstrapper.md",
@@ -269,7 +269,7 @@
         {
             "path": "templates/service-template.md",
             "phase": "phase-5b",
-            "estimatedTokens": 3250,
+            "estimatedTokens": 3364,
             "generates": [
                 "{Entity}Service.cs",
                 "I{Entity}Service.cs"
@@ -377,7 +377,7 @@
         {
             "path": "skills/aspire.md",
             "phase": "phase-5c",
-            "estimatedTokens": 2529
+            "estimatedTokens": 2642
         },
         {
             "path": "skills/configuration-secrets.md",

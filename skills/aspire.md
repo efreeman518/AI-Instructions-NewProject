@@ -24,7 +24,8 @@ var builder = DistributedApplication.CreateBuilder(args);
 
 var sqlServer = builder.AddSqlServer("sql", password, port: 38433)
     .WithLifetime(ContainerLifetime.Persistent)
-    .WithDataVolume("{project}-sql-data");
+    .WithDataVolume("{project}-sql-data")
+    .WithImageTag("2025-latest");
 var projectDb = sqlServer.AddDatabase("{project}db");
 
 var redis = builder.AddRedis("redis");
@@ -90,6 +91,8 @@ var cosmos = builder.AddAzureCosmosDB("cosmos").RunAsEmulator();
 var serviceBus = builder.AddAzureServiceBus("servicebus").RunAsEmulator();
 var eventHubs = builder.AddAzureEventHubs("eventhubs").RunAsEmulator();
 ```
+
+> **Do NOT use `ContainerLifetime.Persistent` on Azure emulator containers** (Storage, Service Bus, Cosmos, Event Hubs). Persistent emulator containers survive Aspire restarts but get stranded on deleted Podman/Docker networks, causing `netavark "eth2 already exists"` errors and broken restarts. Only SQL Server and Redis use `Persistent` + named volumes — Azure emulators should use the default ephemeral lifetime.
 
 ### Azure Service Bus Topics and Subscriptions
 

@@ -156,6 +156,26 @@ See [message-handler-template.md](../templates/message-handler-template.md) for 
 
 > **Note:** `[ScopedMessageHandler]` attribute (from `EF.BackgroundServices.Attributes`) is required on handlers that inject scoped services (repositories, DbContext). Handlers are auto-registered through the internal message bus at startup.
 
+### Domain Events vs Integration Events
+
+- **Domain events** are in-process signals within a bounded context (e.g., entity state-change side-effects). Handled synchronously or via `IInternalMessageBus` (in-memory `System.Threading.Channels`).
+- **Integration events** cross service boundaries — published to Azure Service Bus topics for async downstream processing by Functions or other consumers. Define integration event DTOs in `Application.Contracts/Events/`, publish via `IIntegrationEventPublisher`.
+
+Integration event publishing is **fire-and-forget after a successful save**. Wrap in try/catch so a messaging failure does not roll back or fail an already-persisted entity:
+
+```csharp
+try
+{
+    await eventPublisher.PublishAsync(
+        new {Entity}CreatedEvent(entity.Id, entity.TenantId),
+        requestContext.CorrelationId, ct);
+}
+catch (Exception ex)
+{
+    logger.LogWarning(ex, "Failed to publish {Entity}CreatedEvent for {Id}; entity was saved successfully", entity.Id);
+}
+```
+
 ---
 
 ## Verification
