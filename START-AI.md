@@ -121,16 +121,21 @@ Each phase is one session. Load only the files listed for the current phase.
 **Developer Clarification Rule:** At the start of each phase, ask for required or unsafe-missing inputs before generating code or configuration. Do not block on values covered by canonical defaults; apply the default, state the assumption, and record it in `HANDOFF.md`.
 
 - **Phase 1 (Domain Discovery)** — Session 1
+  - `ai/shared-understanding-interview.md`
   - `ai/domain-specification-schema.md`
-  - **Ask clarification questions first:** domain description, business rules, key entities, constraints, tenant isolation mode, audit/compliance needs, growth projections, performance constraints
-  - Output: `domain-specification.yaml` in target project root
+  - `templates/ubiquitous-language-template.md`
+  - `templates/design-decisions-template.md`
+  - **Interview first:** walk every branch in `shared-understanding-interview.md` until the developer confirms, defaults, or explicitly defers each branch. Resolve decision dependencies before finalizing child decisions.
+  - Output: `domain-specification.yaml`, `UBIQUITOUS-LANGUAGE.md`, and `DESIGN-DECISIONS.md` in target project root
   - Gate: `python .instructions/scripts/validate-domain-spec.py --file-path domain-specification.yaml` passes (or `python scripts/validate-domain-spec.py ...` when running from the instruction repo root)
-  - Session end: YAML is complete, validated, and human-reviewed → write `HANDOFF.md` → close session
+  - Gate: `python .instructions/scripts/validate-ubiquitous-language.py --root .` passes (or `python scripts/validate-ubiquitous-language.py --root <target-root>` from the instruction repo root)
+  - Session end: domain spec, language, and decisions are complete, validated, and human-reviewed → write `HANDOFF.md` → close session
 
 - **Phase 2 (Resource Definition)** — Session 2
   - `ai/resource-implementation-schema.md`
   - `ai/domain-specification-schema.md` (reference)
-  - **Ask clarification questions first:** resource types, API surface, external integrations, data volumes, scaling needs, caching strategy, messaging patterns, optional workloads (Function App, Scheduler, Gateway)
+  - `DESIGN-DECISIONS.md` from the target project root
+  - **Ask clarification questions first:** unresolved or dependent resource decisions from `DESIGN-DECISIONS.md`, resource types, API surface, external integrations, data volumes, scaling needs, caching strategy, messaging patterns, optional workloads (Function App, Scheduler, Gateway)
   - Output: `resource-implementation.yaml` in target project root
   - Gate: `python .instructions/scripts/validate-resource-impl.py --file-path resource-implementation.yaml --domain-spec-path domain-specification.yaml` passes (or `python scripts/validate-resource-impl.py ...` when running from the instruction repo root)
   - Session end: YAML complete, validated, `externalDependencyModes` declared for every external dep → write `HANDOFF.md` → close session
@@ -139,7 +144,8 @@ Each phase is one session. Load only the files listed for the current phase.
   - `ai/implementation-plan.md`
   - `ai/domain-specification-schema.md` (reference)
   - `ai/resource-implementation-schema.md` (reference)
-  - **Ask clarification questions first:** any remaining design questions, tooling preferences (ORM specifics, caching lib, messaging transport), deployment regions, cost constraints, team constraints
+  - `UBIQUITOUS-LANGUAGE.md` and `DESIGN-DECISIONS.md` from the target project root
+  - **Ask clarification questions first:** any remaining design dependency conflicts, tooling preferences (ORM specifics, caching lib, messaging transport), deployment regions, cost constraints, team constraints
   - **Pre-flight:** Ask for custom/private NuGet feed URL and confirm the developer has a GitHub PAT with package read access exposed via `NUGET_AUTH_TOKEN` or an approved credential provider. Update `nuget.config`. Require `dotnet restore` exit 0.
   - **Feed setup helper:** Prefer `python .instructions/scripts/configure-ef-packages-feed.py --root . --feed-url <feed-url> --username <github-user>` so `nuget.config` uses `%NUGET_AUTH_TOKEN%` and never stores the PAT.
   - **Pre-flight:** Verify `dotnet ef` is available (`dotnet tool list`). If missing: `dotnet new tool-manifest && dotnet tool install dotnet-ef`. If `nuget.config` uses package source mapping, add `<package pattern="dotnet-ef" />` under the `nuget.org` source.
@@ -210,6 +216,7 @@ Do not preload these. Load only when the trigger condition is met:
 - `support/ef-packages-reference.md` — **load before Phase 5a** to know which base types come from EF.Packages (do not regenerate these)
 - `support/data-persistence-advanced.md` — **load when** Phase 5a/5c needs design-time factory setup, migrations, JSON mapping fallback, startup seeding, or zero-downtime schema guidance
 - `support/taskflow-proof-map.md` — **load when** you need a fast reference-app proof map from instruction topic to TaskFlow implementation area
+- `support/taskflow-ubiquitous-language-sample.md` — **load when** validating or shaping `UBIQUITOUS-LANGUAGE.md` and `DESIGN-DECISIONS.md` against the TaskFlow reference app
 - `support/troubleshooting.md` — **load when** a build/test/run failure occurs that isn't resolved by the one-pass fix attempt
 - `support/execution-gates.md` — **load when** validating phase completion gates or running operator setup checks
 - `templates/index.md` — **load when** you need a quick lookup for "I need to scaffold X → load template Y + skill Z"

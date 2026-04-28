@@ -23,6 +23,7 @@ Load this file on demand. Keep it out of the default phase context.
 
 | Phase / Concern | TaskFlow area to inspect | What it proves |
 |---|---|---|
+| Phase 1 shared language | `UBIQUITOUS-LANGUAGE.md`, `DESIGN-DECISIONS.md`, `domain-specification.yaml`, `implementation-plan.md` | Shared terminology, rejected synonyms, decision dependencies, and vertical slice order are explicit before code generation. |
 | Phase 4 contract scaffolding | `src/Domain/TaskFlow.Domain.Model`, `src/Application/TaskFlow.Application.Contracts`, `src/Application/TaskFlow.Application.Models`, `src/Test/Test.Support` | Entity shells, contracts, DTOs, builders, and test infrastructure exist before TDD starts. |
 | Phase 5a domain model | `src/Domain/TaskFlow.Domain.Model` | `Create()` / `Update()` patterns, value objects, domain rules, and aggregate shape. |
 | Phase 5a data persistence | `src/Infrastructure/TaskFlow.Infrastructure.Data`, `src/Infrastructure/TaskFlow.Infrastructure.Repositories` | Dual DbContext split, EF configuration, repository split, and save/query separation. |
@@ -47,6 +48,8 @@ Use these links first. If a branch or path has moved, search inside the same rep
 
 | Concern | Direct link |
 |---|---|
+| Ubiquitous language | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/blob/main/UBIQUITOUS-LANGUAGE.md> |
+| Design decisions | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/blob/main/DESIGN-DECISIONS.md> |
 | Domain model | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Domain/TaskFlow.Domain.Model> |
 | Application contracts | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Application/TaskFlow.Application.Contracts> |
 | Application models | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Application/TaskFlow.Application.Models> |

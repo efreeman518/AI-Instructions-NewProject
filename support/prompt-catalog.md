@@ -23,8 +23,10 @@ Run the MCP Server Check from START-AI.md — ensure Microsoft Docs and Context7
 Generate a domain-specification YAML for a new application called {ProjectName}.
 The business is: {one-sentence business description}.
 Key entities: {entity list}.
-Follow .instructions/ai/domain-specification-schema.md.
-When the YAML is complete and reviewed, write HANDOFF.md to the project root and close the session.
+Follow .instructions/ai/shared-understanding-interview.md before writing final artifacts.
+Create domain-specification.yaml, UBIQUITOUS-LANGUAGE.md, and DESIGN-DECISIONS.md.
+Run validate-domain-spec.py and validate-ubiquitous-language.py.
+When the artifacts are complete and reviewed, write HANDOFF.md to the project root and close the session.
 ```
 
 ## Phase 2 — Resource Definition (Session 2)
@@ -33,6 +35,7 @@ When the YAML is complete and reviewed, write HANDOFF.md to the project root and
 Load .instructions/START-AI.md and HANDOFF.md from the project root.
 Run the MCP Server Check — ensure Microsoft Docs and Context7 MCPs are active.
 Generate the resource implementation YAML per .instructions/ai/resource-implementation-schema.md.
+Read DESIGN-DECISIONS.md first and resolve any parent decisions that affect resource mapping.
 Mode: {full|lite|api-only}. Testing profile: {minimal|balanced|comprehensive}.
 Declare externalDependencyModes for every external dependency before finalizing.
 When the YAML is complete and the Phase 2→3 transition gate passes, update HANDOFF.md and close the session.
@@ -44,6 +47,7 @@ When the YAML is complete and the Phase 2→3 transition gate passes, update HAN
 Load .instructions/START-AI.md and HANDOFF.md from the project root.
 Run the MCP Server Check — enable GitHub MCP and Azure MCP for this phase.
 Generate an implementation plan per .instructions/ai/implementation-plan.md template.
+Read UBIQUITOUS-LANGUAGE.md and DESIGN-DECISIONS.md first. Populate the Decision Dependency Graph.
 Run Phase 3 pre-flights: EF.Packages feed configured, NUGET_AUTH_TOKEN/PAT available, dotnet restore exits 0, dotnet ef available, validate-ef-packages-feed.py --config-only --require-auth-env passes.
 Flag open questions before writing implementation-plan.md to the project root.
 When the plan is reviewed and open questions resolved, update HANDOFF.md and close the session.

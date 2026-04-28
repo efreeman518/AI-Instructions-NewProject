@@ -177,7 +177,10 @@
                 "CLAUDE.md"
             ],
             "phase-1": [
-                "ai/domain-specification-schema.md"
+                "ai/domain-specification-schema.md",
+                "ai/shared-understanding-interview.md",
+                "templates/design-decisions-template.md",
+                "templates/ubiquitous-language-template.md"
             ],
             "phase-2": [
                 "ai/resource-implementation-schema.md"
@@ -289,7 +292,8 @@
                 "patterns/expected-output-index.md",
                 "support/pattern-dispatcher.md",
                 "support/final-scaffold-checklist.md",
-                "support/golden-path-sample.md"
+                "support/golden-path-sample.md",
+                "support/taskflow-ubiquitous-language-sample.md"
             ]
         },
         "lite": {
@@ -301,7 +305,10 @@
                 "CLAUDE.md"
             ],
             "phase-1": [
-                "ai/domain-specification-schema.md"
+                "ai/domain-specification-schema.md",
+                "ai/shared-understanding-interview.md",
+                "templates/design-decisions-template.md",
+                "templates/ubiquitous-language-template.md"
             ],
             "phase-2": [
                 "ai/resource-implementation-schema.md"
@@ -401,7 +408,8 @@
                 "patterns/expected-output-index.md",
                 "support/pattern-dispatcher.md",
                 "support/final-scaffold-checklist.md",
-                "support/golden-path-sample.md"
+                "support/golden-path-sample.md",
+                "support/taskflow-ubiquitous-language-sample.md"
             ]
         },
         "api-only": {
@@ -413,7 +421,10 @@
                 "CLAUDE.md"
             ],
             "phase-1": [
-                "ai/domain-specification-schema.md"
+                "ai/domain-specification-schema.md",
+                "ai/shared-understanding-interview.md",
+                "templates/design-decisions-template.md",
+                "templates/ubiquitous-language-template.md"
             ],
             "phase-2": [
                 "ai/resource-implementation-schema.md"
@@ -514,7 +525,8 @@
                 "patterns/expected-output-index.md",
                 "support/pattern-dispatcher.md",
                 "support/final-scaffold-checklist.md",
-                "support/golden-path-sample.md"
+                "support/golden-path-sample.md",
+                "support/taskflow-ubiquitous-language-sample.md"
             ]
         }
     }

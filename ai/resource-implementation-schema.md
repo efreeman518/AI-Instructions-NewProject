@@ -4,7 +4,7 @@ Maps domain constructs from [domain-specification-schema.md](domain-specificatio
 
 **JSON Schema:** [`schemas/resource-implementation.schema.json`](../schemas/resource-implementation.schema.json) — use for programmatic validation of `resource-implementation.yaml`.
 
-**Prerequisite:** Complete Phase 1 domain definition first.
+**Prerequisite:** Complete Phase 1 domain definition first, including `domain-specification.yaml`, `UBIQUITOUS-LANGUAGE.md`, and `DESIGN-DECISIONS.md`.
 
 ## Output Contract
 
@@ -44,6 +44,18 @@ functionProfile: starter        # starter | full
 unoProfile: starter             # starter | full
 customNugetFeeds: []
 ```
+
+## Decision Dependency Inputs
+
+Before choosing resources, read `DESIGN-DECISIONS.md` and resolve any parent decisions that affect resource mapping:
+
+- Tenant model before partition keys, schemas, databases, route shape, or query filters.
+- Entity ownership before relationship mapping, cascade behavior, store selection, and repository order.
+- Lifecycle/events before messaging channels, scheduled jobs, projections, notifications, or AI hooks.
+- Compliance classification before retention, encryption, audit storage, and private endpoint choices.
+- External dependency mode before local emulator/no-op/lazy-optional wiring.
+
+If a resource choice changes Phase 1 language or ownership, reopen Phase 1 artifacts before finalizing `resource-implementation.yaml`.
 
 ## Policy Inputs (Optional)
 

@@ -21,6 +21,8 @@ No external APIs, no notifications, no UI, no Functions, no scheduler, no AI ser
 
 ## Expected Phase 1 Output
 
+### `domain-specification.yaml`
+
 ```yaml
 ProjectName: WorkBoard
 ProjectDescription: Multi-tenant work tracking API
@@ -89,6 +91,52 @@ domainRules:
     appliesTo: [Project, WorkItem]
 events: []
 workflows: []
+```
+
+### `UBIQUITOUS-LANGUAGE.md`
+
+```markdown
+# Ubiquitous Language - WorkBoard
+
+## Accepted Terms
+
+| Term | Type | Meaning | Code/Naming Guidance |
+|---|---|---|---|
+| `Project` | aggregate | Tenant-owned work container. | Use `Project` in source names. |
+| `WorkItem` | entity | Trackable item of work under a project. | Use `WorkItem`; avoid `Task`. |
+| `Draft` | state | Project has not started. | Use as project status. |
+| `Active` | state | Project is in active use. | Use as project status. |
+| `Completed` | state | Project work is complete. | Use as project status. |
+| `Archived` | state | Project is retained but inactive. | Use as project status. |
+| `ProjectNameRequired` | policy | Project must have a usable name. | Use as domain rule name. |
+| `GlobalAdmin` | role | Cross-tenant administrator. | Use for global admin role. |
+| `EntraID` | external-system | Enterprise identity provider. | Use in auth config. |
+| `enterprise` | auth scenario | Internal workforce auth scenario. | Use in domain spec. |
+
+## Rejected Synonyms
+
+| Rejected Term | Use Instead | Reason |
+|---|---|---|
+| `Task` | `WorkItem` | Avoid .NET type collision. |
+```
+
+### `DESIGN-DECISIONS.md`
+
+```markdown
+# Design Decisions - WorkBoard
+
+## Decision Dependency Graph
+
+D-001 --> D-002
+D-001 --> D-003
+
+## Decisions
+
+| ID | Branch | Decision | Selected Option | Depends On | Status | Rationale | Affects |
+|---|---|---|---|---|---|---|---|
+| D-001 | Tenancy | Tenant model | row-level tenant isolation | none | confirmed | Simple shared schema for scaffold. | Phase 1, Phase 2 |
+| D-002 | Auth | Auth provider | EntraID enterprise auth | D-001 | confirmed | Workforce SSO expected. | Phase 5f |
+| D-003 | Naming | Work item term | WorkItem instead of Task | none | confirmed | Avoid .NET type collision. | All phases |
 ```
 
 ---
@@ -184,6 +232,7 @@ Run these from the generated app root:
 
 ```powershell
 python .instructions/scripts/validate-domain-spec.py --file-path domain-specification.yaml
+python .instructions/scripts/validate-ubiquitous-language.py --root .
 python .instructions/scripts/validate-resource-impl.py --file-path resource-implementation.yaml --domain-spec-path domain-specification.yaml
 python .instructions/scripts/validate-ef-packages-feed.py --root . --config-only --require-auth-env
 ```

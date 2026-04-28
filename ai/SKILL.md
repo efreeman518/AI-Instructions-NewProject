@@ -43,6 +43,8 @@ Follow [../START-AI.md](../START-AI.md) for session bootstrap, version checks, p
 
 **Developer Clarification Rule:** Before generating code or configuration in any phase, ask for required or unsafe-missing inputs. For values covered by canonical defaults, apply the default, state the assumption, and record it in `HANDOFF.md`.
 
+**Shared Understanding Rule:** In Phase 1, run [shared-understanding-interview.md](shared-understanding-interview.md) before finalizing artifacts. Produce `domain-specification.yaml`, `UBIQUITOUS-LANGUAGE.md`, and `DESIGN-DECISIONS.md`. Later phases must preserve accepted domain terms and respect decision dependencies unless the developer explicitly revises them.
+
 **Each Phase 5 sub-phase runs in its own session.** At session start for Phase 5:
 1. Load `SKILL.md` + [placeholder-tokens.md](placeholder-tokens.md) + [tdd-protocol.md](tdd-protocol.md).
 2. Read [resource-implementation-schema.md](resource-implementation-schema.md) for `scaffoldMode`, `testingProfile`, host profiles, enabled flags, and canonical defaults.

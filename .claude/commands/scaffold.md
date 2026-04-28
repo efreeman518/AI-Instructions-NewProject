@@ -28,6 +28,7 @@ You are executing the phased scaffolding workflow. Follow these steps exactly:
 - All defaults come from `.instructions/ai/resource-implementation-schema.md` (Canonical Defaults).
 - Record instruction gaps in `INSTRUCTION-GAPS.md` at the project root, do not modify instruction files.
 - TaskFlow (<https://github.com/efreeman518/AI-Instructions-ReferenceApp>) is the canonical working reference app for generated patterns. When a pattern is ambiguous, consult it via GitHub MCP and `.instructions/support/taskflow-proof-map.md` before inventing a new approach. Do not copy files wholesale.
+- Phase 1 produces `domain-specification.yaml`, `UBIQUITOUS-LANGUAGE.md`, and `DESIGN-DECISIONS.md` after the shared-understanding interview.
 
 ## Phases
 

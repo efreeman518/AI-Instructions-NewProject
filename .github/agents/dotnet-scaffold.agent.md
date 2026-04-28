@@ -25,6 +25,7 @@ All instruction files (skills, templates, support docs, schemas, scripts) live u
 - Checkpoint after 15+ generated files or 3+ build/fix cycles — update `HANDOFF.md` (in project root).
 - After each phase/sub-phase gate passes, update `HANDOFF.md` and end the session.
 - Reference app: TaskFlow (<https://github.com/efreeman518/AI-Instructions-ReferenceApp>) is the canonical working example for generated patterns. When a pattern is ambiguous, consult it via GitHub MCP and `.instructions/support/taskflow-proof-map.md` before inventing a new approach. Do not copy files wholesale.
+- Phase 1 produces `domain-specification.yaml`, `UBIQUITOUS-LANGUAGE.md`, and `DESIGN-DECISIONS.md` after the shared-understanding interview.
 
 ## Phase Summary
 

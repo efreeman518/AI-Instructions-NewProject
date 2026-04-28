@@ -117,6 +117,8 @@ def check_base_structure(root, phase, issues):
     require_file(issues, root, "global.json", "SDK pinning is required.")
     require_file(issues, root, "nuget.config", "NuGet feed config is required.")
     require_file(issues, root, "domain-specification.yaml", "Phase 1 output is required.")
+    require_file(issues, root, "UBIQUITOUS-LANGUAGE.md", "Phase 1 ubiquitous language artifact is required.")
+    require_file(issues, root, "DESIGN-DECISIONS.md", "Phase 1 design decision artifact is required.")
     require_file(issues, root, "resource-implementation.yaml", "Phase 2 output is required.")
     require_file(issues, root, "implementation-plan.md", "Phase 3 output is required.")
     if phase in {"4", "final"}:

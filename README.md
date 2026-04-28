@@ -79,13 +79,18 @@ This instruction set turns an AI coding assistant into a guided scaffolding engi
 
 The goal is not to replace engineering judgment but to compress the multi day/week "green-field to first vertical slice" timeline down to hours, with guardrails that prevent common shortcuts (missing tests, leaky abstractions, inconsistent naming).
 
+Phase 1 also creates durable collaboration artifacts before code planning starts:
+
+- `UBIQUITOUS-LANGUAGE.md` records accepted domain terms, rejected synonyms, states, commands/actions, roles, events, policies, and naming guidance so later AI sessions use consistent expressions.
+- `DESIGN-DECISIONS.md` records design choices and dependencies between decisions, so downstream resource and code choices do not silently contradict earlier domain answers.
+
 ## Phases
 
 Each phase runs in its own AI session and produces artifacts the next phase consumes.
 
 | Phase | Purpose | Output |
 |---|---|---|
-| **1 — Domain Discovery** | Structured conversation to define entities, relationships, events, workflows, and business rules in pure business language — no implementation details. | `domain-specification.yaml` |
+| **1 — Domain Discovery** | Structured interview to reach shared understanding, define ubiquitous language, resolve decision dependencies, and capture entities, relationships, events, workflows, and business rules in pure business language — no implementation details. | `domain-specification.yaml`, `UBIQUITOUS-LANGUAGE.md`, `DESIGN-DECISIONS.md` |
 | **2 — Resource Definition** | Map each resource requirement to concrete technology choices — data stores, messaging, AI capabilities, hosting models. | `resource-implementation.yaml` |
 | **3 — Implementation Planning** | Resolve open questions, verify tooling (NuGet feeds, CLIs), discover project-specific CLIs and MCP servers, and produce a sequenced build plan. | `implementation-plan.md` |
 | **4 — Contract Scaffolding** | Generate solution structure, interfaces, DTOs, entity shells, test infrastructure, and no-op DI stubs. Gate: `dotnet build` succeeds on the full solution. | Compilable skeleton |
@@ -251,7 +256,7 @@ Phase 3 analyzes `resource-implementation.yaml` technology choices and actively 
 
 | Feature | What It Does |
 |---|---|
-| **Domain discovery conversation** | Phase 1 drives a structured discussion to define entities, relationships, events, workflows, and business rules in pure business language — no implementation details. The resulting [domain specification](ai/domain-specification-schema.md) YAML becomes the single source of truth that every later phase consumes, preventing scope drift and hallucinated architecture. |
+| **Domain discovery conversation** | Phase 1 drives a structured interview to define shared language, decision dependencies, entities, relationships, events, workflows, and business rules in pure business language — no implementation details. The resulting [domain specification](ai/domain-specification-schema.md), `UBIQUITOUS-LANGUAGE.md`, and `DESIGN-DECISIONS.md` become the source of truth that every later phase consumes, preventing scope drift and naming drift. |
 | **Resource & technology mapping** | Phase 2 is a deliberate conversation about *how* to implement each domain concept — which data store fits each entity (SQL, Cosmos DB, Table Storage), where messaging is needed (Service Bus, Event Grid), whether AI capabilities apply (search, agents, document intelligence), and which hosting model suits each workload. The output is a [resource implementation](ai/resource-implementation-schema.md) YAML that locks in technology choices before any code is written. |
 | **Token-aware phase loading** | A manifest and Python scripts calculate per-file token costs and generate phase-specific load sets, keeping AI context usage under a configurable ceiling (~30K tokens/phase). |
 | **Three scaffolding modes** | `full` (production w/ gateway, scheduler, UI, IaC), `lite` (clean architecture without infra), `api-only` (single API host). Set once in resource YAML, all downstream loading adapts. |
@@ -280,7 +285,7 @@ Defaults: [ai/resource-implementation-schema.md](ai/resource-implementation-sche
 ## Happy Path
 
 1. Prerequisites and repo setup (see [Quick Start](#quick-start) and [Prerequisites](#prerequisites))
-2. Phase 1: Domain YAML → [ai/domain-specification-schema.md](ai/domain-specification-schema.md)
+2. Phase 1: Domain YAML + language + decisions → [ai/shared-understanding-interview.md](ai/shared-understanding-interview.md)
 3. Phase 2: Resource YAML → [ai/resource-implementation-schema.md](ai/resource-implementation-schema.md)
 4. Phase 3: Implementation plan → [ai/implementation-plan.md](ai/implementation-plan.md)
 5. Phase 4: Contract scaffolding → [ai/contract-scaffolding.md](ai/contract-scaffolding.md)
@@ -311,6 +316,7 @@ Useful script entrypoints:
 - `scripts/setup-local.py` — recreate `.venv` and run author preflight in this repo or installed-payload preflight under `.instructions/`.
 - `scripts/configure-ef-packages-feed.py` — create/update target-app `nuget.config` for EF.Packages without writing PATs.
 - `scripts/validate-handoff.py` — validate target-app `HANDOFF.md` resume state.
+- `scripts/validate-ubiquitous-language.py` — validate Phase 1 language and decision artifacts against `domain-specification.yaml`.
 - `scripts/validate-implementation-plan.py` — validate Phase 3 readiness before contract scaffolding.
 - `scripts/run-final-scaffold-check.py` — run restore/build/test plus static scaffold validators in a generated app.
 

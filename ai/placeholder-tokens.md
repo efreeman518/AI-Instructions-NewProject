@@ -7,6 +7,7 @@ When generating code from templates and skill files, substitute these placeholde
 | Token | Source | Notes |
 |-------|--------|-------|
 | `{Project}` | `ProjectName` | Primary project and namespace prefix. |
+| `{ProjectName}` | `ProjectName` | Markdown/document templates that should display the full project name. Prefer `{Project}` for code templates. |
 | `{Org}` | `OrganizationName` | Optional org prefix. If present, full namespace becomes `{Org}.{Project}`. |
 | `{App}` | Derived from `{Project}` | Application namespace prefix. Used in `{App}DbContextTrxn` and `{App}DbContextQuery`. |
 | `{Host}` | Derived from `{Project}` or `{Org}.{Project}` | Host project prefix. Used in `{Host}.Api`, `{Host}.Gateway`, `{Host}.Scheduler`. |
@@ -28,6 +29,11 @@ When generating code from templates and skill files, substitute these placeholde
 | `{agent-route}` | Kebab-cased agent name | Agent endpoint route segment. |
 | `{Tool}` | Tool or function name | AI function tool class name. |
 | `{SearchIndex}` | Search config index name | Azure AI Search index name. |
+| `{ValueObject}` | Phase 1 language artifact | Value object term accepted in `UBIQUITOUS-LANGUAGE.md`. |
+| `{Role}` | Phase 1 language artifact | Actor or authorization role term accepted in `UBIQUITOUS-LANGUAGE.md`. |
+| `{State}` | Phase 1 language artifact | Lifecycle state term accepted in `UBIQUITOUS-LANGUAGE.md`. |
+| `{PolicyName}` | Phase 1 language artifact | Domain policy/rule term accepted in `UBIQUITOUS-LANGUAGE.md`. |
+| `{ExternalSystem}` | Phase 1 language artifact | External system term accepted in `UBIQUITOUS-LANGUAGE.md`. |
 
 ## Casing Conventions
 

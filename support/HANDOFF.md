@@ -66,6 +66,8 @@ Out of scope for this session — do not attempt unless explicitly re-scoped:
 ## Notes
 
 - Record any non-default paths for `domain-specification.yaml` or `resource-implementation.yaml`.
+- Record any non-default paths for `UBIQUITOUS-LANGUAGE.md` or `DESIGN-DECISIONS.md`.
+- At Phase 1 close, summarize unresolved/deferred design decisions and confirm they do not block Phase 2.
 - Keep `enabledFeatures` flags in sync with `resource-implementation.yaml`.
 - For Phase 4, set `contractsScaffolded: true` after the gate passes. Phase 5a/5b require this flag.
 - For Phase 5a/5b, update `testStatus` as tests transition: `not-started` → `red` (tests written, failing) → `green` (implementation complete, tests passing). This tracks TDD progress across sessions.

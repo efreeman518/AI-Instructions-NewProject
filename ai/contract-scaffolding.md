@@ -9,6 +9,8 @@ This phase produces the compilable skeleton that enables TDD red/green cycles in
 ## Inputs
 
 - `domain-specification.yaml` (from Phase 1)
+- `UBIQUITOUS-LANGUAGE.md` (from Phase 1)
+- `DESIGN-DECISIONS.md` (from Phase 1)
 - `resource-implementation.yaml` (from Phase 2)
 - `implementation-plan.md` (from Phase 3)
 

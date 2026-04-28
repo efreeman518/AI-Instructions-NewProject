@@ -668,6 +668,94 @@ class InstructionScriptTests(unittest.TestCase):
 
         self.assertIn("dataStore 'cosmosDb' is not a recognized store type", result.stdout)
 
+    def test_validate_ubiquitous_language_requires_domain_terms(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            write_text(
+                root / "domain-specification.yaml",
+                """ProjectName: DemoApp
+globalAdminRole: GlobalAdmin
+authProvider: EntraID
+authScenario: enterprise
+entities:
+  - name: Product
+    properties:
+      - { name: Name, required: true }
+    stateMachine:
+      field: Status
+      initial: Draft
+      states: [Draft, Active]
+      transitions:
+        - { from: Draft, to: Active, action: Activate }
+events:
+  - name: ProductActivated
+    raisedBy: Product
+    trigger: afterAction(Activate)
+domainRules:
+  - name: ProductNameRequired
+    appliesTo: [Product]
+""",
+            )
+            write_text(
+                root / "UBIQUITOUS-LANGUAGE.md",
+                """# Ubiquitous Language - DemoApp
+
+Product Draft Active Activate ProductActivated ProductNameRequired GlobalAdmin EntraID enterprise
+""",
+            )
+            write_text(
+                root / "DESIGN-DECISIONS.md",
+                """# Design Decisions - DemoApp
+
+## Decision Dependency Graph
+D-001 --> D-002
+
+## Decisions
+| ID | Branch | Decision | Selected Option | Depends On | Status | Rationale | Affects |
+|---|---|---|---|---|---|---|---|
+| D-001 | Domain | Product lifecycle | Draft to Active | none | confirmed | Simple workflow | Phase 1 |
+""",
+            )
+
+            result = run_script("validate-ubiquitous-language.py", "--root", str(root))
+
+        self.assertIn("PASS: ubiquitous language validation passed", result.stdout)
+
+    def test_validate_ubiquitous_language_fails_missing_term(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            write_text(
+                root / "domain-specification.yaml",
+                """ProjectName: DemoApp
+entities:
+  - name: Product
+    properties:
+      - { name: Name, required: true }
+events:
+  - name: ProductCreated
+    raisedBy: Product
+    trigger: afterCreate
+""",
+            )
+            write_text(root / "UBIQUITOUS-LANGUAGE.md", "# Ubiquitous Language - DemoApp\nProduct\n")
+            write_text(
+                root / "DESIGN-DECISIONS.md",
+                """# Design Decisions - DemoApp
+
+## Decision Dependency Graph
+D-001
+
+## Decisions
+| ID | Status |
+|---|---|
+| D-001 | confirmed |
+""",
+            )
+
+            result = run_script_expect_failure("validate-ubiquitous-language.py", "--root", str(root))
+
+        self.assertIn("ProductCreated", result.stdout)
+
     def test_preflight_installed_does_not_require_author_tests(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir) / ".instructions"
@@ -682,6 +770,7 @@ class InstructionScriptTests(unittest.TestCase):
                 "scripts/run-final-scaffold-check.py",
                 "scripts/setup-local.py",
                 "scripts/validate-domain-spec.py",
+                "scripts/validate-ubiquitous-language.py",
                 "scripts/validate-resource-impl.py",
                 "scripts/validate-ef-packages-feed.py",
                 "scripts/validate-handoff.py",
@@ -730,6 +819,7 @@ class InstructionScriptTests(unittest.TestCase):
                 "scripts/run-final-scaffold-check.py",
                 "scripts/setup-local.py",
                 "scripts/validate-domain-spec.py",
+                "scripts/validate-ubiquitous-language.py",
                 "scripts/validate-resource-impl.py",
                 "scripts/validate-ef-packages-feed.py",
                 "scripts/validate-handoff.py",
@@ -935,6 +1025,8 @@ class InstructionScriptTests(unittest.TestCase):
                 "global.json",
                 "nuget.config",
                 "domain-specification.yaml",
+                "UBIQUITOUS-LANGUAGE.md",
+                "DESIGN-DECISIONS.md",
                 "implementation-plan.md",
                 ".instruction-version",
                 "src/Domain/Demo.Domain.Model/Product.cs",
@@ -973,6 +1065,8 @@ externalDependencyModes:
                 "global.json",
                 "nuget.config",
                 "domain-specification.yaml",
+                "UBIQUITOUS-LANGUAGE.md",
+                "DESIGN-DECISIONS.md",
                 "implementation-plan.md",
                 ".instruction-version",
             ]:
@@ -1144,6 +1238,8 @@ entities:
 - scaffoldMode: api-only
 - testingProfile: balanced
 - includeGateway: true
+- UBIQUITOUS-LANGUAGE.md
+- DESIGN-DECISIONS.md
 
 ## Implementation Steps
 
@@ -1161,6 +1257,9 @@ entities:
 
 ## Open Questions
 None.
+
+## Decision Dependency Graph
+D-001 -> D-002.
 
 ## Decisions Log
 | Decision | Rationale |

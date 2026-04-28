@@ -8,6 +8,13 @@ Pure business domain model — no implementation details, no datatypes, no datab
 
 Write Phase 1 output to `domain-specification.yaml` in the target project root by default. Alternatively, `.instructions/domain-specification.yaml` may be used if the repo explicitly adopts that convention — state the chosen path in handoff notes.
 
+Phase 1 also writes:
+
+- `UBIQUITOUS-LANGUAGE.md` — shared domain vocabulary for future AI/developer sessions.
+- `DESIGN-DECISIONS.md` — decision log and dependency graph for design choices.
+
+Run the shared understanding interview before finalizing this YAML. See [shared-understanding-interview.md](shared-understanding-interview.md).
+
 ## Project Identity
 
 ```yaml
@@ -299,7 +306,7 @@ Auth provider options:
 
 ## Discovery Conversation Pattern
 
-Work through these in order during Phase 1:
+Work through these in order during Phase 1 after loading [shared-understanding-interview.md](shared-understanding-interview.md):
 
 1. **Core entities** — what does the business call things?
 2. **Relationships** — who owns what? What references what?
@@ -309,6 +316,8 @@ Work through these in order during Phase 1:
 6. **Workflows** — what multi-step processes exist beyond CRUD?
 7. **AI capabilities** — what searches should be "smart"? What decisions could an agent help with? What content should be generated or summarized?
 8. **Tenancy/auth** — who can see/do what?
+
+After each branch, recap the current understanding, confirmed language, design decisions, open conflicts, and deferred items. Do not write final YAML until every branch is confirmed, defaulted, or deferred.
 
 ---
 
@@ -324,3 +333,5 @@ Before moving to Phase 2 (Resource Definition), verify all of the following:
 - [ ] `ProjectName` is set and valid (PascalCase, no spaces)
 - [ ] At least one entity is defined
 - [ ] If `aiCapabilities` is defined: every referenced entity exists, every `agentWorkflow` references defined entities, and `searchableFields` reference defined properties
+- [ ] `UBIQUITOUS-LANGUAGE.md` contains every entity, state, event, command/action, role, policy, and value object name from this file
+- [ ] `DESIGN-DECISIONS.md` records non-obvious choices and marks each blocking Phase 2 decision `confirmed`, `defaulted`, or `deferred`

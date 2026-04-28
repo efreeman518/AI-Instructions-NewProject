@@ -15,6 +15,8 @@ Checkpoint commands and pass criteria are canonical in [../support/execution-gat
 
 - Domain specification: `domain-specification.yaml` (project root; or `.instructions/domain-specification.yaml` if repo adopts that convention)
 - Resource mapping: `resource-implementation.yaml` (project root; or `.instructions/resource-implementation.yaml` if repo adopts that convention)
+- Ubiquitous language: `UBIQUITOUS-LANGUAGE.md`
+- Design decisions: `DESIGN-DECISIONS.md`
 - Mode: {{scaffoldMode}} | Testing: {{testingProfile}}
 - Enabled hosts: {{list}}
 
@@ -107,6 +109,19 @@ Resolve before Phase 5 starts:
 1. _[list any unresolved design decisions]_
 2. _[ambiguous requirements]_
 3. _[external dependency unknowns]_
+
+## Decision Dependency Graph
+
+Keep this aligned with `DESIGN-DECISIONS.md`. Include every decision that affects code generation order, resource mapping, auth, external dependency mode, or endpoint contracts.
+
+```mermaid
+flowchart TD
+    D001["D-001: Tenant model"]
+    D002["D-002: Resource partitioning"]
+    D003["D-003: Auth scenario"]
+    D001 --> D002
+    D001 --> D003
+```
 
 ## Decisions Log
 
@@ -207,6 +222,8 @@ Before starting Phase 4 (contract scaffolding), verify all of the following:
 - [ ] EF.Packages feed validation passes (`validate-ef-packages-feed.py --config-only --require-auth-env`)
 - [ ] Implementation plan validation passes (`validate-implementation-plan.py --root .`)
 - [ ] Domain specification and resource implementation YAML files are complete
+- [ ] `UBIQUITOUS-LANGUAGE.md` and `DESIGN-DECISIONS.md` exist and match the domain/resource artifacts
+- [ ] Decision Dependency Graph is populated and has no unresolved blockers for Phase 4
 - [ ] Tooling & Environment Readiness section populated (CLIs identified, MCP discovery complete)
 - [ ] All required CLIs verified or install commands provided
 - [ ] Implementation plan reviewed and approved by human

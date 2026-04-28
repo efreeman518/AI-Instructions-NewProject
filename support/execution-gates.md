@@ -116,6 +116,7 @@ Phase 3 must populate the **Tooling & Environment Readiness** section of `implem
 - [ ] CLI preference applied: CLIs chosen over MCP servers where both exist (lower token cost)
 - [ ] Each CLI entry has a verified checkbox or an install command the operator can run before Phase 4
 - [ ] EF.Packages feed validation passes: `python .instructions/scripts/validate-ef-packages-feed.py --root . --config-only --require-auth-env`
+- [ ] Ubiquitous language validation passes: `python .instructions/scripts/validate-ubiquitous-language.py --root .`
 - [ ] Implementation plan validation passes: `python .instructions/scripts/validate-implementation-plan.py --root .`
 
 ---
@@ -421,6 +422,7 @@ dotnet restore
 dotnet build
 dotnet test
 python .instructions/scripts/validate-ef-packages-feed.py --root . --require-auth-env
+python .instructions/scripts/validate-ubiquitous-language.py --root .
 python .instructions/scripts/validate-scaffold-output.py --root . --phase final
 python .instructions/scripts/validate-handoff.py --root .
 python .instructions/scripts/validate-implementation-plan.py --root .
@@ -464,7 +466,7 @@ When the AI discovers a fundamental assumption error (wrong entity design, incor
 4. **Decide recovery path:**
    - **Isolated error** (affects 1-2 files): `git stash pop`, fix the affected files, rebuild and re-test.
    - **Structural error** (wrong entity shape, missing relationship, bad inheritance): ask the developer before discarding work. Prefer `git stash branch recovery/<short-name>` or a targeted revert over `git checkout <last-checkpoint>`.
-   - **Domain misunderstanding** (entity purpose is wrong): go back to Phase 1 output, clarify with the user, update `domain-specification.md`, and re-scaffold the slice from scratch.
+   - **Domain misunderstanding** (entity purpose is wrong): go back to Phase 1 output, clarify with the user, update `domain-specification.yaml`, `UBIQUITOUS-LANGUAGE.md`, and `DESIGN-DECISIONS.md`, then re-scaffold the slice from scratch.
 5. **Document in HANDOFF.md:** Record what was rolled back and why, so the next session doesn't repeat the mistake.
 6. **Re-enter at the corrected sub-phase** using the standard phase loading manifest.
 
@@ -484,6 +486,7 @@ dotnet restore
 dotnet build
 dotnet test
 python .instructions/scripts/validate-ef-packages-feed.py --root . --require-auth-env
+python .instructions/scripts/validate-ubiquitous-language.py --root .
 python .instructions/scripts/validate-scaffold-output.py --root . --phase final
 python .instructions/scripts/validate-handoff.py --root .
 python .instructions/scripts/validate-implementation-plan.py --root .

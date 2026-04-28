@@ -15,6 +15,7 @@ REQUIRED_HEADINGS = [
     "Phase 5b",
     "Phase 5c",
     "Open Questions",
+    "Decision Dependency Graph",
     "Decisions Log",
     "Tooling & Environment Readiness",
     "Required CLIs",
@@ -24,6 +25,8 @@ REQUIRED_HEADINGS = [
 REQUIRED_PHRASES = [
     "scaffoldMode",
     "testingProfile",
+    "UBIQUITOUS-LANGUAGE.md",
+    "DESIGN-DECISIONS.md",
     "dotnet-ef",
     "nuget.config",
     "NUGET_AUTH_TOKEN",

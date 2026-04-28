@@ -88,6 +88,14 @@ def main():
 
     maybe_run(
         results,
+        "ubiquitous language validation",
+        [python, str(scripts_dir / "validate-ubiquitous-language.py"), "--root", str(root)],
+        root,
+        args.fail_fast,
+    )
+
+    maybe_run(
+        results,
         "scaffold output validation",
         [
             python,

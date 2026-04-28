@@ -2,6 +2,14 @@
 
 Quick lookup: "I need to scaffold X" → load these files.
 
+## Phase 1 Discovery Artifacts
+
+| Artifact | Template / Instruction |
+|---|---|
+| Shared understanding interview | `ai/shared-understanding-interview.md` |
+| Domain vocabulary | `ubiquitous-language-template.md` |
+| Decision dependency log | `design-decisions-template.md` |
+
 ## Backend Vertical Slice (Entity End-to-End)
 
 | Artifact | Template | Required Skill |

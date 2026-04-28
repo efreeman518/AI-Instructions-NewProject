@@ -14,7 +14,7 @@
             "env/**"
         ]
     },
-    "totalEstimatedTokens": 209156,
+    "totalEstimatedTokens": 214525,
     "contextBudget": {
         "default": 30000,
         "extended": 60000,
@@ -52,12 +52,12 @@
         {
             "path": "_manifest.json",
             "phase": "metadata",
-            "estimatedTokens": 5661
+            "estimatedTokens": 5815
         },
         {
             "path": "START-AI.md",
             "phase": "session-bootstrap",
-            "estimatedTokens": 4851
+            "estimatedTokens": 5060
         },
         {
             "path": "CLAUDE.md",
@@ -67,22 +67,22 @@
         {
             "path": "ai/domain-specification-schema.md",
             "phase": "phase-1",
-            "estimatedTokens": 3058
+            "estimatedTokens": 3283
         },
         {
             "path": "ai/resource-implementation-schema.md",
             "phase": "phase-2",
-            "estimatedTokens": 4204
+            "estimatedTokens": 4418
         },
         {
             "path": "ai/implementation-plan.md",
             "phase": "phase-3",
-            "estimatedTokens": 2481
+            "estimatedTokens": 2646
         },
         {
             "path": "ai/contract-scaffolding.md",
             "phase": "phase-4",
-            "estimatedTokens": 2518
+            "estimatedTokens": 2538
         },
         {
             "path": "skills/solution-structure.md",
@@ -97,12 +97,12 @@
         {
             "path": "ai/SKILL.md",
             "phase": "phase-5-base",
-            "estimatedTokens": 3831
+            "estimatedTokens": 3923
         },
         {
             "path": "ai/placeholder-tokens.md",
             "phase": "phase-5-base",
-            "estimatedTokens": 1517
+            "estimatedTokens": 1690
         },
         {
             "path": "ai/tdd-protocol.md",
@@ -616,7 +616,7 @@
         {
             "path": "templates/index.md",
             "phase": "on-demand",
-            "estimatedTokens": 1159
+            "estimatedTokens": 1228
         },
         {
             "path": "support/quick-reference.md",
@@ -631,7 +631,7 @@
         {
             "path": "support/taskflow-proof-map.md",
             "phase": "on-demand",
-            "estimatedTokens": 1949
+            "estimatedTokens": 2073
         },
         {
             "path": "support/troubleshooting.md",
@@ -641,7 +641,7 @@
         {
             "path": "support/execution-gates.md",
             "phase": "on-demand",
-            "estimatedTokens": 5197
+            "estimatedTokens": 5275
         },
         {
             "path": "support/vertical-slice-checklist.md",
@@ -656,7 +656,7 @@
         {
             "path": "support/HANDOFF.md",
             "phase": "on-demand",
-            "estimatedTokens": 953
+            "estimatedTokens": 1001
         },
         {
             "path": "patterns/data-layer-wiring.md",
@@ -681,12 +681,12 @@
         {
             "path": "README.md",
             "phase": "support-only",
-            "estimatedTokens": 5853
+            "estimatedTokens": 6058
         },
         {
             "path": "support/prompt-catalog.md",
             "phase": "support-only",
-            "estimatedTokens": 2038
+            "estimatedTokens": 2133
         },
         {
             "path": "support/pattern-dispatcher.md",
@@ -696,12 +696,32 @@
         {
             "path": "support/final-scaffold-checklist.md",
             "phase": "on-demand",
-            "estimatedTokens": 792
+            "estimatedTokens": 857
         },
         {
             "path": "support/golden-path-sample.md",
             "phase": "on-demand",
-            "estimatedTokens": 1435
+            "estimatedTokens": 1912
+        },
+        {
+            "path": "ai/shared-understanding-interview.md",
+            "phase": "phase-1",
+            "estimatedTokens": 1116
+        },
+        {
+            "path": "support/taskflow-ubiquitous-language-sample.md",
+            "phase": "on-demand",
+            "estimatedTokens": 839
+        },
+        {
+            "path": "templates/design-decisions-template.md",
+            "phase": "phase-1",
+            "estimatedTokens": 365
+        },
+        {
+            "path": "templates/ubiquitous-language-template.md",
+            "phase": "phase-1",
+            "estimatedTokens": 636
         }
     ],
     "phases": {

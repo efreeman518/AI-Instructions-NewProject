@@ -45,6 +45,7 @@ REQUIRED_SCRIPT_FILES = [
     "scripts/run-final-scaffold-check.py",
     "scripts/setup-local.py",
     "scripts/validate-domain-spec.py",
+    "scripts/validate-ubiquitous-language.py",
     "scripts/validate-resource-impl.py",
     "scripts/validate-ef-packages-feed.py",
     "scripts/validate-handoff.py",

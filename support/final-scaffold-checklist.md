@@ -21,6 +21,7 @@ dotnet restore
 dotnet build
 dotnet test
 python .instructions/scripts/validate-ef-packages-feed.py --root . --require-auth-env
+python .instructions/scripts/validate-ubiquitous-language.py --root .
 python .instructions/scripts/validate-scaffold-output.py --root . --phase final
 python .instructions/scripts/validate-handoff.py --root .
 python .instructions/scripts/validate-implementation-plan.py --root .
@@ -66,6 +67,7 @@ Use `curl`, HTTPie, REST Client, or Scalar. Record status codes and endpoint dis
 
 - [ ] `dotnet restore`, `dotnet build`, and `dotnet test` pass.
 - [ ] `validate-ef-packages-feed.py` passes.
+- [ ] `validate-ubiquitous-language.py` passes.
 - [ ] `validate-scaffold-output.py --phase final` passes.
 - [ ] `validate-handoff.py` passes.
 - [ ] `validate-implementation-plan.py` passes.
@@ -86,5 +88,6 @@ Use `curl`, HTTPie, REST Client, or Scalar. Record status codes and endpoint dis
 - Build/test failure: one focused fix pass, rerun the exact failing command.
 - Feed failure: fix `nuget.config`, `Directory.Packages.props`, or project package references before changing code.
 - Structure failure: generate the missing scaffold artifact instead of loosening the validator.
+- Language failure: update `UBIQUITOUS-LANGUAGE.md` or `DESIGN-DECISIONS.md` to match the accepted domain model before changing code names.
 - Host/runtime failure: record blocker in `HANDOFF.md`, continue only if the failed host is optional or dependency-only.
 - Instruction gap: append to root `INSTRUCTION-GAPS.md` in the generated app.
