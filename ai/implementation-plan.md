@@ -160,14 +160,10 @@ Required before Phase 4:
 Validation:
 
 ```powershell
-python .instructions/scripts/validate-ef-packages-feed.py --root . --config-only --require-auth-env
+dotnet restore
 ```
 
-After Phase 4 creates projects:
-
-```powershell
-python .instructions/scripts/validate-ef-packages-feed.py --root .
-```
+After Phase 4 creates projects, re-run `dotnet restore` to confirm all `EF.*` packages still resolve cleanly.
 
 ### Recommended MCP Servers
 
@@ -219,8 +215,8 @@ Before starting Phase 4 (contract scaffolding), verify all of the following:
 - [ ] `scaffoldMode`, `testingProfile`, and all host flags confirmed
 - [ ] Custom NuGet feed URLs and auth configured (if any)
 - [ ] EF.Packages feed helper run or manually verified (`configure-ef-packages-feed.py`)
-- [ ] EF.Packages feed validation passes (`validate-ef-packages-feed.py --config-only --require-auth-env`)
-- [ ] Implementation plan validation passes (`validate-implementation-plan.py --root .`)
+- [ ] `dotnet restore` exits 0 with `NUGET_AUTH_TOKEN` set
+- [ ] Developer reviews `implementation-plan.md` against `ai/implementation-plan.md` schema
 - [ ] Domain specification and resource implementation YAML files are complete
 - [ ] `UBIQUITOUS-LANGUAGE.md` and `DESIGN-DECISIONS.md` exist and match the domain/resource artifacts
 - [ ] Decision Dependency Graph is populated and has no unresolved blockers for Phase 4

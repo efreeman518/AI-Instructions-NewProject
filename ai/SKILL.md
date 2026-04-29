@@ -4,6 +4,24 @@
 
 Use this skill set to scaffold new C#/.NET business applications with clean architecture, optional Gateway/Functions/Scheduler/Uno UI, and Azure-ready deployment patterns.
 
+## Phase 5 Decision Table
+
+Fast-lookup answer to "what do I do next?" — refer to this before scrolling for prose.
+
+| Situation | Action |
+|---|---|
+| Build green after a sub-phase | Move to next sub-phase. Update `HANDOFF.md`, close session. |
+| Build red, fixable in one focused pass | Fix, rebuild. If still red, stop and write `HANDOFF.md`. |
+| Build red after one fix attempt | Write `HANDOFF.md` with the blocker. Do not loop. |
+| Domain assumption looks wrong (entity shape, relationship) | Stop. Confirm with developer before continuing. See **Mid-Session Rollback Protocol** below. |
+| External dependency cannot be stubbed locally | Mark as `deployment-only` in `resource-implementation.yaml`, generate a no-op stub anyway, log blocker in `HANDOFF.md`, continue. |
+| Sub-phase has produced 15+ generated files or 3+ build cycles | Checkpoint `HANDOFF.md` mid-session. Do not wait for the gate. |
+| Multiple files touched by a single structural error | Don't patch-fix. Roll back, log, re-scaffold the slice. |
+| Missing required input (`ProjectName`, custom NuGet feed, at least one entity) | Ask developer before proceeding. |
+| Missing optional input (mode/profile/flag default) | Apply canonical default from [resource-implementation-schema.md](resource-implementation-schema.md), state assumption inline, record in `HANDOFF.md`. |
+
+Detail sections (Fail-Fast Protocol, Git Checkpoint Protocol, Missing-Inputs Protocol, Mid-Session Rollback Protocol, Mixed-Store Slice Gate) live below — this table is the index.
+
 ## When to Use
 
 Use for:
@@ -17,7 +35,7 @@ Use for:
 - **Conflict resolution order:** `support/execution-gates.md` > this file (`ai/SKILL.md`) > individual skill files > templates.
 - Load pattern files from `patterns/` only when needed for cross-project wiring. Use [../support/pattern-dispatcher.md](../support/pattern-dispatcher.md) as the index to find the right file.
 - **Load [../support/ef-packages-reference.md](../support/ef-packages-reference.md) before Phase 5a** to know which base types (DbContextBase, DomainResult, IRequestContext, etc.) come from the EF.Packages private feed. Do not regenerate these types.
-- **Reference app — TaskFlow** (<https://github.com/efreeman518/AI-Instructions-ReferenceApp>) is a fully scaffolded example of every pattern these instructions produce. When a skill or template is ambiguous, consult it via GitHub MCP before inventing a pattern. Use [../support/taskflow-proof-map.md](../support/taskflow-proof-map.md) for the phase → area index. Do not copy files wholesale.
+- **Reference app — TaskFlow.** When a skill or template is ambiguous, consult it. Use [../support/taskflow-proof-map.md](../support/taskflow-proof-map.md) for the phase → area index. Reference application rules (local sibling preference, do-not-copy-wholesale) live in [../START-AI.md](../START-AI.md) § Reference Application.
 - Generate code only in the user's new project directory.
 - Use `.slnx` (not legacy `.sln`).
 - Use central package management (`Directory.Packages.props`).
@@ -26,16 +44,21 @@ Use for:
 - Prefer latest stable .NET SDK and package releases. MCP server setup: see [../README.md](../README.md).
 - All mode/profile/flag defaults come from [resource-implementation-schema.md](resource-implementation-schema.md) (**Canonical Defaults**).
 
-## Context Budget Rules (Mandatory)
+## Phase 5 file table
 
-1. Load at most **4 skills + 5 templates** per turn.
-2. Keep instruction context around **≤30K tokens per phase** (see `_manifest.json` `contextBudget` for model-specific overrides).
-3. Use the **Phase Loading Manifest** (below) for per-phase file lists.
-4. Unload prior phase docs when transitioning.
-5. Keep [../support/quick-reference.md](../support/quick-reference.md), pattern files, and advanced support docs on-demand.
-6. Load the phase-relevant pattern file before cross-project wiring: `patterns/data-layer-wiring.md` before 5a/5b, `patterns/api-host-wiring.md` before 5b/5c, `patterns/infrastructure-wiring.md` before 5c/5d.
-7. Load only the current sub-phase test templates. `skills/ui-uno.md` remains a dedicated-session file.
-8. Checkpoint immediately after **15+ generated files** or **more than 3 build/fix cycles**. Update `HANDOFF.md`; do not wait for the gate.
+Each Phase 5 sub-phase loads its own file set. The base context (`ai/SKILL.md`, `ai/placeholder-tokens.md`, `ai/tdd-protocol.md`, `support/ef-packages-reference.md`) is always loaded.
+
+| Sub-phase | Required skills | Required templates | On-demand |
+|---|---|---|---|
+| **5a Foundation (TDD)** | `domain-model`, `data-persistence` | `entity`, `ef-configuration`, `repository`, `domain-rules`, `appsettings`, `test-templates-domain`, `test-templates-repository` | `azure-data-storage`, `updater-template` (non-SQL stores); `patterns/data-layer-wiring` (cross-project wiring) |
+| **5b App Core (TDD for app/API, tests-after for runtime)** | `application-layer`, `bootstrapper`, `api`, plus enabled runtime concerns: `gateway`, `multi-tenant`, `caching`, `aspire`, `configuration-secrets`, `observability`, `security` | `data-mapping`, `service`, `endpoint`, `message-handler`, `structure-validator`, `exception-handler`, `test-templates-service`, `test-templates-endpoint`, `health-check` | `patterns/api-host-wiring`, `patterns/infrastructure-wiring` |
+| **5c Optional Hosts (tests-after)** | only the enabled host(s): `background-services`, `function-app`, `ui-uno`, `ui-blazor`, `notifications` | host-matching templates: `uno-mvux-model`, `uno-ui-client-layer`, `uno-xaml-page` | `ui-uno` is a dedicated-session file |
+| **5d Quality + Delivery** | `testing`, `iac`, `cicd` | `test-templates-quality`, `dockerfile` | `messaging`, `grpc`, `external-api` (if used) |
+| **5e Integration (Auth + AI)** | `identity-management` (always); `ai-integration` (when `includeAiServices: true`) | `ai-search`, `agent` (when AI in scope) | scope AI further to search-only or agents-only as needed |
+
+Read the table once at the start of each Phase 5 sub-phase session, load the listed files, proceed.
+
+> **Phase 5 was consolidated from seven sub-phases (5a–5g) to five.** Old `5c` (Runtime/Edge) merged into `5b` (App Core). Old `5d` (Optional Hosts) → new `5c`. Old `5e` (Quality + Delivery) → new `5d`. Old `5f` (Auth) and `5g` (AI) merged into new `5e` (Integration). HANDOFF.md `currentSubPhase` values from before this change should be remapped: `5c → 5b`, `5d → 5c`, `5e → 5d`, `5f → 5e`, `5g → 5e`.
 
 ## Session Start (Every AI Turn)
 
@@ -48,10 +71,8 @@ Follow [../START-AI.md](../START-AI.md) for session bootstrap, version checks, p
 **Each Phase 5 sub-phase runs in its own session.** At session start for Phase 5:
 1. Load `SKILL.md` + [placeholder-tokens.md](placeholder-tokens.md) + [tdd-protocol.md](tdd-protocol.md).
 2. Read [resource-implementation-schema.md](resource-implementation-schema.md) for `scaffoldMode`, `testingProfile`, host profiles, enabled flags, and canonical defaults.
-3. Resolve the current sub-phase load set: `python scripts/get-phase-load-set.py --phase <5x> --mode <mode>` (or `python .instructions/scripts/get-phase-load-set.py ...` from a target project root).
-4. For compact 5a/5b execution, keep the same sub-phase but optionally resolve a narrower curated slice: `--slice domain|repository|service|endpoint`.
-5. Keep only the current sub-phase docs loaded; unload prior sub-phase docs before continuing.
-6. For Phase 5a/5b: verify `contractsScaffolded: true` in `HANDOFF.md` — Phase 4 must have completed before TDD begins.
+3. Look up the current sub-phase row in the **Phase 5 file table** above and load its required files. Add on-demand files only when the current sub-phase clearly needs them.
+4. For Phase 5a/5b: verify `contractsScaffolded: true` in `HANDOFF.md` — Phase 4 must have completed before TDD begins.
 
 **Session end — after each sub-phase gate passes:**
 1. Update `HANDOFF.md` with `currentSubPhase`, gate result, and next load set.
@@ -59,15 +80,6 @@ Follow [../START-AI.md](../START-AI.md) for session bootstrap, version checks, p
 3. Close the session. The next session starts from `START-AI.md` + `HANDOFF.md` only.
 
 ---
-
-## Mode + Load Resolution
-
-Follow the **Phase Load Resolution** procedure in [../START-AI.md](../START-AI.md). Key points for Phase 5:
-
-- [resource-implementation-schema.md](resource-implementation-schema.md) is the source of truth for `scaffoldMode`, `testingProfile`, enabled capabilities, and defaults.
-- For `phase-5a` and `phase-5b`, `--slice` resolves a curated compact bundle inside the current sub-phase without creating a new gate or `HANDOFF.md` state.
-- Use `-IncludeAiSearch` and/or `-IncludeAgents` for Phase 5g when only one AI capability is in scope.
-- Load only files returned by the script.
 
 ## Phase 4 — Contract Scaffolding (Prerequisite for Phase 5)
 
@@ -77,37 +89,27 @@ Phase 4 must finish before any Phase 5 sub-phase starts. It generates the soluti
 
 Each sub-phase is one session. Gate must pass before the next session begins.
 
-**Phase 5a and 5b use TDD:** contracts, entity shells, and test infrastructure already exist from Phase 4. Follow [tdd-protocol.md](tdd-protocol.md): write tests first (red), implement to green. Load the phase-specific test templates alongside production templates.
+**Phase 5a uses TDD; 5b is mixed mode (TDD for application/API, tests-after for runtime concerns); 5c–5e use tests-after.** Contracts, entity shells, and test infrastructure already exist from Phase 4. Follow [tdd-protocol.md](tdd-protocol.md) where TDD applies: write tests first (red), implement to green.
 
-**Phase 5c and 5d use tests-after:** implement infrastructure/hosts first, then write tests at end of session to verify behavior.
-
-1. **5a — Foundation (TDD):** 
+1. **5a — Foundation (TDD):**
    - **Ask clarification questions first:** domain rule specifics, invariant constraints, inheritance patterns, special validations, audit/versioning needs
    - Write domain/rule/repository tests first, then implement entities, EF configs, and repositories. Load `test-templates-domain.md` + `test-templates-repository.md`. Gate: `dotnet build` + `dotnet test --filter "TestCategory=Unit"`.
 
-2. **5b — App Core (TDD):** 
-   - **Ask clarification questions first:** service business logic details, API pagination/filtering strategy, response formats, error handling approach, idempotency needs
-   - Write service tests, implement services, then write endpoint tests and implement endpoints. Replace no-op DI stubs with real implementations. Load `test-templates-service.md` + `test-templates-endpoint.md`. Gate: `dotnet build` + `dotnet test --filter "TestCategory=Unit|TestCategory=Endpoint"`.
+2. **5b — App Core + Runtime/Edge (TDD for app/API, tests-after for runtime):**
+   - **Ask clarification questions first:** service business logic, API pagination/filtering, response formats, error handling, idempotency. Plus runtime concerns: observability/tracing, health checks, rate limiting, caching, gateway routing.
+   - Write service tests → implement services. Write endpoint tests → implement endpoints. Replace no-op DI stubs with real implementations. Then add enabled runtime concerns (gateway, caching, observability, security, multi-tenant) followed by their tests. Load `test-templates-service.md` + `test-templates-endpoint.md` + runtime skill files. Gate: `dotnet build` + `dotnet test --filter "TestCategory=Unit|TestCategory=Endpoint"` + app starts via Aspire (when Aspire is enabled).
 
-3. **5c — Runtime/Edge (tests-after):** 
-   - **Ask clarification questions first:** observability/tracing preferences, health check specific needs, rate limiting strategy, caching specifics
-   - Load only enabled runtime concerns, then add health/config tests. Gate: `dotnet build` + `dotnet test` + app starts via Aspire.
-
-4. **5d — Optional Hosts (tests-after):** 
+3. **5c — Optional Hosts (tests-after):**
    - **Ask clarification questions first:** for each enabled host, ask host-specific details (Function App triggers/bindings/outputs, Scheduler job types/schedules, Notification channels/templates, Uno UI target platforms/responsive needs)
-   - Resolve with explicit feature flags (`--include-scheduler`, `--include-function-app`, `--include-uno-ui`, `--include-blazor-ui`, `--include-notifications`) and load only returned files. Uno UI stays dedicated. Gate: per-host status in `HANDOFF.md` + `dotnet test`.
+   - Load only the host-specific files matching the enabled hosts in `resource-implementation.yaml`. Uno UI stays a dedicated session. Gate: per-host status in `HANDOFF.md` + `dotnet test`.
 
-5. **5e — Quality Gates + Delivery:** 
+4. **5d — Quality + Delivery:**
    - **Ask clarification questions first:** code quality thresholds, load test requirements, benchmark baselines, CI-CD pipeline specifics
    - Add architecture/load/benchmark/CI-CD gates and run full regression. Load `test-templates-quality.md`. Gate: `dotnet test`.
 
-6. **5f — Authentication:** 
-   - **Ask clarification questions first:** authentication provider details, custom claims/roles, B2B vs B2C needs, token expiry policies
-   - Finalize identity last. Use stubs in earlier sub-phases when needed for compile-time flow. Gate: authenticated endpoints respond correctly.
-
-7. **5g — AI Integration:** 
-   - **Ask clarification questions first:** AI search scope/filters, agent capabilities/tools, content ingestion strategy, cost/latency constraints
-   - Run only when `includeAiServices: true`, scope further with `-IncludeAiSearch` / `-IncludeAgents`. Gate: search returns results, agent responds to test prompt.
+5. **5e — Integration (Auth + AI):**
+   - **Ask clarification questions first:** authentication provider, custom claims/roles, B2B vs B2C, token expiry. If AI in scope: AI search scope/filters, agent capabilities, content ingestion, cost/latency.
+   - Finalize identity (replace earlier stubs with config-driven scaffold principal). When `includeAiServices: true`, scaffold AI search and/or agents — load only the templates matching the enabled capability. Gate: authenticated endpoints respond correctly; if AI enabled, search returns results and agent responds to test prompt.
 
 ## Template Usage
 
@@ -148,43 +150,13 @@ Generate one complete slice, validate, then move to next slice.
 
 ---
 
-## Fail-Fast Protocol
+## Operational Protocols
 
-After every build:
-- **Code-generation issue** (usings/references/DI/wiring/packages): attempt one focused fix pass, rebuild.
-- **Missing package in `Directory.Packages.props`**: add at latest stable version, restore, rebuild.
-- **Infrastructure issue** (feed auth, env vars, Docker, certs, SQL/cloud access): do not loop fixes. Document blocker in `HANDOFF.md`, point engineer to [../support/execution-gates.md](../support/execution-gates.md).
-
-## Git Checkpoint Protocol
-
-Create a checkpoint after each successful sub-phase gate. Prefer a git commit when the developer has approved committing; otherwise record the exact suggested commit command in `HANDOFF.md` and ensure the working tree state is clearly described. Do not run destructive git commands without explicit developer approval.
-
-If a sub-phase fails after the one-pass fix attempt:
-- isolate the broken changes from the last clean state,
-- log the blocker in `HANDOFF.md`,
-- continue only with non-blocked work.
-
-## Missing-Inputs Protocol
-
-When domain inputs are absent or ambiguous:
-- **Required** (`ProjectName`, `customNugetFeeds`, at least one entity): ask before proceeding.
-- **Defaults** (modes/profiles/flags): use [resource-implementation-schema.md](resource-implementation-schema.md) **Canonical Defaults**; note assumptions inline.
-- **Partial entity definitions**: scaffold what is defined; emit `// TODO` stubs for missing properties/rules.
-
-### Phase 3 Pre-Flight: Custom NuGet Feeds
-
-At Phase 3 start: ask for custom/private NuGet feed URLs and auth method. Update `nuget.config`, run `dotnet restore`, and require exit code 0 before Phase 4.
+Fail-Fast, Git Checkpoint, Missing-Inputs, Mid-Session Rollback, Mixed-Store Slice Gate, and Context Budgets all live in a single source of truth: [../support/OPERATIONS.md](../support/OPERATIONS.md). Read it when something fails, when state changes, or when an assumption breaks. The Phase 5 **Decision Table** at the top of this file is the fast-lookup index for what to do; OPERATIONS.md is the detail.
 
 ## Validation Cadence
 
 Canonical validation gates and commands are defined in [../support/execution-gates.md](../support/execution-gates.md).
-
-## Mixed-Store Slice Gate
-
-For slices spanning SQL + Cosmos/Table/Blob + messaging:
-- Explicit consistency boundary (authoritative store + projection store)
-- Reconciliation handler/job with replay-safe correction logic
-- Drift detection check in post-generation verification
 
 ## Session State (`HANDOFF.md`)
 
@@ -195,5 +167,9 @@ Create or update in the target project root at the end of **every** phase and su
 ## Prompt Catalog
 
 Copy-paste prompts live in [../support/prompt-catalog.md](../support/prompt-catalog.md). Load that file only when starting or resuming a phase; keep it out of the default Phase 5 execution context.
+
+## Context budgets
+
+See [../support/OPERATIONS.md](../support/OPERATIONS.md) § Context Budgets.
 
 

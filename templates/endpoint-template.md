@@ -1,5 +1,8 @@
 # Endpoint Template
 
+> **When to read:** Phase 5b, when generating the Minimal API endpoint group for an entity — CRUD + search routes mapped through the entity's service.
+> **Skip if:** No API host in scope; entity is internal-only (no public surface); endpoint group already exists.
+
 | | |
 |---|---|
 | **File** | `Host/{Host}.Api/Endpoints/{Entity}Endpoints.cs` |
@@ -152,3 +155,8 @@ app.MapGroup("v{apiVersion:apiVersion}/tenant/{tenantId}/{entity}")
 ```
 
 For kebab-case route segments, use `{entity-route}` in route definitions.
+
+---
+
+**TaskFlow proof (local):** `../AI-Instructions-ReferenceApp/src/Host/TaskFlow.Api/Endpoints/TaskItemEndpoints.cs`
+**TaskFlow proof (remote fallback):** <https://github.com/efreeman518/AI-Instructions-ReferenceApp/blob/main/src/Host/TaskFlow.Api/Endpoints/TaskItemEndpoints.cs>

@@ -1,5 +1,8 @@
 # Entity Template
 
+> **When to read:** Phase 5a, when generating a new entity class with private setters, factory `Create()`, and rule-based validation.
+> **Skip if:** Entity already exists; modifying existing behavior only; non-entity domain work (value objects, domain services).
+
 | | |
 |---|---|
 | **File** | `Domain.Model/Entities/{Entity}.cs` |
@@ -179,3 +182,8 @@ builder.HasOne(e => e.{Related})
     .HasForeignKey(e => e.{Related}Id)
     .OnDelete(DeleteBehavior.Restrict);
 ```
+
+---
+
+**TaskFlow proof (local):** `../AI-Instructions-ReferenceApp/src/Domain/TaskFlow.Domain.Model/TaskItem/TaskItem.cs` (full entity with factory + rules), and the `Category/`, `Tag/`, `Comment/`, `ChecklistItem/` sibling folders for relationship variants
+**TaskFlow proof (remote fallback):** <https://github.com/efreeman518/AI-Instructions-ReferenceApp/blob/main/src/Domain/TaskFlow.Domain.Model/TaskItem/TaskItem.cs>

@@ -29,9 +29,6 @@ INSTRUCTIONS_FILES = [
     "README.md",
     "CLAUDE.md",
     "START-AI.md",
-    "phase-load-packs.json",
-    "_manifest.json",
-    "payload-manifest.json",
 ]
 
 INSTRUCTIONS_DIRS = [

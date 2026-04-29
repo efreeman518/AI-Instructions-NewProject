@@ -1,5 +1,51 @@
 # Application Layer
 
+> **When to read:** Phase 5b, when building application services, DTOs, static mappers, validation helpers, or internal message handlers — anything that orchestrates domain operations behind a `Result<T>` boundary.
+> **Skip if:** Phase 5a (domain) or Phase 5c (runtime/edge) without service work; pure API endpoint shaping (see `api.md`).
+
+## Worked Example
+
+This is `TaskItemService.CreateAsync` from TaskFlow (`../AI-Instructions-ReferenceApp/src/Application/TaskFlow.Application.Services/TaskItemService.cs`) — multi-tenant variant. It shows the full `Result<DefaultResponse<T>>` flow: validate, enforce tenant boundary, map DTO → entity, persist, log, publish integration event.
+
+```csharp
+public async Task<Result<DefaultResponse<TaskItemDto>>> CreateAsync(
+    DefaultRequest<TaskItemDto> request, CancellationToken ct = default)
+{
+    var dto = request.Item;
+    dto.TenantId = RequestTenantId ?? Guid.Empty;     // [MULTI-TENANT] stamp from IRequestContext
+
+    var validation = TaskItemStructureValidator.ValidateCreate(dto);
+    if (validation.IsFailure)
+        return Result<DefaultResponse<TaskItemDto>>.Failure(validation.Errors);
+
+    var boundary = tenantBoundaryValidator.EnsureTenantBoundary(    // [MULTI-TENANT]
+        logger, RequestTenantId, RequestRoles, dto.TenantId,
+        "TaskItem:Create", nameof(TaskItem));
+    if (boundary.IsFailure)
+        return Result<DefaultResponse<TaskItemDto>>.Failure(boundary.ErrorMessage!);
+
+    var entityResult = dto.ToEntity(dto.TenantId)
+        .Bind(e => repoTrxn.UpdateFromDto(e, dto));   // DomainResult chain
+    if (entityResult.IsFailure)
+        return Result<DefaultResponse<TaskItemDto>>.Failure(entityResult.ErrorMessage!);
+
+    var entity = entityResult.Value!;
+    repoTrxn.Create(ref entity);
+    await repoTrxn.SaveChangesAsync(OptimisticConcurrencyWinner.ClientWins, ct);
+
+    return Result<DefaultResponse<TaskItemDto>>.Success(BuildResponse(entity.ToDto()));
+}
+```
+
+Things to notice:
+- Service is `internal` — callers go through `ITaskItemService`.
+- Primary constructor injection brings in repo split (`repoTrxn`/`repoQuery`), `IRequestContext` (audit + tenant), `ITenantBoundaryValidator`, cache, integration event publisher.
+- `BuildResponse` is a private static helper — every Success path uses it. Never inline `new DefaultResponse<T>`.
+- DTO → entity mapping uses static mappers (`dto.ToEntity()`, `entity.ToDto()`); no AutoMapper.
+- Multi-tenant stamping happens *before* validation. For single-tenant scaffolds, drop the `// [MULTI-TENANT]` lines and `TenantInfo` from `BuildResponse`.
+
+The principles below are commentary on this shape.
+
 ## Purpose
 
 The application layer owns DTOs, contracts, static mappers, orchestration services, validation helpers, and internal message handlers. Domain invariants stay in domain factories/methods.
@@ -200,3 +246,8 @@ catch (Exception ex)
 - [ ] **[Multi-tenant only]** Update calls `PreventTenantChange` after boundary check
 - [ ] event DTOs are in contracts and handlers are in message-handlers project
 - [ ] service signatures align with [endpoint-template.md](../templates/endpoint-template.md)
+
+---
+
+**TaskFlow proof (local):** `../AI-Instructions-ReferenceApp/src/Application/TaskFlow.Application.Services/TaskItemService.cs` + `Rules/ServiceErrorMessages.cs`, plus mappers at `../AI-Instructions-ReferenceApp/src/Application/TaskFlow.Application.Mappers/TaskItemMapper.cs`
+**TaskFlow proof (remote fallback):** <https://github.com/efreeman518/AI-Instructions-ReferenceApp/blob/main/src/Application/TaskFlow.Application.Services/TaskItemService.cs>

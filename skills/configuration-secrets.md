@@ -1,5 +1,8 @@
 # Configuration & Secrets Management
 
+> **When to read:** Phase 5c, when defining the appsettings hierarchy, wiring User Secrets locally, configuring Key Vault with managed identity, or shaping environment-specific config layering.
+> **Skip if:** No secrets in scope; appsettings already match the canonical pattern; pure domain or pure API endpoint work.
+
 ## Overview
 
 Configuration flows through a strict hierarchy. Secrets are never committed — use User Secrets locally and Key Vault with managed identity in Azure.
@@ -380,3 +383,8 @@ env: [
 - [ ] Crypto utility is bound to a specific key
 - [ ] Secrets are not logged or exposed in API output
 - [ ] Cross-check with [identity-management.md](identity-management.md), [iac.md](iac.md)
+
+---
+
+**TaskFlow proof (local):** `../AI-Instructions-ReferenceApp/src/Host/TaskFlow.Api/appsettings.json` + `appsettings.Development.json` for the layered hierarchy; gateway/scheduler/functions hosts at `../AI-Instructions-ReferenceApp/src/Host/TaskFlow.Gateway/appsettings.json`, `TaskFlow.Scheduler/appsettings.json`, `TaskFlow.Functions/appsettings.json`
+**TaskFlow proof (remote fallback):** <https://github.com/efreeman518/AI-Instructions-ReferenceApp/blob/main/src/Host/TaskFlow.Api/appsettings.json>

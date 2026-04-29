@@ -1,5 +1,66 @@
 # API
 
+> **When to read:** Phase 5b, when building ASP.NET Core Minimal API endpoint groups, `ProblemDetails` exception handling, or the API host's middleware pipeline.
+> **Skip if:** No API host in scope (e.g., scheduler-only or function-app-only scaffold); UI work; gateway-only work (see `gateway.md`).
+
+## Worked Example
+
+This is `TaskItemEndpoints.cs` from TaskFlow (`../AI-Instructions-ReferenceApp/src/Host/TaskFlow.Api/Endpoints/TaskItemEndpoints.cs`) — full route group with one handler shown. Demonstrates `MapGroup`, `Produces`, `Result.Match`, and `ProblemDetailsHelper` usage.
+
+```csharp
+public static class TaskItemEndpoints
+{
+    private static bool _problemDetailsIncludeStackTrace;
+
+    public static IEndpointRouteBuilder MapTaskItemEndpoints(
+        this IEndpointRouteBuilder group, bool problemDetailsIncludeStackTrace)
+    {
+        _problemDetailsIncludeStackTrace = problemDetailsIncludeStackTrace;
+
+        var g = group.MapGroup("/api/task-items").WithTags("TaskItems");
+
+        g.MapPost("/search", Search)
+            .Produces<PagedResponse<TaskItemDto>>(StatusCodes.Status200OK)
+            .WithSummary("Search TaskItems with paging, filters, and sorts");
+
+        g.MapGet("/{id:guid}", GetById)
+            .Produces<DefaultResponse<TaskItemDto>>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .WithSummary("Get a single TaskItem");
+
+        g.MapPost("/", Create)
+            .Produces<DefaultResponse<TaskItemDto>>(StatusCodes.Status201Created)
+            .ProducesValidationProblem()
+            .WithSummary("Create a new TaskItem");
+
+        // ... PUT, DELETE follow the same shape
+
+        return group;
+    }
+
+    private static async Task<IResult> GetById(
+        [FromServices] ITaskItemService service, Guid id, CancellationToken ct)
+    {
+        var result = await service.GetAsync(id, ct);
+        return result.Match<IResult>(
+            response => TypedResults.Ok(response),
+            errors => TypedResults.Problem(ProblemDetailsHelper.BuildProblemDetailsResponseMultiple(
+                messages: errors, statusCodeOverride: StatusCodes.Status400BadRequest)),
+            () => TypedResults.NotFound(id));
+    }
+}
+```
+
+Things to notice:
+- Static class with extension method (`MapTaskItemEndpoints`) — no controllers, no instance state.
+- `MapGroup` carries the route prefix and `WithTags` for OpenAPI grouping. Authorization (`.RequireAuthorization(...)`) typically applies at the group level in the host's `Program.cs`.
+- Handlers are `private static` methods. Service is injected via `[FromServices]`. `CancellationToken` is the last parameter on every handler.
+- `result.Match<IResult>(success, failure, none)` maps `Result<T>` directly to `IResult` — three branches for the three terminal states.
+- `ProblemDetailsHelper.BuildProblemDetailsResponseMultiple(...)` is the canonical way to surface multi-error failures; single-error failures use the singular variant.
+- Stack trace inclusion is controlled by configuration (`_problemDetailsIncludeStackTrace`), not by environment checks.
+
+The principles below are commentary on this shape.
+
 ## Overview
 
 Use ASP.NET Core Minimal APIs with endpoint classes (no controllers), `ProblemDetails`, and deterministic middleware ordering.
@@ -238,3 +299,8 @@ group.MapGet("/{id:guid}", GetById)
 - [ ] Entra auth uses `AddMicrosoftIdentityWebApi` (service-to-service)
 - [ ] `X-Orig-Request` forwarding is parsed for identity context
 - [ ] Cross-check with [endpoint-template.md](../templates/endpoint-template.md) and [application-layer.md](application-layer.md)
+
+---
+
+**TaskFlow proof (local):** `../AI-Instructions-ReferenceApp/src/Host/TaskFlow.Api/RegisterApiServices.cs` + `../AI-Instructions-ReferenceApp/src/Host/TaskFlow.Api/Endpoints/TaskItemEndpoints.cs`
+**TaskFlow proof (remote fallback):** <https://github.com/efreeman518/AI-Instructions-ReferenceApp/blob/main/src/Host/TaskFlow.Api/Endpoints/TaskItemEndpoints.cs>

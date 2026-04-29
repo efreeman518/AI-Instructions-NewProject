@@ -145,24 +145,6 @@ Use underscores in `Projects.{Host}_Api` style identifiers.
 
 ---
 
-## Instruction Set Version
-
-Check current version:
-
-```powershell
-(Get-Content _manifest.json | ConvertFrom-Json).version
-```
-
-Or from the project root:
-
-```powershell
-cat .instruction-version   # version the target project was scaffolded with
-```
-
-Version mismatch → see `README.md` release notes for breaking changes before continuing.
-
----
-
 ## Common Config Keys
 
 | Key | Purpose |

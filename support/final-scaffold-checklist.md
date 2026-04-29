@@ -11,21 +11,12 @@ This is not production-readiness. It verifies that the generated app is a consis
 Run from the generated app root:
 
 ```powershell
-python .instructions/scripts/run-final-scaffold-check.py --root . --require-auth-env
-```
-
-Equivalent expanded commands:
-
-```powershell
 dotnet restore
 dotnet build
 dotnet test
-python .instructions/scripts/validate-ef-packages-feed.py --root . --require-auth-env
-python .instructions/scripts/validate-ubiquitous-language.py --root .
-python .instructions/scripts/validate-scaffold-output.py --root . --phase final
-python .instructions/scripts/validate-handoff.py --root .
-python .instructions/scripts/validate-implementation-plan.py --root .
 ```
+
+All three must exit 0. Then walk the **Completion Criteria** below.
 
 If IaC is enabled:
 
@@ -66,11 +57,11 @@ Use `curl`, HTTPie, REST Client, or Scalar. Record status codes and endpoint dis
 ## Completion Criteria
 
 - [ ] `dotnet restore`, `dotnet build`, and `dotnet test` pass.
-- [ ] `validate-ef-packages-feed.py` passes.
-- [ ] `validate-ubiquitous-language.py` passes.
-- [ ] `validate-scaffold-output.py --phase final` passes.
-- [ ] `validate-handoff.py` passes.
-- [ ] `validate-implementation-plan.py` passes.
+- [ ] All `EF.*` packages resolve from the configured private feed (`dotnet restore` succeeded with `NUGET_AUTH_TOKEN` set).
+- [ ] `UBIQUITOUS-LANGUAGE.md` and `DESIGN-DECISIONS.md` still match the generated entity, service, and endpoint names.
+- [ ] Generated solution shape matches `skills/solution-structure.md` (no missing project, no orphan no-op stub).
+- [ ] `HANDOFF.md` resume state is current: `currentPhase`, `currentSubPhase`, gate result, blockers, next load set.
+- [ ] `implementation-plan.md` open questions resolved or explicitly deferred with TODO.
 - [ ] Every enabled host has a recorded status in `HANDOFF.md`: validated, partially validated, or blocked with reason.
 - [ ] At least one entity CRUD/search smoke cycle succeeds.
 - [ ] Health endpoint returns 200.

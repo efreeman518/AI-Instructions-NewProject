@@ -96,10 +96,9 @@ $env:NUGET_AUTH_TOKEN = "ghp_xxxxxxxxxxxxxxxxxxxx"
 
 ```powershell
 dotnet restore
-python .instructions/scripts/validate-ef-packages-feed.py --root . --config-only --require-auth-env
 ```
 
-Gate: both commands exit 0. All EF.Packages resolve successfully, `EF.*` maps to the private feed, and `dotnet-ef` maps to `nuget.org` when package source mapping is enabled.
+Gate: `dotnet restore` exits 0. All EF.Packages resolve successfully, `EF.*` maps to the private feed, and `dotnet-ef` maps to `nuget.org` when package source mapping is enabled.
 
 ### AI Assistant — MCP Servers
 
@@ -115,9 +114,9 @@ Phase 3 must populate the **Tooling & Environment Readiness** section of `implem
 - [ ] MCP server discovery completed (npm search, MCP registry) for project-specific libraries
 - [ ] CLI preference applied: CLIs chosen over MCP servers where both exist (lower token cost)
 - [ ] Each CLI entry has a verified checkbox or an install command the operator can run before Phase 4
-- [ ] EF.Packages feed validation passes: `python .instructions/scripts/validate-ef-packages-feed.py --root . --config-only --require-auth-env`
-- [ ] Ubiquitous language validation passes: `python .instructions/scripts/validate-ubiquitous-language.py --root .`
-- [ ] Implementation plan validation passes: `python .instructions/scripts/validate-implementation-plan.py --root .`
+- [ ] `dotnet restore` exits 0 with `NUGET_AUTH_TOKEN` set
+- [ ] Developer reviews `UBIQUITOUS-LANGUAGE.md` and `DESIGN-DECISIONS.md` for completeness against `domain-specification.yaml`
+- [ ] Developer reviews `implementation-plan.md` against `ai/implementation-plan.md` schema
 
 ---
 
@@ -160,12 +159,11 @@ Exit criteria:
 Commands:
 
 ```powershell
+dotnet restore
 dotnet build
-python .instructions/scripts/validate-ef-packages-feed.py --root . --require-auth-env
-python .instructions/scripts/validate-scaffold-output.py --root . --phase 4
 ```
 
-No `dotnet test` required — test projects are empty or contain no test methods.
+No `dotnet test` required — test projects are empty or contain no test methods. Developer confirms the solution structure, no-op stubs, and EF.Packages references match the Phase 4 exit criteria above.
 
 ---
 
@@ -208,7 +206,7 @@ dotnet ef migrations add InitialCreate `
 
 > **Scaffold rule:** During scaffolding, always start fresh. Do not accumulate incremental migrations until the baseline is established and the project is in production.
 
-## 5b — App Core (TDD)
+## 5b — App Core + Runtime/Edge (TDD for app/API, tests-after for runtime)
 
 Required:
 - DTOs/mappers/services compile,
@@ -231,7 +229,7 @@ dotnet build
 dotnet test --filter "TestCategory=Unit|TestCategory=Endpoint"
 ```
 
-## 5c — Runtime / Edge (Tests-After)
+### Runtime / Edge concerns (within 5b, tests-after)
 
 Required:
 - host startup path is healthy for enabled runtime concerns,
@@ -271,7 +269,7 @@ dotnet run --project src/Host/Aspire/AppHost
 
 After Aspire verification, write infrastructure tests (health checks, config loading, caching) and re-run `dotnet test` to confirm.
 
-## 5d — Optional Hosts (Tests-After)
+## 5c — Optional Hosts (Tests-After)
 
 Run only for enabled hosts.
 
@@ -328,7 +326,7 @@ dotnet run --project src/Host/{Host}.Scheduler
 
 > **AppHost/config dependency:** When the scheduler depends on AppHost-provided resources (e.g., connection strings via service discovery), either run it through AppHost or provide equivalent local connection strings (e.g., `ConnectionStrings:LuminaDb`) before using direct `dotnet run`. Record which path was validated in the handoff.
 
-## 5e — Quality Gates + Delivery
+## 5d — Quality Gates + Delivery
 
 Unit, service, endpoint, and integration tests already exist from Phases 5a/5b/5c/5d. Phase 5e adds quality gate tests and runs a full regression.
 
@@ -364,7 +362,9 @@ Delivery checks:
 - [ ] `az bicep build --file infra/main.bicep` succeeds *(if IaC enabled)*
 - [ ] Aspire <-> IaC names/connection strings are aligned
 
-## 5f — Authentication Finalization
+## 5e — Integration (Auth + AI)
+
+### Authentication Finalization (within 5e)
 
 **Scaffold mode is the default.** Phase 5f is complete when the app builds, tests pass, and auth works with the config-driven scaffold principal. Live identity provider setup is supplemental hardening — it does **not** block scaffold completion.
 
@@ -388,7 +388,7 @@ dotnet test --filter "TestCategory=Endpoint"
 
 If live Entra setup is not yet performed, log it in `HANDOFF.md` as a deployment-only dependency and continue.
 
-## 5g — AI Integration
+### AI Integration (within 5e, when `includeAiServices: true`)
 
 **Scaffold mode is the default.** Phase 5g is complete when AI-backed interfaces compile, resolve from DI, and tests pass with stubs or no-op implementations. Live Foundry/AI Search endpoints are deployment-only dependencies and do not block scaffold completion.
 
@@ -421,18 +421,9 @@ Must pass before merge:
 dotnet restore
 dotnet build
 dotnet test
-python .instructions/scripts/validate-ef-packages-feed.py --root . --require-auth-env
-python .instructions/scripts/validate-ubiquitous-language.py --root .
-python .instructions/scripts/validate-scaffold-output.py --root . --phase final
-python .instructions/scripts/validate-handoff.py --root .
-python .instructions/scripts/validate-implementation-plan.py --root .
 ```
 
-Equivalent wrapper:
-
-```powershell
-python .instructions/scripts/run-final-scaffold-check.py --root . --require-auth-env
-```
+Plus a manual walk-through of [final-scaffold-checklist.md](final-scaffold-checklist.md) covering: solution structure shape, no-op stub coverage, host startup smoke checks, and HANDOFF.md completeness.
 
 If IaC is part of scope:
 
@@ -454,23 +445,7 @@ az bicep build --file infra/main.bicep
 
 ## Mid-Session Rollback Protocol
 
-When the AI discovers a fundamental assumption error (wrong entity design, incorrect relationship, misunderstood domain rule) after multiple files have been generated:
-
-1. **Stop generating.** Do not continue building on a flawed assumption.
-2. **Assess scope:** Identify all files generated since the last git checkpoint that are affected by the error.
-3. **Checkpoint recovery prep:**
-   ```powershell
-   git stash          # save current work
-   git log --oneline -5  # find last clean checkpoint
-   ```
-4. **Decide recovery path:**
-   - **Isolated error** (affects 1-2 files): `git stash pop`, fix the affected files, rebuild and re-test.
-   - **Structural error** (wrong entity shape, missing relationship, bad inheritance): ask the developer before discarding work. Prefer `git stash branch recovery/<short-name>` or a targeted revert over `git checkout <last-checkpoint>`.
-   - **Domain misunderstanding** (entity purpose is wrong): go back to Phase 1 output, clarify with the user, update `domain-specification.yaml`, `UBIQUITOUS-LANGUAGE.md`, and `DESIGN-DECISIONS.md`, then re-scaffold the slice from scratch.
-5. **Document in HANDOFF.md:** Record what was rolled back and why, so the next session doesn't repeat the mistake.
-6. **Re-enter at the corrected sub-phase** using the standard phase loading manifest.
-
-> **Rule:** Never patch-fix a structural error across 3+ files. It is faster and safer to rollback and re-scaffold than to chase cascading fixes.
+See [OPERATIONS.md](OPERATIONS.md) § Mid-Session Rollback Protocol.
 
 ---
 
@@ -485,11 +460,6 @@ Load [final-scaffold-checklist.md](final-scaffold-checklist.md) for the canonica
 dotnet restore
 dotnet build
 dotnet test
-python .instructions/scripts/validate-ef-packages-feed.py --root . --require-auth-env
-python .instructions/scripts/validate-ubiquitous-language.py --root .
-python .instructions/scripts/validate-scaffold-output.py --root . --phase final
-python .instructions/scripts/validate-handoff.py --root .
-python .instructions/scripts/validate-implementation-plan.py --root .
 ```
 
 ### 2. Host Startup

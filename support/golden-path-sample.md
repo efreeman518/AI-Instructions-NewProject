@@ -228,29 +228,26 @@ externalDependencyModes:
 
 ## Validation Commands
 
-Run these from the generated app root:
+Run these from the generated app root.
 
-```powershell
-python .instructions/scripts/validate-domain-spec.py --file-path domain-specification.yaml
-python .instructions/scripts/validate-ubiquitous-language.py --root .
-python .instructions/scripts/validate-resource-impl.py --file-path resource-implementation.yaml --domain-spec-path domain-specification.yaml
-python .instructions/scripts/validate-ef-packages-feed.py --root . --config-only --require-auth-env
-```
+After Phases 1–3, developer reviews the YAML artifacts (`domain-specification.yaml`, `UBIQUITOUS-LANGUAGE.md`, `DESIGN-DECISIONS.md`, `resource-implementation.yaml`, `implementation-plan.md`) against their schemas in `ai/`.
 
 After Phase 4:
 
 ```powershell
 dotnet restore
 dotnet build
-python .instructions/scripts/validate-ef-packages-feed.py --root .
-python .instructions/scripts/validate-scaffold-output.py --root . --phase 4
 ```
 
 After the final enabled Phase 5 sub-phase:
 
 ```powershell
-python .instructions/scripts/run-final-scaffold-check.py --root . --require-auth-env
+dotnet restore
+dotnet build
+dotnet test
 ```
+
+Then walk through `support/final-scaffold-checklist.md`.
 
 ---
 

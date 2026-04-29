@@ -13,7 +13,7 @@ Use this file as a convenience layer only. [START-AI.md](../START-AI.md) remains
 
 ## Reference Application
 
-A fully scaffolded example — **TaskFlow** — lives at <https://github.com/efreeman518/AI-Instructions-ReferenceApp>. When a prompt result looks off or a pattern is ambiguous, point the AI at it via GitHub MCP and use [taskflow-proof-map.md](taskflow-proof-map.md) for the phase → area index.
+A fully scaffolded example — **TaskFlow** — lives at <https://github.com/efreeman518/AI-Instructions-ReferenceApp>, and is also kept locally as a sibling repo at `../AI-Instructions-ReferenceApp/` when available. When a prompt result looks off or a pattern is ambiguous, point the AI at it (Read tool for the local clone, GitHub MCP otherwise) and use [taskflow-proof-map.md](taskflow-proof-map.md) for the phase → area index.
 
 ## Phase 1 — Domain Discovery (Session 1)
 
@@ -25,7 +25,7 @@ The business is: {one-sentence business description}.
 Key entities: {entity list}.
 Follow .instructions/ai/shared-understanding-interview.md before writing final artifacts.
 Create domain-specification.yaml, UBIQUITOUS-LANGUAGE.md, and DESIGN-DECISIONS.md.
-Run validate-domain-spec.py and validate-ubiquitous-language.py.
+Review each artifact against the Phase 1 schema before closing the session.
 When the artifacts are complete and reviewed, write HANDOFF.md to the project root and close the session.
 ```
 
@@ -38,7 +38,7 @@ Generate the resource implementation YAML per .instructions/ai/resource-implemen
 Read DESIGN-DECISIONS.md first and resolve any parent decisions that affect resource mapping.
 Mode: {full|lite|api-only}. Testing profile: {minimal|balanced|comprehensive}.
 Declare externalDependencyModes for every external dependency before finalizing.
-When the YAML is complete and the Phase 2→3 transition gate passes, update HANDOFF.md and close the session.
+When the YAML is complete and reviewed, update HANDOFF.md and close the session.
 ```
 
 ## Phase 3 — Implementation Plan (Session 3)
@@ -48,7 +48,8 @@ Load .instructions/START-AI.md and HANDOFF.md from the project root.
 Run the MCP Server Check — enable GitHub MCP and Azure MCP for this phase.
 Generate an implementation plan per .instructions/ai/implementation-plan.md template.
 Read UBIQUITOUS-LANGUAGE.md and DESIGN-DECISIONS.md first. Populate the Decision Dependency Graph.
-Run Phase 3 pre-flights: EF.Packages feed configured, NUGET_AUTH_TOKEN/PAT available, dotnet restore exits 0, dotnet ef available, validate-ef-packages-feed.py --config-only --require-auth-env passes.
+Phase 3 pre-flight: configure the EF.Packages feed via configure-ef-packages-feed.py if private packages are used,
+ensure NUGET_AUTH_TOKEN is set, and confirm `dotnet restore` exits 0. Verify `dotnet ef` is available.
 Flag open questions before writing implementation-plan.md to the project root.
 When the plan is reviewed and open questions resolved, update HANDOFF.md and close the session.
 ```
@@ -58,10 +59,10 @@ When the plan is reviewed and open questions resolved, update HANDOFF.md and clo
 ```text
 Load .instructions/START-AI.md and HANDOFF.md from the project root.
 Run the MCP Server Check — ensure GitHub MCP is active.
-Run python .instructions/scripts/get-phase-load-set.py --phase 4 --mode {full|lite|api-only} to resolve the load set.
+Load the Phase 4 file set listed in START-AI.md § Phase Router.
 Generate the contract scaffold per .instructions/ai/contract-scaffolding.md:
   solution structure, interfaces, DTOs, entity shells, test infrastructure, no-op DI stubs.
-Gate: 'dotnet build' succeeds, validate-ef-packages-feed.py passes, and validate-scaffold-output.py --phase 4 passes.
+Gate: `dotnet build` succeeds on the full solution including test projects.
 When gate passes, set contractsScaffolded: true in HANDOFF.md and close the session.
 ```
 
@@ -72,6 +73,7 @@ Start every Phase 5 sub-phase with:
 ```text
 Load .instructions/START-AI.md and HANDOFF.md from the project root.
 Run the MCP Server Check for this sub-phase.
+Read the Phase 5 file table in .instructions/ai/SKILL.md and load the files for the current sub-phase.
 ```
 
 Then append the relevant sub-phase block below.
@@ -79,75 +81,56 @@ Then append the relevant sub-phase block below.
 ### 5a — Foundation (TDD)
 
 ```text
-Run python .instructions/scripts/get-phase-load-set.py --phase 5a --mode {full|lite|api-only} to resolve the load set.
-If context is tight, use --slice domain for entity/rule work or --slice repository for EF/repository work. These are curated compact bundles inside the same sub-phase; they do not create a new sub-phase.
 Follow .instructions/ai/tdd-protocol.md: write domain/rule/repository tests first (red), then implement to green.
 Contracts and entity shells already exist from Phase 4. Activate builders after entity logic is implemented.
-Gate: 'dotnet build' + 'dotnet test --filter TestCategory=Unit'. When gate passes, update HANDOFF.md (currentSubPhase: 5b) and close session.
+Gate: `dotnet build` + `dotnet test --filter TestCategory=Unit`.
+When gate passes, update HANDOFF.md (currentSubPhase: 5b) and close session.
 ```
 
-### 5b — App Core (TDD)
+(Note: Phase 5 was consolidated from 7 sub-phases to 5. Old `5c|5d|5e|5f|5g` mapping: 5c→5b, 5d→5c, 5e→5d, 5f/5g→5e.)
+
+### 5b — App Core + Runtime/Edge (TDD for app/API, tests-after for runtime)
 
 ```text
-Run python .instructions/scripts/get-phase-load-set.py --phase 5b --mode {full|lite|api-only}.
-If context is tight, use --slice service for mapping/service work or --slice endpoint for API/exception/endpoint-test work. These are curated compact bundles inside the same sub-phase; they do not create a new sub-phase.
-Follow .instructions/ai/tdd-protocol.md: write service tests (red), implement services (green), write endpoint tests (red), implement endpoints (green).
-Replace no-op DI stubs with real implementations.
-Gate: 'dotnet build' + 'dotnet test --filter TestCategory=Unit|TestCategory=Endpoint'. When gate passes, update HANDOFF.md and close session.
+Follow .instructions/ai/tdd-protocol.md for application/API code: write service tests (red), implement services (green),
+write endpoint tests (red), implement endpoints (green). Replace no-op DI stubs with real implementations.
+Then scaffold the enabled runtime concerns ({gateway/aspire/caching/observability/security/multi-tenant}) and add their tests.
+Gate: `dotnet build` + `dotnet test --filter TestCategory=Unit|TestCategory=Endpoint` + app starts via Aspire (when enabled).
+When gate passes, update HANDOFF.md and close session.
 ```
 
-### 5c — Runtime / Edge (Tests-After)
+### 5c — Optional Hosts (Tests-After)
 
 ```text
-Run python .instructions/scripts/get-phase-load-set.py --phase 5c --mode {full|lite|api-only}.
-Scaffold only the enabled runtime concerns: {gateway/aspire/caching/observability/security}.
-After implementation, write infrastructure tests (health checks, config loading, caching).
-Gate: 'dotnet build' + 'dotnet test' + app starts via Aspire. When gate passes, update HANDOFF.md and close session.
-```
-
-### 5d — Optional Hosts
-
-```text
-Run python .instructions/scripts/get-phase-load-set.py --phase 5d --mode {full|lite|api-only} {--include-scheduler} {--include-function-app} {--include-uno-ui} {--include-blazor-ui} {--include-notifications}.
-Scaffold only the enabled optional hosts: {scheduler/functionapp/uno-ui/blazor-ui/notifications}.
+Scaffold only the enabled optional hosts named in resource-implementation.yaml: {scheduler/functionapp/uno-ui/blazor-ui/notifications}.
 Update hostGates in HANDOFF.md per host as each reaches scaffolded → validated.
 Close session when all enabled hosts are validated (or blockers are recorded for deployment-only deps).
 ```
 
-Note: Uno UI is always a dedicated session within 5d. Use the same session start prompt but scope only to Uno UI.
+Note: Uno UI is always a dedicated session within 5c. Use the same session start prompt but scope only to Uno UI.
 
-### 5e — Quality Gates + Delivery
+### 5d — Quality Gates + Delivery
 
 ```text
-Run python .instructions/scripts/get-phase-load-set.py --phase 5e --mode {full|lite|api-only}.
-Unit/endpoint/integration tests already exist from 5a/5b/5c/5d.
+Unit/endpoint/integration tests already exist from 5a/5b/5c.
 Scaffold quality gate tests (architecture, load, benchmarks per profile: {minimal|balanced|comprehensive}), IaC, CI/CD, Dockerfile.
-Run full regression: 'dotnet test'. Also 'az bicep build --file infra/main.bicep' (if IaC enabled). Update HANDOFF.md and close session.
+Run full regression: `dotnet test`. Also `az bicep build --file infra/main.bicep` (if IaC enabled).
+Update HANDOFF.md and close session.
 ```
 
-### 5f — Authentication
+### 5e — Integration (Auth + AI)
 
 ```text
-Run python .instructions/scripts/get-phase-load-set.py --phase 5f --mode {full|lite|api-only}.
 Finalize auth: replace stubs with config-driven scaffold principal ({Entra|OAuth2|social|hybrid}).
-Gate: 'dotnet build' + 'dotnet test --filter TestCategory=Endpoint'. Update HANDOFF.md and close session.
-```
-
-### 5g — AI Integration
-
-```text
-Run python .instructions/scripts/get-phase-load-set.py --phase 5g --mode {full|lite|api-only} {--include-ai-services} {--include-ai-search} {--include-agents}.
-Scaffold AI integration: {search indexing/agent service} as enabled.
-Gate: 'dotnet build' + 'dotnet test --filter TestCategory=Unit'. Update HANDOFF.md and close session.
+If `includeAiServices: true`, also scaffold AI integration: {search indexing/agent service} as enabled in resource-implementation.yaml.
+Gate: `dotnet build` + `dotnet test --filter TestCategory=Endpoint` (auth) + `dotnet test --filter TestCategory=Unit` (AI). When all enabled capabilities pass, update HANDOFF.md and close session.
 ```
 
 ## Final Scaffold Validation
 
 ```text
 Load .instructions/support/final-scaffold-checklist.md.
-Run final scaffold validation from the app root:
-  python .instructions/scripts/run-final-scaffold-check.py --root . --require-auth-env
-Run enabled host smoke checks from final-scaffold-checklist.md.
+Walk through the checklist manually: build, test, run smoke checks for each enabled host.
 Record exact results, blockers, and deployment-only residuals in HANDOFF.md.
 ```
 

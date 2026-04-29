@@ -1,5 +1,8 @@
 # Bootstrapper
 
+> **When to read:** Phase 5b/5c, when wiring shared DI for domain/application/infrastructure services that multiple hosts (API, Function App, Scheduler, integration tests) consume.
+> **Skip if:** Single-host scaffold where registration lives directly in the host; pure domain or pure data-access work that does not touch DI.
+
 ## Overview
 
 The **Bootstrapper project** is the centralized DI registration hub. It wires up all non-host-specific services (domain, application, infrastructure) so they can be shared across multiple deployable hosts — API, Function App, Scheduler, and integration tests — without duplicating registration code.
@@ -206,3 +209,8 @@ After generating the Bootstrapper, confirm:
 - [ ] Startup tasks registered as `IStartupTask` (migrations, cache warmup)
 - [ ] No host-specific concerns (no endpoints, no triggers, no YARP) — those belong in the host project
 - [ ] Cross-references: Every service/repository in [solution-structure.md](solution-structure.md) reference map is registered here
+
+---
+
+**TaskFlow proof (local):** `../AI-Instructions-ReferenceApp/src/Host/TaskFlow.Bootstrapper/RegisterServices.cs` + `../AI-Instructions-ReferenceApp/src/Host/TaskFlow.Bootstrapper/Registration/RegisterServices.*.cs` (Application, Infrastructure, Database, Caching, RequestContext partials)
+**TaskFlow proof (remote fallback):** <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Host/TaskFlow.Bootstrapper>

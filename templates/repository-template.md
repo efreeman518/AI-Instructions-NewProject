@@ -1,5 +1,8 @@
 # Repository Template
 
+> **When to read:** Phase 5a, when generating the Trxn (mutations) + Query (reads) repository pair for an EF-backed entity, plus their interfaces.
+> **Skip if:** Entity has no mutations (read-only projection); persistence is non-EF (Cosmos/Table/Blob — use `azure-data-storage.md`); repository pair already exists.
+
 | | |
 |---|---|
 | **File** | `Infrastructure.Repositories/{Entity}RepositoryTrxn.cs`, `{Entity}RepositoryQuery.cs` |
@@ -257,3 +260,8 @@ The 2-param overload retries on `DbUpdateConcurrencyException` using the specifi
 - No `SaveChangesAsync` override on query repo — read-only by design
 - Entity-specific repositories for complex queries; `GenericRepositoryTrxn/Query` for simple CRUD
 - Use `ConfigureAwait(ConfigureAwaitOptions.None)` in repository methods (library code)
+
+---
+
+**TaskFlow proof (local):** `../AI-Instructions-ReferenceApp/src/Infrastructure/TaskFlow.Infrastructure.Repositories/TaskItemRepositoryTrxn.cs` + `TaskItemRepositoryQuery.cs`
+**TaskFlow proof (remote fallback):** <https://github.com/efreeman518/AI-Instructions-ReferenceApp/blob/main/src/Infrastructure/TaskFlow.Infrastructure.Repositories/TaskItemRepositoryTrxn.cs>

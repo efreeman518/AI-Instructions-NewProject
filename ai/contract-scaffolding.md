@@ -19,10 +19,10 @@ This phase produces the compilable skeleton that enables TDD red/green cycles in
 Before generating projects, verify EF.Packages feed readiness:
 
 ```powershell
-python .instructions/scripts/validate-ef-packages-feed.py --root . --config-only --require-auth-env
+dotnet restore
 ```
 
-If it fails, fix `nuget.config` before generating code. Do not scaffold local replacements for EF.Packages types.
+If it fails, fix `nuget.config` (and confirm `NUGET_AUTH_TOKEN` is set) before generating code. Do not scaffold local replacements for EF.Packages types.
 
 ## Loaded Skills
 
@@ -220,12 +220,11 @@ Generate entities in dependency order: parent entities first, then children. Use
 ## Gate
 
 ```powershell
+dotnet restore
 dotnet build
-python .instructions/scripts/validate-ef-packages-feed.py --root .
-python .instructions/scripts/validate-scaffold-output.py --root . --phase 4
 ```
 
-The entire solution — including all test projects — must compile successfully. EF.Packages feed/package validation and Phase 4 scaffold structure validation must pass. All tests are either absent (empty projects) or trivially pass. No `dotnet test` run is required at this gate.
+The entire solution — including all test projects — must compile successfully. `dotnet restore` must succeed against the configured private feed (with `NUGET_AUTH_TOKEN` set). All tests are either absent (empty projects) or trivially pass. No `dotnet test` run is required at this gate. Developer reviews the scaffolded shape against the verification checklist below.
 
 ---
 
@@ -263,6 +262,6 @@ The entire solution — including all test projects — must compile successfull
 - [ ] `RegisterServices.cs` wires all no-op stubs
 - [ ] No domain logic in entity shells (only `throw new NotImplementedException`)
 - [ ] No local reimplementation of EF.Packages shared types
-- [ ] `validate-ef-packages-feed.py --root .` passes
-- [ ] `validate-scaffold-output.py --root . --phase 4` passes
+- [ ] `dotnet restore` exits 0 with `NUGET_AUTH_TOKEN` set; all `EF.*` packages resolve from the configured private feed
+- [ ] Developer reviews the scaffolded shape against the items above
 - [ ] Token placeholders follow [placeholder-tokens.md](placeholder-tokens.md)

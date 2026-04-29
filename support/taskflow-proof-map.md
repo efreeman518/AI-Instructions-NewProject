@@ -2,7 +2,7 @@
 
 Use this file when you need to prove that an instruction, pattern, or scaffolded output already exists in the TaskFlow reference app.
 
-Reference app repository: <https://github.com/efreeman518/AI-Instructions-ReferenceApp>
+**Local sibling clone preferred:** if `../AI-Instructions-ReferenceApp/` exists relative to the target project's parent, read TaskFlow files via the Read tool — paths in the proof table below are relative to the TaskFlow repo root, so prefix with `../AI-Instructions-ReferenceApp/`. Fall back to GitHub MCP only when the local clone is absent: <https://github.com/efreeman518/AI-Instructions-ReferenceApp>
 
 Load this file on demand. Keep it out of the default phase context.
 
@@ -15,7 +15,7 @@ Load this file on demand. Keep it out of the default phase context.
 1. Find the current phase or concern.
 2. Jump to the matching TaskFlow area.
 3. Verify structure, wiring, and naming there before inventing a new pattern.
-4. Generate code for the target project; do not copy TaskFlow files wholesale.
+4. Generate code for the target project. Reference application rules (do-not-copy-wholesale, etc.) live in [../START-AI.md](../START-AI.md) § Reference Application.
 
 ---
 

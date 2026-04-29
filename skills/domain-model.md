@@ -1,5 +1,8 @@
 # Domain Model
 
+> **When to read:** Phase 5a, when building entities, value objects, domain rules, or factory `Create()` methods returning `DomainResult<T>`.
+> **Skip if:** Phase 5b+ where the domain layer is already in place; non-domain work (services, endpoints, infra).
+
 ## Overview
 
 Domain entities use a **rich domain model** pattern with factory creation, private setters, encapsulated validation, and `DomainResult<T>` for railway-oriented error handling. No public constructors — all creation goes through static `Create()` methods.
@@ -198,3 +201,8 @@ After generating domain entities, confirm:
 - [ ] `InvalidEntityException` exists in `Domain.Shared/Exceptions/`
 - [ ] Shared entities (Tag, etc.) are `sealed class` with `IEquatable<T>` and `Normalize` helper
 - [ ] Cross-references: Entity properties align with [data-mapping-template.md](../templates/data-mapping-template.md), EF config covers all relationships per [ef-configuration-template.md](../templates/ef-configuration-template.md)
+
+---
+
+**TaskFlow proof (local):** `../AI-Instructions-ReferenceApp/src/Domain/TaskFlow.Domain.Model/TaskItem/TaskItem.cs` and `../AI-Instructions-ReferenceApp/src/Domain/TaskFlow.Domain.Model/Rules/TaskItemStatusTransitionRule.cs`
+**TaskFlow proof (remote fallback):** <https://github.com/efreeman518/AI-Instructions-ReferenceApp/blob/main/src/Domain/TaskFlow.Domain.Model/TaskItem/TaskItem.cs>

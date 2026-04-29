@@ -1,5 +1,8 @@
 # Service Template
 
+> **When to read:** Phase 5b, when generating an application service for an entity — orchestrating repositories, mapping DTOs, returning `Result<T>` / `Result<DefaultResponse>`.
+> **Skip if:** Pure projection (no orchestration); query-only with no domain rules; service already exists.
+
 | | |
 |---|---|
 | **File** | `Application.Services/{Entity}Service.cs` |
@@ -245,3 +248,8 @@ public interface I{Entity}Service
 ## Policy Notes
 
 - Monetary and time-boundary sensitive logic should be delegated to dedicated policy services (for example money calculation, entitlement resolution, and period boundary policy) rather than hard-coded inside endpoint handlers.
+
+---
+
+**TaskFlow proof (local):** `../AI-Instructions-ReferenceApp/src/Application/TaskFlow.Application.Services/TaskItemService.cs` + companion `Rules/TaskItemStructureValidator.cs` (multi-tenant variant) and `Rules/ServiceErrorMessages.cs`
+**TaskFlow proof (remote fallback):** <https://github.com/efreeman518/AI-Instructions-ReferenceApp/blob/main/src/Application/TaskFlow.Application.Services/TaskItemService.cs>

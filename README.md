@@ -19,14 +19,14 @@ Install this repo into each app repository. The installer copies runtime instruc
 
 | Entrypoint | Purpose |
 |---|---|
-| `dotnet-scaffold` / `/scaffold` / explicit CLI prompt | Full phased scaffolding, Phases 1–5g, one phase per session. |
+| `dotnet-scaffold` / `/scaffold` / explicit CLI prompt | Full phased scaffolding, Phases 1–5e, one phase per session. |
 | `vertical-slice` / `/vertical-slice` / explicit CLI prompt | Add one entity to an existing scaffolded solution using the fast-path checklist. |
 
 ### How they work
 
 All harnesses follow the same flow:
 
-1. **Scaffold** — Boot from `.instructions/START-AI.md`, check `HANDOFF.md` in the project root, load only the current phase files via `.instructions/phase-load-packs.json`, execute one phase, write `HANDOFF.md`, stop.
+1. **Scaffold** — Boot from `.instructions/START-AI.md`, check `HANDOFF.md` in the project root, load only the current phase files (per the Phase Router in START-AI.md and the Phase 5 file table in `ai/SKILL.md`), execute one phase, write `HANDOFF.md`, stop.
 2. **Vertical slice** — Load `.instructions/support/vertical-slice-checklist.md`, generate the full entity stack (entity → EF config → repos → DTOs → mapper → validator → service → endpoint → DI wiring → migration), validate with `dotnet build` + `dotnet test`.
 
 ### Install into a new app
@@ -45,7 +45,7 @@ What it places:
 
 | Source in this repo | Destination in your app |
 |---|---|
-| `README.md`, `CLAUDE.md`, `START-AI.md`, `phase-load-packs.json`, `_manifest.json`, `payload-manifest.json` | `<app>/.instructions/` |
+| `README.md`, `CLAUDE.md`, `START-AI.md` | `<app>/.instructions/` |
 | `ai/`, `patterns/`, `schemas/`, `skills/`, `support/`, `templates/`, `scripts/` | `<app>/.instructions/` |
 | `AGENTS.md` | `<app>/AGENTS.md` (app repo root, so Codex-style CLI agents discover it) |
 | `.claude/commands/` | `<app>/.claude/commands/` (app repo root, so Claude Code discovers them) |
@@ -61,11 +61,9 @@ Flags:
 
 After install:
 
-- [ ] Run `python .instructions/scripts/preflight-installed.py` in the app repo to validate the copied set without modifying instruction files.
 - [ ] Configure the private EF.Packages feed with `python .instructions/scripts/configure-ef-packages-feed.py --root . --feed-url https://nuget.pkg.github.com/{owner}/index.json --username {github-user}`.
-- [ ] During Phase 3, run `python .instructions/scripts/validate-ef-packages-feed.py --root . --config-only --require-auth-env`.
-- [ ] After Phase 4, run `python .instructions/scripts/validate-scaffold-output.py --root . --phase 4`.
-- [ ] After the final enabled Phase 5 sub-phase, run `python .instructions/scripts/run-final-scaffold-check.py --root . --require-auth-env`.
+- [ ] Confirm `dotnet restore` exits 0.
+- [ ] Phase gates rely on `dotnet build` and `dotnet test`; the scaffold checklist at `support/final-scaffold-checklist.md` covers end-to-end acceptance.
 
 ### Manual copy (alternative)
 
@@ -94,7 +92,7 @@ Each phase runs in its own AI session and produces artifacts the next phase cons
 | **2 — Resource Definition** | Map each resource requirement to concrete technology choices — data stores, messaging, AI capabilities, hosting models. | `resource-implementation.yaml` |
 | **3 — Implementation Planning** | Resolve open questions, verify tooling (NuGet feeds, CLIs), discover project-specific CLIs and MCP servers, and produce a sequenced build plan. | `implementation-plan.md` |
 | **4 — Contract Scaffolding** | Generate solution structure, interfaces, DTOs, entity shells, test infrastructure, and no-op DI stubs. Gate: `dotnet build` succeeds on the full solution. | Compilable skeleton |
-| **5 — Implementation (TDD)** | Build vertical slices entity-by-entity across sub-phases 5a–5g. Phases 5a/5b use test-driven development (write tests first → red → implement → green). Phases 5c–5g use tests-after. | Production code + passing tests |
+| **5 — Implementation (TDD)** | Build vertical slices entity-by-entity across sub-phases 5a–5e (Foundation, App Core + Runtime, Optional Hosts, Quality + Delivery, Integration). Phase 5a uses test-driven development (write tests first → red → implement → green); 5b is mixed (TDD for app/API, tests-after for runtime); 5c–5e are tests-after. | Production code + passing tests |
 
 Phase details: [START-AI.md](START-AI.md) § Phase Router.
 
@@ -106,7 +104,7 @@ The instruction set is designed around three core ideas:
 Five phases prevent hallucinated architecture by ensuring verified context before code is written. Phase 4 produces a compilable skeleton so that Phase 5a/5b can follow a strict red/green TDD cycle — tests are written against contracts before any implementation exists. See [ai/tdd-protocol.md](ai/tdd-protocol.md).
 
 **2. Skills and templates as composable units.**
-Implementation knowledge is split into ~27 skill files (how things work) and ~25 template files (what to generate). An AI token manifest (`_manifest.json`) tracks estimated token costs, phase membership, and mode exclusions so the assistant loads only what's needed per phase, staying within context budgets. Templates carry `generates` and `requires` metadata, and the load-set resolver expands transitive dependencies automatically.
+Implementation knowledge is split into ~27 skill files (how things work) and ~25 template files (what to generate). The Phase Router in `START-AI.md` and the Phase 5 file table in `ai/SKILL.md` tell the agent which files to load for the current phase or sub-phase.
 
 **3. Composition patterns, not documentation alone.**
 Pattern files in `patterns/` document how generated components wire together across projects — database context pooling, API startup sequences, request context resolution, cache configuration, and Aspire resource wiring. An index (`support/pattern-dispatcher.md`) maps each pattern file to its relevant phase. This grounds the generated output in proven, real-world patterns rather than abstract descriptions.
@@ -135,15 +133,14 @@ If you want the shortest path from zero context to first scaffold:
 
 1. Create a new app repo.
 2. Run `python scripts/install-to-project.py --target /path/to/your-app-repo` from this repo.
-3. Run `python .instructions/scripts/preflight-installed.py` in the app repo. This check is read-only and does not require the author-side `tests/` folder.
-4. Start through the harness table above: `AGENTS.md`, Copilot agent, Claude command, or a prompt that loads `.instructions/START-AI.md`.
+3. Start through the harness table above: `AGENTS.md`, Copilot agent, Claude command, or a prompt that loads `.instructions/START-AI.md`.
 
 Read the rest of this guide when you need setup details, MCP recommendations, or troubleshooting rules.
 
 ## Prerequisites
 
 - `git`
-- Python 3.11+ for instruction validation scripts
+- Python 3.11+ to run `install-to-project.py` and `configure-ef-packages-feed.py`
 - Latest stable `.NET SDK`
 - Docker engine running (Docker Desktop not required) — Aspire relies on it for hosting local container services
 - VS Code + AI assistant
@@ -166,11 +163,10 @@ Use an environment variable rather than committing secrets:
 $env:NUGET_AUTH_TOKEN = "ghp_xxxxxxxxxxxxxxxxxxxx"
 ```
 
-Then ensure `nuget.config` maps `EF.*` to the private feed and uses `%NUGET_AUTH_TOKEN%` for the feed password. Validate before Phase 4:
+Then ensure `nuget.config` maps `EF.*` to the private feed and uses `%NUGET_AUTH_TOKEN%` for the feed password. Configure once, then verify with `dotnet restore`:
 
 ```powershell
 python .instructions/scripts/configure-ef-packages-feed.py --root . --feed-url https://nuget.pkg.github.com/{owner}/index.json --username {github-user}
-python .instructions/scripts/validate-ef-packages-feed.py --root . --config-only --require-auth-env
 dotnet restore
 ```
 
@@ -199,9 +195,6 @@ Expected shape (note `AGENTS.md`, `.github/agents/`, and `.claude/commands/` liv
     README.md
     CLAUDE.md
     START-AI.md
-    _manifest.json
-    phase-load-packs.json
-    payload-manifest.json
     ai/
       SKILL.md
       domain-specification-schema.md
@@ -258,14 +251,12 @@ Phase 3 analyzes `resource-implementation.yaml` technology choices and actively 
 |---|---|
 | **Domain discovery conversation** | Phase 1 drives a structured interview to define shared language, decision dependencies, entities, relationships, events, workflows, and business rules in pure business language — no implementation details. The resulting [domain specification](ai/domain-specification-schema.md), `UBIQUITOUS-LANGUAGE.md`, and `DESIGN-DECISIONS.md` become the source of truth that every later phase consumes, preventing scope drift and naming drift. |
 | **Resource & technology mapping** | Phase 2 is a deliberate conversation about *how* to implement each domain concept — which data store fits each entity (SQL, Cosmos DB, Table Storage), where messaging is needed (Service Bus, Event Grid), whether AI capabilities apply (search, agents, document intelligence), and which hosting model suits each workload. The output is a [resource implementation](ai/resource-implementation-schema.md) YAML that locks in technology choices before any code is written. |
-| **Token-aware phase loading** | A manifest and Python scripts calculate per-file token costs and generate phase-specific load sets, keeping AI context usage under a configurable ceiling (~30K tokens/phase). |
-| **Three scaffolding modes** | `full` (production w/ gateway, scheduler, UI, IaC), `lite` (clean architecture without infra), `api-only` (single API host). Set once in resource YAML, all downstream loading adapts. |
+| **Phase-scoped file loading** | The Phase Router in `START-AI.md` and the Phase 5 file table in `ai/SKILL.md` tell the agent which files to load for the current phase. |
+| **Three scaffolding modes** | `full` (production w/ gateway, scheduler, UI, IaC), `lite` (clean architecture without infra), `api-only` (single API host). Set once in resource YAML; the Phase Router and Phase 5 file table cover what to skip. |
 | **Vertical-slice scaffolding** | Each entity is built end-to-end: domain model → EF config → repository → DTO/mapper → service → endpoint → tests. A [checklist](support/vertical-slice-checklist.md) and [execution gates](support/execution-gates.md) enforce completeness. |
 | **Built-in quality gates** | `dotnet build` + targeted tests after every sub-phase. Architecture tests enforce layer dependencies. Structure validators catch DTO issues before runtime. |
-| **Automated validation scripts** | Python scripts lint instruction files, validate domain/resource YAML, verify EF.Packages feed/package hygiene, validate generated scaffold shape, and run preflight checks before scaffolding begins. |
-| **Golden-path sample** | [support/golden-path-sample.md](support/golden-path-sample.md) provides a small WorkBoard scaffold scenario for regression-checking instruction changes without productizing the repo. |
-| **Visible budget proof loop** | `scripts/report-context-budgets.py` reports hot-path phase totals and compact 5a/5b slice totals directly from `_manifest.json` + `phase-load-packs.json`, and preflight prints that report on every run. |
-| **Safe session handoff** | Context budget tracking per sub-phase plus a `HANDOFF.md` template let the AI resume cleanly across sessions without losing progress or re-reading the full instruction set. |
+| **Golden-path sample** | [support/golden-path-sample.md](support/golden-path-sample.md) provides a small WorkBoard scaffold scenario for regression-checking instruction changes. |
+| **Safe session handoff** | A `HANDOFF.md` template lets the AI resume cleanly across sessions without losing progress or re-reading the full instruction set. |
 | **Result pattern error flow** | Domain → Service → Endpoint error mapping is fully documented with a type mapping table, anti-patterns, and end-to-end trace example. No exceptions for business logic. |
 | **Test data builders** | Fluent builder patterns for entities and DTOs ensure tests construct valid objects by default and override only the property under test. |
 | **Composition pattern catalog** | Pattern files in `patterns/` document cross-project wiring — database pooling, API startup sequence, request context, cache configuration, Aspire resource wiring — with inline code snippets. An index (`support/pattern-dispatcher.md`) maps each to its relevant phase. |
@@ -313,16 +304,8 @@ These references are for **maintaining and developing the instruction set itself
 
 Useful script entrypoints:
 
-- `scripts/setup-local.py` — recreate `.venv` and run author preflight in this repo or installed-payload preflight under `.instructions/`.
+- `scripts/install-to-project.py` — copy the runtime payload into a consumer app's `.instructions/` directory and place harness entrypoints at the app root.
 - `scripts/configure-ef-packages-feed.py` — create/update target-app `nuget.config` for EF.Packages without writing PATs.
-- `scripts/validate-handoff.py` — validate target-app `HANDOFF.md` resume state.
-- `scripts/validate-ubiquitous-language.py` — validate Phase 1 language and decision artifacts against `domain-specification.yaml`.
-- `scripts/validate-implementation-plan.py` — validate Phase 3 readiness before contract scaffolding.
-- `scripts/run-final-scaffold-check.py` — run restore/build/test plus static scaffold validators in a generated app.
-
-Run `python scripts/preflight-instructions.py` before Phase 4 execution and before opening validation PRs in this instruction repository. It refreshes `_manifest.json`, regenerates `phase-load-packs.json`, prints the current context-budget report, lints markdown invariants, and runs the Python unittest suite in `tests/`. In a consumer app with an installed `.instructions/` payload, use `python .instructions/scripts/preflight-installed.py` instead.
-
-For an on-demand budget snapshot without the full preflight, run `python scripts/report-context-budgets.py --mode full`.
 
 ## Document Ownership
 
@@ -333,7 +316,7 @@ For an on-demand budget snapshot without the full preflight, run `python scripts
  
 ## Layout
 
-- Root: entry points and machine-readable metadata (`AGENTS.md`, `README.md`, `CLAUDE.md`, `START-AI.md`, `_manifest.json`, `phase-load-packs.json`)
+- Root: entry points (`AGENTS.md`, `README.md`, `CLAUDE.md`, `START-AI.md`)
 - `ai/`: phase schemas, execution guidance, and AI-loaded base docs
 - `support/`: operator checklists, troubleshooting, handoff template, prompt catalog, and repo change notes
 - `skills/`, `templates/`, `scripts/`, `schemas/`: domain-specific content and validation schemas

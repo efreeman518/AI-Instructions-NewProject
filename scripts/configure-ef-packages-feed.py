@@ -234,11 +234,7 @@ def main():
     action = "Updated" if original_text else "Created"
     print(f"{action} {original_path}")
     print(f"Credential uses %{args.token_env}% only. No PAT was written.")
-    print(
-        "Next: run "
-        "`python .instructions/scripts/validate-ef-packages-feed.py --root . "
-        "--config-only --require-auth-env`."
-    )
+    print("Next: run `dotnet restore` to confirm the feed authenticates correctly.")
     return 0
 
 

@@ -1,5 +1,53 @@
 # Data Persistence (EF Core)
 
+> **When to read:** Phase 5a, when building EF Core DbContexts, entity configurations, repositories (Trxn/Query split), or updater helpers for SQL Server / Azure SQL.
+> **Skip if:** Cosmos/Table/Blob-only persistence (use `azure-data-storage.md` instead); pure domain work; phases 5b+ where data access is already wired.
+
+## Worked Example
+
+This is the actual `TaskItemRepositoryTrxn` from TaskFlow (`../AI-Instructions-ReferenceApp/src/Infrastructure/TaskFlow.Infrastructure.Repositories/TaskItemRepositoryTrxn.cs`):
+
+```csharp
+public class TaskItemRepositoryTrxn(TaskFlowDbContextTrxn db)
+    : RepositoryBase<TaskFlowDbContextTrxn, string, Guid?>(db), ITaskItemRepositoryTrxn
+{
+    public async Task<TaskItem?> GetTaskItemAsync(Guid id, bool inclChildren = true, CancellationToken ct = default)
+    {
+        var includesList = new List<Expression<Func<IQueryable<TaskItem>, IIncludableQueryable<TaskItem, object?>>>>
+        {
+            q => q.Include(t => t.Category)
+        };
+
+        if (inclChildren)
+        {
+            includesList.Add(q => q.Include(t => t.Comments));
+            includesList.Add(q => q.Include(t => t.ChecklistItems));
+            includesList.Add(q => q.Include(t => t.TaskItemTags).ThenInclude(tt => tt.Tag));
+            includesList.Add(q => q.Include(t => t.SubTasks));
+        }
+
+        return await GetEntityAsync(
+            true,
+            filter: t => t.Id == id,
+            splitQueryThresholdOptions: SplitQueryThresholdOptions.Default,
+            includes: [.. includesList],
+            cancellationToken: ct
+        ).ConfigureAwait(ConfigureAwaitOptions.None);
+    }
+
+    public DomainResult<TaskItem> UpdateFromDto(TaskItem entity, TaskItemDto dto, RelatedDeleteBehavior relatedDeleteBehavior = RelatedDeleteBehavior.None)
+        => DB.UpdateFromDto(entity, dto, relatedDeleteBehavior);
+}
+```
+
+Things to notice:
+- Inherits from `RepositoryBase<TContext, TAuditId, TTenantId>` from EF.Packages — the entity-specific class only adds *what's different* (entity-specific includes, `UpdateFromDto` delegation).
+- `GetEntityAsync` does the heavy lifting; this class composes includes conditionally and delegates.
+- `ConfigureAwait(ConfigureAwaitOptions.None)` on every async call (library code).
+- The Query repository is a separate class with NoTracking semantics — see `TaskItemRepositoryQuery.cs` in the same folder.
+
+The principles below are commentary on this shape — they tell you why each piece exists and when to deviate.
+
 ## Overview
 
 Use EF Core with split read/write contexts, explicit entity configurations, repository abstractions, updater helpers for child synchronization, and concurrency-safe save paths.
@@ -197,3 +245,8 @@ await repoTrxn.SaveChangesAsync(OptimisticConcurrencyWinner.ClientWins, ct);
 - [ ] No migration renamed after sharing
 - [ ] Multi-store changes deploy code before SQL migration
 - [ ] Mappings/repositories align with [entity-template.md](../templates/entity-template.md) and [repository-template.md](../templates/repository-template.md)
+
+---
+
+**TaskFlow proof (local):** `../AI-Instructions-ReferenceApp/src/Infrastructure/TaskFlow.Infrastructure.Repositories/TaskItemRepositoryTrxn.cs` + `TaskItemRepositoryQuery.cs`, plus `../AI-Instructions-ReferenceApp/src/Host/TaskFlow.Bootstrapper/Registration/RegisterServices.Database.cs`
+**TaskFlow proof (remote fallback):** <https://github.com/efreeman518/AI-Instructions-ReferenceApp/blob/main/src/Infrastructure/TaskFlow.Infrastructure.Repositories/TaskItemRepositoryTrxn.cs>

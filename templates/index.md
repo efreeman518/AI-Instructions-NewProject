@@ -93,4 +93,4 @@ Scaffold either Uno Platform (multi-target WASM + mobile + desktop) or Blazor (S
 | **5e — Quality Gates** | **`test-templates-quality`**, `dockerfile-template` |
 | **5g — AI** | `ai-search-template`, `agent-template` |
 
-> **Note:** Use `phase-load-packs.json` for authoritative per-phase file lists. This index is a human/AI quick-reference.
+> **Note:** Use the Phase Router in `START-AI.md` and the Phase 5 file table in `ai/SKILL.md` for authoritative per-phase file lists. This index is a human/AI quick-reference for "I need to scaffold X → load template Y".

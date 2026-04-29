@@ -5,7 +5,7 @@ Create this file in the **target project root** at the end of every phase and ea
 ```yaml
 instructionVersion: ""
 currentPhase: ""           # 1 | 2 | 3 | 4 | 5
-currentSubPhase: ""        # 5a | 5b | 5c | 5d | 5e | 5f | 5g (Phase 5 only)
+currentSubPhase: ""        # 5a | 5b | 5c | 5d | 5e (Phase 5 only). Migration: old 5c→5b, 5d→5c, 5e→5d, 5f/5g→5e.
 scaffoldMode: ""           # full | lite | api-only
 testingProfile: ""         # minimal | balanced | comprehensive
 contractsScaffolded: false # set true after Phase 4 completes
@@ -21,7 +21,7 @@ testStatus:                # updated per sub-phase
   unitTests: not-started   # not-started | red | green
   endpointTests: not-started
   infrastructureTests: not-started
-hostGates:                 # Phase 5d per-host status: not-started | scaffolded | validated
+hostGates:                 # Phase 5c per-host status: not-started | scaffolded | validated
   scheduler: not-started
   functionApp: not-started
   unoUI: not-started       # always a dedicated session
@@ -71,11 +71,11 @@ Out of scope for this session — do not attempt unless explicitly re-scoped:
 - Keep `enabledFeatures` flags in sync with `resource-implementation.yaml`.
 - For Phase 4, set `contractsScaffolded: true` after the gate passes. Phase 5a/5b require this flag.
 - For Phase 5a/5b, update `testStatus` as tests transition: `not-started` → `red` (tests written, failing) → `green` (implementation complete, tests passing). This tracks TDD progress across sessions.
-- For Phase 5d, update `hostGates` per-host as each host moves through scaffolded → validated. Do not mark the sub-phase complete until all enabled hosts reach `validated`.
+- For Phase 5c (Optional Hosts), update `hostGates` per-host as each host moves through scaffolded → validated. Do not mark the sub-phase complete until all enabled hosts reach `validated`.
 - Note unresolved infra/auth/package-feed issues here rather than retrying them repeatedly.
 - Record instruction gaps in root `INSTRUCTION-GAPS.md`, not inside `.instructions/`, during consumer app scaffolding.
 - Keep entries short so the next AI turn can resume without reloading unnecessary docs.
-- Run `python .instructions/scripts/validate-handoff.py --root .` before ending a phase session.
+- Verify HANDOFF.md is well-formed (correct sub-phase, gate result, next-load-set populated, blockers itemized) before ending a phase session.
 - **Ephemeral URLs:** Do not record Aspire dashboard URLs, proxy ports, or host endpoints. These are assigned at runtime and change between launches. Instead, record the discovery method (e.g., "read dashboard URL from `dotnet run` output, then check resource list for host URLs").
 
 ## Residual Environment Note
@@ -100,9 +100,9 @@ Issues encountered and fixed this session (so the next session does not re-inves
 - Result:
 - Notes:
 
-### Per-Host Gate Status (Phase 5d)
+### Per-Host Gate Status (Phase 5c)
 
-For each enabled optional host, record its individual gate result. Use "complete", "scaffolded", or "partially validated" — never claim Phase 5d complete if any enabled host is only scaffolded.
+For each enabled optional host, record its individual gate result. Use "complete", "scaffolded", or "partially validated" — never claim Phase 5c complete if any enabled host is only scaffolded.
 
 | Host | Build | Host-Specific Gate | Status | Notes |
 |------|-------|--------------------|--------|-------|
