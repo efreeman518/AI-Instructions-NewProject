@@ -307,20 +307,6 @@ Useful script entrypoints:
 - `scripts/install-to-project.py` — copy the runtime payload into a consumer app's `.instructions/` directory and place harness entrypoints at the app root.
 - `scripts/configure-ef-packages-feed.py` — create/update target-app `nuget.config` for EF.Packages without writing PATs.
 
-### Author-side validation
-
-Run before commit to catch drift between docs (no external services required for the first three; the rest need `pip install pyyaml jsonschema`):
-
-| Script | What it checks |
-|---|---|
-| `scripts/check-phase-references.py` | Fails on any stale Phase 5 sub-phase reference outside the canonical 5a-5e set. Run any time docs are edited. |
-| `scripts/check-test-naming.py` | Fails on legacy test-project names that don't match the canonical set in `skills/solution-structure.md` (e.g., browser tests outside `Test.PlaywrightUI`, or endpoint contract tests scaffolded under `Test.Integration`). |
-| `scripts/check-cross-doc-links.py` | Walks markdown and verifies relative links resolve. |
-| `scripts/validate-handoff.py support/HANDOFF.md` | Validates HANDOFF.md YAML front-matter against `schemas/handoff.schema.json`. |
-| `scripts/validate-domain-spec.py <path>` | Validates a `domain-specification.yaml` against the schema. |
-| `scripts/validate-resource-impl.py <path>` | Validates a `resource-implementation.yaml` against the schema. |
-| `scripts/audit-vulnerable-packages.py [solution]` | Runs `dotnet list package --vulnerable --include-transitive` and enforces the severity policy from [support/execution-gates.md](support/execution-gates.md) § Vulnerability Audit. |
-
 ## Document Ownership
 
 - `README.md` — human onboarding and repository overview
