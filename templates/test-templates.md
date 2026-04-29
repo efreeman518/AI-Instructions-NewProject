@@ -430,25 +430,22 @@ Endpoint contract tests exercise HTTP endpoints through `WebApplicationFactory` 
 
 For multi-endpoint workflow chains (create → search → update → delete), use `Test.E2E` instead — same harness, different scope.
 
-### CustomApiFactory
+### CustomApiFactory (derives from shared base)
 
-#### File: `Test/Test.Endpoints/CustomApiFactory.cs` (or `Test/Test.Support/CustomApiFactory.cs` if shared — see follow-up)
+The shared plumbing (pooled-context swap, interceptor removal, reflection-based context creation) lives in `Test/Test.Support/WebApplicationFactoryBase.cs` — see [test-templates-endpoint.md](test-templates-endpoint.md) § Shared WebApplicationFactoryBase for the full base class.
+
+#### File: `Test/Test.Endpoints/CustomApiFactory.cs`
 
 ```csharp
-public class CustomApiFactory<TProgram>(string? dbConnectionString = null)
-    : WebApplicationFactory<TProgram> where TProgram : class
+public sealed class CustomApiFactory : WebApplicationFactoryBase<Program, {App}DbContextTrxn, {App}DbContextQuery>
 {
-    protected override void ConfigureWebHost(IWebHostBuilder builder)
-    {
-        builder.UseEnvironment("Development").ConfigureServices(services =>
-        {
-            services.RemoveAll<IHostedService>();
-            DbSupport.ConfigureServicesTestDB<{App}DbContextTrxn, {App}DbContextQuery>(
-                services,
-                dbConnectionString,
-                "Test.Endpoints.TestDB");
-        });
-    }
+    private readonly string _dbName = $"TestDb_{Guid.NewGuid()}";
+
+    protected override DbContextOptions BuildTrxnOptions() =>
+        new DbContextOptionsBuilder<{App}DbContextTrxn>().UseInMemoryDatabase(_dbName).Options;
+
+    protected override DbContextOptions BuildQueryOptions() =>
+        new DbContextOptionsBuilder<{App}DbContextQuery>().UseInMemoryDatabase(_dbName).Options;
 }
 ```
 

@@ -17,60 +17,104 @@ public async Task Given_ValidPayload_When_PostEntity_Then_Returns201() { }
 
 ---
 
-## CustomApiFactory
+## Shared WebApplicationFactoryBase (in Test.Support)
 
-Generated in Phase 4. Located at `Test/Test.Endpoints/CustomApiFactory.cs` (or shared via `Test.Support` if both `Test.Endpoints` and `Test.E2E` need it — see follow-up refactor in `support/REFACTOR-TODO.md`):
+The plumbing for swapping the production DbContext + interceptors + pooled factories with a test-mode store is identical between `Test.Endpoints` (in-memory) and `Test.E2E` (Testcontainers SQL). It lives once in `Test.Support` as `WebApplicationFactoryBase<TProgram, TTrxnContext, TQueryContext>`. Both projects derive thin specializations that only declare which options to use.
+
+`Test/Test.Support/WebApplicationFactoryBase.cs`:
 
 ```csharp
-public class CustomApiFactory<TProgram>(string? dbConnectionString = null)
-    : WebApplicationFactory<TProgram> where TProgram : class
+public abstract class WebApplicationFactoryBase<TProgram, TTrxnContext, TQueryContext> : WebApplicationFactory<TProgram>
+    where TProgram : class
+    where TTrxnContext : DbContext
+    where TQueryContext : DbContext
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.UseEnvironment("Development").ConfigureServices(services =>
+        builder.UseEnvironment("Development");
+        builder.ConfigureServices(services =>
         {
             services.RemoveAll<IHostedService>();
-            DbSupport.ConfigureServicesTestDB<{App}DbContextTrxn, {App}DbContextQuery>(
-                services,
-                dbConnectionString,
-                "Test.Endpoints.TestDB");
+            RemoveStandardEfInfrastructure(services);
+            RemoveAppSpecificServices(services);
+
+            var trxnOptions = BuildTrxnOptions();
+            var queryOptions = BuildQueryOptions();
+            services.AddScoped(_ => WebApplicationFactoryHelpers.CreateContext<TTrxnContext>(trxnOptions));
+            services.AddScoped(_ => WebApplicationFactoryHelpers.CreateContext<TQueryContext>(queryOptions));
+            services.AddSingleton<IDbContextFactory<TTrxnContext>>(new TestDbContextFactory<TTrxnContext>(trxnOptions));
+            services.AddSingleton<IDbContextFactory<TQueryContext>>(new TestDbContextFactory<TQueryContext>(queryOptions));
         });
+    }
+
+    protected abstract DbContextOptions BuildTrxnOptions();
+    protected abstract DbContextOptions BuildQueryOptions();
+    protected virtual void RemoveAppSpecificServices(IServiceCollection services) { }
+
+    private static void RemoveStandardEfInfrastructure(IServiceCollection services)
+    {
+        services.RemoveAll<AuditInterceptor<string, Guid?>>();
+        services.RemoveAll<ConnectionNoLockInterceptor>();
+        // Removes: TTrxnContext, TQueryContext, DbContextOptions<TTrxn|TQuery>, DbContextOptions,
+        //          IDbContextFactory<TTrxn|TQuery>, DbContextScopedFactory<...>, DbContextPool partial-name match
+    }
+}
+
+public sealed class TestDbContextFactory<TContext>(DbContextOptions options) : IDbContextFactory<TContext>
+    where TContext : DbContext
+{
+    public TContext CreateDbContext() => WebApplicationFactoryHelpers.CreateContext<TContext>(options);
+}
+
+public static class WebApplicationFactoryHelpers
+{
+    public static TContext CreateContext<TContext>(DbContextOptions options) where TContext : DbContext
+    {
+        // Reflection-based ctor invoke bypasses DbContextBase's `required` member enforcement.
     }
 }
 ```
 
-### Pooled DbContext Swap — Required Removals
-
-When the Bootstrapper uses `AddPooledDbContextFactory` + `DbContextScopedFactory` + `AuditInterceptor` (per [data-layer-wiring.md](../patterns/data-layer-wiring.md)), the test factory's `ConfigureServices` (or `DbSupport`) must remove **all** of the following before re-registering in-memory contexts:
+**Why a base class:** the production host registers `AddPooledDbContextFactory` + `DbContextScopedFactory` + `AuditInterceptor` (per [data-layer-wiring.md](../patterns/data-layer-wiring.md)). Both Test.Endpoints and Test.E2E need to remove **all** of the following before re-registering test contexts:
 
 | Registration to Remove | Why |
 |---|---|
 | `AuditInterceptor<string, Guid?>` | Depends on `IInternalMessageBus` (EF.BackgroundServices), not registered in test host |
 | `ConnectionNoLockInterceptor` | SQL-only interceptor, incompatible with InMemory provider |
-| `IDbContextPool<T>` (internal) | Pooled factory creates singleton pools that conflict with scoped in-memory options |
-| `DbContextScopedFactory<T, string, Guid?>` | Wraps `IDbContextFactory<T>` — must be removed and re-registered or left for re-resolution |
-| `IDbContextFactory<T>` | Original pooled factory — must be replaced with in-memory factory |
-| `DbContextOptions<T>` + `DbContextOptions` | Pool-registered options conflict with new in-memory options |
+| `IDbContextPool<T>` (internal) | Pooled factory creates singleton pools that conflict with scoped test options |
+| `DbContextScopedFactory<T, string, Guid?>` | Wraps `IDbContextFactory<T>` — must be removed and re-registered |
+| `IDbContextFactory<T>` | Original pooled factory — must be replaced with `TestDbContextFactory<T>` |
+| `DbContextOptions<T>` + `DbContextOptions` | Pool-registered options conflict with new test options |
 
-**Critical details:**
+The base does this once. Derived classes provide only the test-mode store.
+
+**Critical details preserved by the base:**
 1. **Typed options per context.** Use `new DbContextOptionsBuilder<{App}DbContextTrxn>().UseInMemoryDatabase(name).Options` — do NOT use generic `DbContextOptions` when multiple contexts exist. `DbContextBase` constructors take `DbContextOptions` (non-generic base), but EF validates the generic type at runtime.
-2. **Required member bypass.** `DbContextBase<TAuditIdType, TTenantIdType>` declares `required` members (e.g., `AuditId`). Use `ConstructorInfo.Invoke()` via reflection to bypass compile-time `required` enforcement when creating contexts from a test factory.
-3. **Re-provide `IDbContextFactory<T>`.** `DbContextScopedFactory` resolves `IDbContextFactory<T>` — provide a test implementation that creates in-memory contexts.
+2. **Required member bypass.** `DbContextBase<TAuditIdType, TTenantIdType>` declares `required` members (e.g., `AuditId`). The base's `WebApplicationFactoryHelpers.CreateContext<T>` uses `ConstructorInfo.Invoke()` via reflection to bypass compile-time `required` enforcement when creating contexts from a test factory.
+3. **Re-provided `IDbContextFactory<T>`.** `DbContextScopedFactory` resolves `IDbContextFactory<T>` — the base registers `TestDbContextFactory<T>` that creates contexts via reflection.
+
+## Test.Endpoints derived factory (in-memory)
+
+`Test/Test.Endpoints/CustomApiFactory.cs`:
 
 ```csharp
-// Example: reflection-based context factory for required-member bypass
-internal sealed class TestDbContextFactory<TContext>(DbContextOptions options)
-    : IDbContextFactory<TContext> where TContext : DbContext
+public sealed class CustomApiFactory : WebApplicationFactoryBase<Program, {App}DbContextTrxn, {App}DbContextQuery>
 {
-    public TContext CreateDbContext()
-    {
-        var genericOptionsType = typeof(DbContextOptions<>).MakeGenericType(typeof(TContext));
-        var ctor = typeof(TContext).GetConstructor([genericOptionsType])
-                ?? typeof(TContext).GetConstructor([typeof(DbContextOptions)]);
-        return (TContext)ctor!.Invoke([options]);
-    }
+    private readonly string _dbName = $"TestDb_{Guid.NewGuid()}";
+
+    protected override DbContextOptions BuildTrxnOptions() =>
+        new DbContextOptionsBuilder<{App}DbContextTrxn>().UseInMemoryDatabase(_dbName).Options;
+
+    protected override DbContextOptions BuildQueryOptions() =>
+        new DbContextOptionsBuilder<{App}DbContextQuery>().UseInMemoryDatabase(_dbName).Options;
 }
 ```
+
+That's the entire file. The pooled-context swap, interceptor removal, factory plumbing, and reflection-based context creation are inherited.
+
+## Test.E2E derived factory (Testcontainers SQL)
+
+`Test/Test.E2E/SqlApiFactory.cs` is identical except the options use `UseSqlServer(connectionString)` and the class also manages the container lifecycle (start/stop). See [test-templates-quality.md](test-templates-quality.md).
 
 ---
 
