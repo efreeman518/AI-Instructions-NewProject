@@ -105,8 +105,10 @@ These types are consumed throughout scaffolded code. Know where they come from s
 
 | Type | Package | Used For |
 |---|---|---|
-| `UnitTestBase` | EF.Test.Unit | Base class for unit tests with service provider setup |
-| `IntegrationTestBase` | EF.Test.Integration | Base class with TestContainers + WebApplicationFactory |
+| `UnitTestBase` | EF.Test.Unit | Base class for `Test.Unit` (mocked unit tests) |
+| `IntegrationTestBase` | EF.Test.Integration | Base class with TestContainers + WebApplicationFactory; consumed by `Test.Endpoints`, `Test.E2E`, and `Test.Integration` |
+
+**Naming asymmetry:** `EF.Test.Integration` is the EF package name and predates the project split; it provides the WebApplicationFactory base used by `Test.Endpoints` (per-endpoint contract), `Test.E2E` (workflow chains), and `Test.Integration` (service-level vs real external services). The package name is preserved for ecosystem compatibility.
 
 ---
 
@@ -131,12 +133,10 @@ These types appear in the service and endpoint templates but are **not provided 
 ## Phase Usage
 
 - **5a:** EF.Common, EF.Domain, EF.Domain.Contracts, EF.Data, EF.Data.Contracts, EF.Common.Contracts
-- **5b:** EF.AspNetCore, EF.Host, EF.FilterBuilder
-- **5c:** EF.Cache and optional auth/key vault packages
-- **5d:** EF.BackgroundServices and messaging packages when enabled
-- **5e:** EF.Test.Unit and EF.Test.Integration
-- **5f:** EF.Auth and optional EF.MSGraph
-- **5g:** EF.AzureOpenAI or EF.OpenAI
+- **5b:** EF.AspNetCore, EF.Host, EF.FilterBuilder, EF.Cache, optional auth/key vault packages
+- **5c:** EF.BackgroundServices and messaging packages when enabled
+- **5d:** EF.Test.Unit and EF.Test.Integration
+- **5e:** EF.Auth and optional EF.MSGraph; EF.AzureOpenAI or EF.OpenAI (when AI in scope)
 
 ---
 

@@ -45,13 +45,15 @@ src/
 │   ├── {Host}.Uno/                     # optional
 │   └── {Host}.Uno.Core/                # optional
 ├── Test/
-│   ├── Test.Unit/
-│   ├── Test.Integration/
-│   ├── Test.Architecture/
-│   ├── Test.PlaywrightUI/
-│   ├── Test.Load/
-│   ├── Test.Benchmarks/
-│   └── Test.Support/
+│   ├── Test.Unit/                    # mocked unit tests
+│   ├── Test.Integration/             # service-level vs real external services (Testcontainers SQL, real cache, etc.)
+│   ├── Test.Endpoints/               # WebApplicationFactory in-memory; per-endpoint contract tests
+│   ├── Test.E2E/                     # WebApplicationFactory in-memory; multi-endpoint workflow chains
+│   ├── Test.Architecture/            # NetArchTest layering rules
+│   ├── Test.PlaywrightUI/            # browser-driven UI tests against hosted stack (Aspire/docker-compose)
+│   ├── Test.Load/                    # NBomber (comprehensive profile)
+│   ├── Test.Benchmarks/              # BenchmarkDotNet (comprehensive profile)
+│   └── Test.Support/                 # shared bases, builders, fixtures
 ├── Directory.Packages.props
 ├── global.json
 ├── nuget.config

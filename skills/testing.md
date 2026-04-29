@@ -8,9 +8,9 @@ Reference patterns: [../patterns/expected-output-index.md](../patterns/expected-
 
 Phases 5a and 5b use **test-driven development**: write tests first (red), then implement to green. Phase 4 generates the contract surface (interfaces, DTOs, entity shells, test infrastructure) that makes this possible. See [../ai/tdd-protocol.md](../ai/tdd-protocol.md) for the step-by-step cycle.
 
-Phases 5c and 5d use **tests-after**: implement infrastructure/hosts first, then write tests at the end of the same session.
+Phase 5c uses **tests-after**: implement optional hosts first, then write per-host smoke tests at the end of the same session.
 
-Phase 5e adds **quality gate tests** (architecture, load, benchmarks) and runs a **full regression** — it does not author unit/endpoint/integration tests, which already exist from earlier phases.
+Phase 5d adds **quality gate tests** (architecture, load, benchmarks, Playwright UI) and runs a **full regression** — it does not author unit/endpoint/integration/E2E tests, which already exist from earlier phases.
 
 ## BDD Naming Convention
 
@@ -35,8 +35,8 @@ Test templates are split by layer for context-budget-friendly phase loading:
 | [test-templates-domain.md](../templates/test-templates-domain.md) | 5a | Entity tests, rule tests, builder activation |
 | [test-templates-repository.md](../templates/test-templates-repository.md) | 5a | Repository CRUD, search, paging tests |
 | [test-templates-service.md](../templates/test-templates-service.md) | 5b | Service unit tests, mapper tests |
-| [test-templates-endpoint.md](../templates/test-templates-endpoint.md) | 5b | Endpoint integration tests, CustomApiFactory |
-| [test-templates-quality.md](../templates/test-templates-quality.md) | 5e | Architecture, E2E, load, benchmarks |
+| [test-templates-endpoint.md](../templates/test-templates-endpoint.md) | 5b | Endpoint contract tests via `WebApplicationFactory` (Test.Endpoints) |
+| [test-templates-quality.md](../templates/test-templates-quality.md) | 5d | Architecture, Playwright UI, load, benchmarks |
 
 The unified [test-templates.md](../templates/test-templates.md) remains as a complete reference but should not be loaded during phase work.
 
@@ -56,15 +56,32 @@ Rule: start `balanced`, then add E2E/load/benchmarks once core slices stabilize.
 
 ```text
 Test/
-  Test.Support/
-  Test.Unit/
-  Test.Integration/
-  Test.Architecture/
-  Test.E2E/                 (WebApplicationFactory + Testcontainers)
-  Test.PlaywrightUI/        (optional, browser E2E)
-  Test.Load/                (optional)
-  Test.Benchmarks/          (optional)
+  Test.Support/             (shared bases, builders, fixtures)
+  Test.Unit/                (mocked unit tests; services, domain rules, mappers)
+  Test.Integration/         (service-level tests against real external services — DB via Testcontainers, real cache/broker)
+  Test.Endpoints/           (HTTP endpoint contract tests via WebApplicationFactory in-memory host)
+  Test.E2E/                 (WebApplicationFactory in-memory; multi-endpoint workflow chains end-to-end)
+  Test.Architecture/        (NetArchTest layering rules)
+  Test.PlaywrightUI/        (optional, browser-driven UI tests; runs against hosted stack — Aspire AppHost or docker-compose)
+  Test.Load/                (optional, comprehensive profile)
+  Test.Benchmarks/          (optional, comprehensive profile)
 ```
+
+### Test Harness Tiers (Critical)
+
+There are three host-facing harness tiers. Tests must land in the right project by harness, not by category:
+
+| Project | Harness | Test scope |
+|---|---|---|
+| `Test.Endpoints` | `WebApplicationFactory<TProgram>` in-memory | One endpoint at a time — request/response shape, status codes, validation, auth contract |
+| `Test.E2E` | `WebApplicationFactory<TProgram>` in-memory | Multi-endpoint workflows — e.g., `create → search → update → delete` chained against the same in-memory host |
+| `Test.PlaywrightUI` | **Real running stack** (Aspire AppHost locally; docker-compose / preview deployment in CI) | Browser-driven UI — Playwright cannot use WebApplicationFactory because it needs a real Kestrel + URL + UI host serving real assets |
+
+**Rule:** Test.Endpoints and Test.E2E share the WebApplicationFactory harness; their split is by test scope (single endpoint vs workflow chain). Test.PlaywrightUI is a different beast — never share its harness with the WAF projects.
+
+### Service-Level Integration vs Endpoint Tests
+
+`Test.Integration` is **not** for endpoint tests. It targets the service/repository layer wired against real external services (Testcontainers SQL, real Redis, real Service Bus emulator). If a test's surface is "I post JSON to an endpoint and assert the response," it belongs in `Test.Endpoints`, not `Test.Integration`.
 
 ## Templates
 
@@ -145,14 +162,12 @@ Use category tags for targeted commands:
 public void Validate_Name_ReturnsExpected() { }
 ```
 
-### Endpoint vs Integration (Execution Contract)
+### Endpoint vs Integration vs E2E vs PlaywrightUI (Execution Contract)
 
-- `Endpoint`: API endpoint behavior tested through `WebApplicationFactory` (request/response/auth/status contract).
-- `Integration`: broader integration scenarios across infrastructure/services that are not endpoint contract tests.
-- Endpoint tests in `Test.Integration` should include **both** categories:
-  - `TestCategory("Endpoint")`
-  - `TestCategory("Integration")`
-- Non-endpoint integration tests should use only `TestCategory("Integration")`.
+- `Endpoint`: tests in `Test.Endpoints` — API endpoint contract via `WebApplicationFactory` (request/response/auth/status for one endpoint).
+- `Integration`: tests in `Test.Integration` — service/repository scenarios against real external services (Testcontainers SQL, real Redis). **Never used for endpoint contract tests.**
+- `E2E`: tests in `Test.E2E` — multi-endpoint workflow chains via `WebApplicationFactory`.
+- `PlaywrightUI`: tests in `Test.PlaywrightUI` — browser-driven UI against a hosted stack (Aspire/docker-compose).
 
 Command split:
 
@@ -160,8 +175,14 @@ Command split:
 # Endpoint contract path (default CI path)
 dotnet test --filter "TestCategory=Endpoint"
 
-# Broader integration path (optional/gated)
-dotnet test --filter "TestCategory=Integration&TestCategory!=Endpoint"
+# Service-level integration path (Testcontainers required)
+dotnet test --filter "TestCategory=Integration"
+
+# Workflow E2E path (in-memory)
+dotnet test --filter "TestCategory=E2E"
+
+# Browser UI path (hosted stack must be running)
+dotnet test --filter "TestCategory=PlaywrightUI"
 ```
 
 ---
@@ -191,23 +212,38 @@ Pattern:
 public async Task CRUD_InMemory_Pass() { }
 ```
 
-### 3) Endpoint and Integration tests (`Test.Integration`)
+### 3a) Endpoint contract tests (`Test.Endpoints`)
 
-- Use `CustomApiFactory<TProgram>` and test appsettings
+- Use `CustomApiFactory<TProgram>` (or shared `WebApplicationFactoryBase` from `Test.Support`) and test appsettings
 - Remove `IHostedService` registrations in test host when needed
 - Reset DB state per test class/scenario
-- Validate status codes + payload shape + auth behavior
+- Validate status codes + payload shape + auth behavior — one endpoint at a time
 
 Pattern:
 
 ```csharp
 [TestCategory("Endpoint")]
-[TestCategory("Integration")]
 [TestMethod]
-public async Task CRUD_Pass() { }
+public async Task Get_ExistingEntity_Returns200() { }
 ```
 
-### 4) Playwright E2E (`Test.PlaywrightUI`)
+### 3b) Service-level integration tests (`Test.Integration`)
+
+- Wire services and repositories against **real** external services (Testcontainers SQL Server, real Redis, real broker emulator)
+- Bypass HTTP — call the service or repository contract directly
+- Used to verify EF migrations, query projection, repository concurrency behavior, cache eviction, transactional consistency
+
+Pattern:
+
+```csharp
+[TestCategory("Integration")]
+[TestMethod]
+public async Task Repository_AgainstSql_PersistsCorrectly() { }
+```
+
+### 4) Playwright UI (`Test.PlaywrightUI`)
+
+**Harness: hosted stack, NOT WebApplicationFactory.** Playwright drives a real browser; it requires a real Kestrel + UI host. Run tests against the Aspire AppHost (locally — read the host URL from `dotnet run` output and inject as `PLAYWRIGHT_BASE_URL`) or against a docker-compose / preview deployment in CI.
 
 - Use Page Object Model
 - Keep selectors stable (`data-testid` preferred)
@@ -268,13 +304,13 @@ export default defineConfig({
 });
 ```
 
-### 4b) API E2E (`Test.E2E`) — WebApplicationFactory + Testcontainers
+### 4b) Workflow E2E (`Test.E2E`) — WebApplicationFactory + Testcontainers
 
-For API-level end-to-end tests that exercise the full stack (routing → endpoint → service → EF → real SQL) without a browser:
+For API-level workflow tests that chain multiple endpoints to verify a complete business flow (create → search → update → delete) end-to-end through the in-memory host:
 
-- Use `WebApplicationFactory<Program>` with Testcontainers SQL Server
-- Tests run against a real database container — no mocks, no in-memory
-- Separate from Playwright browser tests (those go in `Test.PlaywrightUI`)
+- Use `WebApplicationFactory<Program>` with Testcontainers SQL Server (so EF queries hit real SQL)
+- Tests are workflow-scoped: each test asserts a multi-step business outcome, not a single endpoint contract
+- Separate from `Test.Endpoints` (single-endpoint contracts) and `Test.PlaywrightUI` (browser, hosted stack)
 
 ```csharp
 public sealed class SqlApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
@@ -358,7 +394,7 @@ Use these minimum test gates for a completed vertical slice:
 
 If a slice spans multiple entities or stores, run at least one integration path that exercises the full composite flow.
 
-**When tests are written:** Unit and endpoint tests are written during Phase 5a/5b (TDD). Infrastructure tests are written during 5c/5d (tests-after). Architecture/load/benchmark tests are written in Phase 5e (quality gates). Phase 5e runs a full regression across all categories.
+**When tests are written:** Unit and endpoint tests are written during Phase 5a/5b (TDD). Infrastructure and per-host tests are written during 5b/5c (tests-after). Architecture/load/benchmark/PlaywrightUI tests are written in Phase 5d (quality gates). Phase 5d runs a full regression across all categories.
 
 ## Contention / Concurrency Scenarios
 

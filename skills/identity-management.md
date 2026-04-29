@@ -1,6 +1,6 @@
 # Identity Management
 
-Use this skill when domain inputs enable `authProvider` and the solution needs authentication or identity-backed user management. **This skill is applied as the final phase (Phase 5f)** — earlier phases use auth stubs so the project compiles and runs without identity configuration.
+Use this skill when domain inputs enable `authProvider` and the solution needs authentication or identity-backed user management. **This skill is applied in the integration phase (Phase 5e)** — earlier phases use auth stubs so the project compiles and runs without identity configuration.
 
 Reference patterns: [../patterns/api-host-wiring.md](../patterns/api-host-wiring.md) (Conditional Auth Configuration).
 
@@ -8,7 +8,7 @@ Reference patterns: [../patterns/api-host-wiring.md](../patterns/api-host-wiring
 
 **The default scaffold state is `AuthMode: Scaffold`.** Generated apps must run locally without any live identity provider (Entra ID, Entra External ID) configured. Real provider setup is supplemental deployment hardening, not a scaffold requirement.
 
-- Phase 5f is complete when the app boots end-to-end with the scaffold principal and endpoint tests pass.
+- Phase 5e authentication finalization is complete when the app boots end-to-end with the scaffold principal and endpoint tests pass.
 - Live Entra setup is a `deployment-only` dependency: log it in `HANDOFF.md` and continue.
 - The config key (`AuthMode` or equivalent) must be present in `appsettings.Development.json` with value `Scaffold` by default.
 - Production/staging environments override `AuthMode` to the live provider name; the application code path is identical — only the token source changes.
@@ -23,7 +23,7 @@ Prompt the user at the start of this phase to select the appropriate scenario:
 | External / consumer users | Microsoft Entra External ID, Google, Facebook, Apple, OAuth2/OIDC | Customer-facing apps, self-service portals |
 | Hybrid | Entra ID + Entra External ID / social providers | Public UI for external users + enterprise back-office for internal users |
 
-## Pre-Auth Stub Pattern (Phases 5a–5e)
+## Pre-Auth Stub Pattern (Phases 5a–5d)
 
 Until this phase is reached, authentication must be **stubbed** so the project compiles and runs:
 
@@ -36,7 +36,7 @@ public static class AuthStub
     public static IServiceCollection AddAuthStub(this IServiceCollection services)
     {
         // No-op auth — all endpoints accessible without authentication
-        // Remove this stub and wire real auth in Phase 5f
+        // Remove this stub and wire real auth in Phase 5e
         return services;
     }
 }
@@ -46,7 +46,7 @@ public static class AuthStub
 - Do **not** add `[Authorize]` attributes or `RequireAuthorization()` until real auth is wired
 - All endpoints should work without authentication during development
 
-## Config-Driven Auth Toggle (Phase 5f)
+## Config-Driven Auth Toggle (Phase 5e)
 
 Replace the pre-auth stub with a config-driven toggle that defaults to scaffold mode:
 

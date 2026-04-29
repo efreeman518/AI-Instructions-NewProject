@@ -18,6 +18,31 @@ Each phase — and each Phase 5 sub-phase — runs in its own AI session. When c
 
 Start each session with `START-AI.md` (this file) and `HANDOFF.md` in the target project root (if present — it is the resume contract). Then load only files needed for the current phase. Generate code only in the target project.
 
+## Context Loading Profiles
+
+Two loading profiles exist. Pick the one that matches the harness, not the task — gates and HANDOFF.md writes apply identically to both.
+
+### Default (constrained context — <200K tokens)
+
+Apply when running on a model with a constrained context window. Load files just-in-time:
+
+- One phase per session.
+- For Phase 5, one sub-phase per session.
+- Load only the files listed for the current phase or sub-phase (see `ai/SKILL.md` Phase 5 file table).
+- Add on-demand files only when the current sub-phase clearly needs them.
+- Close the session when the gate passes; the next session resumes from `START-AI.md` + `HANDOFF.md`.
+
+### Frontier model phase pack (≥200K tokens)
+
+Apply when running on a frontier model with a large context window (Claude Opus/Sonnet 4+, GPT-5+, Gemini 2.5 Pro+, etc.). The loading constraint relaxes:
+
+- The session may load the entire current phase's file table up-front (skills + templates + relevant patterns).
+- Adjacent reference files (the proof map, execution gates, prompt catalog) may be preloaded.
+- **The per-sub-phase HANDOFF.md write and `dotnet build` / `dotnet test` checkpoints still apply.** This is a context-loading affordance, not a license to skip gates.
+- The session still closes at the same gate boundaries; the operator decides whether to keep a single chat alive across sub-phases or open a fresh one.
+
+The frontier-model profile reduces context-thrash and tool churn but does not change phase semantics, the conflict-resolution order, or the requirement to record gate results in `HANDOFF.md`.
+
 ## Session Start Router
 
 ```

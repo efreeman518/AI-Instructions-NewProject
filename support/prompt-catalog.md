@@ -87,8 +87,6 @@ Gate: `dotnet build` + `dotnet test --filter TestCategory=Unit`.
 When gate passes, update HANDOFF.md (currentSubPhase: 5b) and close session.
 ```
 
-(Note: Phase 5 was consolidated from 7 sub-phases to 5. Old `5c|5d|5e|5f|5g` mapping: 5c→5b, 5d→5c, 5e→5d, 5f/5g→5e.)
-
 ### 5b — App Core + Runtime/Edge (TDD for app/API, tests-after for runtime)
 
 ```text

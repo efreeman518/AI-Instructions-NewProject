@@ -101,7 +101,7 @@ dotnet test --filter "TestCategory=Unit"
 dotnet test --filter "TestCategory=Unit"
 ```
 
-5. **Write endpoint tests** in `Test/Test.Integration/Endpoints/{Entity}EndpointsTests.cs` from `test-templates-endpoint.md`.
+5. **Write endpoint tests** in `Test/Test.Endpoints/Endpoints/{Entity}EndpointsTests.cs` from `test-templates-endpoint.md`.
 6. **Implement endpoints** and wire endpoint registration.
 7. **Run GREEN (Endpoint)**:
 

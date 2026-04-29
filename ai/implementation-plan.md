@@ -41,54 +41,52 @@ Checkpoint commands and pass criteria are canonical in [../support/execution-gat
 - [ ] Scaffold EF migration
 - [ ] **Checkpoint:** `dotnet build` + `dotnet test --filter "TestCategory=Unit"` passes
 
-### Phase 5b — App Core (TDD)
+### Phase 5b — App Core + Runtime/Edge (TDD for app/API, tests-after for runtime)
 - [ ] Write service unit tests (red) → implement services + mappers + validators (green)
 - [ ] Write endpoint integration tests (red) → implement endpoints (green)
 - [ ] Replace no-op service stubs with real implementations
 - [ ] Message handlers (if events defined)
 - [ ] Bootstrapper DI wiring finalized
-- [ ] **Checkpoint:** `dotnet build` + `dotnet test --filter "TestCategory=Unit|TestCategory=Endpoint"` passes
-
-### Phase 5c — Runtime/Edge (Tests-After)
-- [ ] Gateway (if enabled)
-- [ ] Aspire orchestration (if enabled)
-- [ ] Configuration + appsettings
-- [ ] Multi-tenant middleware (if enabled)
-- [ ] Caching (if enabled)
+- [ ] Runtime/edge concerns (tests-after): gateway (if enabled), Aspire orchestration (if enabled), configuration + appsettings, multi-tenant middleware (if enabled), caching (if enabled), observability, security
 - [ ] Write infrastructure tests (health checks, config loading, caching)
-- [ ] **Checkpoint:** app starts via Aspire, `dotnet test` passes
+- [ ] **Checkpoint:** `dotnet build` + `dotnet test --filter "TestCategory=Unit|TestCategory=Endpoint"` passes; app starts via Aspire (when enabled)
 
-### Phase 5d — Optional Hosts (Tests-After)
+### Phase 5c — Optional Hosts (Tests-After)
 - [ ] Background services / scheduler (if enabled)
 - [ ] Function app (if enabled)
 - [ ] Uno UI (if enabled; dedicated session preferred)
+- [ ] Blazor UI (if enabled)
 - [ ] Notifications (if enabled)
 - [ ] Write per-host smoke tests
-- [ ] **Checkpoint:** `dotnet build`, optional host responds, `dotnet test` passes
+- [ ] **Checkpoint:** `dotnet build`, each enabled host responds, `dotnet test` passes; per-host gate status recorded in `HANDOFF.md`
 
-### Phase 5e — Quality Gates + Delivery
+### Phase 5d — Quality + Delivery
 - [ ] Architecture tests (NetArchTest layering rules)
 - [ ] Load tests (if comprehensive profile)
 - [ ] Benchmarks (if comprehensive profile)
-- [ ] IaC templates
+- [ ] E2E Playwright tests against hosted stack (if comprehensive profile + UI enabled)
+- [ ] IaC templates (Bicep)
 - [ ] CI/CD pipeline
 - [ ] Dockerfile
+- [ ] Vulnerability audit (`dotnet list package --vulnerable --include-transitive`)
 - [ ] Full regression: `dotnet test` (all categories)
-- [ ] **Checkpoint:** full test suite passes
+- [ ] **Checkpoint:** full test suite passes; `az bicep build` succeeds (if IaC enabled)
 
-### Phase 5f — Authentication (Final)
+### Phase 5e — Integration (Auth + AI)
+
+**Authentication finalization:**
 - [ ] Prompt for identity provider scenario (see options below)
-- [ ] Replace auth stubs with real identity configuration
+- [ ] Replace auth stubs with real identity configuration (config-driven scaffold principal as default)
 - [ ] Wire auth middleware, token validation, and role/scope checks
 - [ ] Update appsettings with provider-specific configuration
-- [ ] **Checkpoint:** authenticated endpoints respond correctly
+- [ ] **Checkpoint:** authenticated endpoints respond correctly under `AuthMode` toggle
 
 **Identity Provider Options:**
 - **Enterprise / internal users:** Microsoft Entra ID — SSO, conditional access, group-based roles
 - **External / consumer users:** Microsoft Entra External ID, Google, Facebook, Apple, OAuth2/OIDC
 - **Hybrid:** Entra ID for internal + Entra External ID or social providers for external users
 
-### Phase 5g — AI Integration (if `includeAiServices: true`)
+**AI integration (when `includeAiServices: true`):**
 - [ ] `Infrastructure.AI` project with search/agent service interfaces
 - [ ] Azure AI Search index definitions + client wiring (if search configured)
 - [ ] Embedding pipeline: on-write handler (domain event → vectorize → index) or batch job
@@ -100,7 +98,7 @@ Checkpoint commands and pass criteria are canonical in [../support/execution-gat
 - [ ] Bootstrapper DI registration for AI services
 - [ ] API endpoints for search + agent interactions
 - [ ] Configuration: Foundry endpoint, model deployment names, search index names in appsettings
-- [ ] **Checkpoint:** search returns results, agent responds to test prompt
+- [ ] **Checkpoint:** AI service interfaces compile and resolve from DI; if live endpoints provisioned, search returns results and agent responds to test prompt
 
 ## Open Questions
 

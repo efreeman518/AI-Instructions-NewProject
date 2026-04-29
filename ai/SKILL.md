@@ -58,8 +58,6 @@ Each Phase 5 sub-phase loads its own file set. The base context (`ai/SKILL.md`, 
 
 Read the table once at the start of each Phase 5 sub-phase session, load the listed files, proceed.
 
-> **Phase 5 was consolidated from seven sub-phases (5a–5g) to five.** Old `5c` (Runtime/Edge) merged into `5b` (App Core). Old `5d` (Optional Hosts) → new `5c`. Old `5e` (Quality + Delivery) → new `5d`. Old `5f` (Auth) and `5g` (AI) merged into new `5e` (Integration). HANDOFF.md `currentSubPhase` values from before this change should be remapped: `5c → 5b`, `5d → 5c`, `5e → 5d`, `5f → 5e`, `5g → 5e`.
-
 ## Session Start (Every AI Turn)
 
 Follow [../START-AI.md](../START-AI.md) for session bootstrap, version checks, phase routing, and the session-per-phase model. This file does not repeat those steps.

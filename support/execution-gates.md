@@ -143,7 +143,7 @@ Gate passes when all three commands succeed.
 Required:
 - solution structure compiles (`.slnx`, all project files, `Directory.Packages.props`),
 - all interfaces, DTOs, entity shells, and no-op stubs compile,
-- test projects compile (Test.Support, Test.Unit, Test.Integration, profile-specific projects).
+- test projects compile (Test.Support, Test.Unit, Test.Integration, Test.Endpoints, Test.E2E, profile-specific projects: Test.Architecture, Test.PlaywrightUI, Test.Load, Test.Benchmarks).
 
 Exit criteria:
 - [ ] Solution structure matches `skills/solution-structure.md`
@@ -366,7 +366,7 @@ Delivery checks:
 
 ### Authentication Finalization (within 5e)
 
-**Scaffold mode is the default.** Phase 5f is complete when the app builds, tests pass, and auth works with the config-driven scaffold principal. Live identity provider setup is supplemental hardening — it does **not** block scaffold completion.
+**Scaffold mode is the default.** Authentication finalization is complete when the app builds, tests pass, and auth works with the config-driven scaffold principal. Live identity provider setup is supplemental hardening — it does **not** block scaffold completion.
 
 Required (scaffold mode):
 - `AuthMode` toggle present in config (`Scaffold` vs provider name)
@@ -390,7 +390,7 @@ If live Entra setup is not yet performed, log it in `HANDOFF.md` as a deployment
 
 ### AI Integration (within 5e, when `includeAiServices: true`)
 
-**Scaffold mode is the default.** Phase 5g is complete when AI-backed interfaces compile, resolve from DI, and tests pass with stubs or no-op implementations. Live Foundry/AI Search endpoints are deployment-only dependencies and do not block scaffold completion.
+**Scaffold mode is the default.** AI integration is complete when AI-backed interfaces compile, resolve from DI, and tests pass with stubs or no-op implementations. Live Foundry/AI Search endpoints are deployment-only dependencies and do not block scaffold completion.
 
 Required (scaffold mode):
 - AI service interfaces compile and resolve from DI
@@ -410,6 +410,38 @@ dotnet test --filter "TestCategory=Unit"
 ```
 
 If live AI endpoints are not yet provisioned, log them in `HANDOFF.md` as deployment-only dependencies.
+
+---
+
+## Compiler-Warning Policy
+
+`dotnet build` exits 0 is the gate. New compiler/analyzer warnings introduced by generated code are either resolved or recorded in `INSTRUCTION-GAPS.md` with owner and rationale. `TreatWarningsAsErrors` is **off by default**; teams may opt in via `Directory.Build.props` once the codebase is warning-clean. Warnings from referenced packages or generated SDK code (EF migrations, source generators) do not block the gate.
+
+**What blocks the gate:**
+- `dotnet build` returns nonzero exit code.
+- A warning is suppressed without an entry in `INSTRUCTION-GAPS.md`.
+
+**What does NOT block the gate:**
+- Warnings from third-party packages.
+- SDK-generated code warnings (EF migrations, source generators).
+- Documented warnings with an owner and target resolution date.
+
+---
+
+## Vulnerability Audit
+
+Run after `dotnet restore`:
+
+```powershell
+dotnet list package --vulnerable --include-transitive
+```
+
+Severity policy:
+- **High:** must be fixed (upgrade direct dependency or pin transitive) **or** recorded in `INSTRUCTION-GAPS.md` as a blocked deployment dependency with owner and target resolution date.
+- **Moderate:** logged in `INSTRUCTION-GAPS.md` only; tracked but does not block.
+- **Low:** team discretion.
+
+The audit is mandatory before pre-merge gate and as part of the Phase 5d quality regression. CI workflows must include the audit step (see [../skills/cicd.md](../skills/cicd.md)).
 
 ---
 
@@ -495,6 +527,7 @@ Use `http` (HTTPie), `curl`, or the Scalar UI at `/scalar/v1`.
 - [ ] Health endpoint returns 200
 - [ ] At least one entity CRUD cycle completes successfully
 - [ ] OpenAPI/Scalar UI loads at `/scalar/v1`
-- [ ] No unresolved `// TODO: [CONFIGURE]` stubs remain in production paths (stubs in auth/external-API are expected until Phase 5f)
+- [ ] No unresolved `// TODO: [CONFIGURE]` stubs remain in production paths (stubs in auth/external-API are expected until Phase 5e)
 - [ ] Aspire dashboard shows all registered resources (if enabled)
-- [ ] No compiler warnings in generated code (treat as errors)
+- [ ] Compiler-warning policy applied (see § Compiler-Warning Policy below)
+- [ ] Vulnerability audit run (see § Vulnerability Audit below)

@@ -87,10 +87,9 @@ Scaffold either Uno Platform (multi-target WASM + mobile + desktop) or Blazor (S
 |---|---|
 | **4 — Contracts** | Solution structure + contracts (see `ai/contract-scaffolding.md`) |
 | **5a — Foundation (TDD)** | `entity-template`, `ef-configuration-template`, `repository-template`, `domain-rules-template`, `appsettings-template`, `updater-template` (if needed), **`test-templates-domain`**, **`test-templates-repository`** |
-| **5b — App Core (TDD)** | `data-mapping-template`, `service-template`, `endpoint-template`, `structure-validator-template`, `exception-handler-template`, `message-handler-template` (if events), **`test-templates-service`**, **`test-templates-endpoint`** |
-| **5c — Runtime/Edge** | `health-check-template` |
-| **5d — UI** | `ui-client-layer`, `mvux-model-template`, `xaml-page-template` |
-| **5e — Quality Gates** | **`test-templates-quality`**, `dockerfile-template` |
-| **5g — AI** | `ai-search-template`, `agent-template` |
+| **5b — App Core + Runtime (TDD for app/API, tests-after for runtime)** | `data-mapping-template`, `service-template`, `endpoint-template`, `structure-validator-template`, `exception-handler-template`, `message-handler-template` (if events), `health-check-template`, **`test-templates-service`**, **`test-templates-endpoint`** |
+| **5c — Optional Hosts** | `ui-client-layer`, `mvux-model-template`, `xaml-page-template` (Uno); host-specific templates per enabled host |
+| **5d — Quality + Delivery** | **`test-templates-quality`**, `dockerfile-template` |
+| **5e — Integration (Auth + AI)** | `ai-search-template`, `agent-template` (when AI in scope) |
 
 > **Note:** Use the Phase Router in `START-AI.md` and the Phase 5 file table in `ai/SKILL.md` for authoritative per-phase file lists. This index is a human/AI quick-reference for "I need to scaffold X → load template Y".

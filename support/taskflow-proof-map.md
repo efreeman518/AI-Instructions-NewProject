@@ -36,9 +36,9 @@ Load this file on demand. Keep it out of the default phase context.
 | Phase 5d scheduler | `src/Host/TaskFlow.Scheduler` | TickerQ job registration, cron jobs, and scheduled handler structure. |
 | Phase 5d functions | `src/Host/TaskFlow.Functions` | Function-project structure, trigger layout, and placeholder-host patterns. |
 | Phase 5d Uno UI | `src/UI/TaskFlow.Uno` | UI project structure, feature grouping, and gateway-backed client flow. |
-| Phase 5e quality | `src/Test/Test.Unit`, `src/Test/Test.Architecture`, `src/Test/Test.Load`, `src/Test/Test.Benchmarks` | Test project layout and quality-gate coverage. |
-| Phase 5f auth | `AuthConfiguration`, `ScaffoldAuthHandler`, gateway claims forwarding flow | Scaffold auth, Entra-ready wiring, and API claim enrichment path. |
-| Phase 5g AI | `src/Infrastructure/TaskFlow.Infrastructure.AI`, commented AI resources in AppHost | AI service placement, deployment-only stance, and config-driven activation. |
+| Phase 5d quality | `src/Test/Test.Unit`, `src/Test/Test.Integration`, `src/Test/Test.Endpoints`, `src/Test/Test.E2E`, `src/Test/Test.Architecture`, `src/Test/Test.Load`, `src/Test/Test.Benchmarks`, `src/Test/Test.PlaywrightUI` | Test project layout and quality-gate coverage. |
+| Phase 5e auth | `AuthConfiguration`, `ScaffoldAuthHandler`, gateway claims forwarding flow | Scaffold auth, Entra-ready wiring, and API claim enrichment path. |
+| Phase 5e AI | `src/Infrastructure/TaskFlow.Infrastructure.AI`, commented AI resources in AppHost | AI service placement, deployment-only stance, and config-driven activation. |
 
 ---
 
@@ -79,7 +79,7 @@ Use these links first. If a branch or path has moved, search inside the same rep
 - **Middleware proof:** The API pipeline is ordered as security headers → correlation ID → exception handling → rate limiting → auth → gateway claim enrichment → authorization → endpoints.
 - **Gateway proof:** The gateway forwards bearer tokens and original claims through an encoded header.
 - **Scheduler proof:** TickerQ jobs are registered as explicit scheduled handlers, not hidden inside random hosted services.
-- **Scaffold-auth proof:** Local/dev completion does not require live cloud auth; scaffold auth supplies trusted claims until Phase 5f finalizes identity.
+- **Scaffold-auth proof:** Local/dev completion does not require live cloud auth; scaffold auth supplies trusted claims until Phase 5e finalizes identity.
 
 ---
 

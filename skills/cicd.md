@@ -92,6 +92,16 @@ jobs:
           --configfile src/nuget.config
 
       - run: dotnet restore src/{SolutionName}.slnx
+
+      # Vulnerability audit per support/execution-gates.md § Vulnerability Audit
+      # High severity must be fixed or recorded in INSTRUCTION-GAPS.md
+      - name: Vulnerability audit
+        run: |
+          dotnet list src/{SolutionName}.slnx package --vulnerable --include-transitive 2>&1 | tee vuln.log
+          if grep -E '\bHigh\b' vuln.log; then
+            echo "::warning::High-severity vulnerable packages detected. Verify each is documented in INSTRUCTION-GAPS.md."
+          fi
+
       - run: dotnet build src/{SolutionName}.slnx --no-restore --configuration Release
 
       # Target specific test projects to avoid "No test matches" noise from unrelated projects
@@ -100,6 +110,9 @@ jobs:
       - run: dotnet test src/Test/Test.Architecture/Test.Architecture.csproj --no-build --configuration Release
       - if: ${{ github.event_name == 'workflow_dispatch' && inputs.includeIntegration == true }}
         run: dotnet test src/Test/Test.Integration/Test.Integration.csproj --no-build --configuration Release
+      - if: ${{ github.event_name == 'workflow_dispatch' && inputs.includeE2E == true }}
+        run: dotnet test src/Test/Test.E2E/Test.E2E.csproj --no-build --configuration Release
+      # Test.PlaywrightUI requires a hosted stack — see "Hosted-stack orchestration" section below.
 ```
 
 ### Test Category Policy
@@ -107,10 +120,49 @@ jobs:
     | Category | PR Default | Optional / Manual |
     |---|---|---|
     | `Unit` | required | — |
-    | `Endpoint` | required (WebApplicationFactory endpoint coverage) | — |
+    | `Endpoint` | required (WebApplicationFactory contract coverage) | — |
     | `Architecture` | required | — |
-    | `Integration` | — | non-endpoint integration path (workflow dispatch) |
-    | `E2E`, `Load`, `Benchmark` | — | release/on-demand only |
+    | `Integration` | — | service-level vs real external services (workflow dispatch; Testcontainers required) |
+    | `E2E` | — | multi-endpoint workflow chains (workflow dispatch) |
+    | `PlaywrightUI` | — | browser UI; requires hosted stack (release/nightly) |
+    | `Load`, `Benchmark` | — | release/on-demand only |
+
+### Hosted-Stack Orchestration (`Test.PlaywrightUI`)
+
+Playwright tests cannot use `WebApplicationFactory` — they drive a real browser and need real Kestrel + UI host. The CI job must launch the stack, wait for health, run the tests, then tear down:
+
+```yaml
+playwright:
+  runs-on: ubuntu-latest
+  needs: [build]
+  if: github.event_name == 'workflow_dispatch' && inputs.includePlaywright == true
+  steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-dotnet@v4
+    - run: dotnet build src/{SolutionName}.slnx --configuration Release
+    - name: Start Aspire AppHost
+      run: |
+        dotnet run --project src/Host/Aspire/AppHost --configuration Release &
+        echo "APPHOST_PID=$!" >> $GITHUB_ENV
+    - name: Wait for stack health
+      run: |
+        for i in {1..30}; do
+          if curl -sf http://localhost:5100/health; then exit 0; fi
+          sleep 2
+        done
+        exit 1
+    - name: Install Playwright browsers
+      run: pwsh src/Test/Test.PlaywrightUI/bin/Release/net10.0/playwright.ps1 install --with-deps
+    - name: Run Playwright tests
+      env:
+        PLAYWRIGHT_BASE_URL: http://localhost:5100
+      run: dotnet test src/Test/Test.PlaywrightUI/Test.PlaywrightUI.csproj --no-build --configuration Release
+    - name: Stop AppHost
+      if: always()
+      run: kill $APPHOST_PID || true
+```
+
+For PR-time runs, gate `Test.PlaywrightUI` to nightly to keep PR loops fast.
 
 ---
 

@@ -3,13 +3,13 @@
 > **Phase-specific loading:** Do not load this file during phase work. Use the split templates instead:
 > - Phase 5a: [test-templates-domain.md](test-templates-domain.md) + [test-templates-repository.md](test-templates-repository.md)
 > - Phase 5b: [test-templates-service.md](test-templates-service.md) + [test-templates-endpoint.md](test-templates-endpoint.md)
-> - Phase 5e: [test-templates-quality.md](test-templates-quality.md)
+> - Phase 5d: [test-templates-quality.md](test-templates-quality.md)
 >
 > This file is the complete reference for all test patterns. It is available on-demand but should not be loaded as part of a phase pack.
 
 | | |
 |---|---|
-| **Generates** | `Test/Test.Unit/**`, `Test/Test.Integration/**`, `Test/Test.PlaywrightUI/**`, `Test/Test.Architecture/**`, `Test/Test.Load/**`, `Test/Test.Benchmarks/**` |
+| **Generates** | `Test/Test.Unit/**`, `Test/Test.Integration/**`, `Test/Test.Endpoints/**`, `Test/Test.E2E/**`, `Test/Test.PlaywrightUI/**`, `Test/Test.Architecture/**`, `Test/Test.Load/**`, `Test/Test.Benchmarks/**` |
 | **Requires** | [service-template](service-template.md), [repository-template](repository-template.md), [data-mapping-template](data-mapping-template.md), [endpoint-template](endpoint-template.md) |
 
 See [skills/testing.md](../skills/testing.md) for testing strategy, TDD protocol, BDD naming convention, and profile selection.
@@ -24,12 +24,14 @@ public async Task Given_ValidInput_When_EntityCreated_Then_ReturnsSuccess() { }
 
 ## Testing Strategy Overview
 
-Tests are organized in four tiers, each building on the previous:
+Tests are organized in tiers, each targeting a different harness:
 
-1. **Unit** — Fast, isolated tests with mocked dependencies. Covers domain entity logic, service orchestration, repository queries (in-memory DB), domain rules, and mappers.
-2. **Integration** — Tests that exercise real HTTP endpoints through `WebApplicationFactory` with an in-memory or SQLite database. Covers CRUD flows, search/filter, error responses, and optional concurrency scenarios.
-3. **E2E** — Playwright browser tests driven through Page Objects. Covers full user-facing flows (create/edit/delete, search, validation errors) against a running application.
-4. **Quality Gates** — Architecture dependency tests (NetArchTest), load tests (NBomber), and microbenchmarks (BenchmarkDotNet). Enforces structural rules and performance baselines.
+1. **Unit (`Test.Unit`)** — Fast, isolated tests with mocked dependencies. Covers domain entity logic, service orchestration, repository queries (in-memory DB), domain rules, and mappers.
+2. **Integration (`Test.Integration`)** — Service/repository tests against **real** external services (Testcontainers SQL, real Redis). Bypasses HTTP. Validates EF migrations, projections, transactional behavior. **Not for endpoint contract tests.**
+3. **Endpoints (`Test.Endpoints`)** — HTTP endpoint contract tests via `WebApplicationFactory` in-memory host. One endpoint at a time: status codes, payload shape, validation, auth contract.
+4. **E2E (`Test.E2E`)** — Multi-endpoint workflow chains via `WebApplicationFactory` (often with Testcontainers SQL). Verifies a complete business flow end-to-end without a browser.
+5. **Playwright UI (`Test.PlaywrightUI`)** — Browser-driven UI tests. **Runs against a hosted stack** (Aspire AppHost locally, docker-compose / preview deployment in CI). Cannot use WebApplicationFactory — Playwright requires a real Kestrel + URL.
+6. **Quality Gates** — Architecture dependency tests (`Test.Architecture` via NetArchTest), load tests (`Test.Load` via NBomber), microbenchmarks (`Test.Benchmarks` via BenchmarkDotNet).
 
 ## Common Setup
 
@@ -65,9 +67,9 @@ public abstract class UnitTestBase
 
 ### EndpointTestBase
 
-Base class for integration endpoint tests providing HTTP client factory and DB reset helpers.
+Base class for endpoint contract tests providing HTTP client factory and DB reset helpers.
 
-#### File: `Test/Test.Integration/EndpointTestBase.cs`
+#### File: `Test/Test.Endpoints/EndpointTestBase.cs` (or `Test/Test.Support/EndpointTestBase.cs` if shared with Test.E2E — see follow-up refactor)
 
 ```csharp
 public abstract class EndpointTestBase : DbIntegrationTestBase
@@ -422,13 +424,15 @@ public class {Entity}MapperTests
 
 ---
 
-## Integration Tests
+## Endpoint Contract Tests (`Test.Endpoints`)
 
-Integration tests exercise real HTTP endpoints through `WebApplicationFactory` with in-memory or SQLite databases. Inherit from `EndpointTestBase` and keep test methods focused on scenario setup and assertions.
+Endpoint contract tests exercise HTTP endpoints through `WebApplicationFactory` with in-memory or SQLite databases. Inherit from `EndpointTestBase` and keep test methods focused on a single endpoint's request/response/auth contract.
+
+For multi-endpoint workflow chains (create → search → update → delete), use `Test.E2E` instead — same harness, different scope.
 
 ### CustomApiFactory
 
-#### File: `Test/Test.Integration/CustomApiFactory.cs`
+#### File: `Test/Test.Endpoints/CustomApiFactory.cs` (or `Test/Test.Support/CustomApiFactory.cs` if shared — see follow-up)
 
 ```csharp
 public class CustomApiFactory<TProgram>(string? dbConnectionString = null)
@@ -442,7 +446,7 @@ public class CustomApiFactory<TProgram>(string? dbConnectionString = null)
             DbSupport.ConfigureServicesTestDB<{App}DbContextTrxn, {App}DbContextQuery>(
                 services,
                 dbConnectionString,
-                "Test.Integration.TestDB");
+                "Test.Endpoints.TestDB");
         });
     }
 }
@@ -450,14 +454,13 @@ public class CustomApiFactory<TProgram>(string? dbConnectionString = null)
 
 ### Endpoint Tests
 
-#### File: `Test/Test.Integration/Endpoints/{Entity}EndpointsTests.cs`
+#### File: `Test/Test.Endpoints/Endpoints/{Entity}EndpointsTests.cs`
 
 ```csharp
 [TestClass]
 public class {Entity}EndpointsTests : EndpointTestBase
 {
     [TestCategory("Endpoint")]
-    [TestCategory("Integration")]
     [TestMethod]
     public async Task Given_ExistingEntities_When_SearchWithFilter_Then_ReturnsFilteredResults()
     {
@@ -496,7 +499,6 @@ public class {Entity}EndpointsTests : EndpointTestBase
     }
 
     [TestCategory("Endpoint")]
-    [TestCategory("Integration")]
     [TestMethod]
     public async Task Given_NonExistentId_When_GetEntity_Then_Returns404()
     {
@@ -516,7 +518,6 @@ public class {Entity}EndpointsTests : EndpointTestBase
     }
 
     [TestCategory("Endpoint")]
-    [TestCategory("Integration")]
     [TestMethod]
     public async Task Given_FullCrudCycle_When_AllOperationsExecuted_Then_AllSucceed()
     {
@@ -556,7 +557,6 @@ public class {Entity}EndpointsTests : EndpointTestBase
     }
 
     [TestCategory("Endpoint")]
-    [TestCategory("Integration")]
     [TestMethod]
     public async Task Given_EmptyDatabase_When_SearchExecuted_Then_ReturnsOk()
     {
@@ -583,13 +583,13 @@ public class {Entity}EndpointsTests : EndpointTestBase
 
 ### Test Configuration
 
-#### File: `Test/Test.Integration/appsettings-test.json`
+#### File: `Test/Test.Endpoints/appsettings-test.json`
 
 ```json
 {
   "TestSettings": {
     "DBSource": "UseInMemoryDatabase",
-    "DBName": "Test.Integration.TestDB"
+    "DBName": "Test.Endpoints.TestDB"
   }
 }
 ```

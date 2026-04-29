@@ -27,7 +27,7 @@ flowchart TD
 
 | ID | Revisit In | Blocking? | Needed Before | Notes |
 |---|---|---|---|---|
-| D-### | Phase 5f | no | Auth finalization | _What remains unresolved._ |
+| D-### | Phase 5e | no | Auth finalization | _What remains unresolved._ |
 
 ## Superseded Decisions
 

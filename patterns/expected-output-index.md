@@ -55,11 +55,13 @@ Expected file layout when scaffolding is complete. All paths relative to project
 |---|---|
 | Unit (domain) | `Test/Test.Unit/Domain/TodoItemTests.cs` |
 | Unit (mapper) | `Test/Test.Unit/Application/TodoItemMapperTests.cs` |
-| Integration | `Test/Test.Integration/EndpointContractTests.cs` |
+| Service-level integration | `Test/Test.Integration/Repositories/CategoryRepositoryIntegrationTests.cs` |
 | Architecture | `Test/Test.Architecture/LayerDependencyTests.cs` |
 | Test support | `Test/Test.Support/UnitTestBase.cs`, `InMemoryDbBuilder.cs`, `DbSupport.cs` |
-| Endpoint tests | `Test/Test.Endpoints/Endpoints/CategoryEndpointsTests.cs` |
-| Custom factory | `Test/Test.Integration/CustomApiFactory.cs` |
+| Endpoint contract tests | `Test/Test.Endpoints/Endpoints/CategoryEndpointsTests.cs` |
+| Workflow E2E tests | `Test/Test.E2E/Workflows/CategoryWorkflowTests.cs` |
+| Custom factory | `Test/Test.Endpoints/CustomApiFactory.cs` (or shared via `Test/Test.Support/`) |
+| Playwright UI | `Test/Test.PlaywrightUI/Pages/CategoryCrudTests.cs` (browser; runs against hosted stack) |
 
 ## Aspire
 | Artifact | Path |

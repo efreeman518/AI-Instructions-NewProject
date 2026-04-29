@@ -41,7 +41,7 @@ Follow `solution-structure.md` exactly:
 - `.slnx`, `Directory.Packages.props`, `global.json`, `nuget.config`
 - All project folders and `.csproj` files per the canonical layout
 - Project references wired per the dependency direction contract
-- Test projects: `Test.Support`, `Test.Unit`, `Test.Integration`, plus profile-specific projects (`Test.Architecture`, `Test.PlaywrightUI`, `Test.Load`, `Test.Benchmarks`) per `testingProfile`
+- Test projects: `Test.Support`, `Test.Unit`, `Test.Integration`, `Test.Endpoints`, `Test.E2E`, plus profile-specific projects (`Test.Architecture`, `Test.PlaywrightUI`, `Test.Load`, `Test.Benchmarks`) per `testingProfile`
 
 ### 2. Contracts (Per Entity)
 
@@ -160,13 +160,15 @@ public class {Entity}DtoBuilder
 }
 ```
 
-**Test.Integration base classes:**
-- `CustomApiFactory<TProgram>` — `WebApplicationFactory` with in-memory DB and no `IHostedService`
+**WebApplicationFactory base classes (consumed by `Test.Endpoints` and `Test.E2E`):**
+- `CustomApiFactory<TProgram>` — `WebApplicationFactory` with in-memory DB and no `IHostedService`. Place in `Test.Endpoints` initially; the follow-up refactor (see plan) consolidates it into `Test.Support` so both `Test.Endpoints` and `Test.E2E` derive from a single shared base.
 - `EndpointTestBase` / `DbIntegrationTestBase` — HTTP client factory + DB reset helpers
 
 **Empty test project shells:**
 - `Test.Unit/` — project file with MSTest + Moq references, no test classes yet (Phase 5a adds them)
-- `Test.Integration/` — project file with MSTest + `Microsoft.AspNetCore.Mvc.Testing`, no test classes yet (Phase 5b adds them)
+- `Test.Integration/` — project file with MSTest + Testcontainers + EF, no test classes yet (Phase 5b adds service-level integration tests against real external services)
+- `Test.Endpoints/` — project file with MSTest + `Microsoft.AspNetCore.Mvc.Testing`, no test classes yet (Phase 5b adds endpoint contract tests via WebApplicationFactory)
+- `Test.E2E/` — project file with MSTest + `Microsoft.AspNetCore.Mvc.Testing` + Testcontainers, no test classes yet (Phase 5b/5d adds multi-endpoint workflow tests)
 
 ### 5. No-Op DI Stubs
 

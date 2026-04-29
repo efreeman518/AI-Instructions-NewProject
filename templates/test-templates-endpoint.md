@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Generates** | `Test/Test.Integration/Endpoints/{Entity}EndpointsTests.cs` |
+| **Generates** | `Test/Test.Endpoints/Endpoints/{Entity}EndpointsTests.cs` |
 | **Requires** | [endpoint-template](endpoint-template.md), CustomApiFactory from Phase 4, DTOs from Phase 4 |
 | **Phase** | 5b (App Core TDD) |
 | **Protocol** | Write these tests BEFORE implementing endpoints. See [../ai/tdd-protocol.md](../ai/tdd-protocol.md). |
@@ -19,7 +19,7 @@ public async Task Given_ValidPayload_When_PostEntity_Then_Returns201() { }
 
 ## CustomApiFactory
 
-Generated in Phase 4. Located at `Test/Test.Integration/CustomApiFactory.cs`:
+Generated in Phase 4. Located at `Test/Test.Endpoints/CustomApiFactory.cs` (or shared via `Test.Support` if both `Test.Endpoints` and `Test.E2E` need it — see follow-up refactor in `support/REFACTOR-TODO.md`):
 
 ```csharp
 public class CustomApiFactory<TProgram>(string? dbConnectionString = null)
@@ -33,7 +33,7 @@ public class CustomApiFactory<TProgram>(string? dbConnectionString = null)
             DbSupport.ConfigureServicesTestDB<{App}DbContextTrxn, {App}DbContextQuery>(
                 services,
                 dbConnectionString,
-                "Test.Integration.TestDB");
+                "Test.Endpoints.TestDB");
         });
     }
 }
@@ -76,14 +76,13 @@ internal sealed class TestDbContextFactory<TContext>(DbContextOptions options)
 
 ## Endpoint Tests
 
-### File: `Test/Test.Integration/Endpoints/{Entity}EndpointsTests.cs`
+### File: `Test/Test.Endpoints/Endpoints/{Entity}EndpointsTests.cs`
 
 ```csharp
 [TestClass]
 public class {Entity}EndpointsTests : EndpointTestBase
 {
     [TestCategory("Endpoint")]
-    [TestCategory("Integration")]
     [TestMethod]
     public async Task Given_ValidPayload_When_PostEntity_Then_Returns201()
     {
@@ -106,7 +105,6 @@ public class {Entity}EndpointsTests : EndpointTestBase
     }
 
     [TestCategory("Endpoint")]
-    [TestCategory("Integration")]
     [TestMethod]
     public async Task Given_NonExistentId_When_GetEntity_Then_Returns404()
     {
@@ -126,7 +124,6 @@ public class {Entity}EndpointsTests : EndpointTestBase
     }
 
     [TestCategory("Endpoint")]
-    [TestCategory("Integration")]
     [TestMethod]
     public async Task Given_ExistingEntities_When_SearchWithFilter_Then_ReturnsFilteredPage()
     {
@@ -165,7 +162,6 @@ public class {Entity}EndpointsTests : EndpointTestBase
     }
 
     [TestCategory("Endpoint")]
-    [TestCategory("Integration")]
     [TestMethod]
     public async Task Given_FullCrudCycle_When_AllOperationsExecuted_Then_AllSucceed()
     {
@@ -205,7 +201,6 @@ public class {Entity}EndpointsTests : EndpointTestBase
     }
 
     [TestCategory("Endpoint")]
-    [TestCategory("Integration")]
     [TestMethod]
     public async Task Given_EmptyDatabase_When_SearchExecuted_Then_ReturnsEmptyPage()
     {
@@ -234,13 +229,13 @@ public class {Entity}EndpointsTests : EndpointTestBase
 
 ## Test Configuration
 
-### File: `Test/Test.Integration/appsettings-test.json`
+### File: `Test/Test.Endpoints/appsettings-test.json`
 
 ```json
 {
   "TestSettings": {
     "DBSource": "UseInMemoryDatabase",
-    "DBName": "Test.Integration.TestDB"
+    "DBName": "Test.Endpoints.TestDB"
   }
 }
 ```
@@ -253,7 +248,6 @@ For high-contention domains (inventory, reservations, financial flows), add:
 
 ```csharp
 [TestCategory("Endpoint")]
-[TestCategory("Integration")]
 [TestMethod]
 public async Task Given_ConcurrentUpdates_When_Executed_Then_OptimisticConcurrencyEnforced()
 {

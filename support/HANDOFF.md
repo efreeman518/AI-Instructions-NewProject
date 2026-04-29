@@ -5,7 +5,7 @@ Create this file in the **target project root** at the end of every phase and ea
 ```yaml
 instructionVersion: ""
 currentPhase: ""           # 1 | 2 | 3 | 4 | 5
-currentSubPhase: ""        # 5a | 5b | 5c | 5d | 5e (Phase 5 only). Migration: old 5c→5b, 5d→5c, 5e→5d, 5f/5g→5e.
+currentSubPhase: ""        # 5a | 5b | 5c | 5d | 5e (Phase 5 only)
 scaffoldMode: ""           # full | lite | api-only
 testingProfile: ""         # minimal | balanced | comprehensive
 contractsScaffolded: false # set true after Phase 4 completes

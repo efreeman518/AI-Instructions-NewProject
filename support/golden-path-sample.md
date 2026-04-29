@@ -135,7 +135,7 @@ D-001 --> D-003
 | ID | Branch | Decision | Selected Option | Depends On | Status | Rationale | Affects |
 |---|---|---|---|---|---|---|---|
 | D-001 | Tenancy | Tenant model | row-level tenant isolation | none | confirmed | Simple shared schema for scaffold. | Phase 1, Phase 2 |
-| D-002 | Auth | Auth provider | EntraID enterprise auth | D-001 | confirmed | Workforce SSO expected. | Phase 5f |
+| D-002 | Auth | Auth provider | EntraID enterprise auth | D-001 | confirmed | Workforce SSO expected. | Phase 5e |
 | D-003 | Naming | Work item term | WorkItem instead of Task | none | confirmed | Avoid .NET type collision. | All phases |
 ```
 
