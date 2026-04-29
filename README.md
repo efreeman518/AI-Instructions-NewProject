@@ -1,16 +1,16 @@
-# AI Instructions — New .NET App/Service
+# AI Instructions - New .NET App/Service
 
 Pragmatic instruction set for AI-assisted scaffolding of C#/.NET business applications and services.
 
 ## Purpose
 
-This instruction set turns an AI coding assistant into a guided scaffolding engine for production-grade C#/.NET solutions. Instead of generating throwaway boilerplate, it drives a structured five-phase process — from domain discovery through implementation — producing consistent, buildable, testable code that follows clean architecture and the conventions of a mature engineering team.
+This instruction set turns an AI coding assistant into a guided scaffolding engine for production-grade C#/.NET solutions. Instead of generating throwaway boilerplate, it drives a structured five-phase process - from domain discovery through implementation - producing consistent, buildable, testable code that follows clean architecture and the conventions of a mature engineering team.
 
 The goal is not to replace engineering judgment but to compress the multi day/week "green-field to first vertical slice" timeline down to hours, with guardrails that prevent common shortcuts (missing tests, leaky abstractions, inconsistent naming).
 
 Phase 1 also creates durable collaboration artifacts before code planning starts:
 
-- `domain-specification.yaml` captures entities, relationships, events, workflows, and business rules in pure business language — the source of truth every later phase consumes.
+- `domain-specification.yaml` captures entities, relationships, events, workflows, and business rules in pure business language - the source of truth every later phase consumes.
 - `UBIQUITOUS-LANGUAGE.md` records accepted domain terms, rejected synonyms, states, commands/actions, roles, events, policies, and naming guidance so later AI sessions use consistent expressions.
 - `DESIGN-DECISIONS.md` records design choices and dependencies between decisions, so downstream resource and code choices do not silently contradict earlier domain answers.
 
@@ -20,11 +20,11 @@ Each phase runs in its own AI session and produces artifacts the next phase cons
 
 | Phase | Purpose | Output |
 |---|---|---|
-| **1 — Domain Discovery** | Structured interview to reach shared understanding, define ubiquitous language, resolve decision dependencies, and capture entities, relationships, events, workflows, and business rules in pure business language — no implementation details. | `domain-specification.yaml`, `UBIQUITOUS-LANGUAGE.md`, `DESIGN-DECISIONS.md` |
-| **2 — Resource Definition** | Map each resource requirement to concrete technology choices — data stores, messaging, AI capabilities, hosting models. | `resource-implementation.yaml` |
-| **3 — Implementation Planning** | Resolve open questions, verify tooling (NuGet feeds, CLIs), discover project-specific CLIs and MCP servers, and produce a sequenced build plan. | `implementation-plan.md` |
-| **4 — Contract Scaffolding** | Generate solution structure, interfaces, DTOs, entity shells, test infrastructure, and no-op DI stubs. Gate: `dotnet build` succeeds on the full solution. | Compilable skeleton |
-| **5 — Implementation (TDD)** | Build vertical slices entity-by-entity across sub-phases 5a–5e (Foundation, App Core + Runtime, Optional Hosts, Quality + Delivery, Integration). Phase 5a uses test-driven development (write tests first → red → implement → green); 5b is mixed (TDD for app/API, tests-after for runtime); 5c–5e are tests-after. | Production code + passing tests |
+| **1 - Domain Discovery** | Structured interview to reach shared understanding, define ubiquitous language, resolve decision dependencies, and capture entities, relationships, events, workflows, and business rules in pure business language - no implementation details. | `domain-specification.yaml`, `UBIQUITOUS-LANGUAGE.md`, `DESIGN-DECISIONS.md` |
+| **2 - Resource Definition** | Map each resource requirement to concrete technology choices - data stores, messaging, AI capabilities, hosting models. | `resource-implementation.yaml` |
+| **3 - Implementation Planning** | Resolve open questions, verify tooling (NuGet feeds, CLIs), discover project-specific CLIs and MCP servers, and produce a sequenced build plan. | `implementation-plan.md` |
+| **4 - Contract Scaffolding** | Generate solution structure, interfaces, DTOs, entity shells, test infrastructure, and no-op DI stubs. Gate: `dotnet build` succeeds on the full solution. | Compilable skeleton |
+| **5 - Implementation (TDD)** | Build vertical slices entity-by-entity across sub-phases 5a–5e (Foundation, App Core + Runtime, Optional Hosts, Quality + Delivery, Integration). Phase 5a uses test-driven development (write tests first → red → implement → green); 5b is mixed (TDD for app/API, tests-after for runtime); 5c–5e are tests-after. | Production code + passing tests |
 
 Phase details: [START-AI.md](START-AI.md) § Phase Router.
 
@@ -33,20 +33,20 @@ Phase details: [START-AI.md](START-AI.md) § Phase Router.
 The instruction set is designed around three core ideas:
 
 **1. Phased workflow with TDD.**
-Five phases prevent hallucinated architecture by ensuring verified context before code is written. Phase 4 produces a compilable skeleton so that Phase 5a/5b can follow a strict red/green TDD cycle — tests are written against contracts before any implementation exists. See [ai/tdd-protocol.md](ai/tdd-protocol.md).
+Five phases prevent hallucinated architecture by ensuring verified context before code is written. Phase 4 produces a compilable skeleton so that Phase 5a/5b can follow a strict red/green TDD cycle - tests are written against contracts before any implementation exists. See [ai/tdd-protocol.md](ai/tdd-protocol.md).
 
 **2. Skills and templates as composable units.**
 Implementation knowledge is split into ~27 skill files (how things work) and ~25 template files (what to generate). The Phase Router in `START-AI.md` and the Phase 5 file table in `ai/SKILL.md` tell the agent which files to load for the current phase or sub-phase.
 
 **3. Composition patterns, not documentation alone.**
-Pattern files in `patterns/` document how generated components wire together across projects — database context pooling, API startup sequences, request context resolution, cache configuration, and Aspire resource wiring. An index (`support/pattern-dispatcher.md`) maps each pattern file to its relevant phase. This grounds the generated output in proven, real-world patterns rather than abstract descriptions.
+Pattern files in `patterns/` document how generated components wire together across projects - database context pooling, API startup sequences, request context resolution, cache configuration, and Aspire resource wiring. An index (`support/pattern-dispatcher.md`) maps each pattern file to its relevant phase. This grounds the generated output in proven, real-world patterns rather than abstract descriptions.
 
 ## High-Value Features
 
 | Feature | What It Does |
 |---|---|
-| **Domain discovery conversation** | Phase 1 drives a structured interview to define shared language, decision dependencies, entities, relationships, events, workflows, and business rules in pure business language — no implementation details. The resulting [domain specification](ai/domain-specification-schema.md), `UBIQUITOUS-LANGUAGE.md`, and `DESIGN-DECISIONS.md` become the source of truth that every later phase consumes, preventing scope drift and naming drift. |
-| **Resource & technology mapping** | Phase 2 is a deliberate conversation about *how* to implement each domain concept — which data store fits each entity (SQL, Cosmos DB, Table Storage), where messaging is needed (Service Bus, Event Grid), whether AI capabilities apply (search, agents, document intelligence), and which hosting model suits each workload. The output is a [resource implementation](ai/resource-implementation-schema.md) YAML that locks in technology choices before any code is written. |
+| **Domain discovery conversation** | Phase 1 drives a structured interview to define shared language, decision dependencies, entities, relationships, events, workflows, and business rules in pure business language - no implementation details. The resulting [domain specification](ai/domain-specification-schema.md), `UBIQUITOUS-LANGUAGE.md`, and `DESIGN-DECISIONS.md` become the source of truth that every later phase consumes, preventing scope drift and naming drift. |
+| **Resource & technology mapping** | Phase 2 is a deliberate conversation about *how* to implement each domain concept - which data store fits each entity (SQL, Cosmos DB, Table Storage), where messaging is needed (Service Bus, Event Grid), whether AI capabilities apply (search, agents, document intelligence), and which hosting model suits each workload. The output is a [resource implementation](ai/resource-implementation-schema.md) YAML that locks in technology choices before any code is written. |
 | **Phase-scoped file loading** | The Phase Router in `START-AI.md` and the Phase 5 file table in `ai/SKILL.md` tell the agent which files to load for the current phase. |
 | **Three scaffolding modes** | `full` (production w/ gateway, scheduler, UI, IaC), `lite` (clean architecture without infra), `api-only` (single API host). Set once in resource YAML; the Phase Router and Phase 5 file table cover what to skip. |
 | **Vertical-slice scaffolding** | Each entity is built end-to-end: domain model → EF config → repository → DTO/mapper → service → endpoint → tests. A [checklist](support/vertical-slice-checklist.md) and [execution gates](support/execution-gates.md) enforce completeness. |
@@ -55,13 +55,13 @@ Pattern files in `patterns/` document how generated components wire together acr
 | **Safe session handoff** | A `HANDOFF.md` template lets the AI resume cleanly across sessions without losing progress or re-reading the full instruction set. |
 | **Result pattern error flow** | Domain → Service → Endpoint error mapping is fully documented with a type mapping table, anti-patterns, and end-to-end trace example. No exceptions for business logic. |
 | **Test data builders** | Fluent builder patterns for entities and DTOs ensure tests construct valid objects by default and override only the property under test. |
-| **Composition pattern catalog** | Pattern files in `patterns/` document cross-project wiring — database pooling, API startup sequence, request context, cache configuration, Aspire resource wiring — with inline code snippets. An index (`support/pattern-dispatcher.md`) maps each to its relevant phase. |
+| **Composition pattern catalog** | Pattern files in `patterns/` document cross-project wiring - database pooling, API startup sequence, request context, cache configuration, Aspire resource wiring - with inline code snippets. An index (`support/pattern-dispatcher.md`) maps each to its relevant phase. |
 | **Prompt catalog** | Copy-paste prompts for each phase live in [support/prompt-catalog.md](support/prompt-catalog.md), keeping `README.md` focused on human onboarding while [START-AI.md](START-AI.md) stays canonical for execution. |
 | **Event boundary enforcement** | Cross-process events are modeled as integration contracts in `Application.Contracts.Events` and published via `IIntegrationEventPublisher`; Domain events remain aggregate-local. This avoids layered leakage and naming drift. |
 
 ## Reference Application
 
-A companion reference app — **TaskFlow** — demonstrates every pattern and convention these instructions produce:
+A companion reference app - **TaskFlow** - demonstrates every pattern and convention these instructions produce:
 
 **Repository:** <https://github.com/efreeman518/AI-Instructions-ReferenceApp>
 
@@ -69,9 +69,9 @@ TaskFlow is a fully scaffolded task-management application built by following th
 
 Use it for:
 
-- **Pattern lookups** — when an instruction or template describes a pattern (e.g., middleware ordering, repository split, cache key format), the reference app contains the working implementation.
-- **Wiring verification** — cross-project DI registration, startup sequences, and Aspire resource definitions are all present and buildable.
-- **Test structure** — unit, integration, architecture, and endpoint test projects are scaffolded with builder patterns.
+- **Pattern lookups** - when an instruction or template describes a pattern (e.g., middleware ordering, repository split, cache key format), the reference app contains the working implementation.
+- **Wiring verification** - cross-project DI registration, startup sequences, and Aspire resource definitions are all present and buildable.
+- **Test structure** - unit, integration, architecture, and endpoint test projects are scaffolded with builder patterns.
 
 For a phase-by-phase pointer map into the reference app, use [support/taskflow-proof-map.md](support/taskflow-proof-map.md).
 
@@ -93,7 +93,7 @@ Read the rest of this guide when you need setup details, MCP recommendations, or
 - `git`
 - Python 3.11+ to run `install-to-project.py` and `configure-ef-packages-feed.py`
 - Latest stable `.NET SDK`
-- Docker engine running (Docker Desktop not required) — Aspire relies on it for hosting local container services
+- Docker engine running (Docker Desktop not required) - Aspire relies on it for hosting local container services
 - VS Code + AI assistant
 - Local SQL Server/Azure SQL access for dev scenarios
 - GitHub Packages PAT for the private EF.Packages NuGet feed; local environments must set it before Phase 3/4 restore
@@ -104,7 +104,7 @@ Read the rest of this guide when you need setup details, MCP recommendations, or
 
 Version policy: prefer latest stable packages and SDKs.
 
-## AI Agents & Harnesses — Quick Start
+## AI Agents & Harnesses - Quick Start
 
 Clone this repo then run the install script to copy the instruction files into any target app repository root folder. The installer copies runtime instructions into `<app>/.instructions/` and places thin harness entrypoints at the app root. Scaffold rules stay app-scoped; do not put phase routing, TaskFlow rules, or generated-code conventions in global Codex, Claude, or Copilot instruction files.
 
@@ -130,12 +130,12 @@ Clone this repo then run the install script to copy the instruction files into a
 
 All harnesses follow the same flow:
 
-1. **Scaffold** — Boot from `.instructions/START-AI.md`, check `HANDOFF.md` in the project root, load only the current phase files (per the Phase Router in START-AI.md and the Phase 5 file table in `ai/SKILL.md`), execute one phase, write `HANDOFF.md`, stop.
-2. **Vertical slice** — Load `.instructions/support/vertical-slice-checklist.md`, generate the full entity stack (entity → EF config → repos → DTOs → mapper → validator → service → endpoint → DI wiring → migration), validate with `dotnet build` + `dotnet test`.
+1. **Scaffold** - Boot from `.instructions/START-AI.md`, check `HANDOFF.md` in the project root, load only the current phase files (per the Phase Router in START-AI.md and the Phase 5 file table in `ai/SKILL.md`), execute one phase, write `HANDOFF.md`, stop.
+2. **Vertical slice** - Load `.instructions/support/vertical-slice-checklist.md`, generate the full entity stack (entity → EF config → repos → DTOs → mapper → validator → service → endpoint → DI wiring → migration), validate with `dotnet build` + `dotnet test`.
 
 ### Install into a new app
 
-Use `install-to-project.py` from a local clone of this repo. It copies only the runtime payload — instruction files, scoped agents, CLI entrypoint, and slash commands — into your app, and skips repo-maintenance files (tests, CI workflows, global assistant instruction files, git hooks, virtualenvs).
+Use `install-to-project.py` from a local clone of this repo. It copies only the runtime payload - instruction files, scoped agents, CLI entrypoint, and slash commands - into your app, and skips repo-maintenance files (tests, CI workflows, global assistant instruction files, git hooks, virtualenvs).
 
 `--target` is the **app repo root** (not the `.instructions/` folder). The script creates `<target>/.instructions/` if it does not exist, and writes `AGENTS.md`, `.claude/commands/`, and `.github/agents/` at the target root so CLI agents, Claude, and Copilot discover the scoped scaffold entrypoints.
 
@@ -246,8 +246,8 @@ Notes:
 
 | Server | Why | CLI alternative |
 |---|---|---|
-| Microsoft Docs MCP | Official .NET/Azure docs, samples, full-page retrieval | — |
-| Context7 MCP | Third-party library/API docs | — |
+| Microsoft Docs MCP | Official .NET/Azure docs, samples, full-page retrieval | - |
+| Context7 MCP | Third-party library/API docs | - |
 
 ### Enable by phase
 
@@ -255,9 +255,9 @@ Notes:
 |---|---|---|
 | GitHub MCP | Repo workflows, issues/PRs, CI visibility | `gh` CLI (preferred) |
 | Azure MCP | IaC/deployment/resource validation | `az` CLI (preferred) |
-| Playwright MCP | UI E2E validation/debugging | — |
+| Playwright MCP | UI E2E validation/debugging | - |
 | Fetch MCP | Pull external specs/docs into markdown | `curl` / `Invoke-RestMethod` |
-| Sequential Thinking MCP | Complex design/debug reasoning | — |
+| Sequential Thinking MCP | Complex design/debug reasoning | - |
 
 Optional additions: Git, Docker (`docker` CLI preferred), Memory, web-search MCPs, Azure DevOps MCP (`az devops` CLI preferred).
 
@@ -295,28 +295,28 @@ For copy-paste phase prompts, see [support/prompt-catalog.md](support/prompt-cat
 
 ## Operational References
 
-These references are for **maintaining and developing the instruction set itself** — not for using it to scaffold a new application. For app scaffolding, see [Quick Start](#quick-start) and [Happy Path](#happy-path).
+These references are for **maintaining and developing the instruction set itself** - not for using it to scaffold a new application. For app scaffolding, see [Quick Start](#quick-start) and [Happy Path](#happy-path).
 
-- [START-AI.md](START-AI.md) — canonical AI bootstrap, version checks, phase routing, and load rules
-- [support/prompt-catalog.md](support/prompt-catalog.md) — copy-paste prompts for starting or resuming a session
-- [support/execution-gates.md](support/execution-gates.md) — canonical validation gates and operator setup checklist
-- [support/golden-path-sample.md](support/golden-path-sample.md) — canonical small sample for regression-checking scaffold instructions
-- [support/final-scaffold-checklist.md](support/final-scaffold-checklist.md) — final generated-app scaffold acceptance checklist
-- [support/troubleshooting.md](support/troubleshooting.md) — failure triage and recurring issue guidance
-- [support/taskflow-proof-map.md](support/taskflow-proof-map.md) — fast reference-app proof map from instruction concern to TaskFlow area
-- [support/UPDATE-INSTRUCTIONS.md](support/UPDATE-INSTRUCTIONS.md) — capture improvements discovered during scaffolding
+- [START-AI.md](START-AI.md) - canonical AI bootstrap, version checks, phase routing, and load rules
+- [support/prompt-catalog.md](support/prompt-catalog.md) - copy-paste prompts for starting or resuming a session
+- [support/execution-gates.md](support/execution-gates.md) - canonical validation gates and operator setup checklist
+- [support/golden-path-sample.md](support/golden-path-sample.md) - canonical small sample for regression-checking scaffold instructions
+- [support/final-scaffold-checklist.md](support/final-scaffold-checklist.md) - final generated-app scaffold acceptance checklist
+- [support/troubleshooting.md](support/troubleshooting.md) - failure triage and recurring issue guidance
+- [support/taskflow-proof-map.md](support/taskflow-proof-map.md) - fast reference-app proof map from instruction concern to TaskFlow area
+- [support/UPDATE-INSTRUCTIONS.md](support/UPDATE-INSTRUCTIONS.md) - capture improvements discovered during scaffolding
 
 Useful script entrypoints:
 
-- `scripts/install-to-project.py` — copy the runtime payload into a consumer app's `.instructions/` directory and place harness entrypoints at the app root.
-- `scripts/configure-ef-packages-feed.py` — create/update target-app `nuget.config` for EF.Packages without writing PATs.
+- `scripts/install-to-project.py` - copy the runtime payload into a consumer app's `.instructions/` directory and place harness entrypoints at the app root.
+- `scripts/configure-ef-packages-feed.py` - create/update target-app `nuget.config` for EF.Packages without writing PATs.
 
 ## Document Ownership
 
-- `README.md` — human onboarding and repository overview
-- `AGENTS.md` — root CLI-agent scaffold entrypoint for installed app repos
-- `START-AI.md` — canonical AI session bootstrap and phase router
-- `ai/SKILL.md` — scaffolding policy and conventions (loaded as Phase 5 base)
+- `README.md` - human onboarding and repository overview
+- `AGENTS.md` - root CLI-agent scaffold entrypoint for installed app repos
+- `START-AI.md` - canonical AI session bootstrap and phase router
+- `ai/SKILL.md` - scaffolding policy and conventions (loaded as Phase 5 base)
  
 ## Layout
 
