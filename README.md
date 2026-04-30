@@ -422,3 +422,4 @@ Useful script entrypoints:
 - `ai/`: phase schemas, execution guidance, and AI-loaded base docs
 - `support/`: operator checklists, troubleshooting, handoff template, prompt catalog, and repo change notes
 - `skills/`, `templates/`, `scripts/`, `schemas/`: domain-specific content and validation schemas
+
