@@ -1,4 +1,4 @@
-# AI Instructions - New .NET App/Service
+# AI Instructions - New .NET App/Service Scaffolding
 
 Pragmatic instruction set for AI-assisted scaffolding of C#/.NET business applications and services.
 
