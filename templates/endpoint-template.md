@@ -136,6 +136,37 @@ public static class {Entity}Endpoints
 }
 ```
 
+## Custom Action Routes (Optional)
+
+Include only when `domain-specification.yaml` declares a `customActions` entry on `{Entity}` (e.g. `Reschedule`, `Approve`, `Cancel`). Map the action route inside the same `Map{Entity}Endpoints` extension so each entity's surface stays co-located. See [../skills/api.md](../skills/api.md) § Custom Action Endpoints for routing conventions and the request/response contract.
+
+```csharp
+// Inside Map{Entity}Endpoints — add alongside the CRUD routes above:
+group.MapPost("/{id:guid}/{action-name}", {ActionName})
+    .Produces<DefaultResponse<{Entity}Dto>>(StatusCodes.Status200OK)
+    .ProducesValidationProblem()
+    .ProducesProblem(StatusCodes.Status404NotFound)
+    .WithSummary("{ActionName} a {Entity}");
+
+private static async Task<IResult> {ActionName}(
+    HttpContext httpContext,
+    [FromServices] I{Entity}Service service,
+    Guid id,
+    [FromBody] {ActionName}Request request,
+    CancellationToken ct)
+{
+    var result = await service.{ActionName}Async(id, request, ct);
+    return result.Match<IResult>(
+        response => TypedResults.Ok(response),
+        errors => TypedResults.Problem(ProblemDetailsHelper.BuildProblemDetailsResponseMultiple(
+            messages: errors, traceId: httpContext.TraceIdentifier,
+            includeStackTrace: _problemDetailsIncludeStackTrace)),
+        () => TypedResults.NotFound(id));
+}
+```
+
+The handler shape mirrors `GetById` / `Update` deliberately — same `Result.Match()` three-branch mapping, same `ProblemDetails` builder, same `CancellationToken` placement. The service method invokes the entity's domain method (e.g. `entity.{ActionName}(...)`) and emits `afterAction({ActionName})` per the event model.
+
 ## Registration in Pipeline
 
 In `WebApplicationBuilderExtensions.cs`, add to `SetupApiEndpoints`:

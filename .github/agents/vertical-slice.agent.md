@@ -23,6 +23,7 @@ Before generating any files:
 - [ ] Locate existing: `RegisterServices.cs`, DbContext files, `WebApplicationBuilderExtensions.cs`
 - [ ] Confirm `scaffoldMode` and `testingProfile` from `resource-implementation.yaml`
 - [ ] If adding to a domain with existing entities, review their patterns for consistency
+- [ ] If this slice introduces a new domain term, role, event, custom action, or design decision, append it to `UBIQUITOUS-LANGUAGE.md` / `DESIGN-DECISIONS.md` and update `domain-specification.yaml` **before** generating code (see `.instructions/README.md` § Phase-1 Artifact Lifecycle)
 
 ## Execution Order
 

@@ -4,6 +4,8 @@ Load on-demand as a reference during Phase 5a–5e to verify scaffolded file lay
 
 Expected file layout when scaffolding is complete. All paths relative to project root `src/`.
 
+> **Scope:** Backend layers below are always emitted. Optional Phase 5c hosts (Blazor, Uno) extend this index — those sections only apply when the corresponding `enabledFeatures` flag is set in `HANDOFF.md` (`includeBlazorUI`, `includeUnoUI`). For host-internal layout details, see [../skills/ui-blazor.md](../skills/ui-blazor.md) and [../skills/ui-uno.md](../skills/ui-uno.md).
+
 ## Domain Layer
 | Artifact | Path |
 |---|---|
@@ -74,3 +76,44 @@ Expected file layout when scaffolding is complete. All paths relative to project
 |---|---|
 | Dockerfile (per host) | `Host/{Host}.Api/Dockerfile` |
 | Health checks | `Host/{Host}.Api/HealthChecks/SqlHealthCheck.cs` |
+
+## Blazor UI (Phase 5c, optional — `includeBlazorUI: true`)
+
+Source: [../skills/ui-blazor.md](../skills/ui-blazor.md). Project root: `Host/{Project}.Blazor/`.
+
+| Artifact | Path |
+|---|---|
+| Program.cs | `Host/{Project}.Blazor/Program.cs` |
+| App root | `Host/{Project}.Blazor/App.razor` |
+| Routes | `Host/{Project}.Blazor/Components/Routes.razor` |
+| Imports | `Host/{Project}.Blazor/Components/_Imports.razor` |
+| Layout | `Host/{Project}.Blazor/Components/Layout/MainLayout.razor` |
+| Page (dashboard) | `Host/{Project}.Blazor/Components/Pages/Dashboard.razor` |
+| Page (entity list, per entity) | `Host/{Project}.Blazor/Components/Pages/{Entity}List.razor` |
+| Page (entity new/edit, per entity) | `Host/{Project}.Blazor/Components/Pages/{Entity}Page.razor` |
+| Page (settings, error) | `Host/{Project}.Blazor/Components/Pages/Settings.razor`, `Error.razor` |
+| Refit API client | `Host/{Project}.Blazor/Services/I{Project}ApiClient.cs` |
+| Scoped state hub | `Host/{Project}.Blazor/Services/FloatService.cs` |
+| Static assets | `Host/{Project}.Blazor/wwwroot/app.css` |
+| Runtime config (WASM only) | `Host/{Project}.Blazor/wwwroot/appsettings.json` |
+
+## Uno UI (Phase 5c, optional, dedicated session — `includeUnoUI: true`)
+
+Source: [../skills/ui-uno.md](../skills/ui-uno.md), [../skills/ui-uno-shell.md](../skills/ui-uno-shell.md), [../skills/ui-uno-mvux.md](../skills/ui-uno-mvux.md), [../skills/ui-uno-platforms.md](../skills/ui-uno-platforms.md). Project root: `Host/{Project}.UI/`.
+
+| Artifact | Path |
+|---|---|
+| App entry | `Host/{Project}.UI/App.xaml`, `App.xaml.cs`, `App.xaml.host.cs` |
+| App config | `Host/{Project}.UI/appsettings.json` (+ environment variants) |
+| Shell | `Host/{Project}.UI/Shell.xaml`, `Shell.xaml.cs`, `ShellModel.cs` |
+| Business model (per entity) | `Host/{Project}.UI/Business/Models/{Entity}.cs` |
+| Business service (per feature) | `Host/{Project}.UI/Business/Services/{Feature}/I{Entity}Service.cs`, `{Entity}Service.cs` |
+| Kiota client (generated) | `Host/{Project}.UI/Client/` |
+| MVUX model — list (per entity) | `Host/{Project}.UI/Presentation/{Entity}ListModel.cs` |
+| MVUX model — detail (per entity) | `Host/{Project}.UI/Presentation/{Entity}DetailModel.cs` |
+| MVUX model — create (per entity) | `Host/{Project}.UI/Presentation/Create{Entity}Model.cs` |
+| Page — list (per entity) | `Host/{Project}.UI/Views/{Entity}ListPage.xaml` + `.xaml.cs` |
+| Page — detail (per entity) | `Host/{Project}.UI/Views/{Entity}DetailPage.xaml` + `.xaml.cs` |
+| Page — create (per entity) | `Host/{Project}.UI/Views/Create{Entity}Page.xaml` + `.xaml.cs` |
+| Styles / strings / converters | `Host/{Project}.UI/Styles/`, `Strings/`, `Converters/` |
+| WASM platform glue | `Host/{Project}.UI/Platforms/WebAssembly/WasmScripts/AppManifest.js` |

@@ -82,6 +82,22 @@ Phase 1 also creates durable collaboration artifacts before code planning starts
 - `UBIQUITOUS-LANGUAGE.md` records accepted domain terms, rejected synonyms, states, commands/actions, roles, events, policies, and naming guidance so later AI sessions use consistent expressions.
 - `DESIGN-DECISIONS.md` records design choices and dependencies between decisions, so downstream resource and code choices do not silently contradict earlier domain answers.
 
+### Phase-1 Artifact Lifecycle
+
+`domain-specification.yaml`, `UBIQUITOUS-LANGUAGE.md`, and `DESIGN-DECISIONS.md` are **living source of truth**, not snapshots. Every phase consumes them, so they must stay current as the project evolves — otherwise later AI sessions reason from a stale model and naming/decision drift creeps in.
+
+**When to update each:**
+
+- **New entity, term, role, event, or domain action** → append the term to `UBIQUITOUS-LANGUAGE.md` and update the relevant section of `domain-specification.yaml` (entity, customAction, event, etc.) before generating code. The `/vertical-slice` checklist enforces this as a pre-flight step.
+- **New design choice or revision of an earlier one** → append to `DESIGN-DECISIONS.md`. Do not silently rewrite earlier entries; mark the prior decision as superseded and link forward, so the dependency graph remains traceable.
+- **Schema or relationship change** → update `domain-specification.yaml` first, then propagate to EF configuration, repositories, DTOs, mappers, and tests in that order.
+
+**Drift signal.** If `UBIQUITOUS-LANGUAGE.md` and code identifiers diverge, the doc is wrong, not the code (per [support/final-scaffold-checklist.md](support/final-scaffold-checklist.md) language-failure rule). Update the doc to match accepted reality before changing code names. The same applies to `DESIGN-DECISIONS.md` — if the implemented architecture has moved past a recorded decision, supersede the entry rather than leaving the doc to contradict the code.
+
+**Mid-scaffold corrections.** When a domain misunderstanding surfaces mid-Phase-5 (entity purpose wrong, term mismatched, decision violated), [support/OPERATIONS.md](support/OPERATIONS.md) is the canonical recovery path: clarify with the user, update the Phase-1 artifacts, then re-scaffold the affected slice.
+
+**Do not delete.** These artifacts are the onboarding surface for every future AI session, code reviewer, and new team member. Keep them in the repo root for the life of the project — even when they grow long, the cost of reading them is far lower than the cost of an AI session reasoning from absent context.
+
 ## Phases
 
 Each phase runs in its own AI session and produces artifacts the next phase consumes.

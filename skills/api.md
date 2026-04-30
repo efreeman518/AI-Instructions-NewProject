@@ -187,6 +187,34 @@ Required endpoint rules:
 6. Add OpenAPI metadata (`Produces*`, summary/tags).
 7. Use POST for complex search filters.
 
+## Custom Action Endpoints
+
+The six-route CRUD shape above is the default. When `domain-specification.yaml` declares a `customActions` entry on an entity (e.g. `Reschedule`, `Approve`, `Cancel`), or when a non-CRUD operation legitimately spans multiple entities (cross-entity aggregation, bulk import, workflow trigger), surface it as an additional route on the same entity's endpoint group rather than inventing a parallel controller.
+
+**Route convention.** Stateful actions on a single aggregate go under the entity route as `POST /{entities}/{id:guid}/{action-name}` (kebab-case action segment). Cross-entity queries that don't bind to a single id go under `POST /{entities}/search/{aggregate-name}` so search-style POST semantics carry through.
+
+```csharp
+// Inside Map{Entity}Endpoints — co-locate custom actions with CRUD routes
+group.MapPost("/{id:guid}/reschedule", Reschedule)
+    .Produces<DefaultResponse<{Entity}Dto>>(StatusCodes.Status200OK)
+    .ProducesValidationProblem()
+    .ProducesProblem(StatusCodes.Status404NotFound)
+    .WithSummary("Reschedule a {Entity} to a new due date");
+```
+
+**Request / response.** Each custom action gets its own DTO in `Application.Models`:
+
+- Request: `{ActionName}Request` containing exactly the parameters declared on the `customActions` entry (e.g. `RescheduleRequest { DateTimeOffset NewDueDate }`). Wrap in `DefaultRequest<T>` only when the action mutates and returns the full entity.
+- Response: same `Result<T>` → `Result.Match()` → `TypedResults` + `ProblemDetails` flow as CRUD; do not invent action-specific error envelopes.
+
+**Service contract.** Add a method to `I{Entity}Service` named after the action (`Task<Result<{Entity}Dto>> RescheduleAsync(Guid id, RescheduleRequest req, CancellationToken ct)`). The service orchestrates: load aggregate → invoke domain method → persist → emit `afterAction({ActionName})` event per the existing event model in `domain-specification-schema.md`.
+
+**Domain method.** The action lives on the entity itself as a `DomainResult` method (e.g. `public DomainResult Reschedule(DateTimeOffset newDueDate)`), keeping invariants and state transitions inside the aggregate. The service does not contain the rule logic — only the orchestration around it.
+
+**Cross-entity queries.** When the operation reads across multiple entities and does not naturally belong to one of them (e.g. `POST /reports/search/sla-breaches` aggregating SLA, Order, and Customer), put it in a dedicated `{Domain}QueryEndpoints.cs` mapper. Apply the same Result-mapping rules; do not bypass `ProblemDetails` for these.
+
+**What stays out.** Do not add custom action routes purely to expose internal admin operations — those belong in a separate admin-scoped endpoint group with its own auth policy. Do not route domain events through HTTP; events are an internal contract surfaced via `IIntegrationEventPublisher`, not an API resource.
+
 ## Error Handling Strategy
 
 Two complementary layers — **Result pattern for expected outcomes, `DefaultExceptionHandler` for unexpected exceptions**:
