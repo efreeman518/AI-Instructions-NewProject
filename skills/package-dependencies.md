@@ -4,18 +4,21 @@ Use this file as a compact contract map for private/shared packages.
 
 ## Sources
 
-- Internal packages source: <https://github.com/efreeman518/EF.Packages>
+- Core packages: <https://github.com/efreeman518/EF.Packages>
+- Enterprise packages: <https://github.com/efreeman518/EF.Packages.Enterprise>
 - See [../patterns/expected-output-index.md](../patterns/expected-output-index.md).
 
-> **AI lookup rule:** This file provides a compact contract map. When you need full API signatures, constructor parameters, or method overloads for any `EF.*` base type (e.g., `TableRepositoryBase`, `IBlobRepository`, `ICosmosDbRepository`, `IKeyVaultManager`), use the GitHub MCP server to read the source from the [EF.Packages repo](https://github.com/efreeman518/EF.Packages).
+> **AI lookup rule:** This file provides a compact contract map. When you need full API signatures, constructor parameters, or method overloads for any `EF.*` base type (e.g., `TableRepositoryBase`, `IBlobRepository`, `ICosmosDbRepository`, `IKeyVaultManager`), use the GitHub MCP server to read the source from [EF.Packages](https://github.com/efreeman518/EF.Packages) or [EF.Packages.Enterprise](https://github.com/efreeman518/EF.Packages.Enterprise).
 
 ## Feed + Version Rules (Mandatory)
 
 1. `nuget.config` must include `nuget.org` and all `customNugetFeeds` from [resource-implementation-schema.md](../ai/resource-implementation-schema.md).
-2. Use central package versions in `Directory.Packages.props`.
-3. After adding packages, restore and update to latest stable versions.
-4. Re-verify with `dotnet restore` and `dotnet build`.
-5. **Private feed auth:** GitHub Packages and other authenticated feeds require a PAT or token. Local dev stores credentials in `nuget.config` (user-level, not committed). CI/CD must pass credentials via environment variable or `dotnet nuget` auth step — see [cicd.md](cicd.md) for workflow setup. A 401 on restore means the feed credential is missing or expired.
+2. **Both private feeds** must be declared when Enterprise packages (`EF.FlowEngine`, `EF.FilterBuilder`) are used — they ship from the same GitHub Packages org:
+   - `https://nuget.pkg.github.com/efreeman518/index.json` (covers `EF.*` pattern for both Core and Enterprise)
+3. Use central package versions in `Directory.Packages.props`.
+4. After adding packages, restore and update to latest stable versions.
+5. Re-verify with `dotnet restore` and `dotnet build`.
+6. **Private feed auth:** GitHub Packages and other authenticated feeds require a PAT or token. Local dev stores credentials in `nuget.config` (user-level, not committed). CI/CD must pass credentials via environment variable or `dotnet nuget` auth step — see [cicd.md](cicd.md) for workflow setup. A 401 on restore means the feed credential is missing or expired.
 
 > **CPM + floating versions = NU1011.** When `ManagePackageVersionsCentrally=true`, every `<PackageVersion>` entry must use an exact version (e.g. `Version="1.0.8"`). Wildcard/floating versions (e.g. `1.0.*`, `*`) are prohibited and cause restore to fail with NU1011. To use floating versions, set `ManagePackageVersionsCentrally=false` and add `Version="*"` directly to each `<PackageReference>`.
 
@@ -213,6 +216,19 @@ Provides interceptors and registration helpers for consistent gRPC error handlin
 ### `EF.FilterBuilder`
 
 `FilterSet` / `Filter` contracts to generate dynamic query filters.
+
+**Enterprise packages** (from <https://github.com/efreeman518/EF.Packages.Enterprise>):
+
+### `EF.FlowEngine`
+
+Durable, JSON-defined workflow orchestration engine. Add only when the requirement is a long-running, branching, or resumable process that a code-hosted agent cannot meet.
+
+- `IFlowEngine`: start, signal, resume, terminate, status
+- `IWorkflowRegistry`: workflow definition CRUD
+- `IFlowClient` subtypes: `IRequestResponseClient`, `IQueryClient`, `IMessageClient`, `IAgentClient`, `IFlowEngineClient`
+- `IDistributedLockProvider`, `IExecutionStateStore`, `IHumanTaskStore`, `IOutboxStore`, `ICircuitBreakerStore`
+- Pluggable backend packages: `EF.FlowEngine.StateStore.*`, `EF.FlowEngine.Locks.*`, `EF.FlowEngine.WorkflowRegistry.*`, `EF.FlowEngine.HumanTaskStore.*`, `EF.FlowEngine.Clients.*`
+- See [../support/ef-packages-reference.md](../support/ef-packages-reference.md) for full type list.
 
 ---
 

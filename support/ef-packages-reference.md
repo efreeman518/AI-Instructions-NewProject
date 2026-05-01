@@ -92,14 +92,220 @@ These types are consumed throughout scaffolded code. Know where they come from s
 | Type | Package | Used For |
 |---|---|---|
 | `IConfigurationBuilderExtensions` | EF.Host | Configuration builder extensions |
-| `IHostApplicationBuilderExtensions` | EF.Host | Host builder extensions (includes RunStartupTasks) |
-| `DefaultExceptionHandler` | EF.AspNetCore | Base `IExceptionHandler` for ProblemDetails mapping (requires ASP.NET Core host) |
+| `IHostApplicationBuilderExtensions` | EF.Host | Host builder extensions |
+| `CorrelationIdStartupFilter` | EF.AspNetCore | Middleware to propagate/generate correlation IDs |
+| `ValidationFilter<T>` | EF.AspNetCore | FluentValidation endpoint filter |
+| `ProblemDetailsHelper` | EF.AspNetCore | ProblemDetails response builder helpers |
+| `HealthCheckHelper` | EF.AspNetCore | Health check registration helpers |
+| `MemoryHealthCheck` | EF.AspNetCore | Memory usage health check implementation |
+| `HealthLoggingPublisher` | EF.AspNetCore | IHealthCheckPublisher that logs health status |
+| `ChaosManager` / `IChaosManager` | EF.AspNetCore | Chaos engineering fault injection |
+| `FilterActivityProcessor` | EF.AspNetCore | OpenTelemetry Activity processor with filter support |
+
+> **Note:** `DefaultExceptionHandler` is **not** in EF.AspNetCore. Scaffold it per-project as a concrete `IExceptionHandler` implementation. See reference app `TaskFlow.Api/Middleware/GlobalExceptionHandler.cs`.
 
 ### Caching (EF.Cache)
 
 | Type | Package | Used For |
 |---|---|---|
 | `CacheSettings` | EF.Cache | Config model bound from `CacheSettings[]` in appsettings |
+
+### Authentication (EF.Auth)
+
+Add when the app needs outbound auth (calling protected APIs) or role/scope-based authorization.
+
+| Type | Package | Used For |
+|---|---|---|
+| `IOAuth2TokenProvider` | EF.Auth | Token acquisition contract |
+| `OAuth2TokenProvider` | EF.Auth | Generic OAuth2 token provider |
+| `OAuth2Options` | EF.Auth | OAuth2 configuration options |
+| `Auth0TokenProvider` | EF.Auth | Auth0-specific token provider |
+| `Auth0Options` | EF.Auth | Auth0 configuration |
+| `AzureAdTokenProviderConfidentialClientApp` | EF.Auth | Azure AD MSAL confidential client token provider |
+| `AzureADOptions` | EF.Auth | Azure AD configuration |
+| `IAzureDefaultCredTokenProvider` | EF.Auth | Contract for DefaultAzureCredential token acquisition |
+| `AzureDefaultCredTokenProvider` | EF.Auth | DefaultAzureCredential-based token provider |
+| `BaseDefaultAzureCredsAuthMessageHandler` | EF.Auth | `DelegatingHandler` for outbound HTTP auth with Azure credentials |
+| `RolesOrScopesAuthorizationHandler` | EF.Auth | Flexible role or scope-based ASP.NET Core authorization handler |
+| `RolesOrScopesRequirement` | EF.Auth | Authorization requirement for role/scope check |
+
+### Messaging (EF.Messaging)
+
+Add when the app publishes or consumes Azure Service Bus, Event Grid, or Event Hub messages.
+
+| Type | Package | Used For |
+|---|---|---|
+| `IServiceBusSender` | EF.Messaging | Contract for publishing to Service Bus |
+| `ServiceBusSenderBase` | EF.Messaging | Abstract Service Bus sender (derive per-project) |
+| `ServiceBusSenderSettingsBase` | EF.Messaging | Settings base for sender configuration |
+| `ServiceBusProcessorBase` | EF.Messaging | Abstract Service Bus message processor (implement `IServiceBusReceiver`) |
+| `ServiceBusProcessorSettingsBase` | EF.Messaging | Settings base for processor configuration |
+| `IEventGridPublisher` | EF.Messaging | Contract for publishing Event Grid events |
+| `EventGridPublisherBase` | EF.Messaging | Abstract Event Grid publisher (derive per-project) |
+| `EventGridPublisherSettingsBase` | EF.Messaging | Settings base for publisher configuration |
+| `EventGridEvent` | EF.Messaging | Event Grid event model |
+| `IEventHubProducer` | EF.Messaging | Contract for sending to Event Hub |
+| `EventHubProducerBase` | EF.Messaging | Abstract Event Hub producer |
+| `EventHubProducerSettingsBase` | EF.Messaging | Settings base for producer configuration |
+| `IEventHubProcessor` | EF.Messaging | Contract for consuming from Event Hub |
+| `EventHubProcessorBase` | EF.Messaging | Abstract Event Hub processor |
+| `EventHubProcessorSettingsBase` | EF.Messaging | Settings base for processor configuration |
+
+### Azure Storage (EF.Storage)
+
+Add when the app needs Blob Storage access. Do not hand-roll blob logic — extend `BlobRepositoryBase`.
+
+| Type | Package | Used For |
+|---|---|---|
+| `IBlobRepository` | EF.Storage | Blob storage contract (upload, download, delete, SAS generation, container ops) |
+| `BlobRepositoryBase` | EF.Storage | Abstract blob repository; extend with a project-specific class |
+| `BlobRepositorySettingsBase` | EF.Storage | Settings base (requires `BlobServiceClientName`) |
+| `ContainerInfo` | EF.Storage | Container configuration model |
+| `ContainerPublicAccessType` | EF.Storage | Enum for container access level |
+
+**Constructor constraint:** `BlobRepositoryBase(ILogger, IOptions<BlobRepositorySettingsBase>, IAzureClientFactory<BlobServiceClient>)` — the settings parameter uses the base type. Register via `services.Configure<BlobRepositorySettingsBase>(...)` or use covariant DI binding.
+
+### Azure Table Storage (EF.Table)
+
+Add when the app needs Table Storage. Do not hand-roll table logic — extend `TableRepositoryBase`.
+
+| Type | Package | Used For |
+|---|---|---|
+| `ITableRepository` | EF.Table | Table storage contract (get, create, upsert, delete, page query, stream) |
+| `TableRepositoryBase` | EF.Table | Abstract table repository; extend with a project-specific class |
+| `TableRepositorySettingsBase` | EF.Table | Settings base (requires `TableServiceClientName`) |
+| `TableUpdateMode` | EF.Table | Enum: `Merge` (partial update) or `Replace` (full overwrite) |
+
+**Constructor constraint:** `TableRepositoryBase(ILogger, IOptions<TableRepositorySettingsBase>, IAzureClientFactory<TableServiceClient>)` — same base-type settings pattern as `BlobRepositoryBase`.
+
+### Azure Cosmos DB (EF.CosmosDb)
+
+Add when the app needs Cosmos DB document storage.
+
+| Type | Package | Used For |
+|---|---|---|
+| `ICosmosDbRepository` | EF.CosmosDb | Cosmos DB contract (save, get, delete, paged query, projection query) |
+| `CosmosDbRepositoryBase` | EF.CosmosDb | Abstract Cosmos DB repository |
+| `CosmosDbRepositorySettingsBase` | EF.CosmosDb | Settings base (requires `CosmosDbId`) |
+| `CosmosDbEntity` | EF.CosmosDb | Base entity with `PartitionKey` property and `id` alias |
+
+### Azure Key Vault (EF.KeyVault)
+
+Add when the app retrieves secrets, keys, or certificates from Key Vault.
+
+| Type | Package | Used For |
+|---|---|---|
+| `IKeyVaultManager` | EF.KeyVault | Secrets, keys, and certificates operations |
+| `IKeyVaultCryptoUtility` | EF.KeyVault | Encrypt/decrypt helpers via Key Vault |
+
+### gRPC (EF.Grpc)
+
+Add when the app exposes or consumes gRPC services.
+
+| Type | Package | Used For |
+|---|---|---|
+| `EF.Grpc` interceptors and registration helpers | EF.Grpc | Consistent gRPC error handling and Polly resilience wiring for gRPC clients |
+
+### AI / OpenAI (EF.OpenAI, EF.AzureOpenAI)
+
+Add when the app integrates OpenAI or Azure OpenAI directly (not via Agent Framework wrappers).
+
+| Type | Package | Used For |
+|---|---|---|
+| `EF.OpenAI` types | EF.OpenAI | OpenAI API client integration helpers |
+| `EF.AzureOpenAI` types | EF.AzureOpenAI | Azure OpenAI integration with caching support |
+
+### Microsoft Graph (EF.MSGraph)
+
+Add when the app calls Microsoft Graph APIs.
+
+| Type | Package | Used For |
+|---|---|---|
+| `EF.MSGraph` client helpers | EF.MSGraph | Microsoft Graph API client and auth wiring |
+
+---
+
+## EF.Packages.Enterprise
+
+**Feed:** `https://nuget.pkg.github.com/efreeman518/index.json` (same GitHub Packages feed, `EF.*` pattern mapping applies).
+
+Enterprise packages are opt-in. Add them only when the project requires durable workflow orchestration or runtime filter expression building.
+
+### Workflow Engine (EF.FlowEngine)
+
+JSON-defined, durable workflow orchestration engine with pluggable backends (state store, locks, human tasks, outbox, circuit breaker).
+
+**Core interfaces:**
+
+| Type | Package | Used For |
+|---|---|---|
+| `IFlowEngine` | EF.FlowEngine | Main orchestration API: start, signal, resume, terminate, get status |
+| `IWorkflowRegistry` | EF.FlowEngine | Workflow definition CRUD and status transitions |
+| `IFlowClient` | EF.FlowEngine | Base contract for all execution clients |
+| `IRequestResponseClient` | EF.FlowEngine | Synchronous HTTP/gRPC call nodes |
+| `IQueryClient` | EF.FlowEngine | Data query nodes (EF Core via `EF.FlowEngine.Clients.Sql`) |
+| `IMessageClient` | EF.FlowEngine | Async messaging nodes (Service Bus via `EF.FlowEngine.Clients.ServiceBus`) |
+| `IAgentClient` | EF.FlowEngine | AI/LLM agent invocation nodes (OpenAI via `EF.FlowEngine.Clients.OpenAI`) |
+| `IFlowEngineClient` | EF.FlowEngine | Cross-engine orchestration nodes |
+| `IDistributedLockProvider` | EF.FlowEngine | Distributed locking (pluggable: SQL, Redis, Cosmos, Blob, InMemory) |
+| `IExecutionStateStore` | EF.FlowEngine | Execution state persistence (pluggable: SQL, Redis, Cosmos, File) |
+| `IHumanTaskStore` | EF.FlowEngine | Human task/approval management (pluggable: SQL, Redis, Cosmos) |
+| `IOutboxStore` | EF.FlowEngine | Transactional outbox (pluggable: SQL) |
+| `ICircuitBreakerStore` | EF.FlowEngine | Circuit breaker state (pluggable: SQL, Redis) |
+
+**Key model types:**
+
+| Type | Used For |
+|---|---|
+| `WorkflowDefinition` | Workflow schema (nodes + edges) |
+| `NodeConfig` (and subtypes) | Per-node configuration: Decision, Fetch, Filter, Human, Loop, Parallel, Timer, Transform, Wait, Message, Agent, Document, etc. |
+| `HumanTask` / `HumanTaskStatus` | Human approval/review task model |
+| `OutboxEntry` / `OutboxEntryType` | Transactional outbox entry |
+| `ExecStatus` | Execution status enum: Pending, Running, Completed, Failed, Suspended, Terminated |
+| `DefinitionStatus` | Workflow definition status: Draft, Active, Archived |
+| `FilterSet` / `SearchRequest` | Used by `IQueryClient` for declarative data queries |
+
+**Built-in implementations (for testing/dev):**
+
+| Type | Used For |
+|---|---|
+| `InMemoryWorkflowRegistry` | In-memory registry (unit tests / local dev) |
+| `JsonFileWorkflowRegistry` | File-backed registry (local dev without DB) |
+| `InMemoryDistributedLockProvider` | Single-process locking (unit tests) |
+| `LoggerFlowEngineTelemetry` | Logging-based telemetry adapter |
+
+**Pluggable backend packages:**
+
+| Package | Purpose |
+|---|---|
+| `EF.FlowEngine.StateStore.Sql` | SQL-based execution state |
+| `EF.FlowEngine.StateStore.Redis` | Redis-based execution state |
+| `EF.FlowEngine.Locks.Sql` | SQL-based distributed locking |
+| `EF.FlowEngine.Locks.Redis` | Redis-based distributed locking |
+| `EF.FlowEngine.WorkflowRegistry.Sql` | SQL-backed workflow registry |
+| `EF.FlowEngine.HumanTaskStore.Sql` | SQL-backed human task store |
+| `EF.FlowEngine.Outbox.Sql` | SQL transactional outbox |
+| `EF.FlowEngine.CircuitBreaker.Sql` | SQL circuit breaker state |
+| `EF.FlowEngine.Clients.Http` | HTTP/REST client for `IRequestResponseClient` |
+| `EF.FlowEngine.Clients.Sql` | EF Core client for `IQueryClient` |
+| `EF.FlowEngine.Clients.ServiceBus` | Azure Service Bus client for `IMessageClient` |
+| `EF.FlowEngine.Clients.OpenAI` | Azure OpenAI client for `IAgentClient` |
+| `EF.FlowEngine.AdminApi` | REST management endpoints for workflow monitoring |
+| `EF.FlowEngine.Testing` | Test helpers and fixtures |
+
+### Runtime Filter Builder (EF.FilterBuilder)
+
+Translates declarative `FilterSet` JSON/objects into LINQ `Expression<Func<T, bool>>` at runtime. Use when API consumers or workflow steps need to specify query filters without server-side code changes.
+
+| Type | Package | Used For |
+|---|---|---|
+| `FilterBuilder<T>` | EF.FilterBuilder | Converts `FilterSet` → `Expression<Func<T, bool>>` |
+| `FilterSet` | EF.FilterBuilder | Filter definition (recursive: Simple, Expression, Group) |
+| `FilterSetType` | EF.FilterBuilder | Enum for filter node type |
+| `SearchRequest` | EF.FilterBuilder | Paged search request with filters, sorts, and page settings |
+| `SearchResponse<T>` | EF.FilterBuilder | Paginated search results |
+| `Sort` | EF.FilterBuilder | Sort specification (property + direction) |
+| `QueryableExtensions` | EF.FilterBuilder | `IQueryable<T>` extension methods for filter application |
 
 ### Testing (EF.Test.Unit, EF.Test.Integration)
 
