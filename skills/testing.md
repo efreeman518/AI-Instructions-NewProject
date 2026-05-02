@@ -241,6 +241,87 @@ Pattern:
 public async Task Repository_AgainstSql_PersistsCorrectly() { }
 ```
 
+### 3c) Aspire Integration Testing (`Test.Integration` with `DistributedApplicationTestingBuilder`)
+
+Use `DistributedApplicationTestingBuilder` when tests must run the full Aspire stack (SQL container, Redis, Functions, etc.) and verify end-to-end behavior that crosses host boundaries.
+
+#### Rule 1 — One shared Aspire environment per assembly (critical for speed)
+
+**Never start `DistributedApplication` per test class via `[TestInitialize]`.** Each start/stop costs 60–90 seconds. Start once in `[AssemblyInitialize]` inside `DatabaseFixture`:
+
+```csharp
+// DatabaseFixture.cs
+[AssemblyInitialize]
+public static async Task AssemblyInit(TestContext _)
+{
+    // Rule 2 — set BEFORE CreateAsync (see below)
+    Environment.SetEnvironmentVariable("TASKFLOW_ASPIRE_TESTING", "true");
+
+    // Rule 3 — conditional Functions inclusion (see below)
+    if (EnsureFuncToolAvailable())
+        Environment.SetEnvironmentVariable("TASKFLOW_INCLUDE_FUNCTIONS", "true");
+
+    var appHostProgramType = Type.GetType("Program, AppHost", throwOnError: true)!;
+    var builder = await DistributedApplicationTestingBuilder.CreateAsync(appHostProgramType);
+    AspireApp = await builder.BuildAsync();
+    await AspireApp.StartAsync();
+}
+
+internal static DistributedApplication? AspireApp { get; private set; }
+```
+
+Test classes reference `DatabaseFixture.AspireApp!` directly — no `[TestInitialize]`/`[TestCleanup]` needed.
+
+> **Perf:** shared environment cuts full-suite time roughly in half vs. per-class starts (e.g., 14-test suite: ~228 s → ~114 s).
+
+#### Rule 2 — `TASKFLOW_ASPIRE_TESTING=true` MUST be set before `CreateAsync`
+
+Without it the AppHost starts the full environment: CosmosDB emulator (~1.3 GB image), Scheduler, Gateway. These take 5–10 minutes or hang indefinitely. The env var must be set in `[AssemblyInitialize]` **before** `DistributedApplicationTestingBuilder.CreateAsync(...)` — not inside an individual test's init.
+
+**Corollary:** `AppHost/appsettings.Testing.json` must exist and supply all required parameters (e.g., `Parameters:sql-password`), because the slim Aspire environment still needs them to start SQL/Redis containers.
+
+#### Rule 3 — Conditional Functions inclusion before shared app start
+
+The Functions resource depends on `func.exe` (Azure Functions Core Tools). Detect availability once, before the shared app starts:
+
+```csharp
+// In DatabaseFixture
+private static bool EnsureFuncToolAvailable()
+{
+    // e.g., check PATH for func.exe
+    var funcPath = Environment.GetEnvironmentVariable("PATH")?
+        .Split(Path.PathSeparator)
+        .Select(p => Path.Combine(p, "func.exe"))
+        .FirstOrDefault(File.Exists);
+    return funcPath is not null;
+}
+```
+
+Place `EnsureFuncToolAvailable()` in `DatabaseFixture` (not in individual test classes) so `[AssemblyInitialize]` makes the decision once. Tests that require Functions should call `Assert.Inconclusive(...)` when `AspireApp` does not expose that resource — don't silently skip.
+
+#### Rule 4 — `[Timeout]` on every Aspire integration test method is mandatory
+
+With `[assembly: DoNotParallelize]`, a single hanging test blocks the entire suite indefinitely.
+
+```csharp
+[Timeout(300000)]   // 5 min — Aspire end-to-end tests
+[Timeout(120000)]   // 2 min — Testcontainers SQL-only tests
+```
+
+A timeout failure is recoverable; a hang is not.
+
+#### Rule 5 — `local.settings.json` hardcoded connection strings override Aspire injection
+
+Azure Functions `local.settings.json` connection strings override whatever Aspire injects at runtime. If `local.settings.json` contains `TaskFlowDbContextTrxn` or `TaskFlowDbContextQuery` pointing at LocalDB, the Functions host connects to LocalDB (not the test SQL container), causing auth failures.
+
+**Fix:** Remove all DB connection strings from `local.settings.json` for testing. The only safe string to keep is one that Azurite itself provides (e.g., `"TableStorage1": "UseDevelopmentStorage=true"`), since Aspire re-injects the actual Azurite address at runtime.
+
+#### Rule 6 — `using Aspire.Hosting.Testing;` required even when not declaring `DistributedApplication` locally
+
+`CreateHttpClient()` and `GetConnectionStringAsync()` are extension methods from `Aspire.Hosting.Testing`. Any file that calls `DatabaseFixture.AspireApp!.CreateHttpClient(...)` or `.GetConnectionStringAsync(...)` must keep `using Aspire.Hosting.Testing;` even when it has no local `DistributedApplication` field. Removing it causes `CS1061`.
+
+---
+
 ### 4) Playwright UI (`Test.PlaywrightUI`)
 
 **Harness: hosted stack, NOT WebApplicationFactory.** Playwright drives a real browser; it requires a real Kestrel + UI host. Run tests against the Aspire AppHost (locally — read the host URL from `dotnet run` output and inject as `PLAYWRIGHT_BASE_URL`) or against a docker-compose / preview deployment in CI.
