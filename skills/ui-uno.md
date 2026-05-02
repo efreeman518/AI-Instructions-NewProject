@@ -77,8 +77,8 @@ Detailed structure rules live in [ui-uno-shell.md](ui-uno-shell.md) § Project F
 - [ ] `Shell.xaml.cs` implements `IContentControlProvider`
 - [ ] `ShellModel` navigates to first route in constructor
 - [ ] `Platforms/WebAssembly/WasmScripts/AppManifest.js` present (see [ui-uno-platforms.md](ui-uno-platforms.md))
-- [ ] `launchSettings.json` HTTP port not in Windows excluded range (use `55553`, not `55552`)
-- [ ] Gateway `CorsSettings.AllowedOrigins` includes `https://localhost:55551` and `http://localhost:55553`
+- [ ] `launchSettings.json` applicationUrl set to `https://localhost:7069;http://localhost:5189`
+- [ ] Gateway `CorsSettings.AllowedOrigins` includes `https://localhost:7069` and `http://localhost:5189`
 - [ ] UI uses Gateway endpoints only
 
 ## Related Skills

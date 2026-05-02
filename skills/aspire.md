@@ -119,6 +119,49 @@ Services like `AddSqlServer`, `AddRedis`, `AddPostgres`, `AddRabbitMQ` already r
 
 ---
 
+## Parameter Resolution and Credential Management
+
+### Aspire Parameter Resolution Order
+
+Aspire resolves `AddParameter` values in this priority order (highest wins):
+
+1. Environment variables (`Parameters__<name>`)
+2. `appsettings.{Environment}.json` entries under `Parameters:<name>`
+3. `AddParameter(..., default: ...)` code default
+
+**A value in `appsettings.Development.json` or `appsettings.Testing.json` silently overrides the code default on every run.** This is the most common source of "why isn't my password change taking effect?" bugs.
+
+### Rules
+
+- **Never put `Parameters:sql-password` (or any credential parameter) in any AppHost `appsettings` file.** It overrides everything silently. Keep those files as `{}` or omit the `Parameters` key entirely.
+- **Define passwords as a single shared constant** (e.g., `LocalSqlSettings.SharedSaPassword`). Use that constant as the `AddParameter` default and in test fixture setup. Change in one place only.
+- **Persistent SQL volumes lock in the SA password at volume creation time.** If you change the password constant, you must delete the named volume (e.g., `taskflow-sql-data`) before the next run — the container will re-initialize with the new password.
+- **Killing the AppHost process does not stop Docker/Podman containers.** Clean up persistent containers explicitly:
+  ```bash
+  docker ps --filter label=com.microsoft.dotnet.aspire.container.name --format "{{.ID}}" | xargs docker rm -f
+  ```
+  Or remove by name/label from the Aspire dashboard or `docker rm -f <container-name>`.
+
+### Pattern: Shared Constant + Clean appsettings
+
+```csharp
+// AppHost/LocalSqlSettings.cs
+public static class LocalSqlSettings
+{
+    public const string SharedSaPassword = "YourStr0ngP@ssword!";
+}
+
+// AppHost/Program.cs
+var sqlPassword = builder.AddParameter("sql-password", LocalSqlSettings.SharedSaPassword, secret: true);
+var sqlServer = builder.AddSqlServer("sql", sqlPassword)
+    .WithLifetime(ContainerLifetime.Persistent)
+    .WithDataVolume("{project}-sql-data");
+```
+
+`AppHost/appsettings.Development.json` and `appsettings.Testing.json` must **not** contain a `Parameters` section. Leave them as `{}`.
+
+---
+
 ## Package Source Mapping for Aspire Dependencies
 
 When the project uses `nuget.config` with `<packageSourceMapping>`, the following patterns must be mapped to `nuget.org` or Aspire transitive restores will fail:

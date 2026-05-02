@@ -259,6 +259,21 @@ Reference: See [exception-handler-template](../templates/exception-handler-templ
 - **Returning raw error strings** — Always wrap in `ProblemDetails` at the API boundary.
 - **Catching generic `Exception` in services** — Let `DefaultExceptionHandler` handle the rest.
 - **Exposing stack traces in production** — Only include outside production.
+- **Relying on `DefaultExceptionHandler` to silence `OperationCanceledException`** — The VS debugger breaks at the throw site (inside EF Core) before the handler runs. Catch `OperationCanceledException` in the service method and return an empty/default result:
+  ```csharp
+  catch (OperationCanceledException)
+  {
+      logger.LogDebug("Search cancelled by client.");
+      return new PagedResponse<TDto>();
+  }
+  ```
+- **Non-nullable `[FromBody]` on search endpoints** — An empty body (e.g. sent on rapid navigation or client cancellation) causes `BadHttpRequestException` before the service is reached. Make the parameter nullable and null-coalesce at the call site:
+  ```csharp
+  app.MapPost("/search", async ([FromBody] SearchRequest<TFilter>? request, ...) => {
+      request ??= new SearchRequest<TFilter>();
+      ...
+  });
+  ```
 
 ## OpenAPI / Scalar Configuration
 

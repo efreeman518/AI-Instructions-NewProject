@@ -54,9 +54,16 @@ EXCLUDE_PARTS = {
     "obj",
 }
 
+# Sentinel markers used when merging root-level markdown files.
+MERGE_SENTINEL_START = "<!-- ai-scaffold: start -->"
+MERGE_SENTINEL_END = "<!-- ai-scaffold: end -->"
+
 # Agent/command placements that land at the app repo root, not under .instructions/.
+# kind="merge" appends content inside sentinel markers (idempotent) when file exists.
 AGENT_COPIES = [
-    ("AGENTS.md", "AGENTS.md", "file"),
+    ("AGENTS.md", "AGENTS.md", "merge"),
+    ("CLAUDE.md", "CLAUDE.md", "merge"),
+    (".github/copilot-instructions.md", ".github/copilot-instructions.md", "merge"),
     (".claude/commands", ".claude/commands", "dir"),
     (".github/agents", ".github/agents", "dir"),
 ]
@@ -69,6 +76,7 @@ class Planner:
         self.copied = 0
         self.skipped = 0
         self.preserved = 0
+        self.merged = 0
 
     def _should_skip(self, rel_path: Path) -> bool:
         return any(part in EXCLUDE_PARTS for part in rel_path.parts)
@@ -101,9 +109,42 @@ class Planner:
                 continue
             self.copy_file(path, dst / rel, f"{label_prefix}/{rel.as_posix()}")
 
+    def merge_file(self, src: Path, dst: Path, label: str) -> None:
+        """Copy src to dst; if dst exists, append src inside sentinel markers (idempotent)."""
+        src_content = src.read_text(encoding="utf-8")
+        if dst.exists():
+            dst_content = dst.read_text(encoding="utf-8")
+            if MERGE_SENTINEL_START in dst_content:
+                print(f"  [skip]  {label} (already merged)")
+                self.skipped += 1
+                return
+            merged = (
+                dst_content.rstrip("\n")
+                + "\n\n"
+                + MERGE_SENTINEL_START
+                + "\n"
+                + src_content.strip()
+                + "\n"
+                + MERGE_SENTINEL_END
+                + "\n"
+            )
+            action = "[dry-run]" if self.dry_run else "[merge]"
+            print(f"  {action} {label}")
+            if not self.dry_run:
+                dst.write_text(merged, encoding="utf-8")
+            self.merged += 1
+        else:
+            action = "[dry-run]" if self.dry_run else "[copy]"
+            print(f"  {action} {label}")
+            if not self.dry_run:
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(src, dst)
+            self.copied += 1
+
     def summary(self) -> None:
         print()
         print(f"copied:    {self.copied}")
+        print(f"merged:    {self.merged} (appended scaffold block to existing file)")
         print(f"preserved: {self.preserved} (target newer, --update)")
         print(f"skipped:   {self.skipped}")
         if self.dry_run:
@@ -188,7 +229,9 @@ def main() -> int:
                 print(f"  [skip]  {dst_rel} (missing in source)")
                 planner.skipped += 1
                 continue
-            if kind == "file":
+            if kind == "merge":
+                planner.merge_file(src, dst, dst_rel)
+            elif kind == "file":
                 planner.copy_file(src, dst, dst_rel)
             else:
                 planner.copy_tree(src, dst, dst_rel)

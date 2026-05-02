@@ -1,6 +1,6 @@
 # Test Templates — Index
 
-Test scaffolding lives in five split files, one per harness tier. Load only the file matching the current sub-phase.
+Test scaffolding lives in split files by phase and harness. Load only the matching template(s) for the current task.
 
 | Phase | Template | Generates |
 |---|---|---|
@@ -10,4 +10,10 @@ Test scaffolding lives in five split files, one per harness tier. Load only the 
 | 5b | [test-templates-endpoint.md](test-templates-endpoint.md) | `Test/Test.Endpoints/**` (incl. shared `WebApplicationFactoryBase` in `Test.Support`) |
 | 5d | [test-templates-quality.md](test-templates-quality.md) | `Test/Test.Architecture/**`, `Test/Test.Load/**`, `Test/Test.Benchmarks/**`, `Test/Test.PlaywrightUI/**` (Node, hosted-stack), `Test/Test.E2E/**` |
 
-See [skills/testing.md](../skills/testing.md) for the harness model (Test.Unit / Test.Integration / Test.Endpoints / Test.E2E / Test.PlaywrightUI), TDD protocol, BDD naming, and profile selection.
+Primary routing: [../skills/testing-templates-map.md](../skills/testing-templates-map.md)
+
+Core policy and harness model: [../skills/testing-core.md](../skills/testing-core.md)
+
+Hosted browser UI rules: [../skills/testing-playwright-ui.md](../skills/testing-playwright-ui.md)
+
+Integration host fixture rules: [../skills/testing-integration-hosts.md](../skills/testing-integration-hosts.md)

@@ -28,6 +28,10 @@ internal sealed class DefaultExceptionHandler(
         Exception exception,
         CancellationToken cancellationToken)
     {
+        // Guard: if the response has already started (e.g. streaming), writing
+        // a ProblemDetails body would throw a second exception and mask the original.
+        if (httpContext.Response.HasStarted) return true;
+
         var (statusCode, title) = exception switch
         {
             Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException
@@ -95,6 +99,8 @@ app.UseExceptionHandler();
 - Always log at `Error` level with structured placeholders.
 - Return `true` to indicate the exception is handled and prevent further pipeline propagation.
 - Add new exception mappings as needed (e.g., `HttpRequestException` → 502 for downstream failures).
+- **Always check `httpContext.Response.HasStarted` before writing the response body.** Writing to an already-started response throws a second exception and masks the original.
+- **`OperationCanceledException` from EF Core is best caught in the service method**, not here. The VS debugger breaks at the throw site before this handler runs, so the handler alone cannot suppress break-on-exception dialogs. Catch it in the service and return an empty/default result; let this handler remain a true last-resort fallback.
 
 ## Verification Checklist
 

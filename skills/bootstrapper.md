@@ -189,8 +189,10 @@ await app.RunAsync();
 2. **Host projects only add host-specific concerns** — API adds endpoints/auth, Functions add triggers, etc.
 3. **Extension method chaining** — Each `Register*()` returns `IServiceCollection` for fluent chaining
 4. **Private helper methods** — Keep the public surface clean; group related registrations
-5. **Configuration-driven** — Settings classes loaded from `IConfiguration` sections
+5. **Configuration-driven** — Settings classes loaded from `IConfiguration` sections; bootstrapper reads config, never owns per-host defaults
 6. **Startup tasks run after Build()** — Before `RunAsync()`, migrations applied, caches warmed
+7. **Every host must supply its config** — Any key read inside `RegisterInfrastructureServices` (or any shared registration method) must exist in the `appsettings*.json` of every host that calls it: API, Scheduler, and Functions all need the same config keys
+8. **Build after DI changes** — Small registration changes (factory lambdas, new `using` imports, constructor signature changes) can break compile. Run a focused host build immediately after any registration edit to catch failures early
 
 ---
 

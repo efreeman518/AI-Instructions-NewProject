@@ -62,6 +62,12 @@ public class ApplicationDependencyTests : BaseTest
 
 ## E2E Tests (Playwright)
 
+> **Uno WASM vs MudBlazor:** The template below uses standard HTML selectors (MudBlazor / server-rendered Blazor). For Uno WASM targets, use the boot-once shared-page pattern and coordinate-click helpers in [../skills/testing-playwright-ui.md](../skills/testing-playwright-ui.md).
+>
+> **Data-assertion rule:** Never assert specific row counts, page counts, or seeded titles (e.g. `"Showing 1 to 10 of 14"`, `"Build dashboard UI"`). These break against shared dev databases with accumulating test data. Assert structural UI strings only: headers, labels, empty-state text.
+>
+> **MudBlazor timing:** Always `waitFor` inputs before fill and use 15 s timeout for delete dialogs as defined in [../skills/testing-playwright-ui.md](../skills/testing-playwright-ui.md).
+
 ### File: `Test/Test.PlaywrightUI/Tests/{Entity}CrudTests.cs`
 
 ```csharp

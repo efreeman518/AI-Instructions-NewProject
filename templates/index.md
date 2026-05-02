@@ -31,12 +31,20 @@ Quick lookup: "I need to scaffold X" → load these files.
 
 | Artifact | Template | Phase | Required Skill |
 |---|---|---|---|
-| Domain entity + rule tests | `test-templates-domain.md` | 5a | `skills/testing.md` |
-| Repository tests | `test-templates-repository.md` | 5a | `skills/testing.md` |
-| Service + mapper tests | `test-templates-service.md` | 5b | `skills/testing.md` |
-| Endpoint integration tests | `test-templates-endpoint.md` | 5b | `skills/testing.md` |
-| Architecture / E2E / Load / Benchmarks | `test-templates-quality.md` | 5e | `skills/testing.md` |
-| Complete reference (all tests) | `test-templates.md` | on-demand | `skills/testing.md` |
+| Domain entity + rule tests | `test-templates-domain.md` | 5a | `skills/testing-core.md` |
+| Repository tests | `test-templates-repository.md` | 5a | `skills/testing-core.md` |
+| Service + mapper tests | `test-templates-service.md` | 5b | `skills/testing-core.md` |
+| Endpoint integration tests | `test-templates-endpoint.md` | 5b | `skills/testing-core.md` |
+| Architecture / E2E / Load / Benchmarks | `test-templates-quality.md` | 5d | `skills/testing-quality-gates.md` + `skills/testing-playwright-ui.md` |
+| Complete reference (all tests) | `test-templates.md` | on-demand | `skills/testing-templates-map.md` |
+
+Testing skill split (context-friendly loading):
+
+- `skills/testing-core.md`
+- `skills/testing-integration-hosts.md`
+- `skills/testing-playwright-ui.md`
+- `skills/testing-quality-gates.md`
+- `skills/testing-templates-map.md`
 
 ## Contracts + TDD
 

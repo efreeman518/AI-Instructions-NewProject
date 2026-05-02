@@ -11,6 +11,34 @@ See appsettings-template for config file patterns.
 
 Base types (`IKeyVaultManager`, `IKeyVaultCryptoUtility`) come from the `EF.KeyVault` package — see [package-dependencies.md](package-dependencies.md) and the [EF.Packages repo](https://github.com/efreeman518/EF.Packages) for full API details.
 
+---
+
+## Config vs Code
+
+**Must be in config (never hardcoded):**
+- CORS allowed origins
+- Rate limit thresholds
+- DB retry/timeout settings
+- Cosmos database and container names
+- Gateway/external service base URLs
+- Cache duration and tuning values
+
+**May stay in code when not environment-sensitive:**
+- OpenAPI title and description
+- Enum-based business constants that never differ across deployments
+
+**Required settings must fail fast.** When a setting is required for correct runtime behavior, throw on startup rather than silently falling back:
+
+```csharp
+var origins = config.GetSection("Cors:AllowedOrigins").Get<string[]>();
+if (origins is null || origins.Length == 0)
+    throw new InvalidOperationException("Cors:AllowedOrigins is required but missing from configuration.");
+```
+
+Apply this pattern to: CORS origins, gateway base URLs, Entra auth keys (`Instance`, `TenantId`, `ClientId`), and any external dependency URL.
+
+---
+
 ### Prerequisites
 
 - [solution-structure.md](solution-structure.md)

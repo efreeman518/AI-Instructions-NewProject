@@ -164,6 +164,8 @@ public class CacheSettings
 }
 ```
 
+**Extending cache behavior:** add fields to `CacheSettings` and update all host `appsettings*.json` in the same change. Do not add a new separate settings class — the list-based pattern already supports per-named-cache tuning.
+
 ---
 
 ## Testing Guidance

@@ -72,15 +72,15 @@ netsh int ipv4 show excludedportrange protocol=tcp | Select-String '5555[0-9]'
 If a port used in `launchSettings.json` is listed, change it to a port confirmed absent from the exclusion list.
 
 **Known-bad port**: `55552` is routinely in the excluded range on Hyper-V/Docker Desktop hosts.
-**Known-good ports**: `55551` (HTTPS) and `55553` (HTTP) are not excluded on a standard developer machine.
+**Standard local Uno endpoints**: HTTPS `https://localhost:7069`, HTTP `http://localhost:5189`.
 
 When scaffolding a new Uno project's `launchSettings.json`, use:
 
 ```json
-"applicationUrl": "https://localhost:55551;http://localhost:55553"
+"applicationUrl": "https://localhost:7069;http://localhost:5189"
 ```
 
-Also update the Gateway `CorsSettings.AllowedOrigins` to include both `https://localhost:55551` and `http://localhost:55553`.
+Also update the Gateway `CorsSettings.AllowedOrigins` to include both `https://localhost:7069` and `http://localhost:5189`.
 
 ### Freeing a Stuck Dev Port on Windows (from bash/Git Bash)
 
@@ -88,7 +88,7 @@ When `dotnet run` fails with `AddressInUseException` because a previous `WasmApp
 
 ```bash
 # Find PID holding the port
-netstat -ano | grep :55551
+netstat -ano | grep :7069
 # Kill (bash: // not /)
 taskkill //F //PID <pid>
 ```
@@ -100,6 +100,70 @@ Do **not** change the launch port to work around a stuck process — find and ki
 ### Post-Rebuild Browser Refresh
 
 After any rebuild, `WasmAppHost` serves a new `package_<hash>/` directory. The old hash is instantly stale. Always open a **new browser tab** to the HTTPS origin — never reload an existing tab. Existing tabs will 404 all their `package_*` asset requests until a full address-bar navigation occurs.
+
+---
+
+## Playwright Testing Against Uno WASM
+
+These rules apply to `Test.PlaywrightUI` tests that drive a running Uno WASM host.
+
+### Boot Once Per Describe Block
+
+WASM cold-start takes 20–45 seconds. Never use the default `{ page }` Playwright fixture for Uno tests — it boots a new page per test and compounds wall-clock time.
+
+Use `test.describe.configure({ mode: "serial" })` with a shared `BrowserContext`/`Page` created in `beforeAll`. Call `waitForApp(sharedPage)` once in `beforeAll`, then reuse `sharedPage` across all tests in the block. Re-call `waitForApp` after in-test navigation — it re-checks without a full re-boot.
+
+```typescript
+test.describe("EntityCrud", () => {
+  test.describe.configure({ mode: "serial" });
+
+  test.beforeAll(async ({ browser }) => {
+    const context = await browser.newContext({ ignoreHTTPSErrors: true });
+    sharedPage = await context.newPage();
+    await sharedPage.goto("https://localhost:7069");
+    await waitForApp(sharedPage);
+  });
+});
+```
+
+`test.use({ viewport })` does **not** apply to a `beforeAll`-owned context. Pass viewport directly:
+
+```typescript
+context = await browser.newContext({ viewport: { width: 390, height: 844 }, ignoreHTTPSErrors: true });
+```
+
+Set `--timeout=120000` on any suite containing Uno WASM cold-start:
+
+```json
+"test:full": "npx playwright test --retries=0 --max-failures=4 --timeout=120000"
+```
+
+### Coordinate-Click for Invisible Elements
+
+Standard Playwright visibility checks and `.click()` fail on Uno's canvas/shadow DOM. Use `getBoundingClientRect()` via `page.evaluate()` and `page.mouse.click()`. Retry in a loop since elements render asynchronously:
+
+```typescript
+for (let attempt = 0; attempt < 20; attempt++) {
+  const coords = await page.evaluate(() => {
+    for (const p of Array.from(document.querySelectorAll("p"))) {
+      const txt = (p.textContent ?? "").trim();
+      if (!txt.startsWith("E2E-")) continue; // filter by known prefix to avoid overlapping elements
+      const r = p.getBoundingClientRect();
+      if (r.width > 0 && r.height > 0 && r.y > 0 && r.x > 0)
+        return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+    }
+    return null;
+  });
+  if (coords) { await page.mouse.click(coords.x, coords.y); break; }
+  await page.waitForTimeout(500);
+}
+```
+
+Filter by a known text prefix (e.g. `"E2E-"`) to avoid hitting status chips or other `<p>` elements that overlap the target.
+
+### Slow Router After Many Navigations
+
+After several in-session navigations, the WASM router can lag. Increase assertion timeouts for pages loaded later in the shared-page lifecycle (use 60 s after 3+ prior navigations).
 
 ---
 
