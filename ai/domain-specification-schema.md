@@ -64,6 +64,24 @@ entities:
   - fixed, stable set -> `enum`
   - evolving/managed set -> dedicated catalog entity (for localization/versioning)
 
+### Enum Design Rules
+
+Enums are appropriate for a **fixed, closed set of named values** with no transition logic. Two misuses to avoid:
+
+**1. Do not use an enum in place of a state machine.**
+If the values have allowed transitions, guards, or trigger events, model it as a `stateMachine` (see State Machines section). An enum with transition logic buried in service code is a state machine in disguise — it will accumulate `switch` statements and invariant violations across the codebase.
+
+Wrong: `Status: enum [Draft, Active, Suspended, Closed]` when only certain transitions are valid.
+Right: declare a `stateMachine` with explicit `states`, `transitions`, and guards.
+
+**2. Do not collapse multiple domain entities into one entity by misusing an enum discriminator.**
+If objects with different `Type` values have different properties, relationships, lifecycles, or rules, they are separate entities — not one entity with a `Kind`/`Type` enum. Collapsing them produces nullable columns, conditional logic everywhere, and violated invariants.
+
+Wrong: a single `Notification` entity with `Type: enum [Email, SMS, Push]` where each type has different required fields and delivery rules.
+Right: a shared `Notification` base entity (or interface) with separate `EmailNotification`, `SmsNotification`, `PushNotification` entities.
+
+Apply enum freely when the values are genuinely interchangeable labels with no structural or behavioral difference between them.
+
 ### Relationship Types
 
 - `one-to-many` — parent owns children. Specify cascade behavior.

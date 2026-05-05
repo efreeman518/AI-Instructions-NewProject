@@ -77,7 +77,7 @@ Keep versions centralized in `Directory.Packages.props`.
 
 ## Assertion Policy
 
-Do not use FluentAssertions. Version 8+ uses a commercial license.
+**Do not use FluentAssertions.** Version 8+ requires a commercial license. Do not add it as a NuGet reference under any circumstance. If `nuget.config` contains a `<package pattern="FluentAssertions" />` allowlist entry, remove it — its presence is a license-policy violation waiting to happen.
 
 Allowed options:
 
@@ -85,7 +85,9 @@ Allowed options:
 |---|---|---|
 | MSTest built-ins (default) | none | MIT |
 | Shouldly | `Shouldly` | MIT |
-| Custom helpers in Test.Support | none | n/a |
+| `AssertionExtensions` in Test.Support | none | n/a |
+
+The project-local `AssertionExtensions` class (in `Test.Support/AssertionExtensions.cs`, `Lumina.Testing` namespace) provides `.Should()` syntax via `global using Lumina.Testing;` in `Test.Unit/GlobalUsings.cs`. Use it; do not import FluentAssertions to get the same syntax.
 
 Prefer specific MSTest asserts over generic `Assert.IsTrue`.
 
@@ -108,6 +110,60 @@ dotnet test --filter "TestCategory=Integration"
 dotnet test --filter "TestCategory=E2E"
 dotnet test --filter "TestCategory=PlaywrightUI"
 ```
+
+## Test Class Field Declarations
+
+Fields assigned inside `[TestInitialize]` (not the constructor) must be declared with `= null!` to suppress CS8618. The nullable analyzer does not recognise `[TestInitialize]` as a guaranteed initializer.
+
+```csharp
+// Required pattern for all mock and service fields set in [TestInitialize]
+private Mock<IMyDependency> _mockDep = null!;
+private MyService _service = null!;
+
+[TestInitialize]
+public void Setup()
+{
+    _mockDep = new Mock<IMyDependency>();
+    _service = new MyService(_mockDep.Object);
+}
+```
+
+Apply `= null!` to every non-nullable field in every generated test class. A missing `= null!` on any field that is set in `[TestInitialize]` produces a CS8618 warning.
+
+## Assembly Initializer Safety
+
+`[AssemblyInitialize]` methods must **never throw**. A throwing `AssemblyInitialize` causes MSTest to abort the entire assembly — including tests that have no dependency on the failed setup.
+
+For test assemblies that start external infrastructure (e.g., Testcontainers), apply this pattern:
+
+```csharp
+[AssemblyInitialize]
+public static async Task AssemblyInit(TestContext context)
+{
+    try
+    {
+        await _fixture.InitializeAsync();
+    }
+    catch (Exception ex)
+    {
+        _startupError = ex;
+        // Do not rethrow — let individual tests mark themselves inconclusive
+    }
+}
+```
+
+In each test that depends on the infrastructure, check readiness at the start:
+
+```csharp
+[TestInitialize]
+public void TestSetup()
+{
+    if (_startupError != null)
+        Assert.Inconclusive($"Infrastructure startup failed: {_startupError.Message}");
+}
+```
+
+This isolates startup flakiness (e.g., `RegexMatchTimeoutException` from Testcontainers image parsing under CPU contention) to affected tests only, and keeps unrelated tests runnable.
 
 ## Core Patterns
 
@@ -148,3 +204,6 @@ Rules:
 - [ ] Categories match intended command filters.
 - [ ] Search tests always set `PageSize` and `PageIndex`.
 - [ ] Rate limiter is disabled in test factory when API enables rate limiting.
+- [ ] No FluentAssertions NuGet reference exists; no `<package pattern="FluentAssertions" />` in `nuget.config`.
+- [ ] Every test field assigned in `[TestInitialize]` is declared with `= null!`.
+- [ ] `[AssemblyInitialize]` does not throw; infrastructure failures mark dependent tests `Inconclusive`.

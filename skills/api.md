@@ -181,11 +181,34 @@ Required endpoint rules:
 
 1. Static class + static handlers.
 2. Use `TypedResults` for success responses.
-3. Use `Result.Match()` (or equivalent single mapping path) for service outcomes.
-4. Return `ProblemDetails` for errors (no raw strings).
-5. Validate route/body ID consistency on update.
-6. Add OpenAPI metadata (`Produces*`, summary/tags).
-7. Use POST for complex search filters.
+3. **Use `Result.Match()` — never `IsSuccess`/`else` guards.** Every handler must branch through `Result.Match<IResult>()`. Three branches for `Result<T>` (success, errors, none); two branches for non-generic `Result` (success, errors). The `none` branch is the only correct way to produce a `404` — omitting it silently returns `200 OK` for not-found cases.
+   ```csharp
+   // Typed result (3 branches)
+   return result.Match<IResult>(
+       value  => TypedResults.Ok(new DefaultResponse<T>(value)),
+       errors => TypedResults.Problem(ProblemDetailsHelper.BuildProblemDetailsResponseMultiple(
+                     messages: errors, statusCodeOverride: StatusCodes.Status400BadRequest,
+                     traceId: httpContext.TraceIdentifier, includeStackTrace: _problemDetailsIncludeStackTrace)),
+       ()     => TypedResults.NotFound());
+
+   // Non-generic Result (2 branches — fire-and-forget commands)
+   return result.Match<IResult>(
+       ()     => TypedResults.Ok(),
+       errors => TypedResults.Problem(ProblemDetailsHelper.BuildProblemDetailsResponseMultiple(
+                     messages: errors, statusCodeOverride: StatusCodes.Status400BadRequest,
+                     traceId: httpContext.TraceIdentifier, includeStackTrace: _problemDetailsIncludeStackTrace)));
+   ```
+4. **Handler signature:** `HttpContext httpContext` must be the first parameter on every handler (needed for `traceId` in `ProblemDetailsHelper`). `CancellationToken` is the last parameter. `[FromServices]` injects other dependencies.
+   ```csharp
+   private static async Task<IResult> GetById(
+       HttpContext httpContext,
+       [FromServices] IMyService service, Guid id, CancellationToken ct)
+   ```
+5. Return `ProblemDetails` for errors (no raw strings). Always use `ProblemDetailsHelper.BuildProblemDetailsResponseMultiple` (or the singular variant for single-error cases) — never `TypedResults.BadRequest(string)`.
+6. Validate route/body ID consistency on update.
+7. Add OpenAPI metadata (`Produces*`, summary/tags).
+8. Use POST for complex search filters.
+9. Ensure `global using EF.AspNetCore;` is present in `GlobalUsings.cs` for `ProblemDetailsHelper` to resolve.
 
 ## Custom Action Endpoints
 
@@ -335,7 +358,10 @@ group.MapGet("/{id:guid}", GetById)
 - [ ] `Program.cs` wires bootstrapper + API services before `Build()`
 - [ ] Endpoints are static classes under `Endpoints/` with `Map{Entity}Endpoints(...)`
 - [ ] Route groups apply `.RequireAuthorization(...)` at the correct scope
-- [ ] All handlers accept `CancellationToken` as last parameter
+- [ ] All handlers have `HttpContext httpContext` as first parameter and `CancellationToken` as last
+- [ ] Every handler uses `Result.Match<IResult>()` — no `IsSuccess`/`else` guards anywhere
+- [ ] Typed `Result<T>` handlers have all three branches (success, errors, none); non-generic `Result` handlers have two (success, errors)
+- [ ] `global using EF.AspNetCore;` present in `GlobalUsings.cs`
 - [ ] Validation and business errors return `ProblemDetails`/`ValidationProblem`
 - [ ] Swagger/Scalar is gated by `OpenApiSettings:Enable`
 - [ ] `/health` and `/alive` are both mapped

@@ -23,7 +23,9 @@ Use this only when the current slice actually needs semantic retrieval, grounded
 8. Agent sessions (`AgentSession`) must be scoped per user/conversation — never share sessions across tenants.
 9. Start with one agent and a small tool set. Do not scaffold multi-agent orchestration until a single-agent path is proven insufficient.
 10. System prompts live in files, not inline string literals spread through services.
-11. **Scaffold mode is the default.** Foundry and AI Search are `deployment-only` external dependencies — no Aspire emulator or local alternative exists. When endpoints are absent from config, AI services must register as no-op stubs so the app boots without cloud credentials. Live endpoints are wired only when intentionally provisioned; log them in `HANDOFF.md` as deployment-only blockers.
+11. **Read DTO source files before writing any property access against them.** Response/DTO types may not expose the properties you assume. Writing against an assumed shape (e.g., `snapshot.PreferredLanguage` on a type that has no such property) produces `CS1061` compile errors. Always call `read_file` on the DTO before generating tool wrapper code or snapshot records.
+12. **Read the target class constructor before injecting new dependencies into scaffold agents or tool classes.** Generated constructors may differ from what session notes describe. Reading the actual constructor first avoids duplicate-parameter or mismatched-arity compile errors.
+13. **Scaffold mode is the default.** Foundry and AI Search are `deployment-only` external dependencies — no Aspire emulator or local alternative exists. When endpoints are absent from config, AI services must register as no-op stubs so the app boots without cloud credentials. Live endpoints are wired only when intentionally provisioned; log them in `HANDOFF.md` as deployment-only blockers.
 
 ---
 
