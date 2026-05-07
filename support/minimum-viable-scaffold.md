@@ -96,7 +96,7 @@ solution structure (.slnx + Directory.Packages.props), API host project, Applica
 test projects (Test.Support, Test.Unit, Test.Endpoints), interfaces, DTOs, entity shells, no-op DI stubs.
 Skip projects for Gateway, Aspire AppHost, Function App, Uno/Blazor UI, Scheduler.
 Gate: `dotnet build` succeeds on the full solution including test projects.
-Set contractsScaffolded: true in HANDOFF.md and close.
+Set currentPhase: 5, currentSubPhase: 5a, and contractsScaffolded: true in HANDOFF.md and close.
 ```
 
 **Done when:** `dotnet build` is green and the solution contains exactly: API host, Application/Domain/Infrastructure projects, and the three test projects. No optional hosts.

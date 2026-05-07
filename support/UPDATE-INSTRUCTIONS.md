@@ -11,7 +11,7 @@
 - **Don't modify instruction files directly** during scaffolding. Capture the finding instead.
 - Each finding should be **actionable** — reference specific file paths, section names, and line ranges when possible.
 - Use the priority levels to help the maintenance agent triage work.
-- **During MCP discovery** (before each phase), log any new, deprecated, or changed MCP servers here so the maintenance agent can update the static MCP tables in `SKILL.md`. Tag MCP findings with `[MCP]` in the title.
+- **During MCP discovery** (before each phase), log any new, deprecated, or changed MCP servers here so the maintenance agent can update the static MCP tables in `README.md` and Phase 3 capture guidance in `ai/implementation-plan.md` when needed. Tag MCP findings with `[MCP]` in the title.
 
 ### For the Instruction Maintenance Agent (reader)
 
@@ -20,7 +20,7 @@ Your job is to read the findings below and apply approved changes to the instruc
 1. **Read all findings** before making changes — some may conflict or supersede each other.
 2. **Group related findings** — multiple findings about the same file/section should be applied as a single coherent edit.
 3. **Preserve existing style and tone** — match the voice, formatting, and structure of the target file.
-4. **Update cross-references** — if a change in one file affects references in other files (e.g., adding a new skill creates a new row in the skill table in `SKILL.md`), update all references.
+4. **Update cross-references** — if a change in one file affects references in other files (e.g., adding a new skill creates a new row in the Phase 5 file table in `ai/SKILL.md`), update all references.
 5. **Validate consistency** — after making changes, check that the modified instructions don't contradict other instruction files.
 6. **Mark findings as applied** — after applying a finding, change its status from `pending` to `applied` and add the date.
 7. **Reject with reason** — if a finding is incorrect or not applicable, change its status to `rejected` with a brief explanation.
@@ -51,7 +51,7 @@ Your job is to read the findings below and apply approved changes to the instruc
 
 ### [MCP] {MCP Finding Title}
 - **Status:** pending | applied (YYYY-MM-DD) | rejected (reason)
-- **File(s) to update:** `SKILL.md` (Recommended MCP Servers section)
+- **File(s) to update:** `README.md` (Recommended MCP Servers section), `ai/implementation-plan.md` (Tooling & Environment Readiness)
 - **MCP server:** {package name or URL}
 - **Action:** add | update | deprecate | remove
 - **Covers:** {what libraries/services/phases this MCP is relevant to}

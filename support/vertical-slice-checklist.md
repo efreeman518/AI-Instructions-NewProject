@@ -19,8 +19,8 @@ Use this when adding a new entity to an **already-scaffolded** solution. Skip fu
 
 ### Load Set for Slice
 
-1. `SKILL.md` (base reference)
-2. `placeholder-tokens.md`
+1. `ai/SKILL.md` (base reference)
+2. `ai/placeholder-tokens.md`
 3. Backend templates: `entity-template.md`, `ef-configuration-template.md`, `repository-template.md`, `data-mapping-template.md`, `service-template.md`, `endpoint-template.md`, `structure-validator-template.md`
 4. If domain rules needed: `domain-rules-template.md`
 5. If child collections: `updater-template.md`

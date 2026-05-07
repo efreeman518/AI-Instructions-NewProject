@@ -1,7 +1,7 @@
 # Application Layer
 
 > **When to read:** Phase 5b, when building application services, DTOs, static mappers, validation helpers, or internal message handlers — anything that orchestrates domain operations behind a `Result<T>` boundary.
-> **Skip if:** Phase 5a (domain) or Phase 5c (runtime/edge) without service work; pure API endpoint shaping (see `api.md`).
+> **Skip if:** Phase 5a (domain) or Phase 5c (optional hosts) without service work; pure API endpoint shaping (see `api.md`).
 
 ## Worked Example
 

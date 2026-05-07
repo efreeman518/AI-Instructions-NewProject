@@ -1,11 +1,11 @@
 # HANDOFF.md
 
-Create this file in the **target project root** at the end of every phase and each Phase 5 sub-phase session. The next AI session loads `START-AI.md` + this file only — nothing else — and resumes from `currentSubPhase`.
+Create this file in the **target project root** at the end of every phase and each Phase 5 sub-phase session. The next AI session loads `START-AI.md` + this file only — nothing else — and resumes from `currentPhase` / `currentSubPhase`.
 
 ```yaml
 instructionVersion: ""
-currentPhase: ""           # 1 | 2 | 3 | 4 | 5
-currentSubPhase: ""        # 5a | 5b | 5c | 5d | 5e (Phase 5 only)
+currentPhase: ""           # next phase to run: 1 | 2 | 3 | 4 | 5
+currentSubPhase: ""        # next Phase 5 sub-phase to run: 5a | 5b | 5c | 5d | 5e (blank before Phase 5)
 scaffoldMode: ""           # full | lite | api-only — drives load-set sizing (see ai/SKILL.md § Load-Set Sizing)
 testingProfile: ""         # minimal | balanced | comprehensive
 contractsScaffolded: false # set true after Phase 4 completes
@@ -65,11 +65,11 @@ Out of scope for this session — do not attempt unless explicitly re-scoped:
 
 ## Notes
 
-- Record any non-default paths for `domain-specification.yaml` or `resource-implementation.yaml`.
-- Record any non-default paths for `UBIQUITOUS-LANGUAGE.md` or `DESIGN-DECISIONS.md`.
+- Keep `domain-specification.yaml`, `resource-implementation.yaml`, `UBIQUITOUS-LANGUAGE.md`, and `DESIGN-DECISIONS.md` in the target project root.
+- `currentPhase` and `currentSubPhase` always describe the next work to run, not the phase just completed. Record completed gate evidence in `Completed` and `Validation`.
 - At Phase 1 close, summarize unresolved/deferred design decisions and confirm they do not block Phase 2.
 - Keep `enabledFeatures` flags in sync with `resource-implementation.yaml`.
-- For Phase 4, set `contractsScaffolded: true` after the gate passes. Phase 5a/5b require this flag.
+- For Phase 4, set `currentPhase: 5`, `currentSubPhase: 5a`, and `contractsScaffolded: true` after the gate passes. Phase 5a/5b require this flag.
 - For Phase 5a/5b, update `testStatus` as tests transition: `not-started` → `red` (tests written, failing) → `green` (implementation complete, tests passing). This tracks TDD progress across sessions.
 - For Phase 5c (Optional Hosts), update `hostGates` per-host as each host moves through `scaffolded` → `partially-validated` → `validated` or `blocked`. Do not mark the sub-phase complete until all enabled hosts reach `validated` or have a recorded blocker.
 - Note unresolved infra/auth/package-feed issues here rather than retrying them repeatedly.

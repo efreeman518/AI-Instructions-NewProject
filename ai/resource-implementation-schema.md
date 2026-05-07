@@ -8,7 +8,7 @@ Maps domain constructs from [domain-specification-schema.md](domain-specificatio
 
 ## Output Contract
 
-Write Phase 2 output to `resource-implementation.yaml` in the target project root by default. Alternatively, `.instructions/resource-implementation.yaml` may be used if the repo explicitly adopts that convention — state the chosen path in handoff notes.
+Write Phase 2 output to `resource-implementation.yaml` in the target project root. Do not write project artifacts under `.instructions/`; that directory is the installed runtime instruction payload.
 
 ## Canonical Defaults (Single Source of Truth)
 

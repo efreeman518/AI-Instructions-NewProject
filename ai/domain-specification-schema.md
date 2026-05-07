@@ -6,7 +6,7 @@ Pure business domain model — no implementation details, no datatypes, no datab
 
 ## Output Contract
 
-Write Phase 1 output to `domain-specification.yaml` in the target project root by default. Alternatively, `.instructions/domain-specification.yaml` may be used if the repo explicitly adopts that convention — state the chosen path in handoff notes.
+Write Phase 1 output to `domain-specification.yaml` in the target project root. Do not write project artifacts under `.instructions/`; that directory is the installed runtime instruction payload.
 
 Phase 1 also writes:
 
@@ -350,6 +350,6 @@ Before moving to Phase 2 (Resource Definition), verify all of the following:
 - [ ] Every event `raisedBy` references a defined entity
 - [ ] `ProjectName` is set and valid (PascalCase, no spaces)
 - [ ] At least one entity is defined
-- [ ] If `aiCapabilities` is defined: every referenced entity exists, every `agentWorkflow` references defined entities, and `searchableFields` reference defined properties
+- [ ] If `aiCapabilities` is defined: every referenced entity exists, every `agentWorkflows` entry references defined entities, and `searchableFields` reference defined properties
 - [ ] `UBIQUITOUS-LANGUAGE.md` contains every entity, state, event, command/action, role, policy, and value object name from this file
 - [ ] `DESIGN-DECISIONS.md` records non-obvious choices and marks each blocking Phase 2 decision `confirmed`, `defaulted`, or `deferred`

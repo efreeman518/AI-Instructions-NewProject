@@ -63,7 +63,7 @@ Load the Phase 4 file set listed in START-AI.md § Phase Router.
 Generate the contract scaffold per .instructions/ai/contract-scaffolding.md:
   solution structure, interfaces, DTOs, entity shells, test infrastructure, no-op DI stubs.
 Gate: `dotnet build` succeeds on the full solution including test projects.
-When gate passes, set contractsScaffolded: true in HANDOFF.md and close the session.
+When gate passes, set currentPhase: 5, currentSubPhase: 5a, and contractsScaffolded: true in HANDOFF.md and close the session.
 ```
 
 ## Phase 5 — Session Start
@@ -136,7 +136,7 @@ Record exact results, blockers, and deployment-only residuals in HANDOFF.md.
 
 ```text
 Load .instructions/START-AI.md and HANDOFF.md from the project root.
-Resume from currentSubPhase. Load the files listed in Next Load Set. Check Blockers before proceeding.
+Resume from currentPhase/currentSubPhase. Load the files listed in Next Load Set. Check Blockers before proceeding.
 ```
 
 ## Add New Entity (Existing Project)

@@ -13,8 +13,8 @@ Checkpoint commands and pass criteria are canonical in [../support/execution-gat
 
 ## Inputs Summary
 
-- Domain specification: `domain-specification.yaml` (project root; or `.instructions/domain-specification.yaml` if repo adopts that convention)
-- Resource mapping: `resource-implementation.yaml` (project root; or `.instructions/resource-implementation.yaml` if repo adopts that convention)
+- Domain specification: `domain-specification.yaml` (project root)
+- Resource mapping: `resource-implementation.yaml` (project root)
 - Ubiquitous language: `UBIQUITOUS-LANGUAGE.md`
 - Design decisions: `DESIGN-DECISIONS.md`
 - Mode: {{scaffoldMode}} | Testing: {{testingProfile}}

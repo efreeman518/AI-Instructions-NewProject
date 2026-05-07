@@ -218,7 +218,7 @@ public class {App}DbContextTrxn : DbContextBase<Guid, Guid>
 // Infrastructure.Data/{App}DbContextQuery.cs
 public class {App}DbContextQuery : {App}DbContextTrxn
 {
-    // read-only context configuration (Phase 5a/4c finalizes)
+    // read-only context configuration (Phase 5a finalizes)
 }
 ```
 
@@ -245,7 +245,8 @@ The entire solution — including all test projects — must compile successfull
 
 1. Git checkpoint (commit the contract scaffold).
 2. Update `HANDOFF.md`:
-   - `currentPhase: "4"`
+   - `currentPhase: "5"`
+   - `currentSubPhase: "5a"`
    - `contractsScaffolded: true`
    - Record the entity ordering used and any deviations from `resource-implementation.yaml`.
 3. Close session.
