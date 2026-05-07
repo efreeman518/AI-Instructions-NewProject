@@ -48,7 +48,7 @@ Test/
 | Project | Harness | Test scope |
 |---|---|---|
 | `Test.Endpoints` | `WebApplicationFactory<TProgram>` in-memory | Single endpoint contract |
-| `Test.E2E` | `WebApplicationFactory<TProgram>` in-memory | Multi-endpoint workflow chain |
+| `Test.E2E` | `WebApplicationFactory<TProgram>` + Testcontainers SQL | Multi-endpoint workflow chain against real DB |
 | `Test.PlaywrightUI` | Real hosted stack (Aspire/docker-compose/preview) | Browser-driven UI |
 
 Rule: PlaywrightUI is a different harness. Never merge it with WAF tests.

@@ -48,7 +48,7 @@ src/
 │   ├── Test.Unit/                    # mocked unit tests
 │   ├── Test.Integration/             # service-level vs real external services (Testcontainers SQL, real cache, etc.)
 │   ├── Test.Endpoints/               # WebApplicationFactory in-memory; per-endpoint contract tests
-│   ├── Test.E2E/                     # WebApplicationFactory in-memory; multi-endpoint workflow chains
+│   ├── Test.E2E/                     # WebApplicationFactory + Testcontainers SQL; multi-endpoint workflow chains
 │   ├── Test.Architecture/            # NetArchTest layering rules
 │   ├── Test.PlaywrightUI/            # browser-driven UI tests against hosted stack (Aspire/docker-compose)
 │   ├── Test.Load/                    # NBomber (comprehensive profile)

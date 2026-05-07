@@ -177,9 +177,9 @@ public class {Entity}DtoBuilder
 
 **Empty test project shells:**
 - `Test.Unit/` — project file with MSTest + Moq references, no test classes yet (Phase 5a adds them)
-- `Test.Integration/` — project file with MSTest + Testcontainers + EF, no test classes yet (Phase 5b adds service-level integration tests against real external services)
+- `Test.Integration/` — project file with MSTest + Testcontainers + EF, no test classes yet (Phase 5d adds service-level integration tests against real external services as part of the quality regression)
 - `Test.Endpoints/` — project file with MSTest + `Microsoft.AspNetCore.Mvc.Testing`, no test classes yet (Phase 5b adds endpoint contract tests via WebApplicationFactory)
-- `Test.E2E/` — project file with MSTest + `Microsoft.AspNetCore.Mvc.Testing` + Testcontainers, no test classes yet (Phase 5b/5d adds multi-endpoint workflow tests)
+- `Test.E2E/` — project file with MSTest + `Microsoft.AspNetCore.Mvc.Testing` + Testcontainers, no test classes yet (Phase 5d adds multi-endpoint workflow tests against Testcontainers SQL)
 
 ### 5. No-Op DI Stubs
 

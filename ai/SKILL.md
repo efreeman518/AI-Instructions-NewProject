@@ -21,7 +21,7 @@ Fast-lookup answer to "what do I do next?" — refer to this before scrolling fo
 | Missing required input (`ProjectName`, custom NuGet feed, at least one entity) | Ask developer before proceeding. |
 | Missing optional input (mode/profile/flag default) | Apply canonical default from [resource-implementation-schema.md](resource-implementation-schema.md), state assumption inline, record in `HANDOFF.md`. |
 
-Detail sections (Fail-Fast Protocol, Git Checkpoint Protocol, Missing-Inputs Protocol, Mid-Session Rollback Protocol, Mixed-Store Slice Gate) live below — this table is the index.
+Detail sections (Fail-Fast Protocol, Git Checkpoint Protocol, Missing-Inputs Protocol, Mid-Session Rollback Protocol, Mixed-Store Slice Gate) live in [../support/OPERATIONS.md](../support/OPERATIONS.md) — this table is the index.
 
 ## Load-Set Sizing
 
@@ -59,8 +59,8 @@ Each Phase 5 sub-phase loads its own file set. The base context (`ai/SKILL.md`, 
 
 | Sub-phase | Required skills | Required templates | On-demand |
 |---|---|---|---|
-| **5a Foundation (TDD)** | `domain-model`, `data-persistence` | `entity`, `ef-configuration`, `repository`, `domain-rules`, `appsettings`, `test-templates-domain`, `test-templates-repository` | `azure-data-storage`, `updater-template` (non-SQL stores); `patterns/data-layer-wiring` (cross-project wiring) |
-| **5b App Core (TDD for app/API, tests-after for runtime)** | `application-layer`, `bootstrapper`, `api`, plus enabled runtime concerns: `gateway`, `multi-tenant`, `caching`, `aspire`, `configuration-secrets`, `observability`, `security` | `data-mapping`, `service`, `endpoint`, `message-handler`, `structure-validator`, `exception-handler`, `test-templates-service`, `test-templates-endpoint`, `health-check` | `patterns/api-host-wiring`, `patterns/infrastructure-wiring` |
+| **5a Foundation (TDD)** | `domain-model`, `data-persistence`, `testing` | `entity`, `ef-configuration`, `repository`, `domain-rules`, `appsettings`, `test-templates-domain`, `test-templates-repository` | `azure-data-storage`, `updater-template` (non-SQL stores); `patterns/data-layer-wiring` (cross-project wiring) |
+| **5b App Core (TDD for app/API, tests-after for runtime)** | `application-layer`, `bootstrapper`, `api`, `testing`, plus enabled runtime concerns: `gateway`, `multi-tenant`, `caching`, `aspire`, `configuration-secrets`, `observability`, `security` | `data-mapping`, `service`, `endpoint`, `message-handler`, `structure-validator`, `exception-handler`, `test-templates-service`, `test-templates-endpoint`, `health-check` | `patterns/api-host-wiring`, `patterns/infrastructure-wiring` |
 | **5c Optional Hosts (tests-after)** | only the enabled host(s): `background-services`, `function-app`, `ui-uno` (index — load `ui-uno-shell`/`ui-uno-mvux`/`ui-uno-platforms` per task), `ui-blazor`, `notifications` | host-matching templates: `uno-mvux-model`, `uno-ui-client-layer`, `uno-xaml-page` | `ui-uno` is a dedicated-session set |
 | **5d Quality + Delivery** | `testing-quality`, `iac`, `cicd` | `test-templates-quality`, `dockerfile` | `testing` (only if revisiting unit/endpoint scaffolding); `messaging`, `grpc`, `external-api` (if used) |
 | **5e Integration (Auth + AI)** | `identity-management` (always); `ai-integration` (when `includeAiServices: true`) | `ai-search`, `agent` (when AI in scope) | scope AI further to search-only or agents-only as needed |

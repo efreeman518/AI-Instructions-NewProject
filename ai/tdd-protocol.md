@@ -109,6 +109,22 @@ dotnet test --filter "TestCategory=Unit"
 dotnet test --filter "TestCategory=Unit|TestCategory=Endpoint"
 ```
 
+8. **Runtime / edge concerns (tests-after, after all entity slices are green):**
+
+   Once every entity has reached green Unit + Endpoint, layer in enabled runtime concerns (gateway, multi-tenant middleware, caching, Aspire orchestration, configuration/secrets, observability, security) and **then** write infrastructure tests covering them: health checks, config-loading, cache wiring, gateway routing.
+
+   - Place mock-based infrastructure tests in `Test.Unit` with `[TestCategory("Unit")]`.
+   - Place WAF-based infrastructure tests in `Test.Endpoints` with `[TestCategory("Endpoint")]`.
+   - Service-level integration tests against real external services (Testcontainers SQL, real cache) belong in `Test.Integration` and run as part of Phase 5d's quality regression — not 5b's gate.
+
+   Re-run the same filter after writing them:
+
+   ```powershell
+   dotnet test --filter "TestCategory=Unit|TestCategory=Endpoint"
+   ```
+
+   When Aspire is enabled, also verify the AppHost gate per [`../support/execution-gates.md`](../support/execution-gates.md) § 5b before closing the session.
+
 Git checkpoint after gate passes.
 
 ---

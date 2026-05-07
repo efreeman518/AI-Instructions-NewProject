@@ -43,7 +43,7 @@ Load this file on demand. Keep it out of the default phase context.
 | Phase 5c Uno core | `src/UI/TaskFlow.Uno.Core` | Plain single-TFM class library extracted from the Uno project so business logic and Kiota client are unit-testable without the Uno SDK. |
 | Phase 5c Blazor host | `src/UI/TaskFlow.Blazor` | Blazor alternative to Uno UI; same Gateway-backed client flow. |
 | Phase 5d quality (.NET test projects) | `src/Test/Test.Unit`, `src/Test/Test.Integration`, `src/Test/Test.Endpoints`, `src/Test/Test.E2E`, `src/Test/Test.Architecture`, `src/Test/Test.Load`, `src/Test/Test.Benchmarks`, `src/Test/Test.Support` | `dotnet test`-runnable test project layout and quality-gate coverage. |
-| Phase 5d browser UI tests (Node) | `src/Test/Test.PlaywrightUI` | Node.js Playwright suite. Runs against a hosted Aspire AppHost stack via `npm test`. **Not a `dotnet test` target** — invoking it that way will fail. |
+| Phase 5d browser UI tests | `src/Test/Test.PlaywrightUI` | TaskFlow currently uses a Node.js Playwright suite (`npm test`, **not** a `dotnet test` target). **Scaffold output diverges:** templates (`test-templates-quality.md`) and CI (`skills/cicd.md`) generate a C# MSTest + `Microsoft.Playwright.MSTest` project. New scaffolded apps follow the C# pattern; consult TaskFlow only for hosted-stack orchestration shape, not the test language. |
 | Phase 5e auth | `AuthConfiguration`, `ScaffoldAuthHandler`, gateway claims forwarding flow | Scaffold auth, Entra-ready wiring, and API claim enrichment path. |
 | Phase 5e AI | `src/Infrastructure/TaskFlow.Infrastructure.AI`, commented AI resources in AppHost | AI service placement, deployment-only stance, and config-driven activation. |
 
@@ -83,7 +83,7 @@ Use these links first. If a branch or path has moved, search inside the same rep
 | Architecture tests | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Test/Test.Architecture> |
 | Endpoint tests | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Test/Test.Endpoints> |
 | E2E tests | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Test/Test.E2E> |
-| Playwright UI tests (Node) | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Test/Test.PlaywrightUI> |
+| Playwright UI tests (TaskFlow uses Node — scaffold generates C# MSTest) | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Test/Test.PlaywrightUI> |
 
 ---
 

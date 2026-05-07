@@ -269,11 +269,11 @@ Commands:
 
 ```powershell
 dotnet build
-dotnet test
+dotnet test --filter "TestCategory=Unit|TestCategory=Endpoint"
 dotnet run --project src/Host/Aspire/AppHost
 ```
 
-After Aspire verification, write infrastructure tests (health checks, config loading, caching) and re-run `dotnet test` to confirm.
+After Aspire verification, write infrastructure tests (health checks, config loading, caching) and re-run `dotnet test --filter "TestCategory=Unit|TestCategory=Endpoint"` to confirm. Do not run an unfiltered `dotnet test` here — service-level integration tests live in `Test.Integration` and are scoped to the Phase 5d quality regression.
 
 ## 5c — Optional Hosts (Tests-After)
 

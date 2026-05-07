@@ -48,7 +48,7 @@ Checkpoint commands and pass criteria are canonical in [../support/execution-gat
 - [ ] Message handlers (if events defined)
 - [ ] Bootstrapper DI wiring finalized
 - [ ] Runtime/edge concerns (tests-after): gateway (if enabled), Aspire orchestration (if enabled), configuration + appsettings, multi-tenant middleware (if enabled), caching (if enabled), observability, security
-- [ ] Write infrastructure tests (health checks, config loading, caching)
+- [ ] Write infrastructure tests (health checks, config loading, caching) — place mock-based tests in `Test.Unit` (`TestCategory=Unit`) and WAF-based tests in `Test.Endpoints` (`TestCategory=Endpoint`); real-DB integration tests are deferred to Phase 5d
 - [ ] **Checkpoint:** `dotnet build` + `dotnet test --filter "TestCategory=Unit|TestCategory=Endpoint"` passes; app starts via Aspire (when enabled)
 
 ### Phase 5c — Optional Hosts (Tests-After)
@@ -61,10 +61,12 @@ Checkpoint commands and pass criteria are canonical in [../support/execution-gat
 - [ ] **Checkpoint:** `dotnet build`, each enabled host responds, `dotnet test` passes; per-host gate status recorded in `HANDOFF.md`
 
 ### Phase 5d — Quality + Delivery
+- [ ] Service-level Integration tests against real external services (Testcontainers SQL, real cache) — `Test.Integration`, `TestCategory=Integration` (balanced + comprehensive profiles)
+- [ ] Multi-endpoint E2E workflow tests against Testcontainers SQL — `Test.E2E`, `TestCategory=E2E` (comprehensive profile)
 - [ ] Architecture tests (NetArchTest layering rules)
 - [ ] Load tests (if comprehensive profile)
 - [ ] Benchmarks (if comprehensive profile)
-- [ ] E2E Playwright tests against hosted stack (if comprehensive profile + UI enabled)
+- [ ] Browser UI Playwright tests against hosted stack (if comprehensive profile + UI enabled) — `Test.PlaywrightUI`, C# MSTest + `Microsoft.Playwright.MSTest`
 - [ ] IaC templates (Bicep)
 - [ ] CI/CD pipeline
 - [ ] Dockerfile

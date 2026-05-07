@@ -1,7 +1,12 @@
 # AI Scaffold Entry
 
 This is a harness-neutral entrypoint for CLI agents that read root `AGENTS.md`
-files, including Codex-style and Copilot-style CLI workflows.
+files (Codex CLI, GitHub Copilot CLI, and other CLI agents using the same
+discovery convention).
+
+GitHub Copilot in VS Code uses `.github/copilot-instructions.md` and the
+scoped agents in `.github/agents/` instead — see [README.md](README.md) for
+the harness routing table.
 
 Do not activate the scaffold workflow automatically for ordinary repository
 work.

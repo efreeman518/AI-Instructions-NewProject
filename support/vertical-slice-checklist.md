@@ -80,8 +80,8 @@ For entity `{Entity}`:
 |---|---|---|---|
 | Domain | `src/Domain/{Project}.Domain.Model/Entities/{Entity}.cs` | [entity-template.md](../templates/entity-template.md) | yes |
 | Domain (optional) | `src/Domain/{Project}.Domain.Model/Enums/{Entity}Status.cs` | — | if flags/status enum used |
-| Domain (optional) | `src/Domain/{Project}.Domain.Rules/{Entity}Rules.cs` | [domain-rules-template.md](../templates/domain-rules-template.md) | if rules/state machine/policy matrix used |
-| Domain (optional) | `src/Domain/{Project}.Domain.Rules/{Entity}*TransitionRule.cs` | [domain-rules-template.md](../templates/domain-rules-template.md) | if state transitions are constrained |
+| Domain (optional) | `src/Domain/{Project}.Domain.Model/Rules/{Entity}Rules.cs` | [domain-rules-template.md](../templates/domain-rules-template.md) | if rules/state machine/policy matrix used |
+| Domain (optional) | `src/Domain/{Project}.Domain.Model/Rules/{Entity}*TransitionRule.cs` | [domain-rules-template.md](../templates/domain-rules-template.md) | if state transitions are constrained |
 | Data | `src/Infrastructure/{Project}.Infrastructure.Data/EntityConfigurations/{Entity}Configuration.cs` | [ef-configuration-template.md](../templates/ef-configuration-template.md) | yes |
 | Data | `src/Infrastructure/{Project}.Infrastructure.Repositories/{Entity}RepositoryTrxn.cs` | [repository-template.md](../templates/repository-template.md) | yes |
 | Data | `src/Infrastructure/{Project}.Infrastructure.Repositories/{Entity}RepositoryQuery.cs` | [repository-template.md](../templates/repository-template.md) | yes |
