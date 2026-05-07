@@ -16,6 +16,8 @@ Usage:
     python scripts/install-to-project.py --target <app-repo-root> --update
     python scripts/install-to-project.py --target <app-repo-root> --dry-run
     python scripts/install-to-project.py --target <app-repo-root> --instructions-only
+    python scripts/install-to-project.py --target <app-repo-root> --verify
+    python scripts/install-to-project.py --target <app-repo-root> --verify-only
 """
 
 import argparse
@@ -159,6 +161,45 @@ def preserve_handoff(target_instructions: Path, dry_run: bool) -> Path | None:
     return None
 
 
+# Required files/dirs after a full install (relative to <target>).
+# Skipped expectations are pruned in verify_install when --instructions-only was used.
+SMOKE_CHECK_PAYLOAD = [
+    ".instructions/START-AI.md",
+    ".instructions/README.md",
+    ".instructions/CLAUDE.md",
+    ".instructions/ai/SKILL.md",
+    ".instructions/support/execution-gates.md",
+    ".instructions/support/HANDOFF.md",
+]
+
+SMOKE_CHECK_HARNESS_ENTRYPOINTS = [
+    "AGENTS.md",
+    ".claude/commands/scaffold.md",
+    ".claude/commands/vertical-slice.md",
+    ".github/agents/dotnet-scaffold.agent.md",
+    ".github/agents/vertical-slice.agent.md",
+]
+
+
+def verify_install(target_root: Path, instructions_only: bool) -> int:
+    """Verify the expected files exist after install. Returns process exit code."""
+    expected = list(SMOKE_CHECK_PAYLOAD)
+    if not instructions_only:
+        expected += SMOKE_CHECK_HARNESS_ENTRYPOINTS
+
+    missing = [rel for rel in expected if not (target_root / rel).exists()]
+
+    print()
+    print("== install smoke check ==")
+    if missing:
+        print(f"  [fail] {len(missing)} expected file(s) missing under {target_root}:")
+        for rel in missing:
+            print(f"         - {rel}")
+        return 1
+    print(f"  [ok]   all {len(expected)} expected files present under {target_root}")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Install AI-Instructions runtime payload into a consumer app.",
@@ -179,6 +220,14 @@ def main() -> int:
         "--instructions-only", action="store_true",
         help="Install only <target>/.instructions/, skip agent/command placement.",
     )
+    parser.add_argument(
+        "--verify", action="store_true",
+        help="After install, verify expected entrypoints and payload files exist.",
+    )
+    parser.add_argument(
+        "--verify-only", action="store_true",
+        help="Skip install; just verify an existing target. Implies --verify.",
+    )
     args = parser.parse_args()
 
     repo_root = Path(__file__).resolve().parent.parent
@@ -190,7 +239,7 @@ def main() -> int:
     if not target_root.is_dir():
         print(f"error: target is not a directory: {target_root}", file=sys.stderr)
         return 1
-    if target_root == repo_root:
+    if target_root == repo_root and not args.verify_only:
         print("error: refusing to install into the instruction repo itself", file=sys.stderr)
         return 1
 
@@ -198,6 +247,9 @@ def main() -> int:
     print(f"source: {repo_root}")
     print(f"target: {target_root}")
     print()
+
+    if args.verify_only:
+        return verify_install(target_root, args.instructions_only)
 
     preserve_handoff(target_instructions, args.dry_run)
 
@@ -237,6 +289,10 @@ def main() -> int:
                 planner.copy_tree(src, dst, dst_rel)
 
     planner.summary()
+
+    if args.verify and not args.dry_run:
+        return verify_install(target_root, args.instructions_only)
+
     return 0
 
 

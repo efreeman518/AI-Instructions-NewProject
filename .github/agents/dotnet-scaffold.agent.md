@@ -19,11 +19,10 @@ All instruction files (skills, templates, support docs, schemas, scripts) live u
 ## Core Rules
 
 - **Generate code in the project root** (`src/`, `tests/`, etc.). Never modify files under `.instructions/`.
-- Conflict precedence: `.instructions/support/execution-gates.md` > `.instructions/ai/SKILL.md` > individual skills > templates.
+- Conflict precedence: see `.instructions/ai/SKILL.md` § Non-Negotiables (canonical).
 - Checkpoint after 15+ generated files or 3+ build/fix cycles — update `HANDOFF.md` (in project root).
 - After each phase/sub-phase gate passes, update `HANDOFF.md` and end the session.
 - Session model, default sources, and TaskFlow rules: see `.instructions/START-AI.md` § Session Model and § Reference Application, plus `.instructions/ai/SKILL.md` Non-Negotiables.
-- Phase 1 produces `domain-specification.yaml`, `UBIQUITOUS-LANGUAGE.md`, and `DESIGN-DECISIONS.md` after the shared-understanding interview.
 
 ## Phase Summary
 

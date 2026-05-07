@@ -9,10 +9,11 @@ The Phase 5 **Decision Table** at the top of [../ai/SKILL.md](../ai/SKILL.md) is
 After every build:
 
 - **Code-generation issue** (usings/references/DI/wiring/packages): attempt one focused fix pass, rebuild.
+- **Deterministic mechanical cascade** (rename ripple, namespace cascade, file-move fallout from a single root cause): one extra pass allowed *only when* the second pass purely propagates the same fix and introduces no new logic. If the second pass surfaces new failure modes, stop and write the blocker.
 - **Missing package in `Directory.Packages.props`**: add at latest stable version, restore, rebuild.
 - **Infrastructure issue** (feed auth, env vars, Docker, certs, SQL/cloud access): do not loop fixes. Document the blocker in `HANDOFF.md`, point the engineer to [execution-gates.md](execution-gates.md).
 
-Rule: one fix pass, then either green or write the blocker.
+Rule: one fix pass for new errors; one extra pass allowed for mechanical propagation of the same root-cause fix. Otherwise, write the blocker.
 
 ## Git Checkpoint Protocol
 

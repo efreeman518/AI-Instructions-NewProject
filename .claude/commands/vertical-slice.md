@@ -35,9 +35,6 @@ Follow the canonical Slice Execution Order in `.instructions/support/vertical-sl
 
 ## Gate
 
-```bash
-dotnet build
-dotnet test --filter "(TestCategory=Unit|TestCategory=Endpoint)&FullyQualifiedName~{Entity}"
-```
+See `.instructions/support/execution-gates.md` § Core Loop. Scope test filter to the new entity (`FullyQualifiedName~{Entity}`).
 
 Report files created, wiring steps completed, and gate results.

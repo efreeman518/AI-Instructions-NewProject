@@ -26,10 +26,9 @@ Clone this repo then run the install script to copy the instruction files into a
 
 ### How they work
 
-All harnesses follow the same flow:
+All harnesses follow the same flow: scaffold sessions boot from `.instructions/START-AI.md`, resume from `HANDOFF.md` if present, run one phase, write `HANDOFF.md`, stop. Vertical-slice sessions load `.instructions/support/vertical-slice-checklist.md` and generate one full entity stack against the gate.
 
-1. **Scaffold** - Boot from `.instructions/START-AI.md`, check `HANDOFF.md` in the project root, load only the current phase files (per the Phase Router in START-AI.md and the Phase 5 file table in `ai/SKILL.md`), execute one phase, write `HANDOFF.md`, stop.
-2. **Vertical slice** - Load `.instructions/support/vertical-slice-checklist.md`, generate the full entity stack (entity → EF config → repos → DTOs → mapper → validator → service → endpoint → DI wiring → migration), validate with `dotnet build` + `dotnet test`.
+Canonical execution rules: [START-AI.md](START-AI.md) (session model, phase router) and [support/execution-gates.md](support/execution-gates.md) (gate commands).
 
 ### Install into a new app
 
@@ -42,6 +41,15 @@ Use `install-to-project.py` from a local clone of this repo. It copies only the 
 python scripts/install-to-project.py --target /path/to/your-app-repo
 # tip: run with --dry-run first to preview what gets copied
 ```
+
+**Windows Python:** If `python` is not on `PATH` (common on Windows where the Microsoft-Store stub may shadow a real install), use `py -3` instead:
+
+```powershell
+py -3 --version                                                   # check
+py -3 scripts/install-to-project.py --target C:\path\to\your-app
+```
+
+If you maintain a virtualenv in this repo, call it directly: `.venv\Scripts\python.exe scripts/install-to-project.py --target ...`. The same fallback applies to `configure-ef-packages-feed.py` and any other `scripts/*.py` invocation.
 
 What it places:
 
@@ -60,6 +68,8 @@ Flags:
 | `--dry-run` | Print planned copies without writing anything. |
 | `--update` | Re-run against an existing install; preserves any target file with a newer mtime than the source. Leaves `HANDOFF.md` untouched. |
 | `--instructions-only` | Copy only `<app>/.instructions/`; skip `AGENTS.md`, `.claude/commands/`, and `.github/agents/` placement (useful if you manage those separately). |
+| `--verify` | After install, smoke-check that the expected entrypoints and payload files exist. Non-zero exit if anything is missing. Cheap insurance after a manual edit or selective copy. |
+| `--verify-only` | Skip install entirely; just run the smoke check against an existing target. Useful in CI or to confirm an unfamiliar repo is correctly wired. |
 
 After install:
 
@@ -129,36 +139,28 @@ Pattern files in `patterns/` document how generated components wire together acr
 
 ## Reference Application
 
-A companion reference app — **TaskFlow** — demonstrates every pattern and convention these instructions produce:
+A companion reference app — **TaskFlow** — demonstrates every pattern and convention these instructions produce: dual DbContext pooling, YARP gateway, Aspire orchestration, FusionCache + Redis backplane, TickerQ scheduling, Azure Functions, multi-tenancy, scaffold-mode auth, and Uno WASM UI.
 
 **Repository:** <https://github.com/efreeman518/AI-Instructions-ReferenceApp>
 
-TaskFlow is a fully scaffolded task-management application built by following this instruction set end-to-end. It covers dual DbContext pooling, YARP gateway with claims transformation, Aspire orchestration, FusionCache with Redis backplane, TickerQ scheduling, Azure Functions, multitenancy, scaffold-mode auth, and Uno WASM UI.
-
-Use it for:
-
-- **Pattern lookups** — when an instruction or template describes a pattern (e.g., middleware ordering, repository split, cache key format), the reference app contains the working implementation.
-- **Wiring verification** — cross-project DI registration, startup sequences, and Aspire resource definitions are all present and buildable.
-- **Test structure** — unit, integration, architecture, and endpoint test projects are scaffolded with builder patterns.
-
-For a phase-by-phase pointer map into the reference app, use [support/taskflow-proof-map.md](support/taskflow-proof-map.md).
-
-The AI assistant can access the repo via GitHub MCP or by cloning it locally. When stuck on how a pattern should look in practice, consult the reference app before inventing a new approach. The reference app is always available as a live codebase the AI can search, read, and cross-reference during any phase.
+For consultation rules, AI access (local clone vs GitHub MCP), and the phase → area pointer map, see [support/reference-app.md](support/reference-app.md) and [support/taskflow-proof-map.md](support/taskflow-proof-map.md).
 
 ## Quick Start
 
 If you want the shortest path from zero context to first scaffold:
 
 1. Create a new app repo.
-2. Run `python scripts/install-to-project.py --target /path/to/your-app-repo` from this repo.
+2. Run `python scripts/install-to-project.py --target /path/to/your-app-repo --verify` from this repo.
 3. Start through the harness table above: `AGENTS.md`, Copilot agent, Claude command, or a prompt that loads `.instructions/START-AI.md`.
+
+**First time?** Use the [Minimum Viable Scaffold (MVS)](support/minimum-viable-scaffold.md) — five paste-ready prompts that produce an API-only app with one entity, no Gateway/UI/AI/messaging. You can promote to a richer profile once the loop feels familiar.
 
 Read the rest of this guide when you need setup details, MCP recommendations, or troubleshooting rules.
 
 ## Prerequisites
 
 - `git`
-- Python 3.11+ to run `install-to-project.py` and `configure-ef-packages-feed.py`
+- Python 3.11+ to run `install-to-project.py` and `configure-ef-packages-feed.py`. On Windows, `py -3` is the most reliable launcher (the bare `python` command often resolves to the Microsoft-Store stub and fails). Either `python`, `py -3`, or `.venv\Scripts\python.exe` works.
 - Latest stable `.NET SDK`
 - Docker engine running (Docker Desktop not required) — Aspire relies on it for hosting local container services
 - VS Code + AI assistant
@@ -302,16 +304,10 @@ These references are for **maintaining and developing the instruction set itself
 
 Useful script entrypoints:
 
-- `scripts/install-to-project.py` - copy the runtime payload into a consumer app's `.instructions/` directory and place harness entrypoints at the app root.
+- `scripts/install-to-project.py` - copy the runtime payload into a consumer app's `.instructions/` directory and place harness entrypoints at the app root. `--verify` smoke-checks the install; `--verify-only` runs the smoke check without copying.
 - `scripts/configure-ef-packages-feed.py` - create/update target-app `nuget.config` for EF.Packages without writing PATs.
+- `scripts/validate-instructions.py` - author-side sanity check: relative-link integrity, phase-label canonical set, harness command-file shape, payload shape vs installer declaration. Run before committing edits to instruction files.
 
-## Document Ownership
-
-- `README.md` - human onboarding and repository overview
-- `AGENTS.md` - root CLI-agent scaffold entrypoint for installed app repos
-- `START-AI.md` - canonical AI session bootstrap and phase router
-- `ai/SKILL.md` - scaffolding policy and conventions (loaded as Phase 5 base)
- 
 ## Layout
 
 - Root: entry points (`AGENTS.md`, `README.md`, `CLAUDE.md`, `START-AI.md`)

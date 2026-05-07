@@ -89,6 +89,17 @@ public class {Entity}SearchFilter
 // Domain.Shared/Enums/{Entity}Flags.cs (if defined)
 ```
 
+**Integration Events (when externally published):**
+
+Externally published event records belong in `Application.Contracts.Events`, not `Domain`. Generate one record per event the entity will publish across process boundaries:
+
+```csharp
+// Application.Contracts.Events/{Entity}CreatedIntegrationEvent.cs
+public record {Entity}CreatedIntegrationEvent(Guid Id, Guid TenantId, /* fields safe to publish */);
+```
+
+Domain-only events (raised inside aggregates, handled in-process before integration mapping) stay in `Domain`. Do not publish `Domain` namespace events directly over transport — see [../skills/messaging.md](../skills/messaging.md) § Event Boundary Rule.
+
 ### 3. Entity Shells
 
 Generate entity classes with the correct shape but no domain logic:

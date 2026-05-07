@@ -18,30 +18,13 @@ Each phase — and each Phase 5 sub-phase — runs in its own AI session. When c
 
 Start each session with `START-AI.md` (this file) and `HANDOFF.md` in the target project root (if present — it is the resume contract). Then load only files needed for the current phase. Generate code only in the target project.
 
-## Context Loading Profiles
+## File Loading Rule
 
-Two loading profiles exist. Pick the one that matches the harness, not the task — gates and HANDOFF.md writes apply identically to both.
+Just-in-time. One phase per session; for Phase 5, one sub-phase per session. Load only the files listed for the current phase or sub-phase (see `ai/SKILL.md` § Phase 5 file table). Add on-demand files only when the current sub-phase clearly needs them. Close the session when the gate passes; the next session resumes from `START-AI.md` + `HANDOFF.md`.
 
-### Default (constrained context — <200K tokens)
+This rule is the same regardless of the model's context window. Lost-in-the-middle is real even at 200K — loading every skill hurts output quality. See [`support/OPERATIONS.md`](support/OPERATIONS.md) § Context Budgets.
 
-Apply when running on a model with a constrained context window. Load files just-in-time:
-
-- One phase per session.
-- For Phase 5, one sub-phase per session.
-- Load only the files listed for the current phase or sub-phase (see `ai/SKILL.md` Phase 5 file table).
-- Add on-demand files only when the current sub-phase clearly needs them.
-- Close the session when the gate passes; the next session resumes from `START-AI.md` + `HANDOFF.md`.
-
-### Frontier model phase pack (≥200K tokens)
-
-Apply when running on a model with a large context window. The loading constraint relaxes:
-
-- The session may load the entire current phase's file table up-front (skills + templates + relevant patterns).
-- Adjacent reference files (the proof map, execution gates, prompt catalog) may be preloaded.
-- **The per-sub-phase HANDOFF.md write and `dotnet build` / `dotnet test` checkpoints still apply.** This is a context-loading affordance, not a license to skip gates.
-- The session still closes at the same gate boundaries; the operator decides whether to keep a single chat alive across sub-phases or open a fresh one.
-
-The frontier-model profile reduces context-thrash and tool churn but does not change phase semantics, the conflict-resolution order, or the requirement to record gate results in `HANDOFF.md`.
+**Operator mode (Slim vs Comprehensive):** Choose once per project. See `ai/SKILL.md` § Operator Modes. The mode lives in `HANDOFF.md` and shapes the load set and validation cadence — it does not change phase semantics, gates, or the conflict-resolution order.
 
 ## Session Start Router
 
@@ -58,7 +41,7 @@ Prefer CLIs over MCP over online resources. Use Microsoft Docs or Context7 when 
 
 ## Conflict Resolution Order
 
-`support/execution-gates.md` > `ai/SKILL.md` > individual skill files > templates.
+See `ai/SKILL.md` § Non-Negotiables (canonical).
 
 ## Phase Router
 
@@ -72,14 +55,8 @@ Each phase = one session. Load only the files listed for the current phase.
 
 ## Reference Application
 
-A companion reference app **TaskFlow** demonstrates every pattern these instructions produce.
-
-**Repository:** <https://github.com/efreeman518/AI-Instructions-ReferenceApp>
-
-**Local clone preferred:** if `../AI-Instructions-ReferenceApp/` exists relative to the target project's parent, read TaskFlow files via the Read tool. Fall back to GitHub MCP only when the local clone is absent.
-
-**When to consult:** wiring questions (DI, middleware, Aspire), pattern ambiguity, test structure. Use `support/taskflow-proof-map.md` for the phase → area index. Do not copy TaskFlow files wholesale — use as a verified example and generate code matching the target project's domain.
+A companion reference app **TaskFlow** demonstrates every pattern these instructions produce. Canonical detail (repo URL, AI access rules, do-not-copy-wholesale rule, when to consult): see [`support/reference-app.md`](support/reference-app.md) and [`support/taskflow-proof-map.md`](support/taskflow-proof-map.md) for the phase → area index.
 
 ## Event Boundary Rule
 
-Cross-process bus payloads are application/integration contracts, not domain artifacts. Place externally published event records in `Application.Contracts.Events`. Use `IIntegrationEventPublisher` for Service Bus/Event Grid. Keep domain events in Domain only when raised from aggregate invariants and handled in-process before integration mapping. Do not publish Domain namespace events directly over transport.
+See [skills/messaging.md](skills/messaging.md) § Event Boundary Rule (canonical) and [ai/contract-scaffolding.md](ai/contract-scaffolding.md) § Integration Events for Phase 4 contract placement.

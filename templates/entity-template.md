@@ -7,7 +7,7 @@
 |---|---|
 | **File** | `Domain.Model/Entities/{Entity}.cs` |
 | **Depends on** | [domain-specification-schema.md](../ai/domain-specification-schema.md), [resource-implementation-schema.md](../ai/resource-implementation-schema.md) |
-| **Referenced by** | [data-mapping-template](data-mapping-template.md), [ef-configuration-template](ef-configuration-template.md), [data-mapping-template](data-mapping-template.md) |
+| **Referenced by** | [data-mapping-template](data-mapping-template.md), [ef-configuration-template](ef-configuration-template.md) |
 
 ## File: Domain/Model/Entities/{Entity}.cs
 

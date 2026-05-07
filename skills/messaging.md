@@ -11,6 +11,15 @@ Base types (`IServiceBusSender`, `IEventGridPublisher`, `IEventHubProducer`) com
 
 Rule: use `IInternalMessageBus` for in-process events; use this skill for cross-service messaging.
 
+### Event Boundary Rule
+
+Cross-process bus payloads are application/integration contracts, not domain artifacts.
+
+- Place externally published event records in `Application.Contracts.Events`.
+- Use `IIntegrationEventPublisher` for Service Bus / Event Grid.
+- Keep domain events in `Domain` only when raised from aggregate invariants and handled in-process before integration mapping.
+- Do not publish `Domain` namespace events directly over transport — map to an `Application.Contracts.Events` record at the boundary.
+
 > **Shared infrastructure pattern:** Messaging follows the same **Settings → Named client → DI → Resilience** integration chain as external APIs. See [external-api.md](external-api.md) for the general pattern with Refit/resilience pipeline. This file covers messaging-specific adapters.
 
 ## Service Selection

@@ -52,12 +52,7 @@ Use this when adding a new entity to an **already-scaffolded** solution. Skip fu
 
 ### Validation
 
-Use [execution-gates.md](execution-gates.md) for canonical gate commands and [troubleshooting.md](troubleshooting.md) for recurring test failures.
-
-```powershell
-dotnet build
-dotnet test --filter "(TestCategory=Unit|TestCategory=Endpoint)&FullyQualifiedName~{Entity}"
-```
+Gate commands: [execution-gates.md](execution-gates.md) § Core Loop. Scope test filter to the new entity (`FullyQualifiedName~{Entity}`). For recurring test failures, see [troubleshooting.md](troubleshooting.md).
 
 ### Prompt Pattern
 
@@ -161,7 +156,7 @@ Also update `App.xaml.host.cs`:
 - register UI services,
 - register navigation routes.
 
-Templates: [uno-ui-client-layer.md](../templates/uno-ui-client-layer.md), [uno-ui-client-layer.md](../templates/uno-ui-client-layer.md), [uno-mvux-model-template.md](../templates/uno-mvux-model-template.md), [uno-xaml-page-template.md](../templates/uno-xaml-page-template.md).
+Templates: [uno-ui-client-layer.md](../templates/uno-ui-client-layer.md), [uno-mvux-model-template.md](../templates/uno-mvux-model-template.md), [uno-xaml-page-template.md](../templates/uno-xaml-page-template.md).
 
 ---
 
@@ -194,42 +189,14 @@ Templates: [uno-ui-client-layer.md](../templates/uno-ui-client-layer.md), [uno-u
 
 ### Mixed-Store / Reconciliation (if applicable)
 
-When a slice spans multiple data stores (e.g., SQL as authoritative + Cosmos DB for read projections, or SQL + Blob for document attachments):
+For slices spanning SQL + Cosmos/Table/Blob + messaging, see [OPERATIONS.md](OPERATIONS.md) § Mixed-Store Slice Gate. Required:
 
-**Architecture rules:**
-- Designate one store as **authoritative** (source of truth for writes) and others as **projection/secondary** stores.
-- Writes always go to the authoritative store first. Projections are updated asynchronously via domain events or a sync handler.
-- Never read from the authoritative store and projection store in the same service call — pick one per query path.
+- [ ] Authoritative store vs projection store boundary is explicit (writes always go to authoritative first; projections sync via domain events).
+- [ ] Reconciliation job exists for drift detection and replay-safe correction.
+- [ ] Replay window/late-arrival handling validated in tests.
+- [ ] Projection reads never serve stale data for consistency-critical operations.
 
-**Example: SQL + Cosmos DB composite slice**
-
-| Concern | SQL (Authoritative) | Cosmos DB (Projection) |
-|---|---|---|
-| Write path | `{Entity}RepositoryTrxn` via EF | `{Entity}ProjectionWriter` via Cosmos SDK |
-| Read path | `{Entity}RepositoryQuery` (complex joins/reports) | `{Entity}ProjectionReader` (fast point reads, search) |
-| Sync trigger | Domain event: `{Entity}ChangedEvent` | Handler: `{Entity}ProjectionSyncHandler` |
-| Partition key | N/A | `TenantId` (or domain-appropriate key) |
-
-**Reconciliation pattern:**
-```csharp
-public class {Entity}ReconciliationJob : ITickerJob
-{
-    public async Task ExecuteAsync(CancellationToken ct)
-    {
-        // 1. Query authoritative store for entities changed since last reconciliation
-        // 2. Query projection store for matching documents
-        // 3. Compare and upsert any drifted projections
-        // 4. Log reconciliation metrics (matched, corrected, missing)
-    }
-}
-```
-
-**Checklist:**
-- [ ] Authoritative store vs projection store boundary is explicit
-- [ ] Domain event triggers projection sync (not direct dual-write)
-- [ ] Reconciliation job exists for drift detection and replay-safe correction
-- [ ] Replay window/late-arrival handling is validated in tests
-- [ ] Projection reads never serve stale data for consistency-critical operations (read from authoritative instead)
+For implementation patterns (SQL + Cosmos composite, reconciliation job shape), see [data-persistence-advanced.md](data-persistence-advanced.md).
 
 ### Timeline / Support Trace (if applicable)
 
@@ -249,19 +216,4 @@ public class {Entity}ReconciliationJob : ITickerJob
 
 ---
 
-## Bootstrapper Snippet
-
-```csharp
-services.AddScoped<I{Entity}RepositoryTrxn, {Entity}RepositoryTrxn>();
-services.AddScoped<I{Entity}RepositoryQuery, {Entity}RepositoryQuery>();
-services.AddScoped<I{Entity}Service, {Entity}Service>();
-```
-
----
-
-## Quick Runbook
-
-1. `dotnet build`
-2. `dotnet ef migrations add Add{Entity} --project src/Infrastructure/{Project}.Infrastructure.Data --startup-project src/Host/{Host}.Api --context {App}DbContextTrxn`
-3. `dotnet test --filter "TestCategory=Unit"`
-4. `dotnet test --filter "TestCategory=Endpoint"`
+DI registration shape and migration command live in the Fast Path section above; gate commands are canonical in [execution-gates.md](execution-gates.md) § Core Loop.

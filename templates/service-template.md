@@ -6,7 +6,7 @@
 | | |
 |---|---|
 | **File** | `Application.Services/{Entity}Service.cs` |
-| **Depends on** | [repository-template](repository-template.md), [data-mapping-template](data-mapping-template.md), [data-mapping-template](data-mapping-template.md), [structure-validator-template](structure-validator-template.md) |
+| **Depends on** | [repository-template](repository-template.md), [data-mapping-template](data-mapping-template.md), [structure-validator-template](structure-validator-template.md) |
 | **Referenced by** | [endpoint-template](endpoint-template.md), [bootstrapper.md](../skills/bootstrapper.md) |
 
 > **Multi-tenant toggle:** Lines marked `// [MULTI-TENANT]` apply only when the domain specification enables multi-tenancy. For single-tenant scaffolds, omit `ITenantBoundaryValidator` injection, tenant stamping, boundary checks, tenant filter enforcement, and `TenantInfoDto` in `DefaultResponse`. TaskFlow demonstrates multi-tenant patterns.

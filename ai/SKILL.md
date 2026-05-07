@@ -12,7 +12,8 @@ Fast-lookup answer to "what do I do next?" — refer to this before scrolling fo
 |---|---|
 | Build green after a sub-phase | Move to next sub-phase. Update `HANDOFF.md`, close session. |
 | Build red, fixable in one focused pass | Fix, rebuild. If still red, stop and write `HANDOFF.md`. |
-| Build red after one fix attempt | Write `HANDOFF.md` with the blocker. Do not loop. |
+| Build red, second pass purely propagates the same fix (rename/namespace/file-move cascade) | One extra pass allowed. If new failure modes appear, stop and write `HANDOFF.md`. |
+| Build red after fix attempt(s) with new errors | Write `HANDOFF.md` with the blocker. Do not loop. |
 | Domain assumption looks wrong (entity shape, relationship) | Stop. Confirm with developer before continuing. See **Mid-Session Rollback Protocol** below. |
 | External dependency cannot be stubbed locally | Mark as `deployment-only` in `resource-implementation.yaml`, generate a no-op stub anyway, log blocker in `HANDOFF.md`, continue. |
 | Sub-phase has produced 15+ generated files or 3+ build cycles | Checkpoint `HANDOFF.md` mid-session. Do not wait for the gate. |
@@ -29,6 +30,17 @@ Use for:
 - Adding full vertical slices (entity → data → app → API → tests)
 - Adding optional workloads (Gateway, Functions, Scheduler, Uno UI)
 - Preparing config/auth/infra/IaC/CI-CD foundations
+
+## Operator Modes
+
+Choose once per project, record in `HANDOFF.md` as `mode: slim | comprehensive`. Mode shapes load sets and validation cadence — it does **not** change phase semantics, gates, or conflict-resolution order.
+
+| Mode | Load set | Per-sub-phase validation | Use when |
+|---|---|---|---|
+| **slim** (default for MVS / single-entity / prototypes) | Current sub-phase **required** files only; skip on-demand and adjacent references unless the current task clearly needs them. | `dotnet build` + scoped test (skip `dotnet restore` unless package files changed or phase boundary). | First-time users, internal tools, MVS path, single API + one entity. |
+| **comprehensive** (default for production scaffolds) | Required + on-demand for the sub-phase; adjacent references (proof map, prompt catalog) may be preloaded when relevant. | Full Core Loop per [../support/execution-gates.md](../support/execution-gates.md). | Production-grade scaffolds with optional hosts (Gateway, UI, Functions, Scheduler), multi-tenant, full quality gates. |
+
+If `HANDOFF.md` does not declare a mode, infer from `resource-implementation.yaml`: `scaffoldMode: api-only` → slim; otherwise comprehensive. Record the inferred value in `HANDOFF.md` so future sessions are deterministic.
 
 ## Non-Negotiables
 
@@ -91,23 +103,23 @@ Each sub-phase is one session. Gate must pass before the next session begins.
 
 1. **5a — Foundation (TDD):**
    - **Ask clarification questions first:** domain rule specifics, invariant constraints, inheritance patterns, special validations, audit/versioning needs
-   - Write domain/rule/repository tests first, then implement entities, EF configs, and repositories. Load `test-templates-domain.md` + `test-templates-repository.md`. Gate: `dotnet build` + `dotnet test --filter "TestCategory=Unit"`.
+   - Write domain/rule/repository tests first, then implement entities, EF configs, and repositories. Load `test-templates-domain.md` + `test-templates-repository.md`. Gate: see [../support/execution-gates.md](../support/execution-gates.md) § 5a.
 
 2. **5b — App Core + Runtime/Edge (TDD for app/API, tests-after for runtime):**
    - **Ask clarification questions first:** service business logic, API pagination/filtering, response formats, error handling, idempotency. Plus runtime concerns: observability/tracing, health checks, rate limiting, caching, gateway routing.
-   - Write service tests → implement services. Write endpoint tests → implement endpoints. Replace no-op DI stubs with real implementations. Then add enabled runtime concerns (gateway, caching, observability, security, multi-tenant) followed by their tests. Load `test-templates-service.md` + `test-templates-endpoint.md` + runtime skill files. Gate: `dotnet build` + `dotnet test --filter "TestCategory=Unit|TestCategory=Endpoint"` + app starts via Aspire (when Aspire is enabled).
+   - Write service tests → implement services. Write endpoint tests → implement endpoints. Replace no-op DI stubs with real implementations. Then add enabled runtime concerns (gateway, caching, observability, security, multi-tenant) followed by their tests. Load `test-templates-service.md` + `test-templates-endpoint.md` + runtime skill files. Gate: see [../support/execution-gates.md](../support/execution-gates.md) § 5b (includes Aspire startup when enabled).
 
 3. **5c — Optional Hosts (tests-after):**
    - **Ask clarification questions first:** for each enabled host, ask host-specific details (Function App triggers/bindings/outputs, Scheduler job types/schedules, Notification channels/templates, Uno UI target platforms/responsive needs)
-   - Load only the host-specific files matching the enabled hosts in `resource-implementation.yaml`. Uno UI stays a dedicated session. Gate: per-host status in `HANDOFF.md` + `dotnet test`.
+   - Load only the host-specific files matching the enabled hosts in `resource-implementation.yaml`. Uno UI stays a dedicated session. Gate: see [../support/execution-gates.md](../support/execution-gates.md) § 5c (per-host status recorded in `HANDOFF.md`).
 
 4. **5d — Quality + Delivery:**
    - **Ask clarification questions first:** code quality thresholds, load test requirements, benchmark baselines, CI-CD pipeline specifics
-   - Add architecture/load/benchmark/CI-CD gates and run full regression. Load `test-templates-quality.md`. Gate: `dotnet test`.
+   - Add architecture/load/benchmark/CI-CD gates and run full regression. Load `test-templates-quality.md`. Gate: see [../support/execution-gates.md](../support/execution-gates.md) § 5d.
 
 5. **5e — Integration (Auth + AI):**
    - **Ask clarification questions first:** authentication provider, custom claims/roles, B2B vs B2C, token expiry. If AI in scope: AI search scope/filters, agent capabilities, content ingestion, cost/latency.
-   - Finalize identity (replace earlier stubs with config-driven scaffold principal). When `includeAiServices: true`, scaffold AI search and/or agents — load only the templates matching the enabled capability. Gate: authenticated endpoints respond correctly in scaffold mode; if AI enabled, AI interfaces compile, resolve from DI, and pass no-op/stub tests. Live search/agent checks run only when endpoints are provisioned.
+   - Finalize identity (replace earlier stubs with config-driven scaffold principal). When `includeAiServices: true`, scaffold AI search and/or agents — load only the templates matching the enabled capability. Gate: see [../support/execution-gates.md](../support/execution-gates.md) § 5e. Live search/agent checks run only when endpoints are provisioned.
 
 ## Template Usage
 
@@ -152,22 +164,16 @@ Generate one complete slice, validate, then move to next slice.
 
 Fail-Fast, Git Checkpoint, Missing-Inputs, Mid-Session Rollback, Mixed-Store Slice Gate, and Context Budgets all live in a single source of truth: [../support/OPERATIONS.md](../support/OPERATIONS.md). Read it when something fails, when state changes, or when an assumption breaks. The Phase 5 **Decision Table** at the top of this file is the fast-lookup index for what to do; OPERATIONS.md is the detail.
 
-## Validation Cadence
-
-Canonical validation gates and commands are defined in [../support/execution-gates.md](../support/execution-gates.md).
-
 ## Session State (`HANDOFF.md`)
 
 Create or update in the target project root at the end of **every** phase and sub-phase session — not only when context is high. Phases 1–3 use it to hand off their output artifacts and open questions. Phase 5 sub-phases use it to record gate results, blockers, and the next load set. See [../support/HANDOFF.md](../support/HANDOFF.md) for the template.
 
 ---
 
-## Prompt Catalog
+## References
 
-Copy-paste prompts live in [../support/prompt-catalog.md](../support/prompt-catalog.md). Load that file only when starting or resuming a phase; keep it out of the default Phase 5 execution context.
-
-## Context budgets
-
-See [../support/OPERATIONS.md](../support/OPERATIONS.md) § Context Budgets.
+- Validation gates and commands: [../support/execution-gates.md](../support/execution-gates.md)
+- Operational protocols (fail-fast, rollback, context budgets): [../support/OPERATIONS.md](../support/OPERATIONS.md)
+- Copy-paste phase prompts: [../support/prompt-catalog.md](../support/prompt-catalog.md) — load only when starting or resuming a phase; keep out of the default Phase 5 execution context.
 
 

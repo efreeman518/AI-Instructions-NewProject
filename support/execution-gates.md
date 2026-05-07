@@ -121,15 +121,22 @@ Phase 3 must populate the **Tooling & Environment Readiness** section of `implem
 
 ## Core Loop (Run After Each Scaffolding Sub-Phase)
 
-Run from solution root:
+Run from solution root. Default per-sub-phase loop:
 
 ```powershell
-dotnet restore
 dotnet build
-dotnet test --filter "TestCategory=Unit"
+dotnet test --filter "TestCategory=Unit"   # or scope to current sub-phase (Endpoint, Integration, etc.)
 ```
 
-Gate passes when all three commands succeed.
+Run `dotnet restore` only when one of the following is true (otherwise skip — it is wasted work):
+
+- `Directory.Packages.props` or any `.csproj` changed since the last restore.
+- Phase-boundary transition (Phase 4 → 5a, 5a → 5b, etc.).
+- Operator forces a clean restore (e.g., feed change, lock-file corruption).
+
+Phase-completion gates and the Pre-Merge Gate still run a full `dotnet restore` — see § Phase Gates and § Pre-Merge Gate.
+
+Gate passes when build and the scoped test command succeed (plus any sub-phase-specific checks listed below).
 
 **TDD note:** For Phase 5a/5b, the TDD protocol expects tests to fail (red) before implementation and pass (green) after. The core loop verifies the green state. See [../ai/tdd-protocol.md](../ai/tdd-protocol.md).
 

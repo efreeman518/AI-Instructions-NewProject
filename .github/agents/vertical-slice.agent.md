@@ -31,10 +31,7 @@ Follow the canonical Slice Execution Order in `.instructions/support/vertical-sl
 
 ## Validation Gate
 
-```bash
-dotnet build
-dotnet test --filter "(TestCategory=Unit|TestCategory=Endpoint)&FullyQualifiedName~{Entity}"
-```
+See `.instructions/support/execution-gates.md` § Core Loop. Scope test filter to the new entity (`FullyQualifiedName~{Entity}`).
 
 ## Constraints
 

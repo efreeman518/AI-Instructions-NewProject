@@ -19,12 +19,11 @@ You are executing the phased scaffolding workflow. Follow these steps exactly:
 ## Rules
 
 - Generate code in `src/`, `tests/`, and project root. Never modify files under `.instructions/`.
-- Conflict precedence: `.instructions/support/execution-gates.md` > `.instructions/ai/SKILL.md` > individual skills > templates.
+- Conflict precedence: see `.instructions/ai/SKILL.md` § Non-Negotiables (canonical).
 - Checkpoint after 15+ generated files or 3+ build/fix cycles — update `HANDOFF.md` (project root).
 - After each phase gate passes, update `HANDOFF.md` and stop.
 - Record instruction gaps in `INSTRUCTION-GAPS.md` at the project root, do not modify instruction files.
 - Session model, default sources, and TaskFlow rules: see `.instructions/START-AI.md` § Session Model and § Reference Application, plus `.instructions/ai/SKILL.md` Non-Negotiables.
-- Phase 1 produces `domain-specification.yaml`, `UBIQUITOUS-LANGUAGE.md`, and `DESIGN-DECISIONS.md` after the shared-understanding interview.
 
 ## Phases
 
