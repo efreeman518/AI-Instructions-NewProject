@@ -310,9 +310,9 @@ dotnet build --project src/UI/{Project}.Uno/{Project}.Uno.csproj -f <tfm>-browse
 If targeting desktop instead of WASM, build the selected desktop target instead of `<tfm>-browserwasm`.
 
 If targeting Android (`<tfm>-android`):
-- [ ] Android SDK path resolved (see `skills/ui-uno.md` § Android SDK Discovery)
+- [ ] Android SDK path resolved (see `skills/ui-uno-platforms.md` § Android SDK Discovery)
 - [ ] `<EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>` set if manual ADB sideloading is used
-- [ ] Emulator host networking uses `10.0.2.2` for local backend calls (see `skills/ui-uno.md` § Emulator Host Networking)
+- [ ] Emulator host networking uses `10.0.2.2` for local backend calls (see `skills/ui-uno-platforms.md` § Emulator Host Networking)
 
 > **Starter-library escape hatch:** If the repo currently contains only a single-TFM starter library or shell-contract scaffold instead of a real Uno multi-target app, Phase 5c for Uno must be recorded as **blocked**. `NETSDK1139` on `<tfm>-browserwasm` is expected in that scenario and is evidence that Uno scaffolding is still missing — not an environment glitch. Do not debug/workaround it; record the status as `blocked — Uno multi-target not yet created` and move on.
 
@@ -331,6 +331,27 @@ dotnet run --project src/Host/{Host}.Scheduler
 ```
 
 > **AppHost/config dependency:** When the scheduler depends on AppHost-provided resources (e.g., connection strings via service discovery), either run it through AppHost or provide equivalent local connection strings (e.g., `ConnectionStrings:LuminaDb`) before using direct `dotnet run`. Record which path was validated in the handoff.
+
+Blazor UI (if `includeBlazorUI: true`):
+
+- [ ] Blazor host project builds (`dotnet build src/UI/{Project}.Blazor`)
+- [ ] Gateway/OpenAPI endpoint reachable for Refit client generation
+- [ ] App boots and at least one entity list/detail page renders against the scaffolded API
+- [ ] Auth path matches `AuthMode` (scaffold principal or live provider per Phase 5e)
+
+```powershell
+dotnet build src/UI/{Project}.Blazor
+dotnet run --project src/UI/{Project}.Blazor
+```
+
+Notifications (if `includeNotifications: true`):
+
+- [ ] Notification service interface registered in DI
+- [ ] Channel transports declared in `resource-implementation.yaml` have a stub or live implementation per their `externalDependencyMode`
+- [ ] Notification triggers (domain events from `notifications:` block) are wired to handlers
+- [ ] Notification unit tests pass (`dotnet test --filter "TestCategory=Unit&FullyQualifiedName~Notification"`)
+
+For deployment-only channels (e.g., real Azure Communication Services), record blocker in `HANDOFF.md`; the no-op stub is sufficient for scaffold completion.
 
 ## 5d — Quality Gates + Delivery
 

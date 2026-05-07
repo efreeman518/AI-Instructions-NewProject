@@ -25,6 +25,8 @@ hostGates:                 # Phase 5c per-host status: not-started | scaffolded 
   scheduler: not-started
   functionApp: not-started
   unoUI: not-started       # always a dedicated session
+  blazorUI: not-started
+  notifications: not-started
 resumeCommand: ""          # exact prompt to paste at the next session start
 toolingNotes: ""           # CLIs/MCPs discovered in Phase 3; note any missing or unavailable
 instructionGapsPath: "INSTRUCTION-GAPS.md"
@@ -102,11 +104,12 @@ Issues encountered and fixed this session (so the next session does not re-inves
 
 ### Per-Host Gate Status (Phase 5c)
 
-For each enabled optional host, record its individual gate result. Use `validated`, `scaffolded`, `partially-validated`, or `blocked` — never claim Phase 5c complete if any enabled host is only scaffolded.
+For each enabled optional host, record its individual gate result. Use `validated`, `scaffolded`, `partially-validated`, or `blocked` — never claim Phase 5c complete if any enabled host is only scaffolded. Gateway is a Phase 5b runtime concern, not a Phase 5c host — record its status under § Validation, not here.
 
 | Host | Build | Host-Specific Gate | Status | Notes |
 |------|-------|--------------------|--------|-------|
 | Scheduler | | | | |
 | Function App | | | | |
 | Uno UI | | | | |
-| Gateway | | | | |
+| Blazor UI | | | | |
+| Notifications | | | | |

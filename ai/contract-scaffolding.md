@@ -89,9 +89,9 @@ public class {Entity}SearchFilter
 // Domain.Shared/Enums/{Entity}Flags.cs (if defined)
 ```
 
-**Integration Events (when externally published):**
+### Integration Events
 
-Externally published event records belong in `Application.Contracts.Events`, not `Domain`. Generate one record per event the entity will publish across process boundaries:
+When externally published. Externally published event records belong in `Application.Contracts.Events`, not `Domain`. Generate one record per event the entity will publish across process boundaries:
 
 ```csharp
 // Application.Contracts.Events/{Entity}CreatedIntegrationEvent.cs

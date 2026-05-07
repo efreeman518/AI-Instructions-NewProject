@@ -309,7 +309,7 @@ public interface I{Project}ApiClient
 - **Search** accepts `SearchRequest<TFilter>` directly (not wrapped) and returns `PagedResponse<T>` with `data` (items) and `total` (count).
 - **Pagination is 1-based on the wire** — `PageIndex` starts at 1, **not** 0. The server silently coerces 0 to 1 and you get page 1 on every request.
 
-See [ui-uno.md](ui-uno.md) → *Client–API Contract Rules* for the detailed payload diagrams; the same contract applies.
+See [ui-uno-mvux.md](ui-uno-mvux.md) → *Client–API Contract Rules* for the detailed payload diagrams; the same contract applies.
 
 ### Refit JSON Serializer
 
@@ -466,7 +466,7 @@ Add both the HTTPS and HTTP dev URLs declared in `launchSettings.json`.
 
 Detail pages with editable fields must prompt before the user leaves via any navigation — top menu (`MudNavLink`), back button, `Nav.NavigateTo`, or browser back. Use `NavigationManager.RegisterLocationChangingHandler`.
 
-`MudNavLink` renders a standard `<a>` that triggers `NavigationManager.NavigateTo`, so `LocationChanging` fires reliably. **No custom click handler is required on Blazor** (this differs from Uno, which needs a code-behind handler because `PanelVisibilityNavigator` can silently no-op — see [ui-uno.md](ui-uno.md) → Menu Navigation).
+`MudNavLink` renders a standard `<a>` that triggers `NavigationManager.NavigateTo`, so `LocationChanging` fires reliably. **No custom click handler is required on Blazor** (this differs from Uno, which needs a code-behind handler because `PanelVisibilityNavigator` can silently no-op — see [ui-uno-mvux.md](ui-uno-mvux.md) → *Menu Navigation: Always Land On Top Page*).
 
 ```razor
 @page "/tasks/{Id:guid}"

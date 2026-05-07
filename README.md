@@ -128,7 +128,7 @@ The instruction set is designed around three core ideas:
 Five phases prevent hallucinated architecture by ensuring verified context before code is written. Phase 4 produces a compilable skeleton so that Phase 5a/5b can follow a strict red/green TDD cycle — tests are written against contracts before any implementation exists. See [ai/tdd-protocol.md](ai/tdd-protocol.md).
 
 **2. Skills and templates as composable units.**
-Implementation knowledge is split into 32 skill files (how things work) and 28 template files (what to generate). The Phase Router in `START-AI.md` and the Phase 5 file table in `ai/SKILL.md` tell the agent which files to load for the current phase or sub-phase.
+Implementation knowledge is split into 32 skill files (how things work) and 27 template files plus a `templates/index.md` index (what to generate). The Phase Router in `START-AI.md` and the Phase 5 file table in `ai/SKILL.md` tell the agent which files to load for the current phase or sub-phase.
 
 **3. Composition patterns, not documentation alone.**
 Pattern files in `patterns/` document how generated components wire together across projects — database context pooling, API startup sequences, request context resolution, cache configuration, and Aspire resource wiring. The pattern index lives in `ai/SKILL.md` § Non-Negotiables (one bullet per pattern, with the phase to load it). This grounds the generated output in proven, real-world patterns rather than abstract descriptions.
@@ -284,9 +284,11 @@ Rule of thumb when adding new content: it goes in `skills/` if it's "how to do X
 |---|---|
 | Fast internal tool, minimal infra | `scaffoldMode: lite` |
 | Production-ready with optional hosts | `scaffoldMode: full` |
-| Single API, no gateway/UI/scheduler | `scaffoldMode: api-only` |
+| Smallest viable scaffold (single API, defaults to all optional hosts off) | `scaffoldMode: api-only` |
 
-Defaults: [ai/resource-implementation-schema.md](ai/resource-implementation-schema.md) **Canonical Defaults**. `scaffoldMode` also drives how many on-demand files each Phase 5 sub-phase loads — see [ai/SKILL.md](ai/SKILL.md) § Load-Set Sizing.
+`scaffoldMode` drives load-set sizing per Phase 5 sub-phase; the optional-host toggles (`includeGateway`, `includeUnoUI`, `includeScheduler`, etc.) are independent flags in `resource-implementation.yaml` and can be enabled in any mode. `api-only` simply biases the defaults toward "off".
+
+Defaults: [ai/resource-implementation-schema.md](ai/resource-implementation-schema.md) **Canonical Defaults**. Load-set sizing: [ai/SKILL.md](ai/SKILL.md) § Load-Set Sizing.
 
 ## Happy Path
 

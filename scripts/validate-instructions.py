@@ -15,6 +15,10 @@ Checks:
   - The payload shape declared in install-to-project.py covers every top-level
     runtime directory present in this repo (catches "added skills/foo, forgot
     to wire it into the installer" mistakes).
+  - Section-anchor existence: when prose says ``[label](file.md) § Section Name``
+    or ``file.md → Section Name`` (with the path in backticks), verify the named
+    section exists as a heading in the target file. Catches refs left dangling
+    after file splits.
 
 Exit code 0 if all checks pass, 1 otherwise. Output groups failures by file.
 """
@@ -45,6 +49,26 @@ PHASE_PATTERN = re.compile(r"\bPhase\s+(\d+[a-z]?)\b")
 
 # Inline link pattern: [text](target). Skip absolute URLs and anchors-only.
 LINK_PATTERN = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
+
+# Markdown headings (ATX style) for the section-anchor check.
+HEADING_PATTERN = re.compile(r"^#{1,6}\s+(.+?)\s*$", re.MULTILINE)
+
+# Prose pattern: `[label](file.md) § Section`, `[label](file.md) → *Section*`,
+# or the same with a backtick-wrapped path instead of a link. Captures:
+#   group "linkpath": path inside (...) — None for backtick form
+#   group "tickpath": path inside `...` — None for link form
+#   group "section":  raw section text (may include leading/trailing `*`)
+SECTION_REF_PATTERN = re.compile(
+    r"(?:\[[^\]]+\]\((?P<linkpath>[^)]+?\.md)(?:#[^)]*)?\)|`(?P<tickpath>[^`]+?\.md)`)"
+    r"\s*(?:§|→)\s*"
+    r"(?P<section>(?:\*[^*\n]{1,80}\*|[^\n.|,)(`*—–]{1,80}))"
+)
+
+# Connectors that end a section name when used like `... see X.md § Foo and bar baz`.
+SECTION_TAIL_CONNECTOR = re.compile(
+    r"\s+(and|or|see|for|in|of|on|via|when|to|with|before|after|then)\b.*$",
+    re.IGNORECASE,
+)
 
 # Required section headings in harness command/agent files.
 REQUIRED_COMMAND_HEADINGS = {
@@ -147,6 +171,67 @@ def check_phase_labels(path: Path, findings: Findings) -> None:
             findings.err(path, f"line {line_no}: unrecognized phase token '{token}' (canonical: 1-5, 5a-5e)")
 
 
+def collect_headings(path: Path, cache: dict[Path, list[str]]) -> list[str]:
+    if path in cache:
+        return cache[path]
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        cache[path] = []
+        return cache[path]
+    cache[path] = [m.group(1).strip() for m in HEADING_PATTERN.finditer(text)]
+    return cache[path]
+
+
+def normalize_text(s: str) -> str:
+    return re.sub(r"\s+", " ", s).strip().lower()
+
+
+def heading_matches_section(headings: list[str], target: str) -> bool:
+    if not target:
+        return False
+    target_n = normalize_text(target)
+    for h in headings:
+        h_n = normalize_text(h)
+        if h_n == target_n:
+            return True
+        # Prefix match for headings like "Menu Navigation: Always Land On Top Page"
+        # vs reference "Menu Navigation".
+        if h_n.startswith(target_n + " ") or h_n.startswith(target_n + ":") or h_n.startswith(target_n + " —") or h_n.startswith(target_n + " –"):
+            return True
+        # Substring fallback for short identifiers like "5a" -> "5a — Foundation (TDD)".
+        if len(target_n) <= 6 and target_n in h_n:
+            return True
+    return False
+
+
+def check_section_anchors(path: Path, findings: Findings, headings_cache: dict[Path, list[str]]) -> None:
+    text = path.read_text(encoding="utf-8")
+    for line_no, line in enumerate(text.splitlines(), start=1):
+        for match in SECTION_REF_PATTERN.finditer(line):
+            target_link = match.group("linkpath") or match.group("tickpath")
+            section = match.group("section").strip().strip("*").strip()
+            section = SECTION_TAIL_CONNECTOR.sub("", section)
+            section = section.rstrip(".,;:")
+            if not section or len(section) < 2:
+                continue
+            link_path = target_link.split("#", 1)[0]
+            try:
+                candidate = (path.parent / link_path).resolve()
+            except (OSError, ValueError):
+                continue
+            if not candidate.exists() or not candidate.is_file() or candidate.suffix != ".md":
+                # Broken file path — handled by check_links.
+                continue
+            headings = collect_headings(candidate, headings_cache)
+            if not heading_matches_section(headings, section):
+                rel = candidate.relative_to(REPO_ROOT).as_posix() if REPO_ROOT in candidate.parents or candidate == REPO_ROOT else candidate.name
+                findings.err(
+                    path,
+                    f"line {line_no}: section anchor not found — {rel} has no heading matching '{section}'",
+                )
+
+
 def check_command_shape(findings: Findings) -> None:
     for rel, required_headings in REQUIRED_COMMAND_HEADINGS.items():
         path = REPO_ROOT / rel
@@ -196,9 +281,11 @@ def main() -> int:
     findings = Findings()
 
     md_files = iter_markdown_files()
+    headings_cache: dict[Path, list[str]] = {}
     for path in md_files:
         check_links(path, findings)
         check_phase_labels(path, findings)
+        check_section_anchors(path, findings, headings_cache)
 
     check_command_shape(findings)
     check_payload_shape(findings)

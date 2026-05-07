@@ -15,7 +15,7 @@ Load this file on demand. Keep it out of the default phase context.
 1. Find the current phase or concern.
 2. Jump to the matching TaskFlow area.
 3. Verify structure, wiring, and naming there before inventing a new pattern.
-4. Generate code for the target project. Reference application rules (do-not-copy-wholesale, etc.) live in [../START-AI.md](../START-AI.md) § Reference Application.
+4. Generate code for the target project. Reference-application consultation rules (when to consult, local clone vs MCP fallback, do-not-copy-wholesale) live in [reference-app.md](reference-app.md).
 
 ---
 

@@ -37,7 +37,7 @@ See `.instructions/support/execution-gates.md` § Core Loop. Scope test filter t
 
 - DO NOT modify the solution structure or shared infrastructure — only add entity-specific files.
 - DO NOT skip DI registration or endpoint mapping steps.
-- DO NOT modify files under `.instructions/` — only generate/edit files in `src/`, `tests/`, and project root.
+- DO NOT modify files under `.instructions/` — only generate/edit files in `src/` (which contains `src/Test/...`) and project root.
 - DO NOT create new projects unless the entity requires a workload not yet in the solution.
 - Follow existing code patterns in the project for consistency.
 

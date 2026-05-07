@@ -631,7 +631,9 @@ return await _http.GetFromJsonAsync<CategoryDto>(url, ct);
 
 **Search is different** — search endpoints accept `SearchRequest<TFilter>` directly (no wrapping) and return `PagedResponse<T>` with a `data` array (not `DefaultResponse`).
 
-**Pagination contract — 1-based `pageIndex`**: The server API expects `pageIndex` (not `pageNumber`) and treats it as **1-based**. Never send `0`. The hand-written client stub must match that wire name and base exactly — using `pageNumber` or 0-based indexing silently returns page 1 for every request.
+#### Pagination contract
+
+1-based `pageIndex`. The server API expects `pageIndex` (not `pageNumber`) and treats it as **1-based**. Never send `0`. The hand-written client stub must match that wire name and base exactly — using `pageNumber` or 0-based indexing silently returns page 1 for every request.
 
 ```csharp
 public class SearchRequest<TFilter> where TFilter : class, new()
