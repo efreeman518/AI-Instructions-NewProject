@@ -20,7 +20,7 @@ You are adding a complete entity slice (domain → data → application → API 
 - Verify `dotnet build` passes on the existing solution.
 - Locate `RegisterServices.cs`, both DbContext files, and `WebApplicationBuilderExtensions.cs`.
 - Review existing entity patterns in the target project for consistency.
-- If this slice introduces a new domain term, role, event, custom action, or design decision, append it to `UBIQUITOUS-LANGUAGE.md` / `DESIGN-DECISIONS.md` and update `domain-specification.yaml` **before** generating code. These artifacts are the living source of truth for the project (see README.md § Phase-1 Artifact Lifecycle).
+- If this slice introduces a new domain term, role, event, custom action, or design decision, append it to `UBIQUITOUS-LANGUAGE.md` / `DESIGN-DECISIONS.md` and update `domain-specification.yaml` **before** generating code. These artifacts are the living source of truth for the project (see `.instructions/README.md` § Phase-1 Artifact Lifecycle).
 
 ## Execution Order
 

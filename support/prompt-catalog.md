@@ -13,7 +13,7 @@ Use this file as a convenience layer only. [START-AI.md](../START-AI.md) remains
 
 **First time?** Start with [minimum-viable-scaffold.md](minimum-viable-scaffold.md) instead — it bundles a pruned prompt path for an API-only, single-entity scaffold. Come back here when you outgrow it.
 
-Reference-app rules (when to consult, local vs MCP) live in [../START-AI.md](../START-AI.md) § Reference Application; the phase → area pointer map is [taskflow-proof-map.md](taskflow-proof-map.md).
+Reference-app rules (when to consult, local vs MCP, do-not-copy-wholesale) live in [reference-app.md](reference-app.md); the phase → area pointer map is [taskflow-proof-map.md](taskflow-proof-map.md). [START-AI.md](../START-AI.md) only routes to those files.
 
 ## Phase 1 — Domain Discovery (Session 1)
 

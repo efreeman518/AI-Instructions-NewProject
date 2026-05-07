@@ -8,7 +8,7 @@ This file is a neutral repository-level pointer for Claude Code. Do not activate
 
 - For ordinary repo maintenance, use [README.md](README.md) for context.
 - For author-side validation, use the scripts documented in [README.md](README.md).
-- For actual app scaffolding, use the scoped Claude slash commands in [.claude/commands/](.claude/commands/).
+- For actual app scaffolding, use the scoped Claude slash commands at the target project root under `.claude/commands/`.
 - `/scaffold` runs the full phased workflow.
 - `/vertical-slice` adds a single entity to an existing scaffolded app.
 

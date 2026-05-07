@@ -265,8 +265,9 @@ A short map of the repo so you know which directory owns what kind of content. U
 
 | Folder | Owns | Loaded when |
 |---|---|---|
-| Root project-memory files: `AGENTS.md` (Codex / CLI agents), `CLAUDE.md` (Claude), `.github/copilot-instructions.md` (Copilot) — three vendor-specific entrypoints, same role | Harness discovery + session bootstrap | First read of every scaffold session |
-| Root scoped pickers: `.claude/commands/` (Claude slash commands), `.github/agents/` (Copilot agent picker), `START-AI.md` (canonical bootstrap all three load on demand) | Harness discovery + session bootstrap | First read of every scaffold session |
+| Root project-memory files: `AGENTS.md` (Codex / CLI agents), `CLAUDE.md` (Claude), `.github/copilot-instructions.md` (Copilot) — three vendor-specific entrypoints, same role | Harness discovery and explicit scaffold trigger detection | Auto-loaded by the harness; must stay thin |
+| Root scoped pickers: `.claude/commands/` (Claude slash commands), `.github/agents/` (Copilot agent picker) | Harness-specific scaffold launchers | Selected only for scaffold or vertical-slice work |
+| `START-AI.md` in this repo / `.instructions/START-AI.md` in installed apps | Canonical bootstrap: session router, phase router, load rules, reference-app pointer | Loaded only after explicit scaffold request |
 | `ai/` | Phase orchestration: schemas, interview, contract scaffolding, TDD protocol, placeholder tokens, Phase 5 file table (`SKILL.md`) | Per-phase routing |
 | `skills/` | Reusable how-to per concern (domain, data, API, gateway, caching, identity, testing, UI, etc.) | Per-sub-phase, by `SKILL.md` file table |
 | `templates/` | Code-shape templates for generated artifacts (entity, EF config, repository, service, endpoint, tests) | Per-sub-phase, paired with the matching skill |

@@ -36,7 +36,8 @@ This sizing does **not** change phase semantics, gates, or conflict-resolution o
 
 ## Non-Negotiables
 
-- **Conflict resolution order:** `support/execution-gates.md` > this file (`ai/SKILL.md`) > individual skill files > templates.
+- **Authority map:** `START-AI.md` owns session boot, phase routing, and load rules. `support/execution-gates.md` owns validation gates and commands. This file (`ai/SKILL.md`) owns Phase 5 load sets, non-negotiables, and concern routing. Individual skills own implementation detail; templates own generated file shape.
+- **Conflict resolution order:** For routing/loading/session-boundary conflicts, follow `START-AI.md`. For validation command/gate conflicts, follow `support/execution-gates.md`. For implementation conflicts, use this file (`ai/SKILL.md`) > individual skill files > templates.
 - **Composition patterns** (cross-project wiring) live in `patterns/`. Load only when the current sub-phase needs cross-project orchestration:
   - [../patterns/data-layer-wiring.md](../patterns/data-layer-wiring.md) — DB context pooling, OnModelCreating order, startup tasks, seed data, scaffold migration strategy. Phase 5a, 5b.
   - [../patterns/api-host-wiring.md](../patterns/api-host-wiring.md) — API startup sequence, request context resolution, conditional auth. Phase 5b, 5c.
@@ -44,7 +45,7 @@ This sizing does **not** change phase semantics, gates, or conflict-resolution o
   - [../patterns/expected-output-index.md](../patterns/expected-output-index.md) — Expected file layout when scaffolding is complete. On-demand verification.
   Prefer template-owned implementation detail over duplicating wiring; use pattern files for orchestration decisions across projects only.
 - **Load [../support/ef-packages-reference.md](../support/ef-packages-reference.md) before Phase 5a** to know which base types (DbContextBase, DomainResult, IRequestContext, etc.) come from the EF.Packages private feed. Do not regenerate these types.
-- **Reference app — TaskFlow.** When a skill or template is ambiguous, consult it. Use [../support/taskflow-proof-map.md](../support/taskflow-proof-map.md) for the phase → area index. Reference application rules (local sibling preference, do-not-copy-wholesale) live in [../START-AI.md](../START-AI.md) § Reference Application.
+- **Reference app — TaskFlow.** When a skill or template is ambiguous, consult it. Rules for when/how to consult, local sibling preference, and the do-not-copy-wholesale constraint live in [../support/reference-app.md](../support/reference-app.md). Use [../support/taskflow-proof-map.md](../support/taskflow-proof-map.md) for the phase → area index.
 - Generate code only in the user's new project directory.
 - Use `.slnx` (not legacy `.sln`).
 - Use central package management (`Directory.Packages.props`).

@@ -19,4 +19,4 @@ All instruction files (skills, templates, support docs, schemas, scripts) live u
 - Generate code in the project root only (`src/`, `tests/`, etc.). Never modify `.instructions/` — record gaps in `INSTRUCTION-GAPS.md` at the project root.
 - One phase per session. Do not skip or combine phases.
 - After each gate passes, update `HANDOFF.md` and stop.
-- Conflict precedence and TaskFlow reference-app rules: see `.instructions/ai/SKILL.md` § Non-Negotiables and `.instructions/START-AI.md` § Reference Application.
+- Conflict precedence: see `.instructions/ai/SKILL.md` § Non-Negotiables. TaskFlow reference-app rules: see `.instructions/support/reference-app.md`.

@@ -8,7 +8,7 @@ Use this file for:
 - exit criteria,
 - pre-merge quality gates.
 
-If another file disagrees, this file wins.
+If another file disagrees on validation gates or commands, this file wins. Session routing and load rules remain owned by [../START-AI.md](../START-AI.md) and [../ai/SKILL.md](../ai/SKILL.md).
 
 ---
 
