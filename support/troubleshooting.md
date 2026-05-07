@@ -10,7 +10,7 @@ This file is intentionally lightweight. Use it to decide **what the AI should do
 
 AI agents generate code. Engineers own environment and runtime setup.
 
-> All code generation and fixes apply to the **new project** only. If an error points to a pattern in `support/pattern-dispatcher.md`, document the issue in `support/UPDATE-INSTRUCTIONS.md`.
+> All code generation and fixes apply to the **new project** only. If an error points to a `patterns/` file (see `ai/SKILL.md` § Non-Negotiables for the index), document the issue in `INSTRUCTION-GAPS.md` (in a consumer app) or `support/UPDATE-INSTRUCTIONS.md` (in this repo).
 
 When an error appears:
 1. Classify it (code-generation vs infrastructure/tooling)
@@ -297,16 +297,16 @@ Rule of thumb: if a type is used both in `.cs` service layer code AND in `.razor
 When a private package's public API is unknown or differs from docs/conventions:
 
 1. Locate the DLL: find it under `%USERPROFILE%\.nuget\packages\{package}\{version}\lib\`.
-2. Create a throwaway console project targeting `net10.0`:
+2. Create a throwaway console project targeting the latest stable .NET TFM:
    ```
-   dotnet new console -o C:\Temp\InspectLib --framework net10.0
+   dotnet new console -o C:\Temp\InspectLib
    ```
 3. Add a `<Reference>` to the DLL in the `.csproj`.
    Preload any dependency assemblies (e.g., `Microsoft.Extensions.Logging.Abstractions`) with `Assembly.LoadFrom()` before calling `GetParameters()`.
 4. Use `Assembly.LoadFrom(path)`, wrap `GetTypes()` in a `ReflectionTypeLoadException` catch, then iterate types/members.
 5. `dotnet run` and inspect the output.
 
-> **Note:** `Assembly.ReflectionOnlyLoadFrom()` is NOT supported on .NET 10 — use full load + exception handling instead.
+> **Note:** `Assembly.ReflectionOnlyLoadFrom()` is not supported on modern .NET — use full load + exception handling instead.
 > Binary text extraction (grep for strings in the DLL bytes) is useful as a quick fallback to spot type names before writing reflection code.
 
 ---

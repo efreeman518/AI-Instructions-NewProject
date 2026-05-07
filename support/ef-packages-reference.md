@@ -10,7 +10,7 @@ The scaffolded project depends on the **EF.Packages** private NuGet feed for inf
 
 These types are consumed throughout scaffolded code. Know where they come from so you don't recreate them.
 
-> **Verified against EF.Packages v1.0.58.** If a type is not listed here, it either does not exist in EF.Packages or has not been verified. Check the actual assemblies before assuming a type exists.
+> **Verified against the latest EF.Packages release.** If a type is not listed here, it either does not exist in EF.Packages or has not been verified. Check the actual assemblies (or the source repo linked above) before assuming a type exists.
 
 ### Domain Layer (EF.Domain, EF.Domain.Contracts)
 
@@ -349,8 +349,8 @@ These types appear in the service and endpoint templates but are **not provided 
 ## Rules
 
 - **Never regenerate types that exist in EF.Packages.** Check this reference before creating base classes, result types, or repository interfaces.
-- All EF.Packages target **.NET 10.0**.
-- Packages use **central package management** — add versions to `Directory.Packages.props`.
+- All EF.Packages target the latest stable .NET TFM. Match the target app's TFM to the EF.Packages release in use.
+- Packages use **central package management** — pin versions only in `Directory.Packages.props`.
 - Private feed must be in `nuget.config` with `<packageSourceMapping>` entries for `EF.*` packages.
 - Project files must not put `Version="..."` on `EF.*` `<PackageReference>` entries.
 - If source contains local definitions for `EntityBase`, `RepositoryBase`, `DbContextBase`, `Result`, `PagedResponse`, `SearchRequest`, `IRequestContext`, `IInternalMessageBus`, or `IMessageHandler`, stop and replace them with package references.

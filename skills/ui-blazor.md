@@ -78,7 +78,7 @@ Use the EF.Common.Contracts `SearchRequest<T>` / `PagedResponse<T>` already pull
 
 - **Server**: `<Project Sdk="Microsoft.NET.Sdk.Web">`
 - **WASM**: `<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">` + `<BlazorWebAssemblyLoadAllGlobalizationData>true</BlazorWebAssemblyLoadAllGlobalizationData>` when localization is in scope
-- `TargetFramework` net10.0 (matches solution `Directory.Build.props`)
+- `TargetFramework` matches the solution's `Directory.Build.props` value (use the latest stable TFM the rest of the solution targets — do not hard-code).
 
 ## Program.cs — Server
 

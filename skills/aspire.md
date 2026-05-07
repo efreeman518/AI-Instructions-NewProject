@@ -209,10 +209,10 @@ Use persistent `tunnelId` for stable callback URLs.
 Use the `Aspire.AppHost.Sdk` MSBuild SDK. It handles `Projects.*` type proxy generation, `IsAspireHost`, and `AspireHostingSDKVersion` automatically.
 
 ```xml
-<Project Sdk="Aspire.AppHost.Sdk/9.2.0">
+<Project Sdk="Aspire.AppHost.Sdk/<latest-stable>">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>$(LatestStableTfm)</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.SqlServer" />
@@ -220,6 +220,8 @@ Use the `Aspire.AppHost.Sdk` MSBuild SDK. It handles `Projects.*` type proxy gen
   </ItemGroup>
 </Project>
 ```
+
+Substitute `<latest-stable>` and the TFM from the pinned SDK at scaffold time. Do not hard-code versions in templates.
 
 If using dev tunnels, add `Aspire.Hosting.DevTunnels`.
 

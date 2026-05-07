@@ -300,21 +300,21 @@ Uno UI:
 - [ ] `uno-check` validates workloads
 - [ ] Gateway/OpenAPI endpoint reachable for client generation
 - [ ] Kiota client generation completes (if used)
-- [ ] UI runs on selected target (`net10.0-browserwasm` or `net10.0-desktop`)
+- [ ] UI runs on selected Uno target (`<tfm>-browserwasm`, `<tfm>-desktop`, etc., where `<tfm>` is the project's pinned .NET TFM)
 
 ```powershell
 uno-check
-dotnet build --project src/UI/{Project}.Uno/{Project}.Uno.csproj -f net10.0-browserwasm
+dotnet build --project src/UI/{Project}.Uno/{Project}.Uno.csproj -f <tfm>-browserwasm
 ```
 
-If targeting desktop instead of WASM, build the selected desktop target instead of `net10.0-browserwasm`.
+If targeting desktop instead of WASM, build the selected desktop target instead of `<tfm>-browserwasm`.
 
-If targeting Android (`net10.0-android`):
+If targeting Android (`<tfm>-android`):
 - [ ] Android SDK path resolved (see `skills/ui-uno.md` § Android SDK Discovery)
 - [ ] `<EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>` set if manual ADB sideloading is used
 - [ ] Emulator host networking uses `10.0.2.2` for local backend calls (see `skills/ui-uno.md` § Emulator Host Networking)
 
-> **Starter-library escape hatch:** If the repo currently contains only a `net10.0` starter library or shell-contract scaffold instead of a real Uno multi-target app, Phase 5c for Uno must be recorded as **blocked**. `NETSDK1139` on `net10.0-browserwasm` is expected in that scenario and is evidence that Uno scaffolding is still missing — not an environment glitch. Do not debug/workaround it; record the status as `blocked — Uno multi-target not yet created` and move on.
+> **Starter-library escape hatch:** If the repo currently contains only a single-TFM starter library or shell-contract scaffold instead of a real Uno multi-target app, Phase 5c for Uno must be recorded as **blocked**. `NETSDK1139` on `<tfm>-browserwasm` is expected in that scenario and is evidence that Uno scaffolding is still missing — not an environment glitch. Do not debug/workaround it; record the status as `blocked — Uno multi-target not yet created` and move on.
 
 Also verify:
 - Gateway/OpenAPI endpoint is reachable for client generation
@@ -477,7 +477,7 @@ az bicep build --file infra/main.bicep
 - Infra/environment failures: log in `HANDOFF.md`, classify blocker, continue non-blocked scope.
 - Instruction gaps: in a consumer app, append to root `INSTRUCTION-GAPS.md`; in this instruction repository, append to `support/UPDATE-INSTRUCTIONS.md`.
 - If a step fails, log the blocker in `HANDOFF.md` (see [HANDOFF.md template](HANDOFF.md)) and continue with non-blocked work.
-- Pattern reference: [../support/pattern-dispatcher.md](../support/pattern-dispatcher.md) (pattern index → `patterns/` folder) for composition wiring.
+- Pattern reference: [../ai/SKILL.md](../ai/SKILL.md) § Non-Negotiables — pattern index for composition wiring.
 
 ---
 

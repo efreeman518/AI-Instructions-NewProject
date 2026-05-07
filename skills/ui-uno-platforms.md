@@ -187,7 +187,7 @@ Example: check for `window.__TAURI__` or `navigator.userAgentData` rather than p
 
 ## .NET for Android — Build & Deploy Rules
 
-These rules apply when targeting `net10.0-android` (or equivalent) via Uno, MAUI, or bare .NET for Android.
+These rules apply when targeting any `<tfm>-android` Uno, MAUI, or bare .NET for Android target (where `<tfm>` is the project's pinned .NET TFM).
 
 ### Android SDK Discovery (Windows)
 

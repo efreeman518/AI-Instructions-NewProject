@@ -2,14 +2,19 @@
 """
 Installs the runtime payload of this instruction repo into a consumer app.
 
-Copies:
-    <repo>/<runtime files>    -> <target>/.instructions/
-    <repo>/AGENTS.md          -> <target>/AGENTS.md              (unless --instructions-only)
-    <repo>/.claude/commands/  -> <target>/.claude/commands/      (unless --instructions-only)
-    <repo>/.github/agents/    -> <target>/.github/agents/        (unless --instructions-only)
+Copies (unless --instructions-only):
+    <repo>/<runtime files>                   -> <target>/.instructions/
+    <repo>/AGENTS.md                         -> <target>/AGENTS.md            (merge)
+    <repo>/CLAUDE.md                         -> <target>/CLAUDE.md            (merge)
+    <repo>/.github/copilot-instructions.md   -> <target>/.github/copilot-instructions.md (merge)
+    <repo>/.claude/commands/                 -> <target>/.claude/commands/    (dir)
+    <repo>/.github/agents/                   -> <target>/.github/agents/      (dir)
+
+"merge" appends source content inside sentinel markers when the target file already exists,
+so existing user content is preserved.
 
 Excludes author-side files: scripts/__pycache__, tests/, .git/, .github/workflows/,
-.github/copilot-instructions.md, .githooks/, .vscode/, .venv/, .tmp/, .gitignore.
+.githooks/, .vscode/, .venv/, .tmp/, .gitignore.
 
 Usage:
     python scripts/install-to-project.py --target <app-repo-root>
@@ -174,6 +179,8 @@ SMOKE_CHECK_PAYLOAD = [
 
 SMOKE_CHECK_HARNESS_ENTRYPOINTS = [
     "AGENTS.md",
+    "CLAUDE.md",
+    ".github/copilot-instructions.md",
     ".claude/commands/scaffold.md",
     ".claude/commands/vertical-slice.md",
     ".github/agents/dotnet-scaffold.agent.md",

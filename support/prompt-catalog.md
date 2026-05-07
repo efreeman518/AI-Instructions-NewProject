@@ -11,11 +11,9 @@ Use this file as a convenience layer only. [START-AI.md](../START-AI.md) remains
 3. Replace `{...}` placeholders with real values.
 4. Keep the one-phase-per-session rule from [START-AI.md](../START-AI.md).
 
-**First time?** Start with [minimum-viable-scaffold.md](minimum-viable-scaffold.md) instead — it bundles a pruned five-prompt path for an API-only, single-entity scaffold. Come back here when you outgrow it.
+**First time?** Start with [minimum-viable-scaffold.md](minimum-viable-scaffold.md) instead — it bundles a pruned prompt path for an API-only, single-entity scaffold. Come back here when you outgrow it.
 
-## Reference Application
-
-A fully scaffolded example — **TaskFlow** — lives at <https://github.com/efreeman518/AI-Instructions-ReferenceApp>, and is also kept locally as a sibling repo at `../AI-Instructions-ReferenceApp/` when available. When a prompt result looks off or a pattern is ambiguous, point the AI at it (Read tool for the local clone, GitHub MCP otherwise) and use [taskflow-proof-map.md](taskflow-proof-map.md) for the phase → area index.
+Reference-app rules (when to consult, local vs MCP) live in [../START-AI.md](../START-AI.md) § Reference Application; the phase → area pointer map is [taskflow-proof-map.md](taskflow-proof-map.md).
 
 ## Phase 1 — Domain Discovery (Session 1)
 

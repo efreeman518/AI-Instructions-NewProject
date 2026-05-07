@@ -6,8 +6,7 @@ Create this file in the **target project root** at the end of every phase and ea
 instructionVersion: ""
 currentPhase: ""           # 1 | 2 | 3 | 4 | 5
 currentSubPhase: ""        # 5a | 5b | 5c | 5d | 5e (Phase 5 only)
-mode: ""                   # slim | comprehensive — operator mode, see ai/SKILL.md § Operator Modes
-scaffoldMode: ""           # full | lite | api-only
+scaffoldMode: ""           # full | lite | api-only — drives load-set sizing (see ai/SKILL.md § Load-Set Sizing)
 testingProfile: ""         # minimal | balanced | comprehensive
 contractsScaffolded: false # set true after Phase 4 completes
 enabledFeatures:
@@ -66,7 +65,6 @@ Out of scope for this session — do not attempt unless explicitly re-scoped:
 
 ## Notes
 
-- Set `mode` at Phase 1 close. If unset, infer from `scaffoldMode` (`api-only` → `slim`, otherwise `comprehensive`) and record. Subsequent sessions read this without re-deciding.
 - Record any non-default paths for `domain-specification.yaml` or `resource-implementation.yaml`.
 - Record any non-default paths for `UBIQUITOUS-LANGUAGE.md` or `DESIGN-DECISIONS.md`.
 - At Phase 1 close, summarize unresolved/deferred design decisions and confirm they do not block Phase 2.

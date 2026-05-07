@@ -1,6 +1,6 @@
 # Notifications
 
-Reference patterns: [../support/pattern-dispatcher.md](../support/pattern-dispatcher.md) (pattern index).
+Reference patterns: [../ai/SKILL.md](../ai/SKILL.md) § Non-Negotiables (pattern index).
 
 ## Purpose
 

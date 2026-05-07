@@ -10,32 +10,13 @@ All instruction files (skills, templates, support docs, schemas, scripts) live u
 
 ## Bootstrap
 
-1. Read `.instructions/START-AI.md` — the canonical bootstrap. Follow it exactly.
-2. Check for `HANDOFF.md` in the **project root** (NOT inside `.instructions/`).
-   - If present: resume from the recorded `currentPhase` / `currentSubPhase`.
-   - If absent: this is a new project — run the Phase Router.
-3. Load only the files listed for the current phase in the Phase Router. For Phase 5, use the Phase 5 file table in `.instructions/ai/SKILL.md`.
+1. Read `.instructions/START-AI.md` and follow its Session Start Router.
+2. If `HANDOFF.md` exists in the project root, resume from `currentPhase`/`currentSubPhase`. Otherwise run the Phase Router fresh.
+3. Load only the files listed for the current phase. For Phase 5, use the file table in `.instructions/ai/SKILL.md`.
 
 ## Core Rules
 
-- **Generate code in the project root** (`src/`, `tests/`, etc.). Never modify files under `.instructions/`.
-- Conflict precedence: see `.instructions/ai/SKILL.md` § Non-Negotiables (canonical).
-- Checkpoint after 15+ generated files or 3+ build/fix cycles — update `HANDOFF.md` (in project root).
-- After each phase/sub-phase gate passes, update `HANDOFF.md` and end the session.
-- Session model, default sources, and TaskFlow rules: see `.instructions/START-AI.md` § Session Model and § Reference Application, plus `.instructions/ai/SKILL.md` Non-Negotiables.
-
-## Phase Summary
-
-See `.instructions/START-AI.md` § Phase Router for the canonical per-phase file list, outputs, and gates. Do not duplicate them here.
-
-## Workflow
-
-1. Run the Session Start Router from `.instructions/START-AI.md`.
-2. Load only the current phase's instruction files (per the Phase Router or Phase 5 file table).
-3. Execute the phase, following all gates and execution rules.
-4. On phase completion: update `HANDOFF.md` (project root), report the gate result, and stop.
-
-## Constraints
-
-- DO NOT skip phases or combine multiple phases in one session.
-- DO NOT modify files under `.instructions/` — record gaps in `INSTRUCTION-GAPS.md` at the project root.
+- Generate code in the project root only (`src/`, `tests/`, etc.). Never modify `.instructions/` — record gaps in `INSTRUCTION-GAPS.md` at the project root.
+- One phase per session. Do not skip or combine phases.
+- After each gate passes, update `HANDOFF.md` and stop.
+- Conflict precedence and TaskFlow reference-app rules: see `.instructions/ai/SKILL.md` § Non-Negotiables and `.instructions/START-AI.md` § Reference Application.

@@ -110,11 +110,13 @@ Do not keep both formats in active use.
 ```json
 {
   "sdk": {
-    "version": "10.0.100",
+    "version": "<latest-installed-stable-sdk>",
     "rollForward": "latestFeature"
   }
 }
 ```
+
+Resolve `<latest-installed-stable-sdk>` from `dotnet --list-sdks` at scaffold time (do not hard-code).
 
 ### `Directory.Packages.props`
 

@@ -24,7 +24,7 @@ Just-in-time. One phase per session; for Phase 5, one sub-phase per session. Loa
 
 This rule is the same regardless of the model's context window. Lost-in-the-middle is real even at 200K — loading every skill hurts output quality. See [`support/OPERATIONS.md`](support/OPERATIONS.md) § Context Budgets.
 
-**Operator mode (Slim vs Comprehensive):** Choose once per project. See `ai/SKILL.md` § Operator Modes. The mode lives in `HANDOFF.md` and shapes the load set and validation cadence — it does not change phase semantics, gates, or the conflict-resolution order.
+Load-set sizing is derived from `scaffoldMode` (`api-only` → required-only; `lite`/`full` → required + on-demand). See [`ai/SKILL.md`](ai/SKILL.md) § Load-Set Sizing.
 
 ## Session Start Router
 

@@ -23,29 +23,26 @@ Fast-lookup answer to "what do I do next?" — refer to this before scrolling fo
 
 Detail sections (Fail-Fast Protocol, Git Checkpoint Protocol, Missing-Inputs Protocol, Mid-Session Rollback Protocol, Mixed-Store Slice Gate) live below — this table is the index.
 
-## When to Use
+## Load-Set Sizing
 
-Use for:
-- New solution scaffolding
-- Adding full vertical slices (entity → data → app → API → tests)
-- Adding optional workloads (Gateway, Functions, Scheduler, Uno UI)
-- Preparing config/auth/infra/IaC/CI-CD foundations
+Load-set discipline is derived from `scaffoldMode` — there is no separate operator-mode knob:
 
-## Operator Modes
+| `scaffoldMode` | Load set | Per-sub-phase validation |
+|---|---|---|
+| `api-only` (also MVS / single-entity / prototypes) | Current sub-phase **required** files only; skip on-demand and adjacent references unless the current task clearly needs them. | `dotnet build` + scoped test (skip `dotnet restore` unless package files changed or phase boundary). |
+| `lite` / `full` (production scaffolds) | Required + on-demand for the sub-phase. Adjacent references (proof map, prompt catalog) preload only when relevant. | Full Core Loop per [../support/execution-gates.md](../support/execution-gates.md). |
 
-Choose once per project, record in `HANDOFF.md` as `mode: slim | comprehensive`. Mode shapes load sets and validation cadence — it does **not** change phase semantics, gates, or conflict-resolution order.
-
-| Mode | Load set | Per-sub-phase validation | Use when |
-|---|---|---|---|
-| **slim** (default for MVS / single-entity / prototypes) | Current sub-phase **required** files only; skip on-demand and adjacent references unless the current task clearly needs them. | `dotnet build` + scoped test (skip `dotnet restore` unless package files changed or phase boundary). | First-time users, internal tools, MVS path, single API + one entity. |
-| **comprehensive** (default for production scaffolds) | Required + on-demand for the sub-phase; adjacent references (proof map, prompt catalog) may be preloaded when relevant. | Full Core Loop per [../support/execution-gates.md](../support/execution-gates.md). | Production-grade scaffolds with optional hosts (Gateway, UI, Functions, Scheduler), multi-tenant, full quality gates. |
-
-If `HANDOFF.md` does not declare a mode, infer from `resource-implementation.yaml`: `scaffoldMode: api-only` → slim; otherwise comprehensive. Record the inferred value in `HANDOFF.md` so future sessions are deterministic.
+This sizing does **not** change phase semantics, gates, or conflict-resolution order — it only determines how many files to load per session.
 
 ## Non-Negotiables
 
 - **Conflict resolution order:** `support/execution-gates.md` > this file (`ai/SKILL.md`) > individual skill files > templates.
-- Load pattern files from `patterns/` only when needed for cross-project wiring. Use [../support/pattern-dispatcher.md](../support/pattern-dispatcher.md) as the index to find the right file.
+- **Composition patterns** (cross-project wiring) live in `patterns/`. Load only when the current sub-phase needs cross-project orchestration:
+  - [../patterns/data-layer-wiring.md](../patterns/data-layer-wiring.md) — DB context pooling, OnModelCreating order, startup tasks, seed data, scaffold migration strategy. Phase 5a, 5b.
+  - [../patterns/api-host-wiring.md](../patterns/api-host-wiring.md) — API startup sequence, request context resolution, conditional auth. Phase 5b, 5c.
+  - [../patterns/infrastructure-wiring.md](../patterns/infrastructure-wiring.md) — Multi-cache config, Aspire resource wiring. Phase 5c, 5d.
+  - [../patterns/expected-output-index.md](../patterns/expected-output-index.md) — Expected file layout when scaffolding is complete. On-demand verification.
+  Prefer template-owned implementation detail over duplicating wiring; use pattern files for orchestration decisions across projects only.
 - **Load [../support/ef-packages-reference.md](../support/ef-packages-reference.md) before Phase 5a** to know which base types (DbContextBase, DomainResult, IRequestContext, etc.) come from the EF.Packages private feed. Do not regenerate these types.
 - **Reference app — TaskFlow.** When a skill or template is ambiguous, consult it. Use [../support/taskflow-proof-map.md](../support/taskflow-proof-map.md) for the phase → area index. Reference application rules (local sibling preference, do-not-copy-wholesale) live in [../START-AI.md](../START-AI.md) § Reference Application.
 - Generate code only in the user's new project directory.
@@ -65,41 +62,16 @@ Each Phase 5 sub-phase loads its own file set. The base context (`ai/SKILL.md`, 
 | **5a Foundation (TDD)** | `domain-model`, `data-persistence` | `entity`, `ef-configuration`, `repository`, `domain-rules`, `appsettings`, `test-templates-domain`, `test-templates-repository` | `azure-data-storage`, `updater-template` (non-SQL stores); `patterns/data-layer-wiring` (cross-project wiring) |
 | **5b App Core (TDD for app/API, tests-after for runtime)** | `application-layer`, `bootstrapper`, `api`, plus enabled runtime concerns: `gateway`, `multi-tenant`, `caching`, `aspire`, `configuration-secrets`, `observability`, `security` | `data-mapping`, `service`, `endpoint`, `message-handler`, `structure-validator`, `exception-handler`, `test-templates-service`, `test-templates-endpoint`, `health-check` | `patterns/api-host-wiring`, `patterns/infrastructure-wiring` |
 | **5c Optional Hosts (tests-after)** | only the enabled host(s): `background-services`, `function-app`, `ui-uno` (index — load `ui-uno-shell`/`ui-uno-mvux`/`ui-uno-platforms` per task), `ui-blazor`, `notifications` | host-matching templates: `uno-mvux-model`, `uno-ui-client-layer`, `uno-xaml-page` | `ui-uno` is a dedicated-session set |
-| **5d Quality + Delivery** | `testing`, `iac`, `cicd` | `test-templates-quality`, `dockerfile` | `messaging`, `grpc`, `external-api` (if used) |
+| **5d Quality + Delivery** | `testing-quality`, `iac`, `cicd` | `test-templates-quality`, `dockerfile` | `testing` (only if revisiting unit/endpoint scaffolding); `messaging`, `grpc`, `external-api` (if used) |
 | **5e Integration (Auth + AI)** | `identity-management` (always); `ai-integration` (when `includeAiServices: true`) | `ai-search`, `agent` (when AI in scope) | scope AI further to search-only or agents-only as needed |
 
 Read the table once at the start of each Phase 5 sub-phase session, load the listed files, proceed.
 
-## Session Start (Every AI Turn)
+## Phase 5 Sub-Phase Clarifications
 
-Follow [../START-AI.md](../START-AI.md) for session bootstrap, version checks, phase routing, and the session-per-phase model. This file does not repeat those steps.
+Session bootstrap, phase routing, and the session-per-phase model are canonical in [../START-AI.md](../START-AI.md). Phase 4 must finish before any Phase 5 sub-phase starts (gate: `dotnet build` succeeds on the full solution). Phase 5a uses TDD; 5b is mixed (TDD for application/API, tests-after for runtime); 5c–5e use tests-after — see [tdd-protocol.md](tdd-protocol.md).
 
-**Developer Clarification Rule:** Before generating code or configuration in any phase, ask for required or unsafe-missing inputs. For values covered by canonical defaults, apply the default, state the assumption, and record it in `HANDOFF.md`.
-
-**Shared Understanding Rule:** In Phase 1, run [shared-understanding-interview.md](shared-understanding-interview.md) before finalizing artifacts. Produce `domain-specification.yaml`, `UBIQUITOUS-LANGUAGE.md`, and `DESIGN-DECISIONS.md`. Later phases must preserve accepted domain terms and respect decision dependencies unless the developer explicitly revises them.
-
-**Each Phase 5 sub-phase runs in its own session.** At session start for Phase 5:
-1. Load `SKILL.md` + [placeholder-tokens.md](placeholder-tokens.md) + [tdd-protocol.md](tdd-protocol.md).
-2. Read [resource-implementation-schema.md](resource-implementation-schema.md) for `scaffoldMode`, `testingProfile`, host profiles, enabled flags, and canonical defaults.
-3. Look up the current sub-phase row in the **Phase 5 file table** above and load its required files. Add on-demand files only when the current sub-phase clearly needs them.
-4. For Phase 5a/5b: verify `contractsScaffolded: true` in `HANDOFF.md` — Phase 4 must have completed before TDD begins.
-
-**Session end — after each sub-phase gate passes:**
-1. Update `HANDOFF.md` with `currentSubPhase`, gate result, and next load set.
-2. Record any blockers, deferred items, and residual environment notes.
-3. Close the session. The next session starts from `START-AI.md` + `HANDOFF.md` only.
-
----
-
-## Phase 4 — Contract Scaffolding (Prerequisite for Phase 5)
-
-Phase 4 must finish before any Phase 5 sub-phase starts. It generates the solution structure, interfaces, DTOs, entity shells, test infrastructure, and no-op DI stubs. Gate: `dotnet build` succeeds on the full solution including test projects.
-
-## Phase 5 Sub-Phases (Execution Order)
-
-Each sub-phase is one session. Gate must pass before the next session begins.
-
-**Phase 5a uses TDD; 5b is mixed mode (TDD for application/API, tests-after for runtime concerns); 5c–5e use tests-after.** Contracts, entity shells, and test infrastructure already exist from Phase 4. Follow [tdd-protocol.md](tdd-protocol.md) where TDD applies: write tests first (red), implement to green.
+Before generating code in each Phase 5 sub-phase, ask the following clarification questions and record answers in `HANDOFF.md`. For values covered by canonical defaults, apply the default and state the assumption inline.
 
 1. **5a — Foundation (TDD):**
    - **Ask clarification questions first:** domain rule specifics, invariant constraints, inheritance patterns, special validations, audit/versioning needs
@@ -160,20 +132,12 @@ Generate one complete slice, validate, then move to next slice.
 
 ---
 
-## Operational Protocols
-
-Fail-Fast, Git Checkpoint, Missing-Inputs, Mid-Session Rollback, Mixed-Store Slice Gate, and Context Budgets all live in a single source of truth: [../support/OPERATIONS.md](../support/OPERATIONS.md). Read it when something fails, when state changes, or when an assumption breaks. The Phase 5 **Decision Table** at the top of this file is the fast-lookup index for what to do; OPERATIONS.md is the detail.
-
-## Session State (`HANDOFF.md`)
-
-Create or update in the target project root at the end of **every** phase and sub-phase session — not only when context is high. Phases 1–3 use it to hand off their output artifacts and open questions. Phase 5 sub-phases use it to record gate results, blockers, and the next load set. See [../support/HANDOFF.md](../support/HANDOFF.md) for the template.
-
----
-
 ## References
 
+- Session model, phase router, conflict order: [../START-AI.md](../START-AI.md)
 - Validation gates and commands: [../support/execution-gates.md](../support/execution-gates.md)
-- Operational protocols (fail-fast, rollback, context budgets): [../support/OPERATIONS.md](../support/OPERATIONS.md)
-- Copy-paste phase prompts: [../support/prompt-catalog.md](../support/prompt-catalog.md) — load only when starting or resuming a phase; keep out of the default Phase 5 execution context.
+- Operational protocols (fail-fast, git checkpoint, missing-inputs, rollback, mixed-store gate, context budgets): [../support/OPERATIONS.md](../support/OPERATIONS.md)
+- HANDOFF template: [../support/HANDOFF.md](../support/HANDOFF.md)
+- Copy-paste phase prompts (human convenience): [../support/prompt-catalog.md](../support/prompt-catalog.md)
 
 

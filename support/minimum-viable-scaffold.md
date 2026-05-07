@@ -38,9 +38,11 @@ py -3 scripts/install-to-project.py --target C:\path\to\your-app --verify
 
 The `--verify` flag confirms all entrypoints landed correctly. See [install-to-project.py](../scripts/install-to-project.py) for the full smoke-check list.
 
-## The five MVS prompts
+## The MVS prompts
 
-One AI session per phase. Paste each prompt verbatim, fill in the `{...}` placeholders, let the session run to its gate, then close the session. The next session starts fresh from `START-AI.md` + `HANDOFF.md`.
+Six AI sessions: one per phase for Phases 1–4, plus separate sessions for Phase 5a and Phase 5b (Phase 5 always runs one sub-phase per session). MVS skips 5c, 5d, and 5e — see § Why this works.
+
+Paste each prompt verbatim, fill in the `{...}` placeholders, let the session run to its gate, then close the session. The next session starts fresh from `START-AI.md` + `HANDOFF.md`.
 
 ### Phase 1 — Domain Discovery (one entity)
 

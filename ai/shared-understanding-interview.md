@@ -4,6 +4,8 @@ Use this file during Phase 1 before writing `domain-specification.yaml`.
 
 Goal: interview the developer until the AI and developer share the same domain model, vocabulary, and decision context. Do not rush to YAML. The YAML is only valid after the interview branches below are confirmed, defaulted, or explicitly deferred.
 
+> **First time?** [`../support/phase-1-worked-example.md`](../support/phase-1-worked-example.md) shows a condensed transcript of the actual interview that produced the TaskFlow reference app — pacing, branch recaps, and how the AI handles a mid-interview correction.
+
 ## Output Artifacts
 
 Phase 1 produces all three files in the target project root:

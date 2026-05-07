@@ -48,7 +48,7 @@ Uno Platform uses an **MSBuild SDK package** (`Uno.Sdk`), not a .NET workload. N
   <PropertyGroup>
     <!-- Clear singular TargetFramework inherited from Directory.Build.props -->
     <TargetFramework />
-    <TargetFrameworks>net10.0-browserwasm</TargetFrameworks>
+    <TargetFrameworks>$(LatestStableTfm)-browserwasm</TargetFrameworks>
     <OutputType>Exe</OutputType>
     <UnoSingleProject>true</UnoSingleProject>
     <ApplicationTitle>{AppName}</ApplicationTitle>
@@ -78,9 +78,9 @@ Uno Platform uses an **MSBuild SDK package** (`Uno.Sdk`), not a .NET workload. N
 
 ### Non-Negotiable csproj Rules
 
-1. **SDK version**: Use `Uno.Sdk/6.5.x` or later for .NET 9/10 projects. The 6.0.x line bundles `Uno.Wasm.Bootstrap 8.0.x` which does NOT support .NET 9+.
-2. **TargetFramework clearing**: When `Directory.Build.props` sets `<TargetFramework>net10.0</TargetFramework>` for non-Uno projects, the Uno csproj MUST add `<TargetFramework />` before `<TargetFrameworks>` to clear the inherited singular value. Otherwise MSBuild merges both, causing `NETSDK1005`.
-3. **Entry point**: Uno SDK may not auto-generate `Program.Main` on .NET 10. Always include a manual `Program.cs`:
+1. **SDK version**: Use the latest stable `Uno.Sdk` line that supports the project's target .NET TFM. Older 6.0.x SDKs bundle `Uno.Wasm.Bootstrap 8.0.x` which does NOT support .NET 9+; check Uno release notes when bumping the TFM.
+2. **TargetFramework clearing**: When `Directory.Build.props` sets a singular `<TargetFramework>` for non-Uno projects, the Uno csproj MUST add `<TargetFramework />` before `<TargetFrameworks>` to clear the inherited value. Otherwise MSBuild merges both, causing `NETSDK1005`.
+3. **Entry point**: Uno SDK may not auto-generate `Program.Main` on the latest TFMs. Always include a manual `Program.cs`:
 
 ```csharp
 namespace {Project}.Uno;
@@ -101,10 +101,10 @@ public class Program
 
 ### Testable Core Library
 
-Extract `Business/` (Models, Services) and `Client/` into a separate `{Project}.Uno.Core` class library targeting plain `net10.0`. This allows unit testing without the Uno SDK.
+Extract `Business/` (Models, Services) and `Client/` into a separate `{Project}.Uno.Core` class library targeting plain single-TFM (the same TFM the rest of the solution targets). This allows unit testing without the Uno SDK.
 
 ```text
-{Project}.Uno.Core/          <- net10.0 class lib (testable)
+{Project}.Uno.Core/          <- single-TFM class lib (testable)
   Business/Models/
   Business/Services/
   Client/

@@ -8,23 +8,14 @@ Clone this repo then run the install script to copy the instruction files into a
 
 ### Supported harnesses
 
-| Harness | Installed entrypoint | How to start |
-|---|---|---|
-| Codex CLI / CLI agents that read `AGENTS.md` | `<app>/AGENTS.md` | Ask the agent to scaffold or continue a phase; it loads `.instructions/START-AI.md` only after that explicit request. |
-| GitHub Copilot in VS Code | `<app>/.github/agents/` | Select `dotnet-scaffold` or `vertical-slice` in the Copilot agent picker. |
-| Claude Code / Claude VS Code extension | `<app>/.claude/commands/` when slash commands are supported | Run `/scaffold <domain>` or `/vertical-slice Product`. If commands are unavailable, prompt: `Load .instructions/START-AI.md and run the scaffold router.` |
-| Generic AI assistant | `<app>/.instructions/START-AI.md` | Use [support/prompt-catalog.md](support/prompt-catalog.md), or directly ask the agent to load `.instructions/START-AI.md`. |
+Each harness has a project-memory file (auto-loaded on session start) and, where supported, a scoped command/agent picker. The three project-memory files (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`) play the same role for their respective tools — the installer writes all three so any agent that opens the repo finds its native entrypoint.
 
-### Scaffold entrypoints
-
-| Harness | Full scaffold | Vertical slice |
-|---|---|---|
-| GitHub Copilot | Select `dotnet-scaffold` in the agent picker | Select `vertical-slice` in the agent picker |
-| Claude Code | `/scaffold <domain>` | `/vertical-slice <Entity>` |
-| Codex CLI / CLI agents | Prompt: `Load .instructions/START-AI.md and run the scaffold router` | Prompt: `Load .instructions/support/vertical-slice-checklist.md` |
-| Generic AI assistant | Prompt: `Load .instructions/START-AI.md and run the scaffold router` | Prompt: `Load .instructions/support/vertical-slice-checklist.md` |
-
-### How they work
+| Harness | Project-memory file | Scoped command/agent picker | Full scaffold | Vertical slice |
+|---|---|---|---|---|
+| Codex CLI (and other CLI agents that read `AGENTS.md`) | `AGENTS.md` | — (no stable convention yet) | Prompt: `Load .instructions/START-AI.md and run the scaffold router` | Prompt: `Load .instructions/support/vertical-slice-checklist.md` |
+| GitHub Copilot in VS Code | `.github/copilot-instructions.md` | `.github/agents/` | Select `dotnet-scaffold` agent | Select `vertical-slice` agent |
+| Claude Code / Claude VS Code | `CLAUDE.md` | `.claude/commands/` | `/scaffold <domain>` | `/vertical-slice <Entity>` |
+| Generic AI assistant | — (point it at `.instructions/START-AI.md` manually) | — | Prompt: `Load .instructions/START-AI.md and run the scaffold router` | Prompt: `Load .instructions/support/vertical-slice-checklist.md` |
 
 All harnesses follow the same flow: scaffold sessions boot from `.instructions/START-AI.md`, resume from `HANDOFF.md` if present, run one phase, write `HANDOFF.md`, stop. Vertical-slice sessions load `.instructions/support/vertical-slice-checklist.md` and generate one full entity stack against the gate.
 
@@ -34,7 +25,7 @@ Canonical execution rules: [START-AI.md](START-AI.md) (session model, phase rout
 
 Use `install-to-project.py` from a local clone of this repo. It copies only the runtime payload - instruction files, scoped agents, CLI entrypoint, and slash commands - into your app, and skips repo-maintenance files (tests, CI workflows, global assistant instruction files, git hooks, virtualenvs).
 
-`--target` is the **app repo root** (not the `.instructions/` folder). The script creates `<target>/.instructions/` if it does not exist, and writes `AGENTS.md`, `.claude/commands/`, and `.github/agents/` at the target root so CLI agents, Claude, and Copilot discover the scoped scaffold entrypoints.
+`--target` is the **app repo root** (not the `.instructions/` folder). The script creates `<target>/.instructions/` if it does not exist, and writes harness entrypoints (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.claude/commands/`, `.github/agents/`) at the target root so CLI agents, Claude, and Copilot discover the scoped scaffold instructions. Existing root-level `AGENTS.md`/`CLAUDE.md`/`copilot-instructions.md` files are preserved — the installer appends the scaffold block inside sentinel markers (`<!-- ai-scaffold: start --> ... <!-- ai-scaffold: end -->`) so re-running the installer is idempotent.
 
 ```bash
 # from a clone of this repo
@@ -42,24 +33,29 @@ python scripts/install-to-project.py --target /path/to/your-app-repo
 # tip: run with --dry-run first to preview what gets copied
 ```
 
-**Windows Python:** If `python` is not on `PATH` (common on Windows where the Microsoft-Store stub may shadow a real install), use `py -3` instead:
+**Windows Python launcher fallback chain.** Try in order; the first one that prints a version is the one to use for every `scripts/*.py` invocation in this repo:
 
 ```powershell
-py -3 --version                                                   # check
-py -3 scripts/install-to-project.py --target C:\path\to\your-app
+python --version            # may resolve to Microsoft-Store stub; if it errors, try the next
+py -3 --version             # works only when the Python launcher (py.exe) is installed
+.venv\Scripts\python.exe --version   # works inside a project venv
 ```
 
-If you maintain a virtualenv in this repo, call it directly: `.venv\Scripts\python.exe scripts/install-to-project.py --target ...`. The same fallback applies to `configure-ef-packages-feed.py` and any other `scripts/*.py` invocation.
+Then call the script with the same launcher, e.g. `python scripts/install-to-project.py --target C:\path\to\your-app` or `py -3 scripts/install-to-project.py --target ...` or `.venv\Scripts\python.exe scripts/install-to-project.py --target ...`. The same fallback applies to `configure-ef-packages-feed.py`, `validate-instructions.py`, and any other `scripts/*.py` invocation.
 
 What it places:
 
-| Source in this repo | Destination in your app |
-|---|---|
-| `README.md`, `CLAUDE.md`, `START-AI.md` | `<app>/.instructions/` |
-| `ai/`, `patterns/`, `schemas/`, `skills/`, `support/`, `templates/`, `scripts/` | `<app>/.instructions/` |
-| `AGENTS.md` | `<app>/AGENTS.md` (app repo root, so Codex-style CLI agents discover it) |
-| `.claude/commands/` | `<app>/.claude/commands/` (app repo root, so Claude Code discovers them) |
-| `.github/agents/` | `<app>/.github/agents/` (app repo root, so Copilot discovers the scoped agents) |
+| Source in this repo | Destination in your app | Mode |
+|---|---|---|
+| `README.md`, `CLAUDE.md`, `START-AI.md` | `<app>/.instructions/` | copy |
+| `ai/`, `patterns/`, `schemas/`, `skills/`, `support/`, `templates/`, `scripts/` | `<app>/.instructions/` | copy |
+| `AGENTS.md` | `<app>/AGENTS.md` (Codex-style CLI agents) | merge |
+| `CLAUDE.md` | `<app>/CLAUDE.md` (Claude Code project memory) | merge |
+| `.github/copilot-instructions.md` | `<app>/.github/copilot-instructions.md` (Copilot global guidance) | merge |
+| `.claude/commands/` | `<app>/.claude/commands/` (Claude slash commands) | dir |
+| `.github/agents/` | `<app>/.github/agents/` (Copilot scoped agents) | dir |
+
+**Merge mode** appends the scaffold block inside `<!-- ai-scaffold: start --> ... <!-- ai-scaffold: end -->` markers when the target file already exists; existing user content is preserved.
 
 Flags:
 
@@ -79,7 +75,7 @@ After install:
 
 ### Manual copy (alternative)
 
-If you prefer to copy by hand, remember: `AGENTS.md`, `.github/agents/`, and `.claude/commands/` must live at the **app repo root**, not inside `.instructions/`, so the tools discover them. Everything else goes under `.instructions/`. Do not copy scaffold routing into global assistant instruction files. The install script above does this automatically.
+If you prefer to copy by hand: harness discovery files (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.github/agents/`, `.claude/commands/`) live at the **app repo root**, not inside `.instructions/`. Everything else goes under `.instructions/`. Do not copy scaffold routing into a developer's global assistant instruction files — the per-app placement is what keeps scope correct. The install script above does this automatically and handles the merge into existing root-level files.
 
 ---
 
@@ -135,7 +131,7 @@ Five phases prevent hallucinated architecture by ensuring verified context befor
 Implementation knowledge is split into ~27 skill files (how things work) and ~25 template files (what to generate). The Phase Router in `START-AI.md` and the Phase 5 file table in `ai/SKILL.md` tell the agent which files to load for the current phase or sub-phase.
 
 **3. Composition patterns, not documentation alone.**
-Pattern files in `patterns/` document how generated components wire together across projects — database context pooling, API startup sequences, request context resolution, cache configuration, and Aspire resource wiring. An index (`support/pattern-dispatcher.md`) maps each pattern file to its relevant phase. This grounds the generated output in proven, real-world patterns rather than abstract descriptions.
+Pattern files in `patterns/` document how generated components wire together across projects — database context pooling, API startup sequences, request context resolution, cache configuration, and Aspire resource wiring. The pattern index lives in `ai/SKILL.md` § Non-Negotiables (one bullet per pattern, with the phase to load it). This grounds the generated output in proven, real-world patterns rather than abstract descriptions.
 
 ## Reference Application
 
@@ -153,14 +149,14 @@ If you want the shortest path from zero context to first scaffold:
 2. Run `python scripts/install-to-project.py --target /path/to/your-app-repo --verify` from this repo.
 3. Start through the harness table above: `AGENTS.md`, Copilot agent, Claude command, or a prompt that loads `.instructions/START-AI.md`.
 
-**First time?** Use the [Minimum Viable Scaffold (MVS)](support/minimum-viable-scaffold.md) — five paste-ready prompts that produce an API-only app with one entity, no Gateway/UI/AI/messaging. You can promote to a richer profile once the loop feels familiar.
+**First time?** Use the [Minimum Viable Scaffold (MVS)](support/minimum-viable-scaffold.md) — paste-ready prompts (one per phase, with Phase 5 split into 5a + 5b sessions) that produce an API-only app with one entity, no Gateway/UI/AI/messaging. You can promote to a richer profile once the loop feels familiar.
 
 Read the rest of this guide when you need setup details, MCP recommendations, or troubleshooting rules.
 
 ## Prerequisites
 
 - `git`
-- Python 3.11+ to run `install-to-project.py` and `configure-ef-packages-feed.py`. On Windows, `py -3` is the most reliable launcher (the bare `python` command often resolves to the Microsoft-Store stub and fails). Either `python`, `py -3`, or `.venv\Scripts\python.exe` works.
+- A current Python 3 to run `install-to-project.py`, `configure-ef-packages-feed.py`, and `validate-instructions.py`. **On Windows, no single launcher is universal:** `py -3` works on machines with the Python launcher installed, the bare `python` command works when a real Python is on PATH (it may resolve to the Microsoft-Store stub if not), and `.venv\Scripts\python.exe` works inside a project venv. Run `where python` and `where py` to see what's available, then pick the one that prints a real path. The scripts have no Python-version-specific syntax — any current 3.x works.
 - Latest stable `.NET SDK`
 - Docker engine running (Docker Desktop not required) — Aspire relies on it for hosting local container services
 - VS Code + AI assistant
@@ -263,6 +259,24 @@ Phase 3 analyzes `resource-implementation.yaml` technology choices and actively 
 
 **CLI → MCP → online resources:** Prefer CLI tools first (lowest token cost), then MCP servers for interactive exploration, then documentation URLs and GitHub repos the AI can fetch during implementation.
 
+## Where Things Live
+
+A short map of the repo so you know which directory owns what kind of content. Useful when deciding where to put a new instruction or fix.
+
+| Folder | Owns | Loaded when |
+|---|---|---|
+| Root project-memory files: `AGENTS.md` (Codex / CLI agents), `CLAUDE.md` (Claude), `.github/copilot-instructions.md` (Copilot) — three vendor-specific entrypoints, same role | Harness discovery + session bootstrap | First read of every scaffold session |
+| Root scoped pickers: `.claude/commands/` (Claude slash commands), `.github/agents/` (Copilot agent picker), `START-AI.md` (canonical bootstrap all three load on demand) | Harness discovery + session bootstrap | First read of every scaffold session |
+| `ai/` | Phase orchestration: schemas, interview, contract scaffolding, TDD protocol, placeholder tokens, Phase 5 file table (`SKILL.md`) | Per-phase routing |
+| `skills/` | Reusable how-to per concern (domain, data, API, gateway, caching, identity, testing, UI, etc.) | Per-sub-phase, by `SKILL.md` file table |
+| `templates/` | Code-shape templates for generated artifacts (entity, EF config, repository, service, endpoint, tests) | Per-sub-phase, paired with the matching skill |
+| `patterns/` | Cross-project wiring (data layer, API host, infrastructure, expected output) | On-demand; index in `ai/SKILL.md` § Non-Negotiables |
+| `support/` | Operator-facing detail: execution gates, operations protocols, troubleshooting, HANDOFF template, MVS, golden path, prompt catalog, reference-app proof map | On failure, on session boundary, or on need |
+| `schemas/` | JSON Schemas for `domain-specification.yaml` and `resource-implementation.yaml` | Phase 1/2 validation |
+| `scripts/` | Author + operator tooling: install-to-project, configure-ef-packages-feed, validate-instructions | One-off |
+
+Rule of thumb when adding new content: it goes in `skills/` if it's "how to do X", in `templates/` if it's "the shape of the file you generate", in `patterns/` if it's "how multiple projects wire together", in `support/` if it's operator-facing, and in `ai/` only if it's phase orchestration the AI needs at session start.
+
 ## Mode Selection
 
 | Need | Mode |
@@ -271,7 +285,7 @@ Phase 3 analyzes `resource-implementation.yaml` technology choices and actively 
 | Production-ready with optional hosts | `scaffoldMode: full` |
 | Single API, no gateway/UI/scheduler | `scaffoldMode: api-only` |
 
-Defaults: [ai/resource-implementation-schema.md](ai/resource-implementation-schema.md) **Canonical Defaults**.
+Defaults: [ai/resource-implementation-schema.md](ai/resource-implementation-schema.md) **Canonical Defaults**. `scaffoldMode` also drives how many on-demand files each Phase 5 sub-phase loads — see [ai/SKILL.md](ai/SKILL.md) § Load-Set Sizing.
 
 ## Happy Path
 
@@ -295,6 +309,7 @@ These references are for **maintaining and developing the instruction set itself
 
 - [START-AI.md](START-AI.md) - canonical AI bootstrap, version checks, phase routing, and load rules
 - [support/prompt-catalog.md](support/prompt-catalog.md) - copy-paste prompts for starting or resuming a session
+- [support/phase-1-worked-example.md](support/phase-1-worked-example.md) - condensed transcript of the TaskFlow Phase 1 interview (pacing, branch recaps, mid-interview corrections)
 - [support/execution-gates.md](support/execution-gates.md) - canonical validation gates and operator setup checklist
 - [support/golden-path-sample.md](support/golden-path-sample.md) - canonical small sample for regression-checking scaffold instructions
 - [support/final-scaffold-checklist.md](support/final-scaffold-checklist.md) - final generated-app scaffold acceptance checklist
@@ -307,11 +322,4 @@ Useful script entrypoints:
 - `scripts/install-to-project.py` - copy the runtime payload into a consumer app's `.instructions/` directory and place harness entrypoints at the app root. `--verify` smoke-checks the install; `--verify-only` runs the smoke check without copying.
 - `scripts/configure-ef-packages-feed.py` - create/update target-app `nuget.config` for EF.Packages without writing PATs.
 - `scripts/validate-instructions.py` - author-side sanity check: relative-link integrity, phase-label canonical set, harness command-file shape, payload shape vs installer declaration. Run before committing edits to instruction files.
-
-## Layout
-
-- Root: entry points (`AGENTS.md`, `README.md`, `CLAUDE.md`, `START-AI.md`)
-- `ai/`: phase schemas, execution guidance, and AI-loaded base docs
-- `support/`: operator checklists, troubleshooting, handoff template, prompt catalog, and repo change notes
-- `skills/`, `templates/`, `scripts/`, `schemas/`: domain-specific content and validation schemas
 

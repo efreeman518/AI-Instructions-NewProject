@@ -40,7 +40,7 @@ Load this file on demand. Keep it out of the default phase context.
 | Phase 5c scheduler | `src/Host/TaskFlow.Scheduler` | TickerQ job registration, cron jobs, and scheduled handler structure. |
 | Phase 5c functions | `src/Host/TaskFlow.Functions` | Function-project structure, trigger layout, and placeholder-host patterns. |
 | Phase 5c Uno UI | `src/UI/TaskFlow.Uno` | UI project structure, feature grouping, and gateway-backed client flow. |
-| Phase 5c Uno core | `src/UI/TaskFlow.Uno.Core` | Plain-`net10.0` library extracted from the Uno project so business logic and Kiota client are unit-testable without Uno SDK. |
+| Phase 5c Uno core | `src/UI/TaskFlow.Uno.Core` | Plain single-TFM class library extracted from the Uno project so business logic and Kiota client are unit-testable without the Uno SDK. |
 | Phase 5c Blazor host | `src/UI/TaskFlow.Blazor` | Blazor alternative to Uno UI; same Gateway-backed client flow. |
 | Phase 5d quality (.NET test projects) | `src/Test/Test.Unit`, `src/Test/Test.Integration`, `src/Test/Test.Endpoints`, `src/Test/Test.E2E`, `src/Test/Test.Architecture`, `src/Test/Test.Load`, `src/Test/Test.Benchmarks`, `src/Test/Test.Support` | `dotnet test`-runnable test project layout and quality-gate coverage. |
 | Phase 5d browser UI tests (Node) | `src/Test/Test.PlaywrightUI` | Node.js Playwright suite. Runs against a hosted Aspire AppHost stack via `npm test`. **Not a `dotnet test` target** — invoking it that way will fail. |

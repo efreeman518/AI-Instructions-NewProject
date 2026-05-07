@@ -152,7 +152,7 @@ playwright:
         done
         exit 1
     - name: Install Playwright browsers
-      run: pwsh src/Test/Test.PlaywrightUI/bin/Release/net10.0/playwright.ps1 install --with-deps
+      run: pwsh src/Test/Test.PlaywrightUI/bin/Release/$(TargetFramework)/playwright.ps1 install --with-deps
     - name: Run Playwright tests
       env:
         PLAYWRIGHT_BASE_URL: http://localhost:5100
