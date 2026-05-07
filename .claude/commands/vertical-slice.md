@@ -24,18 +24,7 @@ You are adding a complete entity slice (domain → data → application → API 
 
 ## Execution Order
 
-1. Entity + enums in `Domain.Model`
-2. EF configuration in `Infrastructure.Data`
-3. `DbSet<Entity>` in both DbContexts
-4. Repository interface + implementations (Trxn + Query)
-5. DTO + SearchFilter in `Application.Models`
-6. Mapper in `Application.Mappers`
-7. StructureValidator in `Application.Services/Rules`
-8. Service + interface
-9. Endpoint
-10. Wire DI in `RegisterServices.cs`
-11. Map endpoints in `WebApplicationBuilderExtensions.cs`
-12. Migration: `dotnet ef migrations add Add{Entity} ...`
+Follow the canonical Slice Execution Order in `.instructions/support/vertical-slice-checklist.md`. Do not duplicate or override it here.
 
 ## Rules
 
@@ -48,7 +37,7 @@ You are adding a complete entity slice (domain → data → application → API 
 
 ```bash
 dotnet build
-dotnet test --filter "TestCategory={Entity}"
+dotnet test --filter "(TestCategory=Unit|TestCategory=Endpoint)&FullyQualifiedName~{Entity}"
 ```
 
 Report files created, wiring steps completed, and gate results.

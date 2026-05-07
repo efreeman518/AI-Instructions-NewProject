@@ -1,11 +1,11 @@
-# Test Templates — Quality Gates (Phase 5e)
+# Test Templates — Quality Gates (Phase 5d)
 
 | | |
 |---|---|
 | **Generates** | `Test/Test.Architecture/**`, `Test/Test.PlaywrightUI/**`, `Test/Test.Load/**`, `Test/Test.Benchmarks/**` |
-| **Requires** | All implementation phases complete (5a–5d) |
-| **Phase** | 5e (Quality + Delivery) |
-| **Protocol** | These tests are written AFTER implementation. Unit/endpoint/integration tests already exist from 5a/5b/5c/5d. Phase 5e adds quality gates and runs a full regression. |
+| **Requires** | Core implementation phases complete (5a–5c) |
+| **Phase** | 5d (Quality + Delivery) |
+| **Protocol** | These tests are written AFTER implementation. Unit/endpoint/integration tests already exist from 5a/5b/5c. Phase 5d adds quality gates and runs a full regression. |
 
 ---
 
@@ -30,6 +30,7 @@ public abstract class BaseTest
 
 ```csharp
 [TestClass]
+[TestCategory("Architecture")]
 public class DomainDependencyTests : BaseTest
 {
     [TestMethod]
@@ -44,6 +45,7 @@ public class DomainDependencyTests : BaseTest
 }
 
 [TestClass]
+[TestCategory("Architecture")]
 public class ApplicationDependencyTests : BaseTest
 {
     [TestMethod]
@@ -74,6 +76,7 @@ public class ApplicationDependencyTests : BaseTest
 [assembly: Parallelize(Workers = 4, Scope = ExecutionScope.MethodLevel)]
 
 [TestClass]
+[TestCategory("E2E")]
 public class {Entity}CrudTests : PageTest
 {
     private const string BaseUrl = "https://localhost:44318";
@@ -160,6 +163,7 @@ public class {Entity}PageObject(IPage page)
 
 ```csharp
 [TestClass]
+[TestCategory("Load")]
 public class {Entity}LoadTests
 {
     [TestMethod]

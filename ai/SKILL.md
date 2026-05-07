@@ -107,7 +107,7 @@ Each sub-phase is one session. Gate must pass before the next session begins.
 
 5. **5e — Integration (Auth + AI):**
    - **Ask clarification questions first:** authentication provider, custom claims/roles, B2B vs B2C, token expiry. If AI in scope: AI search scope/filters, agent capabilities, content ingestion, cost/latency.
-   - Finalize identity (replace earlier stubs with config-driven scaffold principal). When `includeAiServices: true`, scaffold AI search and/or agents — load only the templates matching the enabled capability. Gate: authenticated endpoints respond correctly; if AI enabled, search returns results and agent responds to test prompt.
+   - Finalize identity (replace earlier stubs with config-driven scaffold principal). When `includeAiServices: true`, scaffold AI search and/or agents — load only the templates matching the enabled capability. Gate: authenticated endpoints respond correctly in scaffold mode; if AI enabled, AI interfaces compile, resolve from DI, and pass no-op/stub tests. Live search/agent checks run only when endpoints are provisioned.
 
 ## Template Usage
 

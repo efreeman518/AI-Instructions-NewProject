@@ -45,6 +45,7 @@ private {Entity}Service CreateService(
 
 ```csharp
 [TestClass]
+[TestCategory("Unit")]
 public class {Entity}ServiceTests : UnitTestBase
 {
     [TestMethod]
@@ -150,6 +151,7 @@ public class {Entity}ServiceTests : UnitTestBase
 
 ```csharp
 [TestClass]
+[TestCategory("Unit")]
 public class {Entity}MapperTests
 {
     [TestMethod]

@@ -23,6 +23,7 @@ public async Task Given_ValidEntity_When_Created_Then_CanBeRetrieved() { }
 
 ```csharp
 [TestClass]
+[TestCategory("Unit")]
 public class {Entity}RepositoryTrxnTests
 {
     [TestMethod]
@@ -72,6 +73,7 @@ public class {Entity}RepositoryTrxnTests
 
 ```csharp
 [TestClass]
+[TestCategory("Unit")]
 public class {Entity}RepositoryQueryTests
 {
     [TestMethod]

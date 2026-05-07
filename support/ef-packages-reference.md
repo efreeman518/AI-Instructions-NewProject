@@ -2,7 +2,7 @@
 
 The scaffolded project depends on the **EF.Packages** private NuGet feed for infrastructure, patterns, and abstractions. These types are shared-library types. Do not regenerate them.
 
-> **NuGet feed:** Configure it in `nuget.config` before Phase 4. Local environments need a GitHub PAT exposed through `NUGET_AUTH_TOKEN` or equivalent credential provider. Verify with `dotnet restore` (exit code 0) in Phase 3 and after Phase 4 build. See [execution-gates.md](execution-gates.md).
+> **NuGet feed:** Configure it in `nuget.config` before Phase 4. Local environments need package read access exposed through `NUGET_AUTH_TOKEN` or equivalent credential provider. Verify with `dotnet restore` (exit code 0) in Phase 3 and after Phase 4 build. See [execution-gates.md](execution-gates.md).
 
 ---
 

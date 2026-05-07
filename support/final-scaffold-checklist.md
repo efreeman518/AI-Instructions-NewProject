@@ -62,7 +62,7 @@ Use `curl`, HTTPie, REST Client, or Scalar. Record status codes and endpoint dis
 - [ ] Generated solution shape matches `skills/solution-structure.md` (no missing project, no orphan no-op stub).
 - [ ] `HANDOFF.md` resume state is current: `currentPhase`, `currentSubPhase`, gate result, blockers, next load set.
 - [ ] `implementation-plan.md` open questions resolved or explicitly deferred with TODO.
-- [ ] Every enabled host has a recorded status in `HANDOFF.md`: validated, partially validated, or blocked with reason.
+- [ ] Every enabled host has a recorded status in `HANDOFF.md`: `validated`, `partially-validated`, or `blocked` with reason.
 - [ ] At least one entity CRUD/search smoke cycle succeeds.
 - [ ] Health endpoint returns 200.
 - [ ] OpenAPI/Scalar loads.

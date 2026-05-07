@@ -36,12 +36,11 @@ Run once per machine/repo before beginning any scaffolding phase.
 
 ### Private NuGet Feed Auth (Phase 3 Pre-Flight)
 
-The scaffold uses private EF.Packages NuGet packages. Every local developer environment needs a GitHub PAT with package read access before Phase 4 restore/build can pass.
+The scaffold uses private EF.Packages NuGet packages. Every local developer environment needs package read access before Phase 4 restore/build can pass.
 
-**Step 1:** Ask the user for:
+**Step 1:** Ask the user to set or confirm:
 - Feed URL (e.g., `https://nuget.pkg.github.com/{owner}/index.json`)
-- GitHub PAT with package read access
-- Auth method: environment variable (recommended) or credential provider
+- Auth method: `NUGET_AUTH_TOKEN` environment variable (recommended) or credential provider
 
 **Step 2:** Generate `nuget.config` with the feed helper:
 
@@ -84,13 +83,13 @@ Manual equivalent:
 
 ```powershell
 # PowerShell — session-scoped (recommended for local dev)
-$env:NUGET_AUTH_TOKEN = "ghp_xxxxxxxxxxxxxxxxxxxx"
+$env:NUGET_AUTH_TOKEN = "<package-read-token>"
 
 # Or persist in user profile (PowerShell $PROFILE)
-[Environment]::SetEnvironmentVariable("NUGET_AUTH_TOKEN", "ghp_xxxx", "User")
+[Environment]::SetEnvironmentVariable("NUGET_AUTH_TOKEN", "<package-read-token>", "User")
 ```
 
-> **Security:** Never commit PATs to source control. Use `%VARIABLE%` syntax in `nuget.config` (Windows) or `$VARIABLE` (Linux/Mac) for credential interpolation. Add `.env` and `nuget.config.local` to `.gitignore`.
+> **Security:** Never commit PATs to source control or ask the user to paste one into chat. Use `%VARIABLE%` syntax in `nuget.config` (Windows) or `$VARIABLE` (Linux/Mac) for credential interpolation. Add `.env` and `nuget.config.local` to `.gitignore`.
 
 **Step 4:** Verify:
 
@@ -278,7 +277,7 @@ Required:
 - host-specific integration steps complete,
 - optional host dependencies are reachable.
 
-> **Scaffold vs Complete:** Do NOT mark Phase 5d complete unless each enabled optional host has both a validated build AND its host-specific gate result recorded below. If a host only scaffolds successfully (e.g., solution builds but the host has not been started or its target-specific checks have not passed), record the status as "scaffolded" or "partially validated" — not "complete". The handoff must reflect per-host gate status, not just solution-level build success.
+> **Scaffold vs Complete:** Do NOT mark Phase 5c complete unless each enabled optional host has both a validated build AND its host-specific gate result recorded below. If a host only scaffolds successfully (e.g., solution builds but the host has not been started or its target-specific checks have not passed), record the status as `scaffolded` or `partially-validated`, not `validated`. The handoff must reflect per-host gate status, not just solution-level build success.
 
 Function App:
 
@@ -308,7 +307,7 @@ If targeting Android (`net10.0-android`):
 - [ ] `<EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>` set if manual ADB sideloading is used
 - [ ] Emulator host networking uses `10.0.2.2` for local backend calls (see `skills/ui-uno.md` § Emulator Host Networking)
 
-> **Starter-library escape hatch:** If the repo currently contains only a `net10.0` starter library or shell-contract scaffold instead of a real Uno multi-target app, Phase 5d for Uno must be recorded as **incomplete**. `NETSDK1139` on `net10.0-browserwasm` is expected in that scenario and is evidence that Uno scaffolding is still missing — not an environment glitch. Do not debug/workaround it; record the status as "scaffolded — Uno multi-target not yet created" and move on.
+> **Starter-library escape hatch:** If the repo currently contains only a `net10.0` starter library or shell-contract scaffold instead of a real Uno multi-target app, Phase 5c for Uno must be recorded as **blocked**. `NETSDK1139` on `net10.0-browserwasm` is expected in that scenario and is evidence that Uno scaffolding is still missing — not an environment glitch. Do not debug/workaround it; record the status as `blocked — Uno multi-target not yet created` and move on.
 
 Also verify:
 - Gateway/OpenAPI endpoint is reachable for client generation
@@ -328,7 +327,7 @@ dotnet run --project src/Host/{Host}.Scheduler
 
 ## 5d — Quality Gates + Delivery
 
-Unit, service, endpoint, and integration tests already exist from Phases 5a/5b/5c/5d. Phase 5e adds quality gate tests and runs a full regression.
+Unit, service, endpoint, and integration tests already exist from Phases 5a/5b/5c. Phase 5d adds quality gate tests and runs a full regression.
 
 **New tests in this phase:**
 - Architecture tests (NetArchTest layering rules)

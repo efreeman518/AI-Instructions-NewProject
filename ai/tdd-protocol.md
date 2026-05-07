@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Defines the red/green loop for Phase 5a and Phase 5b, plus the tests-after protocol for Phase 5c and Phase 5d.
+Defines the red/green loop for Phase 5a and Phase 5b, plus the tests-after protocol for Phase 5c, Phase 5d, and Phase 5e.
 
 Phase 4 already generated interfaces, DTOs, entity shells, test infrastructure, and no-op DI stubs. Use those contracts to write tests first, then implement to green.
 
@@ -113,13 +113,15 @@ Git checkpoint after gate passes.
 
 ---
 
-## Phase 5c/5d — Tests-After Protocol
+## Phase 5c/5d/5e — Tests-After Protocol
 
 Infrastructure and optional host phases do not follow TDD. Instead, implement first, then write tests at the end of the session to verify behavior.
 
-5c tests: health checks, configuration/no-op behavior, caching behavior when enabled.
+5c tests: optional host smoke tests, scheduler/function trigger tests, Uno or Blazor client tests when applicable.
 
-5d tests: scheduler registration/trigger tests, Function trigger smoke tests, Uno client tests when applicable.
+5d tests: architecture, load, benchmark, E2E, vulnerability, and delivery checks according to `testingProfile`.
+
+5e tests: auth endpoint behavior plus AI service registration/no-op behavior; live provider checks only when provisioned.
 
 ```powershell
 dotnet test

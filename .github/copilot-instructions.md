@@ -1,4 +1,4 @@
-# AI-Instructions-NewProject
+# AI-Instructions-Scaffold
 
 This repository maintains an AI instruction set for scaffolding C#/.NET business applications. It is not a .NET project itself.
 

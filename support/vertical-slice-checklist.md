@@ -30,7 +30,7 @@ Use this when adding a new entity to an **already-scaffolded** solution. Skip fu
 ### Slice Execution Order
 
 1. Create entity + enum/flags in `Domain.Model`
-2. Create EF configuration in `Infrastructure.Repositories`
+2. Create EF configuration in `Infrastructure.Data`
 3. Add `DbSet<{Entity}>` to both DbContexts
 4. Create repository interface + implementations (Trxn + Query)
 5. Create DTO + SearchFilter in `Application.Models`
@@ -56,7 +56,7 @@ Use [execution-gates.md](execution-gates.md) for canonical gate commands and [tr
 
 ```powershell
 dotnet build
-dotnet test --filter "TestCategory={Entity}"
+dotnet test --filter "(TestCategory=Unit|TestCategory=Endpoint)&FullyQualifiedName~{Entity}"
 ```
 
 ### Prompt Pattern

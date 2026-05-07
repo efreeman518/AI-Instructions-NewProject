@@ -110,17 +110,17 @@ Never rename a migration after it has been shared with any environment or teamma
 $env:EFCORETOOLSDB = "Server=..."
 
 dotnet ef migrations add {MigrationName} `
-  --project src/Infrastructure/{Project}.Infrastructure.Repositories `
+  --project src/Infrastructure/{Project}.Infrastructure.Data `
   --startup-project src/Host/{Host}.Api `
   --context {App}DbContextTrxn
 
 dotnet ef database update `
-  --project src/Infrastructure/{Project}.Infrastructure.Repositories `
+  --project src/Infrastructure/{Project}.Infrastructure.Data `
   --startup-project src/Host/{Host}.Api `
   --context {App}DbContextTrxn
 
 dotnet ef migrations script --idempotent `
-  --project src/Infrastructure/{Project}.Infrastructure.Repositories `
+  --project src/Infrastructure/{Project}.Infrastructure.Data `
   --startup-project src/Host/{Host}.Api `
   --context {App}DbContextTrxn `
   -o migrations.sql

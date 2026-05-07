@@ -23,6 +23,7 @@ public void Given_ValidInput_When_EntityCreated_Then_ReturnsSuccess() { }
 
 ```csharp
 [TestClass]
+[TestCategory("Unit")]
 public class {Entity}Tests
 {
     [TestMethod]
@@ -121,6 +122,7 @@ public class {Entity}Tests
 
 ```csharp
 [TestClass]
+[TestCategory("Unit")]
 public class {Entity}RulesTests
 {
     [TestMethod]

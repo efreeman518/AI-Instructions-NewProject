@@ -19,7 +19,7 @@ A fully scaffolded example — **TaskFlow** — lives at <https://github.com/efr
 
 ```text
 Load .instructions/START-AI.md. This is a new project — no HANDOFF.md yet.
-Run the MCP Server Check from START-AI.md — ensure Microsoft Docs and Context7 MCPs are active.
+Run the Tooling Check from START-AI.md; use Microsoft Docs or Context7 only if current docs are needed.
 Generate a domain-specification YAML for a new application called {ProjectName}.
 The business is: {one-sentence business description}.
 Key entities: {entity list}.
@@ -33,7 +33,7 @@ When the artifacts are complete and reviewed, write HANDOFF.md to the project ro
 
 ```text
 Load .instructions/START-AI.md and HANDOFF.md from the project root.
-Run the MCP Server Check — ensure Microsoft Docs and Context7 MCPs are active.
+Run the Tooling Check; use Microsoft Docs or Context7 only if current docs are needed.
 Generate the resource implementation YAML per .instructions/ai/resource-implementation-schema.md.
 Read DESIGN-DECISIONS.md first and resolve any parent decisions that affect resource mapping.
 Mode: {full|lite|api-only}. Testing profile: {minimal|balanced|comprehensive}.
@@ -45,11 +45,11 @@ When the YAML is complete and reviewed, update HANDOFF.md and close the session.
 
 ```text
 Load .instructions/START-AI.md and HANDOFF.md from the project root.
-Run the MCP Server Check — enable GitHub MCP and Azure MCP for this phase.
+Run the Tooling Check; use GitHub or Azure tooling only if this phase needs repo or cloud access.
 Generate an implementation plan per .instructions/ai/implementation-plan.md template.
 Read UBIQUITOUS-LANGUAGE.md and DESIGN-DECISIONS.md first. Populate the Decision Dependency Graph.
-Phase 3 pre-flight: configure the EF.Packages feed via configure-ef-packages-feed.py if private packages are used,
-ensure NUGET_AUTH_TOKEN is set, and confirm `dotnet restore` exits 0. Verify `dotnet ef` is available.
+Phase 3 pre-flight: configure the EF.Packages feed via `.instructions/scripts/configure-ef-packages-feed.py` if private packages are used,
+ensure `NUGET_AUTH_TOKEN` or an approved credential provider is available, and confirm `dotnet restore` exits 0. Verify `dotnet ef` is available.
 Flag open questions before writing implementation-plan.md to the project root.
 When the plan is reviewed and open questions resolved, update HANDOFF.md and close the session.
 ```
@@ -58,7 +58,7 @@ When the plan is reviewed and open questions resolved, update HANDOFF.md and clo
 
 ```text
 Load .instructions/START-AI.md and HANDOFF.md from the project root.
-Run the MCP Server Check — ensure GitHub MCP is active.
+Run the Tooling Check; use GitHub tooling only if this phase needs repo access.
 Load the Phase 4 file set listed in START-AI.md § Phase Router.
 Generate the contract scaffold per .instructions/ai/contract-scaffolding.md:
   solution structure, interfaces, DTOs, entity shells, test infrastructure, no-op DI stubs.
@@ -72,7 +72,7 @@ Start every Phase 5 sub-phase with:
 
 ```text
 Load .instructions/START-AI.md and HANDOFF.md from the project root.
-Run the MCP Server Check for this sub-phase.
+Run the Tooling Check for this sub-phase.
 Read the Phase 5 file table in .instructions/ai/SKILL.md and load the files for the current sub-phase.
 ```
 

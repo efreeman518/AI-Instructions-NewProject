@@ -150,7 +150,7 @@ Required before Phase 4:
 - [ ] `nuget.config` contains every `customNugetFeeds` entry from `resource-implementation.yaml`.
 - [ ] `packageSourceMapping` maps `EF.*` to the private feed.
 - [ ] `packageSourceMapping` maps `dotnet-ef` or `*` to `nuget.org`.
-- [ ] Local developer has a GitHub PAT with package read access exposed through `NUGET_AUTH_TOKEN` or an approved credential provider.
+- [ ] Local developer has package read access exposed through `NUGET_AUTH_TOKEN` or an approved credential provider.
 - [ ] `Directory.Packages.props` owns all `EF.*` package versions.
 - [ ] Project-level `EF.*` `<PackageReference>` entries have no `Version` attribute.
 - [ ] No EF.Packages shared type is generated locally.

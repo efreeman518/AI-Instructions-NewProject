@@ -34,7 +34,7 @@ Apply when running on a model with a constrained context window. Load files just
 
 ### Frontier model phase pack (≥200K tokens)
 
-Apply when running on a frontier model with a large context window (Claude Opus/Sonnet 4+, GPT-5+, Gemini 2.5 Pro+, etc.). The loading constraint relaxes:
+Apply when running on a model with a large context window. The loading constraint relaxes:
 
 - The session may load the entire current phase's file table up-front (skills + templates + relevant patterns).
 - Adjacent reference files (the proof map, execution gates, prompt catalog) may be preloaded.
@@ -52,21 +52,9 @@ Is HANDOFF.md present?
         New entity  → load support/vertical-slice-checklist.md fast-path only
 ```
 
-## MCP Server Check
+## Tooling Check
 
-| Phase | MCP Servers |
-|---|---|
-| Always on | Microsoft Docs, Context7 |
-| 1–2 | + GitHub, Sequential Thinking |
-| 3 | + GitHub, Azure |
-| 4 | + GitHub |
-| 5a | + GitHub |
-| 5b | + GitHub, Azure |
-| 5c | + Playwright (if Uno UI), Fetch |
-| 5d | + GitHub, Azure, Playwright |
-| 5e | + Azure |
-
-If a server is unavailable, note it in `HANDOFF.md` and continue. **Prefer CLIs over MCP over online resources.** If `implementation-plan.md` exists, reload its **Tooling & Environment Readiness** section at session start and verify CLIs marked for the current phase are installed.
+Prefer CLIs over MCP over online resources. Use Microsoft Docs or Context7 when current docs are needed; add GitHub, Azure, Playwright, or Fetch only when the current phase needs repo, cloud, UI, or external document access. If a server is unavailable, note it in `HANDOFF.md` and continue. If `implementation-plan.md` exists, reload its **Tooling & Environment Readiness** section at session start and verify CLIs marked for the current phase are installed.
 
 ## Conflict Resolution Order
 
@@ -78,7 +66,7 @@ Each phase = one session. Load only the files listed for the current phase.
 
 - **Phase 1 (Domain Discovery):** `ai/shared-understanding-interview.md`, `ai/domain-specification-schema.md`, `templates/ubiquitous-language-template.md`, `templates/design-decisions-template.md`. Walk every interview branch until the developer confirms, defaults, or defers each. Output: `domain-specification.yaml`, `UBIQUITOUS-LANGUAGE.md`, `DESIGN-DECISIONS.md` in target root. Gate: developer reviews each artifact against its schema. → `HANDOFF.md` → close.
 - **Phase 2 (Resource Definition):** `ai/resource-implementation-schema.md` + `DESIGN-DECISIONS.md`. Ask clarification questions for unresolved resource decisions, API surface, external integrations, scaling, caching, messaging, optional workloads. Output: `resource-implementation.yaml` with `externalDependencyModes` declared for every external dep. Gate: developer review. → `HANDOFF.md` → close.
-- **Phase 3 (Implementation Plan):** `ai/implementation-plan.md` + Phase 1/2 schemas + project YAMLs. Pre-flight: configure private NuGet feed via `python scripts/configure-ef-packages-feed.py --root . --feed-url <url> --username <github-user>` (if private packages used); confirm `NUGET_AUTH_TOKEN` is set; verify `dotnet ef` is available (`dotnet new tool-manifest && dotnet tool install dotnet-ef` if missing). Identify required CLIs/MCP servers per phase; populate the **Tooling & Environment Readiness** section of the plan. Gate: `dotnet restore` exits 0 + developer review of `implementation-plan.md`. → `HANDOFF.md` → close.
+- **Phase 3 (Implementation Plan):** `ai/implementation-plan.md` + Phase 1/2 schemas + project YAMLs. Pre-flight: configure private NuGet feed via `python {instructionsRoot}/scripts/configure-ef-packages-feed.py --root . --feed-url <url> --username <github-user>` if private packages are used (`{instructionsRoot}` is `.instructions` in an installed app and `.` in this repo); confirm `NUGET_AUTH_TOKEN` or an approved credential provider is available; verify `dotnet ef` is available (`dotnet new tool-manifest && dotnet tool install dotnet-ef` if missing). Identify required CLIs/MCP servers per phase; populate the **Tooling & Environment Readiness** section of the plan. Gate: `dotnet restore` exits 0 + developer review of `implementation-plan.md`. → `HANDOFF.md` → close.
 - **Phase 4 (Contract Scaffolding):** `ai/contract-scaffolding.md`, `skills/solution-structure.md`, `skills/package-dependencies.md`, `ai/placeholder-tokens.md`, `support/ef-packages-reference.md`. Generates: solution structure, interfaces, DTOs, entity shells, test infrastructure, no-op DI stubs. Gate: `dotnet build` succeeds on full solution including test projects. Set `contractsScaffolded: true` in `HANDOFF.md`. → close.
 - **Phase 5 (Implementation):** one session per sub-phase (5a–5e: Foundation, App Core + Runtime, Optional Hosts, Quality + Delivery, Integration). Base: `ai/SKILL.md` + `ai/placeholder-tokens.md` + `ai/tdd-protocol.md` + `support/ef-packages-reference.md`. Per-sub-phase file lists are in `ai/SKILL.md` (Phase 5 file table). Gate per sub-phase: `dotnet build` + `dotnet test` (filter as appropriate). After the final enabled sub-phase, walk through `support/final-scaffold-checklist.md` manually.
 
