@@ -126,7 +126,7 @@ rtk --version
 rtk gain
 ```
 
-Windows note: RTK filters work on native Windows, but shell auto-rewrite hooks are limited. WSL gives fuller hook support.
+Windows note: RTK filters work on native Windows, but shell auto-rewrite hooks are limited. Treat manual `rtk <cmd>` prefixes as the reliable Windows path. WSL gives fuller hook support.
 
 ## Configure RTK For Agents
 
@@ -135,6 +135,9 @@ Run the target-specific init commands you use:
 ```bash
 # Claude Code
 rtk init -g
+
+# Claude Code, non-interactive or migration-safe
+rtk init -g --auto-patch
 
 # Codex
 rtk init -g --codex
@@ -151,6 +154,8 @@ rtk init -g --gemini
 # Show installed hook/config state
 rtk init --show
 ```
+
+`rtk init --show` may report `Local (./CLAUDE.md): exists but rtk not configured` in a repository that has its own neutral Claude instruction file. That is fine when global instructions already tell agents to use manual `rtk <cmd>` prefixes. Do not inject machine-specific RTK blocks into repo-local instruction files unless the repo intentionally owns that policy.
 
 Native PowerShell habit:
 
@@ -350,6 +355,8 @@ foreach ($dir in @([Environment]::GetFolderPath("Desktop"),
 }
 ```
 
+A simpler shortcut such as `powershell -NoExit -Command headroom proxy --port 8787 --no-telemetry` can work when `headroom.exe` resolves reliably from `PATH`. Prefer the `run-proxy.cmd` + venv `headroom.exe` form when diagnosing Explorer/PATH issues or Python install ambiguity.
+
 ### Windows Failure Modes
 
 - `pip install --user headroom-ai` succeeds, but `ModuleNotFoundError: No module named 'headroom'` appears from another shell. Cause: AppData/user-site redirection or sandboxing. Fix: use `%USERPROFILE%\.headroom\venv`; verify with `python -c "import sys, site; print(site.getusersitepackages()); [print(p) for p in sys.path]"`.
@@ -372,7 +379,9 @@ Get-NetTCPConnection -LocalPort 8787 -State Listen |
 ```
 
 - `rtk proxy <cmd>` is not the normal Windows wrapper. Use `rtk <cmd>` for filtered output. Reserve `rtk proxy <cmd>` for RTK passthrough/debug.
+- `rtk init --show` reports `Hook: not found` on native Windows. This can be cosmetic when `CLAUDE.md` or global agent instructions already mandate manual `rtk <cmd>` prefixes. Run `rtk init -g --auto-patch` once to migrate old blocks, then use manual prefixes. Do not keep chasing Unix-style auto-rewrite hooks on native Windows.
 - Proxy running does not mean clients use it. Clients must start with `ANTHROPIC_BASE_URL=http://127.0.0.1:8787` or `OPENAI_BASE_URL=http://127.0.0.1:8787/v1`. Use `setx`, fully restart agents, then confirm `/stats` counters climb while the agent works.
+- `headroom install status` reports `No deployment profile named 'default' is installed`. That only means Headroom is not installed as a managed service/task. It is acceptable when using manual launch or the no-admin Startup shortcut.
 - `headroom init -g <agent>` reports success, but config files do not update. Cause: sandboxed or redirected writes. Fix: prefer `setx` routing, or verify config files from a separate regular terminal.
 
 ### Windows Verification Checklist
@@ -392,6 +401,29 @@ Expected results:
 - `/readyz` reports ready.
 - `/health` may show `rust_core` disabled on Python 3.14; that is acceptable when `HEADROOM_REQUIRE_RUST_CORE=false`.
 - `/stats` request counters increase after restarting an AI agent and sending work through it.
+
+## Validate Setup Against This Guide
+
+Use this when an agent reports setup drift.
+
+```powershell
+rtk init --show
+[Environment]::GetEnvironmentVariable('ANTHROPIC_BASE_URL','User')
+[Environment]::GetEnvironmentVariable('OPENAI_BASE_URL','User')
+Invoke-RestMethod http://127.0.0.1:8787/health
+Invoke-RestMethod http://127.0.0.1:8787/stats
+headroom install status
+```
+
+Expected:
+
+- Claude Code RTK on Unix/WSL: hook, global `RTK.md`, global `CLAUDE.md` reference, and `settings.json` hook should be `ok`.
+- Claude Code RTK on native Windows: `Hook: not found` can be acceptable because auto-rewrite hooks are limited; verify global instructions require manual `rtk <cmd>` prefixes.
+- Repo-local `CLAUDE.md` can remain unconfigured when it is only a neutral project pointer.
+- Codex can route through `~/.codex/config.toml` with `base_url = "http://127.0.0.1:8787/v1"`; it does not require user env vars for Codex itself.
+- User env vars should be set with `setx` for other clients and future shells.
+- Headroom health should be ready/healthy. `rust_core: disabled` is acceptable on Python 3.14 degraded mode.
+- `headroom install status` may show no installed profile when using manual launch or the Startup shortcut.
 
 ## Global AI Instruction Strategy
 
