@@ -18,6 +18,26 @@ All test methods use Given_When_Then:
 public async Task Given_ValidInput_When_EntityCreated_Then_ReturnsSuccess() { }
 ```
 
+## Test Class Documentation Convention
+
+Every `[TestClass]` carries a 3–6 line class-level `<summary>` answering:
+
+1. **What is exercised** (one line).
+2. **Tooling tier + why this tier** (what a lighter tier would miss).
+3. **Non-obvious quirks** (only when applicable — retry loops, warm-up waits, fixture reuse).
+
+Method-level docs are **not** the convention — Given/When/Then names encode scenarios. Add per-method comments only for non-obvious quirks.
+
+```csharp
+/// <summary>
+/// Exercises the {Entity} create→search→update→delete flow over HTTP.
+/// Tier: Test.E2E (WAF + Testcontainers SQL) — InMemory provider would miss
+/// shadow properties, raw SQL projection, and concurrency token behavior.
+/// </summary>
+[TestClass]
+public class {Entity}WorkflowTests { ... }
+```
+
 ## Profiles
 
 | Profile | Include by default |
@@ -52,6 +72,15 @@ Test/
 | `Test.PlaywrightUI` | Real hosted stack (Aspire/docker-compose/preview) | Browser-driven UI |
 
 Rule: PlaywrightUI is a different harness. Never merge it with WAF tests.
+
+Default tier ladder: pure unit → `CustomApiFactory` (WAF + InMemory) → `SqlApiFactory` (WAF + Testcontainers SQL) → Aspire (multi-service).
+
+### Aspire Tier By Reuse (documented exception)
+
+Single-service tests (SQL-only, Azurite-only) **MAY** piggyback on the shared `AspireTestHost` fixture instead of spinning a parallel Testcontainers stack — purely to avoid duplicate container cost. Required when used:
+
+- Class-level `<summary>` calls out the choice ("piggybacks on shared Aspire host to avoid second SQL container") so the deviation does not read as drift.
+- Test still gates on the specific resource via `WaitForResourceHealthyAsync`, not the whole app.
 
 ## Dependencies
 
@@ -185,27 +214,68 @@ Place fluent builders in `Test.Support/Builders/`.
 
 If the test posts JSON to an API and asserts HTTP response shape, it belongs in `Test.Endpoints`.
 
-## Aspire SQL Fixture Rule
+## Aspire Test Host (recipe)
 
-When AppHost already runs persistent SQL:
+Name the fixture for what it actually wraps. If it owns the full `DistributedApplication` (DB + Functions + Storage + lifecycle), call it `AspireTestHost` — not `DatabaseFixture`. Split DB-context creation helpers into a separate `DbContextFactory` static class. Test fixtures benefit from single-responsibility naming since contributors grep by purpose.
 
-- Do not add a second `MsSqlBuilder` container to `DatabaseFixture`.
-- Start AppHost in fixture and read connection via `GetConnectionStringAsync("sql")`.
-- Set SQL password parameter before host startup.
+### Shared environment rules
+
+1. **One shared app per assembly.** Start once in `[AssemblyInitialize]` and reuse. Never per test class.
+2. **Set scoped flags (e.g., `TASKFLOW_ASPIRE_TESTING`, `TASKFLOW_INCLUDE_FUNCTIONS`) before `CreateAsync`** — only for things AppHost reads via `Environment.GetEnvironmentVariable`. **Save and restore originals** in cleanup for hermeticity.
+3. **Pass parameters via `configureBuilder`, not env-var mutation.** AppHost binds `Parameters:*` through `IConfiguration` — write them into `hostSettings.Configuration` so test isolation stays clean.
+4. **Conditional Functions inclusion.** Detect `func.exe` once in fixture before startup. Set the include flag there, not per test class. Tests that require Functions call `Assert.Inconclusive` when the resource is absent.
+5. **Timeout mandatory.** `[Timeout]` on every Aspire integration test method (`300000` for full multi-service, `120000` for single-service).
+6. **`local.settings.json` override trap.** Hardcoded DB connection strings in Functions `local.settings.json` beat Aspire injection. Remove them (keep safe Azurite-style values only).
+7. **Keep `using Aspire.Hosting.Testing;`** in every file calling `CreateHttpClient()` or `GetConnectionStringAsync()` (they are extension methods).
+
+### Async call discipline
+
+- **Per-call `.WaitAsync(timeout, ct)` on every async Aspire call.** Not a single umbrella `CancellationTokenSource(timeout)` — per-call so a hung step fails *that* step.
+- **Gate on health, not status.** Aspire reports `Running` before SQL accepts connections / Azurite serves first request / Functions warms up. Call `WaitForResourceHealthyAsync(name, ct)` before talking to a resource.
+- **`GetConnectionStringAsync` returns `ValueTask<string?>`** — wrap as `.AsTask().WaitAsync(timeout, ct)`. `ValueTask` has no `WaitAsync` extension.
+- **Bound shutdown.** `[AssemblyCleanup(TestContext)]` (MSTest 3.x overload — use `testContext.CancellationToken`); call `StopAsync(...).WaitAsync(CleanupTimeout)` and catch `TimeoutException` so a stuck teardown does not hang CI.
+
+### Fixture skeleton
 
 ```csharp
-Environment.SetEnvironmentVariable("Parameters__sql-password", LocalSqlSettings.SharedSaPassword);
-var connectionString = await app.GetConnectionStringAsync("sql");
+[AssemblyInitialize]
+public static async Task AssemblyInit(TestContext context)
+{
+    // Save originals first — restore in cleanup
+    SetEnvVar("TASKFLOW_ASPIRE_TESTING", "true");
+    SetEnvVar("TASKFLOW_INCLUDE_FUNCTIONS", FuncToolAvailable() ? "true" : "false");
+
+    var builder = await DistributedApplicationTestingBuilder.CreateAsync<Projects.AppHost>(
+        args: [],
+        configureBuilder: (appOptions, hostSettings) =>
+        {
+            appOptions.DisableDashboard = true; // explicit > implicit default
+            hostSettings.Configuration["Parameters:sql-password"] = LocalSqlSettings.SharedSaPassword;
+        });
+
+    builder.Services.AddLogging(b => b
+        .SetMinimumLevel(LogLevel.Information)
+        .AddFilter("Microsoft.AspNetCore", LogLevel.Warning)
+        .AddFilter("Aspire.", LogLevel.Warning));
+
+    AspireApp = await builder.BuildAsync().WaitAsync(StartupTimeout, context.CancellationToken);
+    await AspireApp.StartAsync().WaitAsync(StartupTimeout, context.CancellationToken);
+    await AspireApp.ResourceNotifications
+        .WaitForResourceHealthyAsync("sql", context.CancellationToken)
+        .WaitAsync(StartupTimeout, context.CancellationToken);
+
+    ConnectionString = await AspireApp.GetConnectionStringAsync("sql", context.CancellationToken)
+        .AsTask().WaitAsync(StartupTimeout, context.CancellationToken);
+}
+
+[AssemblyCleanup]
+public static async Task Cleanup(TestContext context)
+{
+    try { await AspireApp.StopAsync(context.CancellationToken).WaitAsync(CleanupTimeout); }
+    catch (TimeoutException) { /* logged; do not block other assemblies */ }
+    finally { RestoreEnvVars(); }
+}
 ```
-
-## Aspire Shared Environment Rules
-
-1. **One shared app per assembly.** Do not start/stop the distributed app per test class. Start once in `[AssemblyInitialize]` and reuse.
-2. **Set `TASKFLOW_ASPIRE_TESTING` (or your project's equivalent flag) before `CreateAsync`.** Use `DistributedApplicationTestingBuilder.CreateAsync(...)` after the env var is set.
-3. **Conditional Functions inclusion.** Detect `func.exe` once in fixture before startup. Set include flag there, not per test class.
-4. **Timeout mandatory.** Use `[Timeout]` on every Aspire integration test method (`300000` for full Aspire end-to-end, `120000` for SQL container only).
-5. **`local.settings.json` override trap.** Hardcoded DB connection strings in Functions `local.settings.json` override Aspire injection. Remove DB connection strings for tests (except safe Azurite-style values when needed).
-6. **`using Aspire.Hosting.Testing;` directive.** Keep it in files calling `CreateHttpClient()` or `GetConnectionStringAsync()` extension methods.
 
 ---
 
@@ -233,3 +303,11 @@ var connectionString = await app.GetConnectionStringAsync("sql");
 - [ ] `[AssemblyInitialize]` does not throw; infrastructure failures mark dependent tests `Inconclusive`.
 - [ ] Integration tests call service/repository layer directly (no endpoint-contract tests in `Test.Integration`).
 - [ ] Shared Aspire app starts once per assembly with required env vars set before creation.
+- [ ] Every test class has a class-level `<summary>` (scope / tier + why / quirks).
+- [ ] Aspire fixture passes `Parameters:*` via `configureBuilder.hostSettings.Configuration`, not env vars.
+- [ ] Every async Aspire call has its own `.WaitAsync(timeout, ct)` (no umbrella CTS).
+- [ ] Tests gate on `WaitForResourceHealthyAsync` before touching a resource.
+- [ ] `GetConnectionStringAsync` is wrapped via `.AsTask().WaitAsync(...)`.
+- [ ] `[AssemblyCleanup]` uses the `TestContext` overload and bounds `StopAsync` with `.WaitAsync(CleanupTimeout)`.
+- [ ] Env vars set for AppHost are saved/restored in cleanup.
+- [ ] Aspire-tier fixture is named for what it wraps (`AspireTestHost` for full distributed app, not `DatabaseFixture`).

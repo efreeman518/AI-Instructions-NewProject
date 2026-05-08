@@ -210,6 +210,8 @@ public class {Entity}Benchmarks
 
 For real-database integration tests using TestContainers. Add `Testcontainers.MsSql` and `Microsoft.EntityFrameworkCore.SqlServer` to `Test.Integration`.
 
+> **Naming:** `DatabaseFixture` is correct for this Testcontainers-only fixture (single SQL container). If the fixture grows to wrap a full Aspire `DistributedApplication` (DB + Functions + Storage + lifecycle), rename it to `AspireTestHost` and split DB-context creation helpers into a separate `DbContextFactory`. See [../skills/testing.md](../skills/testing.md) → *Aspire Test Host (recipe)*.
+
 ### File: `Test/Test.Integration/DatabaseFixture.cs`
 
 ```csharp

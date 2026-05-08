@@ -10,6 +10,23 @@ Use this file as a compact contract map for private/shared packages.
 
 > **AI lookup rule:** This file provides a compact contract map. When you need full API signatures, constructor parameters, or method overloads for any `EF.*` base type (e.g., `TableRepositoryBase`, `IBlobRepository`, `ICosmosDbRepository`, `IKeyVaultManager`), use the GitHub MCP server to read the source from [EF.Packages](https://github.com/efreeman518/EF.Packages) or [EF.Packages.Enterprise](https://github.com/efreeman518/EF.Packages.Enterprise).
 
+## Latest, Not Pinned (Global Rule)
+
+**All SDKs, packages, and components default to latest stable.** Never pin a specific version in instruction examples or templates. Resolve the latest stable version at scaffold time and write that into `Directory.Packages.props` / `global.json` / `Sdk="...@<version>"`.
+
+In instruction docs:
+
+- Use the `<latest-stable>` placeholder in xml/json snippets (e.g., `Sdk="Aspire.AppHost.Sdk/<latest-stable>"`, `<TargetFramework>$(LatestStableTfm)</TargetFramework>`).
+- Do **not** write a hard-coded `Version="9.2.0"` or `net9.0` into a template — it goes stale silently and contradicts this rule on every PR diff.
+
+**Documented exceptions only.** A pinned version is permitted **only** when accompanied by a one-line reason inline (NU1605/NU1011 conflict, breaking-change quarantine, vendor compatibility note). Any pin without justification is a bug — replace with `<latest-stable>`.
+
+SDK upgrade discipline:
+
+- Treat major-version SDK bumps (e.g., Aspire 9 → 13, .NET N → N+1) as **deliberate, scheduled tasks**, not routine work.
+- Consult the vendor's official upgrade guide via MS Learn before bumping (e.g., `learn.microsoft.com/dotnet/aspire/get-started/upgrade-to-aspire-13`).
+- A file-naming or convention change introduced by a future SDK version (e.g., AppHost.cs in Aspire 13) MAY be adopted on the prior SDK if it is purely cosmetic and back-compatible — call out the rationale in the relevant skill file.
+
 ## Feed + Version Rules (Mandatory)
 
 1. `nuget.config` must include `nuget.org` and all `customNugetFeeds` from [resource-implementation-schema.md](../ai/resource-implementation-schema.md).
@@ -20,7 +37,7 @@ Use this file as a compact contract map for private/shared packages.
 5. Re-verify with `dotnet restore` and `dotnet build`.
 6. **Private feed auth:** GitHub Packages and other authenticated feeds require a PAT or token. Local dev stores credentials in `nuget.config` (user-level, not committed). CI/CD must pass credentials via environment variable or `dotnet nuget` auth step — see [cicd.md](cicd.md) for workflow setup. A 401 on restore means the feed credential is missing or expired.
 
-> **CPM + floating versions = NU1011.** When `ManagePackageVersionsCentrally=true`, every `<PackageVersion>` entry must use an exact version (e.g. `Version="1.0.8"`). Wildcard/floating versions (e.g. `1.0.*`, `*`) are prohibited and cause restore to fail with NU1011. To use floating versions, set `ManagePackageVersionsCentrally=false` and add `Version="*"` directly to each `<PackageReference>`.
+> **CPM + floating versions = NU1011.** When `ManagePackageVersionsCentrally=true`, every `<PackageVersion>` entry must use an exact version (e.g. `Version="<latest-stable>"` resolved at scaffold time). Wildcard/floating versions (e.g. `1.0.*`, `*`) are prohibited and cause restore to fail with NU1011. To use floating versions, set `ManagePackageVersionsCentrally=false` and add `Version="*"` directly to each `<PackageReference>`.
 
 ---
 

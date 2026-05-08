@@ -50,10 +50,12 @@ The rest of this file applies to both modes unless called out. WebAssembly-only 
 Add to `Directory.Packages.props`:
 
 ```xml
-<PackageVersion Include="MudBlazor" Version="9.2.0" />
-<PackageVersion Include="Refit" Version="10.0.1" />
-<PackageVersion Include="Refit.HttpClientFactory" Version="10.0.1" />
+<PackageVersion Include="MudBlazor" Version="<latest-stable>" />
+<PackageVersion Include="Refit" Version="<latest-stable>" />
+<PackageVersion Include="Refit.HttpClientFactory" Version="<latest-stable>" />
 ```
+
+Resolve `<latest-stable>` at scaffold time. See [package-dependencies.md](package-dependencies.md) → *Latest, Not Pinned*.
 
 csproj references:
 

@@ -15,6 +15,16 @@ Host/Aspire/
     Extensions.cs
 ```
 
+### AppHost Entry File: `AppHost.cs` (not `Program.cs`)
+
+The AppHost project's entry file is **`AppHost.cs`** — the Aspire 13 convention. Use this name even on Aspire 9.x SDKs; it is purely a file rename and is back-compatible:
+
+- Top-level statements emit an implicit `class Program` regardless of file name, so reflective lookups like `Type.GetType("Program, AppHost", ...)` and `WebApplicationFactory<Program>` keep working.
+- No code references need updating. `.csproj` only needs editing if it has explicit `<Compile>` items (default item-includes do not).
+- "`Program.cs` in the AppHost project" reads as a generic ASP.NET Core entry point — `AppHost.cs` correctly signals an Aspire orchestrator. Humans grep by file name; align it with intent.
+
+> **Single-file AppHost** (a single `apphost.cs` lowercase with `#:sdk` / `#:package` directives, no `.csproj`) is a separate Aspire 13 prototype-only feature. Not adopted; not supported in Visual Studio.
+
 ---
 
 ## AppHost Baseline Pattern
@@ -179,13 +189,15 @@ When the project uses `nuget.config` with `<packageSourceMapping>`, the followin
 
 ## Azure SQL Transitive Version Conflict
 
-When using `Aspire.Hosting.Azure.Sql`, `Microsoft.Data.SqlClient 6.0.1` pulls `Microsoft.IdentityModel.JsonWebTokens` at a version that conflicts with other Aspire dependencies. To resolve NU1605:
+When using `Aspire.Hosting.Azure.Sql`, `Microsoft.Data.SqlClient` pulls `Microsoft.IdentityModel.JsonWebTokens` at a version that conflicts with other Aspire dependencies. To resolve NU1605:
 
-1. Pin in `Directory.Packages.props`:
+1. Pin in `Directory.Packages.props` — **documented exception** to the latest-not-pinned rule (see [package-dependencies.md](package-dependencies.md) → *Latest, Not Pinned*). Resolve the lowest version that satisfies both consumers at scaffold time and keep the inline reason comment:
    ```xml
-   <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="7.7.1" />
+   <!-- Pinned: NU1605 conflict between Microsoft.Data.SqlClient and other Aspire deps. Re-evaluate on SDK bump. -->
+   <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="<resolved-at-scaffold>" />
    ```
 2. Add a redundant `<PackageReference>` for this package in the AppHost `.csproj` to suppress the downgrade warning.
+3. **Re-evaluate on every SDK bump.** When the underlying conflict is resolved upstream, remove the pin and revert to central latest-stable resolution.
 
 ---
 
@@ -221,7 +233,9 @@ Use the `Aspire.AppHost.Sdk` MSBuild SDK. It handles `Projects.*` type proxy gen
 </Project>
 ```
 
-Substitute `<latest-stable>` and the TFM from the pinned SDK at scaffold time. Do not hard-code versions in templates.
+Substitute `<latest-stable>` and the TFM at scaffold time. Do not hard-code versions in templates — see [package-dependencies.md](package-dependencies.md) → *Latest, Not Pinned*.
+
+> **SDK upgrade discipline.** A major Aspire SDK bump (e.g., 9 → 13) is a **deliberate, scheduled task**, not routine work. Aspire 13 tightens a few APIs (e.g., `IDistributedApplicationTestingBuilder` inheritance), and existing code may need adjustments. Consult the official upgrade guide (`learn.microsoft.com/dotnet/aspire/get-started/upgrade-to-aspire-13`) and the version-specific compatibility pages before bumping. The `AppHost.cs` filename convention is back-compatible and may be adopted independently of the SDK bump.
 
 If using dev tunnels, add `Aspire.Hosting.DevTunnels`.
 
