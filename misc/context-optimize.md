@@ -180,6 +180,8 @@ python -m pip install "headroom-ai[all]"
 headroom --help
 ```
 
+Windows note: if Python lives under a corporate, OneDrive-managed, or sandboxed profile, prefer a dedicated venv at `%USERPROFILE%\.headroom\venv` instead of `pip install --user`. See [Windows Troubleshooting](#windows-troubleshooting).
+
 Node install, for TypeScript/Node apps:
 
 ```bash
@@ -248,6 +250,8 @@ headroom install apply --preset persistent-service --runtime python --scope user
 headroom install status
 ```
 
+Windows note: `persistent-service` and `persistent-task` commonly require Administrator rights. For no-admin Windows installs, use a Startup folder shortcut to a visible launcher script instead. See [Windows Troubleshooting](#windows-troubleshooting).
+
 Useful service commands:
 
 ```bash
@@ -293,6 +297,101 @@ $shortcut.Save()
 ```
 
 Use `--no-optimize` in the shortcut arguments when you want pass-through mode.
+
+## Windows Troubleshooting
+
+These notes come from a real Windows 11 install with Python 3.14 and a OneDrive-managed profile.
+
+### Recommended Windows Bring-Up
+
+Use a venv outside AppData, install proxy runtime dependencies explicitly, and route clients through the proxy with durable user environment variables:
+
+```powershell
+# 1. Build a venv outside AppData.
+& "$env:LOCALAPPDATA\Programs\Python\Python314\python.exe" -m venv "$env:USERPROFILE\.headroom\venv"
+
+# 2. Install binary wheels only. Avoid source builds and [all] ML extras.
+& "$env:USERPROFILE\.headroom\venv\Scripts\python.exe" -m pip install --only-binary=:all: `
+    headroom-ai fastapi "uvicorn[standard]" "httpx[http2]" h2
+
+# 3. Route AI clients through Headroom. Restart agents after setx.
+setx ANTHROPIC_BASE_URL "http://127.0.0.1:8787"
+setx OPENAI_BASE_URL    "http://127.0.0.1:8787/v1"
+```
+
+Create `%USERPROFILE%\.headroom\run-proxy.cmd`:
+
+```batch
+@echo off
+title Headroom Proxy (port 8787)
+set HEADROOM_TELEMETRY=off
+set HEADROOM_REQUIRE_RUST_CORE=false
+echo === Headroom Proxy launching at %date% %time% ===
+echo.
+"%USERPROFILE%\.headroom\venv\Scripts\headroom.exe" proxy --port 8787 --host 127.0.0.1 --no-telemetry
+set EXITCODE=%errorlevel%
+echo.
+echo === Headroom Proxy exited (exit code %EXITCODE%) ===
+echo Press any key to close this window...
+pause >nul
+```
+
+Create Desktop and Startup shortcuts with Windows shell APIs so OneDrive redirection is handled correctly:
+
+```powershell
+$shell = New-Object -ComObject WScript.Shell
+foreach ($dir in @([Environment]::GetFolderPath("Desktop"),
+                   [Environment]::GetFolderPath("Startup"))) {
+    $sc = $shell.CreateShortcut("$dir\Headroom Proxy.lnk")
+    $sc.TargetPath       = "$env:USERPROFILE\.headroom\run-proxy.cmd"
+    $sc.WorkingDirectory = $env:USERPROFILE
+    $sc.WindowStyle      = 1
+    $sc.Save()
+}
+```
+
+### Windows Failure Modes
+
+- `pip install --user headroom-ai` succeeds, but `ModuleNotFoundError: No module named 'headroom'` appears from another shell. Cause: AppData/user-site redirection or sandboxing. Fix: use `%USERPROFILE%\.headroom\venv`; verify with `python -c "import sys, site; print(site.getusersitepackages()); [print(p) for p in sys.path]"`.
+- Python 3.14 may lack a prebuilt `headroom._core` Rust wheel. Fix: set `HEADROOM_REQUIRE_RUST_CORE=false` for degraded pure-Python mode, or build the venv with Python 3.13 for full Rust-core support.
+- `pip install "headroom-ai[all]"` fails with MSVC errors. Cause: ML extras such as `hnswlib` and `py-rust-stemmers` may build from source. Fix: skip `[all]` and use `--only-binary=:all:` with `headroom-ai fastapi "uvicorn[standard]" "httpx[http2]" h2`.
+- Proxy exits with missing `fastapi`, `h2`, or HTTP/2 dependency errors. Fix: install the explicit runtime dependencies above; base `headroom-ai` does not always pull proxy extras.
+- `headroom install apply` fails with `[SC] OpenSCManager FAILED 5` or `schtasks ... Access is denied`. Cause: Windows service/task presets need admin rights. Fix: use a Startup folder `.lnk` pointing at `run-proxy.cmd`.
+- `python -m headroom` fails with `No module named headroom.__main__`. Fix: call the venv console script: `%USERPROFILE%\.headroom\venv\Scripts\headroom.exe`.
+- Global or AppData `headroom.exe` works in one shell but fails from Explorer with `The system cannot find the path specified`. Fix: call the venv `headroom.exe`; venv shims hardcode the venv Python.
+- A hidden launcher window flashes and disappears. Fix: keep `cmd` visible and use `pause >nul` on exit so crash output stays readable.
+- Port `8787` is already in use. Diagnose and stop the stale listener:
+
+```powershell
+Get-NetTCPConnection -LocalPort 8787 -State Listen |
+    ForEach-Object { Get-Process -Id $_.OwningProcess } |
+    Format-Table Id, Name, StartTime, Path
+
+Get-NetTCPConnection -LocalPort 8787 -State Listen |
+    ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }
+```
+
+- `rtk proxy <cmd>` is not the normal Windows wrapper. Use `rtk <cmd>` for filtered output. Reserve `rtk proxy <cmd>` for RTK passthrough/debug.
+- Proxy running does not mean clients use it. Clients must start with `ANTHROPIC_BASE_URL=http://127.0.0.1:8787` or `OPENAI_BASE_URL=http://127.0.0.1:8787/v1`. Use `setx`, fully restart agents, then confirm `/stats` counters climb while the agent works.
+- `headroom init -g <agent>` reports success, but config files do not update. Cause: sandboxed or redirected writes. Fix: prefer `setx` routing, or verify config files from a separate regular terminal.
+
+### Windows Verification Checklist
+
+```powershell
+Get-NetTCPConnection -LocalPort 8787 -State Listen
+Invoke-RestMethod http://127.0.0.1:8787/livez
+Invoke-RestMethod http://127.0.0.1:8787/readyz
+Invoke-RestMethod http://127.0.0.1:8787/health
+Invoke-RestMethod http://127.0.0.1:8787/stats
+```
+
+Expected results:
+
+- Exactly one listener on port `8787`, owned by the venv Python.
+- `/livez` reports alive.
+- `/readyz` reports ready.
+- `/health` may show `rust_core` disabled on Python 3.14; that is acceptable when `HEADROOM_REQUIRE_RUST_CORE=false`.
+- `/stats` request counters increase after restarting an AI agent and sending work through it.
 
 ## Global AI Instruction Strategy
 
