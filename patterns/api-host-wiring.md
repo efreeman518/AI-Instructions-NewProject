@@ -182,6 +182,39 @@ private static void AddRequestContextServices(IServiceCollection services)
 }
 ```
 
+### Dev-Mode Tenant Fallback (Auth Off)
+
+When the scaffold ships with auth off (`Auth:Enabled: false` or no `Auth` section), `userTenantId` claims are absent and the tenant resolves to `null`. The EF tenant query filter then matches nothing and the entire UI looks silently empty (zero rows on every list). Two acceptable mitigations — pick **one** and record it in `HANDOFF.md`:
+
+1. **Single-tenant scaffold** (preferred when only one tenant exists in dev): drop `ITenantEntity<Guid>` from the entity, remove the tenant query filter, and skip this section.
+2. **Dev tenant header**: keep multi-tenancy on, register a `DevRequestContextMiddleware` that reads a tenant id from a project-scoped header (e.g., `X-{App}-Tenant`) **only when** `app.Environment.IsDevelopment()` and `Auth:Enabled` is false. The matching Blazor `TenantHeaderHandler` lives in [../skills/ui-blazor.md](../skills/ui-blazor.md) → *Dev Tenant Header*.
+
+Wire the middleware before `UseAuthentication`:
+
+```csharp
+// Host/{App}.Api/Middleware/DevRequestContextMiddleware.cs
+public sealed class DevRequestContextMiddleware(RequestDelegate next)
+{
+    public async Task InvokeAsync(HttpContext ctx, IConfiguration config)
+    {
+        if (!ctx.Request.Headers.TryGetValue($"X-{{App}}-Tenant", out var raw))
+        {
+            var fallback = config["{App}:DefaultTenantId"];
+            if (!string.IsNullOrWhiteSpace(fallback)) raw = fallback;
+        }
+        if (Guid.TryParse(raw, out var tenantId))
+        {
+            ctx.Items["DevTenantId"] = tenantId;
+        }
+        await next(ctx);
+    }
+}
+```
+
+Inside the `IRequestContext` factory, prefer `httpContext.Items["DevTenantId"]` when the `userTenantId` claim is absent. Production paths still rely on claims — the dev branch is a `IsDevelopment()` short-circuit.
+
+**Symptom:** if a Blazor or external client lands at the API without either a tenant claim or the dev header, every list endpoint returns an empty payload and no error. Log the resolved tenant id at `Information` once per request during dev so the empty-payload case is observable.
+
 ---
 
 ## Conditional Auth Configuration

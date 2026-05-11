@@ -49,6 +49,7 @@ This sizing does **not** change phase semantics, gates, or conflict-resolution o
 - Generate code only in the user's new project directory.
 - Use `.slnx` (not legacy `.sln`).
 - Use central package management (`Directory.Packages.props`).
+- **One public type per file** — universal rule across generated app code and `src/Packages/<Prefix>.*` vendored sources alike. File name matches the type. Lumped files (multiple DTOs, message types, nested helpers) are split at generation time, not deferred. See [../skills/solution-structure.md](../skills/solution-structure.md) § Non-Negotiables for the exception list.
 - After adding packages, update to latest stable and verify restore/build.
 - Record instruction gaps in `INSTRUCTION-GAPS.md` at the target project root (do not hot-edit installed `.instructions/` files mid-scaffold). Instruction maintainers can later copy approved findings into [../support/UPDATE-INSTRUCTIONS.md](../support/UPDATE-INSTRUCTIONS.md).
 - Prefer latest stable .NET SDK and package releases. MCP server setup: see [../README.md](../README.md).

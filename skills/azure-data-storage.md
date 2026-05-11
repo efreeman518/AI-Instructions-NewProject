@@ -224,6 +224,39 @@ public class {Project}BlobRepositorySettings : BlobRepositorySettingsBase { }
 
 `BlobRepositorySettingsBase` requires `BlobServiceClientName`.
 
+**Override the base stubs.** `BlobRepositoryBase.Upload/Download/DeleteAsync` are `virtual` and throw `NotImplementedException` in the feed package. The project wrapper above only inherits them — calling `_blobRepo.UploadAsync(...)` at runtime crashes unless the wrapper overrides each method actually used. Implement against the injected `IAzureClientFactory<BlobServiceClient>`:
+
+```csharp
+public override async Task<Uri> UploadAsync(
+    string containerName, string blobName, Stream content, string contentType,
+    CancellationToken ct = default)
+{
+    var container = _clientFactory.CreateClient(_settings.BlobServiceClientName)
+        .GetBlobContainerClient(containerName);
+    await container.CreateIfNotExistsAsync(cancellationToken: ct);
+    var blob = container.GetBlobClient(blobName);
+    await blob.UploadAsync(
+        content,
+        new BlobHttpHeaders { ContentType = contentType },
+        cancellationToken: ct);
+    return blob.Uri;
+}
+
+public override async Task<Stream> DownloadAsync(
+    string containerName, string blobName, CancellationToken ct = default)
+{
+    var blob = _clientFactory.CreateClient(_settings.BlobServiceClientName)
+        .GetBlobContainerClient(containerName)
+        .GetBlobClient(blobName);
+    var response = await blob.DownloadStreamingAsync(cancellationToken: ct);
+    return response.Value.Content;
+}
+```
+
+**`BlobContainerClient.GetBlobsAsync` signature gotcha.** The current Azure SDK requires **positional** arguments: `GetBlobsAsync(BlobTraits.None, BlobStates.None, prefix, cancellationToken)`. The named-argument form `GetBlobsAsync(prefix: "...", cancellationToken: ct)` that older Microsoft samples show **does not compile** — the method exposes no parameters by those names. Use positional, or assign through the well-named overload of `BlobContainerClient`.
+
+If overrides are deferred (no caller exists yet), keep the wrapper inheriting the throwing stubs and rely on the *scaffold-skipped surface* exception in [../support/final-scaffold-checklist.md](../support/final-scaffold-checklist.md). The moment a service or endpoint calls `UploadAsync`, the override is mandatory.
+
 ### Configuration
 
 `appsettings.json`

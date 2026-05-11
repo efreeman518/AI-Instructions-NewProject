@@ -317,6 +317,180 @@ See [ui-uno-mvux.md](ui-uno-mvux.md) → *Client–API Contract Rules* for the d
 
 Pass a `SystemTextJsonContentSerializer` with `PropertyNameCaseInsensitive = true`, `JsonIgnoreCondition.WhenWritingNull`, and `JsonStringEnumConverter`. Enums flow over the wire as string names, which matches the API and keeps payloads human-readable.
 
+## Dev Tenant Header
+
+When the API host is multi-tenant **and** auth is off (the default scaffold first-vertical-slice state), Refit calls land at the API with no `userTenantId` claim. The EF tenant query filter then evaluates to `TenantId == null` against every row and the UI looks silently empty — every list returns zero items, no error. See [../patterns/api-host-wiring.md](../patterns/api-host-wiring.md) → *Dev-Mode Tenant Fallback* for the API-side middleware.
+
+Ship a `DelegatingHandler` that injects a project-scoped tenant header on every Refit call:
+
+```csharp
+// Services/TenantHeaderHandler.cs
+public sealed class TenantHeaderHandler(IConfiguration config) : DelegatingHandler
+{
+    private const string HeaderName = "X-{Project}-Tenant";
+
+    protected override Task<HttpResponseMessage> SendAsync(
+        HttpRequestMessage request, CancellationToken ct)
+    {
+        var tenantId = config["{Project}:DefaultTenantId"];
+        if (!string.IsNullOrWhiteSpace(tenantId) && !request.Headers.Contains(HeaderName))
+        {
+            request.Headers.Add(HeaderName, tenantId);
+        }
+        return base.SendAsync(request, ct);
+    }
+}
+```
+
+Register and attach to every Refit client:
+
+```csharp
+builder.Services.AddTransient<TenantHeaderHandler>();
+
+builder.Services
+    .AddRefitClient<I{Project}ApiClient>(...)
+    .ConfigureHttpClient(c => c.BaseAddress = new Uri(gatewayUrl))
+    .AddHttpMessageHandler<TenantHeaderHandler>()
+    // Auth handler (when wired) goes AFTER the tenant handler so claims-based
+    // tenant resolution can override the dev header.
+    .AddStandardResilienceHandler();
+```
+
+`appsettings.Development.json`:
+
+```json
+{
+  "{Project}": { "DefaultTenantId": "<seeded-tenant-guid>" }
+}
+```
+
+Use the same GUID the data-seed step inserts into the `Tenants` table. When real auth lands, delete `{Project}:DefaultTenantId` (or leave it for dev-only use); production tenant resolution then flows from the `userTenantId` claim.
+
+**Non-negotiables:**
+- Register the handler as **Transient** — `DelegatingHandler` instances are pooled per-message by `IHttpMessageHandlerFactory`; scoped/singleton causes lifetime errors.
+- The header name must match the API's `DevRequestContextMiddleware` exactly. Centralize the literal in a shared constant if both projects can see it.
+- Do **not** read the tenant id from a Blazor `IRequestContext` — Blazor Server runs server-side per circuit and there is no inbound tenant header to read from. The configuration value is the source of truth in dev.
+
+## Editable Forms Against `init`-Only DTO Records
+
+Scaffolded DTOs are `record` types with `init`-only setters (immutability is the contract between API and client). MudBlazor's `@bind-Value="Model.Title"` requires a settable property and fails to compile against `init` with `CS8852: Init-only property … can only be assigned in an object initializer`.
+
+Edit pages must declare **local mutable fields** for every editable property and project a `with`-expression on submit:
+
+```razor
+@page "/tasks/{Id:guid?}"
+@code {
+    [Parameter] public Guid? Id { get; set; }
+
+    private TaskItemDto? _model;
+    private string _title = "";
+    private string? _description;
+    private TaskItemStatus _status;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _model = Id is null ? new TaskItemDto { Title = "" } : (await Api.GetTaskItemAsync(Id.Value)).Item!;
+        _title = _model.Title;
+        _description = _model.Description;
+        _status = _model.Status;
+    }
+
+    private async Task SaveAsync()
+    {
+        var dto = _model! with
+        {
+            Title = _title,
+            Description = _description,
+            Status = _status,
+        };
+        await Api.UpdateTaskItemAsync(dto.Id, new DefaultRequest<TaskItemDto> { Item = dto });
+    }
+}
+
+<MudTextField @bind-Value="_title" Label="Title" />
+<MudTextField @bind-Value="_description" Label="Description" />
+<MudSelect @bind-Value="_status" Label="Status">@* ... *@</MudSelect>
+```
+
+**Why not just drop `init` from DTOs?** Because the `Updater`-pattern projection in [data-persistence.md](data-persistence.md) and `with`-based testing rely on records being immutable, and `set` members would propagate noise into every service that serializes DTOs. Keep DTOs `init`; mutate locally.
+
+**Non-negotiables:**
+- One local field per bound property — do not try to project intermediate types or use computed properties on the DTO.
+- Re-baseline against the local fields, not the DTO, in the unsaved-changes prompt (see *Unsaved-Changes Prompt on Navigation*).
+- Convert to and from the DTO at the page's edges (`OnParametersSetAsync` and `SaveAsync`); the middle of the page should not see the DTO record at all.
+
+## File Uploads (Multipart)
+
+`AttachmentDto` is metadata-only; the realistic upload path posts the file body as `multipart/form-data`. A pure JSON `Create` endpoint cannot carry an `IFormFile`.
+
+**Service contract** — add the streaming overload alongside any metadata-only method:
+
+```csharp
+public interface I{Project}AttachmentService
+{
+    Task<Result<DefaultResponse<AttachmentDto>>> UploadAsync(
+        Stream content, string fileName, string contentType,
+        string ownerType, Guid ownerId, CancellationToken ct = default);
+}
+```
+
+**API endpoint** — `[Multipart]` consumer with antiforgery disabled (browser form posts without an antiforgery token from the Blazor host):
+
+```csharp
+group.MapPost("/upload", async (
+    [FromForm] IFormFile file,
+    [FromForm] string ownerType,
+    [FromForm] Guid ownerId,
+    I{Project}AttachmentService service,
+    CancellationToken ct) =>
+{
+    await using var stream = file.OpenReadStream();
+    var result = await service.UploadAsync(stream, file.FileName, file.ContentType, ownerType, ownerId, ct);
+    return result.ToHttpResult();
+})
+.DisableAntiforgery()
+.WithMetadata(new ConsumesAttribute("multipart/form-data"))
+.RequireAuthorization(); // omit during auth-off scaffolding
+```
+
+**Refit method** — `[Multipart]` attribute, `StreamPart` for the file body, `[AliasAs]` for each form field:
+
+```csharp
+public interface I{Project}ApiClient
+{
+    [Multipart]
+    [Post("/v1/attachments/upload")]
+    Task<DefaultResponse<AttachmentDto>> UploadAttachmentAsync(
+        [AliasAs("file")] StreamPart file,
+        [AliasAs("ownerType")] string ownerType,
+        [AliasAs("ownerId")] Guid ownerId,
+        CancellationToken ct = default);
+}
+```
+
+**Blazor `MudFileUpload` call site:**
+
+```razor
+<MudFileUpload T="IBrowserFile" FilesChanged="UploadFileAsync" Accept=".pdf,.png,.jpg" />
+
+@code {
+    private async Task UploadFileAsync(IBrowserFile file)
+    {
+        await using var stream = file.OpenReadStream(maxAllowedSize: 25 * 1024 * 1024);
+        var part = new StreamPart(stream, file.Name, file.ContentType);
+        await FloatService.ExecuteWithProgressAsync(
+            () => Api.UploadAttachmentAsync(part, "TaskItem", _model!.Id),
+            errorMessage: $"Upload failed for {file.Name}");
+    }
+}
+```
+
+**Non-negotiables:**
+- `OpenReadStream(maxAllowedSize: ...)` — the default is 512 KB and silently truncates larger files in WASM.
+- `.DisableAntiforgery()` on the endpoint — without it, browser-originated multipart posts are rejected. Re-enable per-route when antiforgery is wired post-scaffold.
+- `[Multipart]` on the Refit method **and** `[AliasAs]` on every parameter — Refit's default name mangler emits PascalCase which the model binder fails to match.
+- Stream the file (`OpenReadStream`) instead of buffering to a byte array — large uploads OOM the circuit otherwise.
+
 ## MudBlazor 9.x API Gotchas
 
 These are changes from MudBlazor 7/8 → 9.x that bite on scaffold and are cheap to avoid up-front:
@@ -328,6 +502,46 @@ These are changes from MudBlazor 7/8 → 9.x that bite on scaffold and are cheap
 | `MudChip` | non-generic | `<MudChip T="string">` — type parameter is now required |
 
 The MudBlazor analyzer emits `MUD0002 Illegal Attribute` warnings for several of these — treat them as errors during scaffolding.
+
+**Version drift on `ShowMessageBoxAsync`.** Some MudBlazor 9.x point releases ship without the `ShowMessageBoxAsync` extension (or expose only the legacy synchronous `ShowMessageBox` that has been pulled in others). Before relying on it, grep the installed package: `dotnet list package | findstr MudBlazor` then check `IDialogService` for the method. If absent, **ship a `ConfirmDialog.razor` scaffold component** and route every confirm prompt through `DialogService.ShowAsync<ConfirmDialog>(...)`:
+
+```razor
+@* Components/Dialogs/ConfirmDialog.razor *@
+@inherits MudComponentBase
+
+<MudDialog>
+    <DialogContent><MudText>@Message</MudText></DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">@CancelText</MudButton>
+        <MudButton Color="Color.Error" Variant="Variant.Filled" OnClick="Confirm">@ConfirmText</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public string Message { get; set; } = "Are you sure?";
+    [Parameter] public string ConfirmText { get; set; } = "Confirm";
+    [Parameter] public string CancelText { get; set; } = "Cancel";
+
+    private void Confirm() => MudDialog.Close(DialogResult.Ok(true));
+    private void Cancel()  => MudDialog.Cancel();
+}
+```
+
+Caller pattern:
+
+```csharp
+var parameters = new DialogParameters
+{
+    ["Message"] = "Discard unsaved changes?",
+    ["ConfirmText"] = "Discard",
+};
+var dialog = await DialogService.ShowAsync<ConfirmDialog>("Confirm", parameters);
+var result = await dialog.Result;
+if (result is { Canceled: false, Data: true }) { /* proceed */ }
+```
+
+Decide once per scaffold (`ShowMessageBoxAsync` vs `ConfirmDialog`) and use the same pattern everywhere — mixing them produces inconsistent confirm UX and doubles the surface to maintain. Alternative: pin MudBlazor to a known-good 8.x range in `Directory.Packages.props` until v9 ships a documented confirm helper.
 
 ## Server-Side Table Paging
 

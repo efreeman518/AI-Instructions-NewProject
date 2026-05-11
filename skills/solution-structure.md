@@ -11,6 +11,7 @@ Define the canonical clean-architecture layout and dependency direction used by 
 3. Domain projects never reference Application or Infrastructure.
 4. Use central package management via `Directory.Packages.props`.
 5. Host projects add host-specific wiring only; shared registrations stay in Bootstrapper.
+6. **One public type per file.** Each `.cs` file declares exactly one public/internal top-level type and the file name matches that type. This rule is **universal** — it applies to generated app code (`src/Domain`, `src/Application`, `src/Infrastructure`, `src/Host`, `src/UI`, `src/Test`) **and** to local-package source under `src/Packages/<Prefix>.*` (the vendored `<packagePrefix>.*` shared surface). Lumped files (e.g. `ServiceBus.cs` declaring multiple message types, `Models.cs` declaring multiple DTOs, `Constants.cs` containing nested helper classes) must be split at generation time. The only permitted exceptions are: (a) nested types whose visibility is `private` to the outer type, (b) records / classes that exist solely to parameterize a generic type and are tightly coupled to the declaring file (rare — prefer splitting), and (c) compiler-generated partials. When scaffolding touches an existing lumped vendored file under `src/Packages/`, split it during that same sub-phase rather than leaving it as a tracked debt item.
 
 ---
 
