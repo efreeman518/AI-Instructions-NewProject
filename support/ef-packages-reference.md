@@ -1,8 +1,20 @@
-# EF.Packages — Shared Library Reference
+# Shared Base-Type Reference (canonical example: `EF.*`)
 
-The scaffolded project depends on the **EF.Packages** private NuGet feed for infrastructure, patterns, and abstractions. These types are shared-library types. Do not regenerate them.
+The scaffolded project depends on a set of shared base-type contracts (entity bases, repository bases, request context, results, paged response, specifications, messaging interfaces, etc.). The tables below describe those contracts and apply equally to every `packageStrategy`.
 
-> **NuGet feed:** Configure it in `nuget.config` before Phase 4. Local environments need package read access exposed through `NUGET_AUTH_TOKEN` or equivalent credential provider. Verify with `dotnet restore` (exit code 0) in Phase 3 and after Phase 4 build. See [execution-gates.md](execution-gates.md).
+How those contracts are delivered depends on `packageStrategy` in `resource-implementation.yaml`:
+
+| `packageStrategy` | Delivery |
+|---|---|
+| `feed` | All layers consumed as NuGet packages `<packagePrefix>.<Layer>` from `customNugetFeeds`. |
+| `local` | All layers generated as packable projects under `src/Packages/<packagePrefix>.<Layer>` and consumed via `<ProjectReference>`. |
+| `hybrid` | Feed-supplied layers consumed as NuGet packages; layers listed in `localPackageLayers` generated under `src/Packages/<packagePrefix>.<Layer>` and consumed via `<ProjectReference>`. Same prefix in both cases. |
+
+Throughout this file, `EF` is the **canonical example prefix** (used by the reference app TaskFlow and the [efreeman518/EF.Packages](https://github.com/efreeman518/EF.Packages) repo). Substitute your `packagePrefix` everywhere you see `EF.<Layer>` below. The type signatures themselves are identical regardless of prefix.
+
+Do not regenerate these types into your application/domain/host layers — they live in `<packagePrefix>.*` only, whether package or project.
+
+> **Pre-flight:** When `packageStrategy: feed` or `hybrid`, configure the private feed in `nuget.config` before Phase 4; local environments need package read access exposed through `NUGET_AUTH_TOKEN` or an equivalent credential provider. When `packageStrategy: local`, no feed configuration is needed for these layers (only `nuget.org` is required). Verify with `dotnet restore` (exit code 0) in Phase 3 and after Phase 4 build. See [execution-gates.md](execution-gates.md).
 
 ---
 

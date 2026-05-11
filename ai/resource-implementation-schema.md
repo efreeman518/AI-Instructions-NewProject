@@ -19,7 +19,11 @@ scaffoldMode: full
 testingProfile: balanced
 functionProfile: starter      # starter | full
 unoProfile: starter           # starter | full
-customNugetFeeds: []
+
+packageStrategy: local        # feed | local | hybrid
+packagePrefix: ""             # required; e.g. "EF", "Contoso", "AcmePay"
+customNugetFeeds: []          # required when packageStrategy: feed or hybrid
+localPackageLayers: []        # required when packageStrategy: local or hybrid; layers generated under src/Packages/<Prefix>.*
 
 includeApi: true
 includeGateway: false
@@ -42,8 +46,22 @@ scaffoldMode: full              # full | lite | api-only
 testingProfile: balanced        # minimal | balanced | comprehensive
 functionProfile: starter        # starter | full
 unoProfile: starter             # starter | full
-customNugetFeeds: []
+
+packageStrategy: local          # feed | local | hybrid
+packagePrefix: ""               # required; e.g. "EF", "Contoso", "AcmePay"
+customNugetFeeds: []            # required when packageStrategy: feed or hybrid
+localPackageLayers: []          # required when packageStrategy: local or hybrid
 ```
+
+### Package Strategy Reference
+
+| `packageStrategy` | `customNugetFeeds` | `localPackageLayers` | Effect |
+|---|---|---|---|
+| `feed` | one or more URLs | `[]` | Feed supplies the full base-contract set. No `src/Packages/` folder. |
+| `local` | `[]` | full layer list | All base contracts generated as packable projects in `src/Packages/<Prefix>.*`. |
+| `hybrid` | one or more URLs | layers the feed lacks | Feed supplies some layers; missing layers generated locally under the **same** prefix so they can later be pushed to the feed without renaming. |
+
+Canonical layer names (must match `support/ef-packages-reference.md`): `Domain`, `Domain.Contracts`, `Data`, `Data.Contracts`, `Common`, `Common.Contracts`. Add others (e.g., `Messaging.Contracts`, `Secrets`) when the reference file lists them.
 
 ## Decision Dependency Inputs
 
@@ -431,17 +449,21 @@ externalDependencyModes:
 
 ## Discovery Conversation Pattern
 
-Work through these in order during Phase 2:
+Work through these in order during Phase 2. **Question 1 is asked first and must be resolved before any other Phase 2 work** — downstream gates, pre-flight, and Phase 4 scaffolding all branch on the answer.
 
-1. **Scaffold mode** — full, lite, or api-only? What optional hosts are needed?
-2. **Data store mapping** — for each entity: SQL (default), Cosmos, Table, or Blob? Binary content → blob, relational → sql, key-value → table, document aggregates → cosmosdb.
-3. **Property details** — add types, maxLength, precision/scale to every property. Resolve ambiguous Phase 1 kinds.
-4. **Relationship config** — join entities for many-to-many, cascade behavior, FK naming.
-5. **External dependencies** — declare a scaffold mode for each (emulator, lazy-optional, no-op stub, deployment-only). Think about what needs to run locally vs. what can be deferred.
-6. **Messaging & events** — which events need Service Bus topics? Which are in-process channel dispatches?
-7. **AI services** — if enabled: which entities need search indexes? Which decisions need agents? What models?
-8. **Testing profile** — minimal, balanced, or comprehensive? Which optional test types (E2E, architecture, load)?
-9. **Custom NuGet feeds** — private feed URLs for EF.Packages and any other internal packages.
+1. **Package strategy & prefix** — Do you have private NuGet feed(s) for shared/base packages (e.g., entity bases, repository bases, request context, results, paged response, specifications, messaging interfaces)?
+   - **Yes (`feed`)** — supply feed URL(s) and the package prefix (e.g., `EF.*`, `Contoso.*`). Then walk the layer table in [`../support/ef-packages-reference.md`](../support/ef-packages-reference.md) and confirm the feed provides every layer. If any layers are missing, the strategy is promoted to **`hybrid`** and the missing layers go into `localPackageLayers`; they will be generated under the same prefix as the feed so they can be pushed into the feed later without renaming. The feed URL(s) are written to `customNugetFeeds`.
+   - **No (`local`)** — supply only a package prefix (e.g., `Contoso`). All base-contract layers are added to `localPackageLayers` and generated in Phase 4 under `src/Packages/<Prefix>.*` as packable projects (consumed via `<ProjectReference>`). `customNugetFeeds` stays empty. The developer may publish these to a feed later without restructuring.
+
+   `packagePrefix` is required in every mode. `EF` is the canonical example prefix used throughout these instructions, not a default.
+2. **Scaffold mode** — full, lite, or api-only? What optional hosts are needed?
+3. **Data store mapping** — for each entity: SQL (default), Cosmos, Table, or Blob? Binary content → blob, relational → sql, key-value → table, document aggregates → cosmosdb.
+4. **Property details** — add types, maxLength, precision/scale to every property. Resolve ambiguous Phase 1 kinds.
+5. **Relationship config** — join entities for many-to-many, cascade behavior, FK naming.
+6. **External dependencies** — declare a scaffold mode for each (emulator, lazy-optional, no-op stub, deployment-only). Think about what needs to run locally vs. what can be deferred.
+7. **Messaging & events** — which events need Service Bus topics? Which are in-process channel dispatches?
+8. **AI services** — if enabled: which entities need search indexes? Which decisions need agents? What models?
+9. **Testing profile** — minimal, balanced, or comprehensive? Which optional test types (E2E, architecture, load)?
 
 ---
 
@@ -456,6 +478,10 @@ Before moving to Phase 3 (Implementation Plan), verify all of the following:
 - [ ] At least one host is enabled (`includeApi`, `includeGateway`, etc.)
 - [ ] If `many-to-many` relationship exists, `joinEntity` is specified
 - [ ] `testingProfile` is set (`minimal`, `balanced`, or `comprehensive`)
-- [ ] `customNugetFeeds` is defined (empty array if none)
+- [ ] `packageStrategy` is set (`feed`, `local`, or `hybrid`)
+- [ ] `packagePrefix` is set and non-empty (used to name packages/projects under the chosen prefix, e.g., `<Prefix>.Domain`)
+- [ ] If `packageStrategy: feed` — `customNugetFeeds` has at least one entry; `localPackageLayers` is `[]`
+- [ ] If `packageStrategy: local` — `customNugetFeeds` is `[]`; `localPackageLayers` covers every layer in [`../support/ef-packages-reference.md`](../support/ef-packages-reference.md)
+- [ ] If `packageStrategy: hybrid` — `customNugetFeeds` has at least one entry **and** `localPackageLayers` lists only the layers the feed does not provide
 - [ ] `externalDependencyModes` declared for every external dependency
 - [ ] If `includeAiServices: true`: Foundry project name set, at least one model defined, each agent references a defined model, search indexes reference defined entities

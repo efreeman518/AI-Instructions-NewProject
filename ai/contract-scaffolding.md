@@ -16,20 +16,21 @@ This phase produces the compilable skeleton that enables TDD red/green cycles in
 
 ## Pre-Gate
 
-Before generating projects, verify EF.Packages feed readiness:
+Before generating projects, verify shared base-type readiness for the configured `packageStrategy` (set in `resource-implementation.yaml`):
 
 ```powershell
 dotnet restore
 ```
 
-If it fails, fix `nuget.config` (and confirm `NUGET_AUTH_TOKEN` is set) before generating code. Do not scaffold local replacements for EF.Packages types.
+- If `packageStrategy: feed` or `hybrid` — fix `nuget.config` (and confirm `NUGET_AUTH_TOKEN` is set) before generating code. Do not scaffold local replacements for layers the feed provides.
+- If `packageStrategy: local` or `hybrid` — confirm `packagePrefix` is set and every layer in `localPackageLayers` matches an entry in [`../support/ef-packages-reference.md`](../support/ef-packages-reference.md). These will be generated under `src/Packages/<packagePrefix>.<Layer>` as packable projects.
 
 ## Loaded Skills
 
-- [solution-structure.md](../skills/solution-structure.md) — canonical folder layout, `.slnx`, dependency direction
-- [package-dependencies.md](../skills/package-dependencies.md) — EF.* package contracts, feed rules
+- [solution-structure.md](../skills/solution-structure.md) — canonical folder layout, `.slnx`, dependency direction (and optional `src/Packages/`)
+- [package-dependencies.md](../skills/package-dependencies.md) — shared base-type contracts and feed/local rules
 - [placeholder-tokens.md](placeholder-tokens.md) — token substitution glossary
-- [../support/ef-packages-reference.md](../support/ef-packages-reference.md) — base types from private NuGet (do not regenerate)
+- [../support/ef-packages-reference.md](../support/ef-packages-reference.md) — base-type contract surface (do not regenerate into application/domain/host layers)
 
 ---
 
@@ -65,7 +66,7 @@ public interface I{Entity}Service
 // Application.Contracts/Repositories/I{Entity}RepositoryQuery.cs
 ```
 
-Derive interface signatures from the entity's properties, relationships, and operations in `resource-implementation.yaml`. Use EF.Packages base types (`IRepositoryBase`, `SearchRequest<T>`, `PagedResponse<T>`, etc.).
+Derive interface signatures from the entity's properties, relationships, and operations in `resource-implementation.yaml`. Use shared base types from `<packagePrefix>.*` (`IRepositoryBase`, `SearchRequest<T>`, `PagedResponse<T>`, etc.) — sourced from `customNugetFeeds` packages or `src/Packages/<packagePrefix>.*` projects per `packageStrategy`.
 
 **DTOs:**
 ```csharp
@@ -275,7 +276,7 @@ The entire solution — including all test projects — must compile successfull
 - [ ] Test data `{Entity}DtoBuilder` returns valid DTOs
 - [ ] `RegisterServices.cs` wires all no-op stubs
 - [ ] No domain logic in entity shells (only `throw new NotImplementedException`)
-- [ ] No local reimplementation of EF.Packages shared types
-- [ ] `dotnet restore` exits 0 with `NUGET_AUTH_TOKEN` set; all `EF.*` packages resolve from the configured private feed
+- [ ] No local reimplementation of `<packagePrefix>.*` shared base types into application/domain/host layers (they live in feed packages or `src/Packages/<packagePrefix>.*` only)
+- [ ] `dotnet restore` exits 0. For `feed`/`hybrid`: `NUGET_AUTH_TOKEN` is set and all feed-supplied `<packagePrefix>.*` packages resolve. For `local`/`hybrid`: every layer in `localPackageLayers` exists as a project under `src/Packages/<packagePrefix>.<Layer>` and is referenced via `<ProjectReference>`
 - [ ] Developer reviews the scaffolded shape against the items above
 - [ ] Token placeholders follow [placeholder-tokens.md](placeholder-tokens.md)

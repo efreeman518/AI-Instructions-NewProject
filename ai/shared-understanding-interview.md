@@ -45,6 +45,8 @@ Walk these branches in order. Revisit earlier branches when a later answer chang
 | Interfaces | API, UI, background hosts, integrations, AI capabilities | actors, workflows, resources |
 | Delivery constraints | scaffold mode, test profile, regions, cost, team constraints | all prior branches |
 
+> **Heads-up — Phase 2 will open with packaging strategy.** The very first Phase 2 question asks whether the project has a private NuGet feed for shared base contracts (e.g., `EF.*`) or whether the scaffold should generate equivalent packable projects under `src/Packages/<Prefix>.*`. Flag any constraints here (corporate feed policy, prefix conventions) so Phase 2 doesn't re-discover them. Full details: [resource-implementation-schema.md § Discovery Conversation Pattern](resource-implementation-schema.md#discovery-conversation-pattern).
+
 ## Branch Recap Format
 
 After each branch, use this exact structure:

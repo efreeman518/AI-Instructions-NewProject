@@ -128,7 +128,7 @@ def read_or_create_config(config_path):
         raise SystemExit(1)
 
 
-def configure(root, feed_url, source_name, username, token_env):
+def configure(root, feed_url, source_name, username, token_env, prefix):
     config_path = root / "nuget.config"
     config, created = read_or_create_config(config_path)
     changed = created
@@ -147,9 +147,9 @@ def configure(root, feed_url, source_name, username, token_env):
     for pattern in DEFAULT_NUGET_PATTERNS:
         changed = ensure_package_pattern(nuget_mapping, pattern) or changed
 
-    ef_mapping, child_changed = ensure_package_source(mapping, source_name)
+    prefix_mapping, child_changed = ensure_package_source(mapping, source_name)
     changed = child_changed or changed
-    changed = ensure_package_pattern(ef_mapping, "EF.*") or changed
+    changed = ensure_package_pattern(prefix_mapping, f"{prefix}.*") or changed
 
     credentials, child_changed = ensure_child(config, "packageSourceCredentials")
     changed = child_changed or changed
@@ -175,7 +175,7 @@ def default_username():
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Create or update nuget.config for EF.Packages private feed auth.",
+        description="Create or update nuget.config for a private NuGet feed auth (canonical example: EF.Packages).",
     )
     parser.add_argument("--root", "-Root", default=".", help="Target app repo root.")
     parser.add_argument(
@@ -187,6 +187,13 @@ def main():
     parser.add_argument("--source-name", default="efpackages", help="NuGet package source key.")
     parser.add_argument("--username", default=default_username(), help="GitHub Packages username.")
     parser.add_argument("--token-env", default="NUGET_AUTH_TOKEN", help="Environment variable used for PAT.")
+    parser.add_argument(
+        "--prefix",
+        default=os.environ.get("PACKAGE_PREFIX", "EF"),
+        help="Package prefix mapped to the private feed (no trailing '.*'). "
+             "Default 'EF' for the canonical example; pass --prefix Contoso for Contoso.*, etc. "
+             "Can also be set with PACKAGE_PREFIX.",
+    )
     parser.add_argument("--check-only", action="store_true", help="Fail if nuget.config would change.")
     parser.add_argument("--dry-run", action="store_true", help="Print generated nuget.config without writing.")
     parser.add_argument(
@@ -195,6 +202,11 @@ def main():
         help="Fail if the token environment variable is not set.",
     )
     args = parser.parse_args()
+
+    prefix = (args.prefix or "").strip().rstrip(".*").strip(".")
+    if not prefix:
+        print("error: --prefix must be a non-empty package prefix (e.g. EF, Contoso).", file=sys.stderr)
+        return 1
 
     root = Path(args.root).resolve()
     if not root.exists():
@@ -209,7 +221,7 @@ def main():
 
     original_path = root / "nuget.config"
     original_text = original_path.read_text(encoding="utf-8") if original_path.exists() else ""
-    config, changed = configure(root, args.feed_url, args.source_name, args.username, args.token_env)
+    config, changed = configure(root, args.feed_url, args.source_name, args.username, args.token_env, prefix)
     output = '<?xml version="1.0" encoding="utf-8"?>\n' + serialize_xml(copy.deepcopy(config)) + "\n"
 
     if has_hardcoded_pat(output):
@@ -218,12 +230,12 @@ def main():
 
     if args.check_only:
         if changed:
-            print("FAIL: nuget.config is missing required EF.Packages feed settings.")
+            print(f"FAIL: nuget.config is missing required {prefix}.* private feed settings.")
             return 1
         if has_hardcoded_pat(original_text):
             print("FAIL: nuget.config contains a hardcoded GitHub PAT.")
             return 1
-        print("PASS: nuget.config already contains required EF.Packages feed settings.")
+        print(f"PASS: nuget.config already contains required {prefix}.* private feed settings.")
         return 0
 
     if args.dry_run:

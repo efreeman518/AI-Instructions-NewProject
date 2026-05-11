@@ -69,7 +69,7 @@ Use `curl`, HTTPie, REST Client, or Scalar. Record status codes and endpoint dis
 - [ ] Aspire dashboard resources healthy when Aspire is enabled.
 - [ ] No generated source file contains `throw new NotImplementedException`.
 - [ ] No scaffold placeholders remain in source/config.
-- [ ] No EF.Packages shared type is reimplemented locally.
+- [ ] No `<packagePrefix>.*` shared base type is reimplemented in application/domain/host layers — they live in feed packages or `src/Packages/<packagePrefix>.*` projects only, per `packageStrategy`.
 - [ ] Deployment-only dependencies are recorded as non-blocking residuals.
 
 ---

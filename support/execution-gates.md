@@ -34,23 +34,28 @@ Run once per machine/repo before beginning any scaffolding phase.
 - [ ] Uno.Check installed (`dotnet tool install -g uno.check`) *(if using Uno UI)*
 - [ ] Kiota CLI installed (`dotnet tool install -g Microsoft.OpenApi.Kiota`) *(if using Uno UI)*
 
-### Private NuGet Feed Auth (Phase 3 Pre-Flight)
+### Shared Base-Type Readiness (Phase 3 Pre-Flight)
 
-The scaffold uses private EF.Packages NuGet packages. Every local developer environment needs package read access before Phase 4 restore/build can pass.
+The required steps depend on `packageStrategy` (set in `resource-implementation.yaml`).
+
+#### When `packageStrategy: feed` or `hybrid`
+
+Feed-supplied layers require package read access before Phase 4 restore/build can pass.
 
 **Step 1:** Ask the user to set or confirm:
 - Feed URL (e.g., `https://nuget.pkg.github.com/{owner}/index.json`)
 - Auth method: `NUGET_AUTH_TOKEN` environment variable (recommended) or credential provider
+- `packagePrefix` matches the feed (e.g., `EF`, `Contoso`)
 
 **Step 2:** Generate `nuget.config` with the feed helper:
 
 ```powershell
-python .instructions/scripts/configure-ef-packages-feed.py --root . --feed-url https://nuget.pkg.github.com/{owner}/index.json --username {username}
+python .instructions/scripts/configure-ef-packages-feed.py --root . --feed-url https://nuget.pkg.github.com/{owner}/index.json --username {username} --prefix {packagePrefix}
 ```
 
 The helper writes `%NUGET_AUTH_TOKEN%` only; it must never write the PAT value.
 
-Manual equivalent:
+Manual equivalent (substitute `{packagePrefix}` for your prefix, e.g., `EF`):
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -66,7 +71,7 @@ Manual equivalent:
       <package pattern="*" />
     </packageSource>
     <packageSource key="privatefeed">
-      <package pattern="EF.*" />
+      <package pattern="{packagePrefix}.*" />
     </packageSource>
   </packageSourceMapping>
 
@@ -97,7 +102,21 @@ $env:NUGET_AUTH_TOKEN = "<package-read-token>"
 dotnet restore
 ```
 
-Gate: `dotnet restore` exits 0. All EF.Packages resolve successfully, `EF.*` maps to the private feed, and `dotnet-ef` maps to `nuget.org` when package source mapping is enabled.
+Gate: `dotnet restore` exits 0. All feed-supplied `{packagePrefix}.*` packages resolve, the prefix pattern maps to the private feed, and `dotnet-ef` maps to `nuget.org` when package source mapping is enabled.
+
+#### When `packageStrategy: local`
+
+No private feed is required. `nuget.config` only needs `nuget.org` (auto-default if the file is absent). Confirm:
+
+- `packagePrefix` is set in `resource-implementation.yaml`.
+- `localPackageLayers` covers every layer in [`ef-packages-reference.md`](ef-packages-reference.md).
+- Phase 4 will generate one packable project per layer under `src/Packages/<packagePrefix>.<Layer>` with `IsPackable=true` and `<PackageId>=<packagePrefix>.<Layer>`.
+
+Gate: `dotnet restore` exits 0 against `nuget.org` only.
+
+#### When `packageStrategy: hybrid`
+
+Both blocks above apply. The feed supplies the layers it covers; layers in `localPackageLayers` are generated locally under the **same** `packagePrefix` so they can be published into the feed later without renaming.
 
 ### AI Assistant — MCP Servers
 
@@ -113,7 +132,7 @@ Phase 3 must populate the **Tooling & Environment Readiness** section of `implem
 - [ ] MCP server discovery completed (npm search, MCP registry) for project-specific libraries
 - [ ] CLI preference applied: CLIs chosen over MCP servers where both exist (lower token cost)
 - [ ] Each CLI entry has a verified checkbox or an install command the operator can run before Phase 4
-- [ ] `dotnet restore` exits 0 with `NUGET_AUTH_TOKEN` set
+- [ ] `dotnet restore` exits 0 (with `NUGET_AUTH_TOKEN` set when `packageStrategy: feed` or `hybrid`)
 - [ ] Developer reviews `UBIQUITOUS-LANGUAGE.md` and `DESIGN-DECISIONS.md` for completeness against `domain-specification.yaml`
 - [ ] Developer reviews `implementation-plan.md` against `ai/implementation-plan.md` schema
 
@@ -159,7 +178,7 @@ Exit criteria:
 - [ ] Test.Support contains `UnitTestBase`, `InMemoryDbBuilder`, `DbSupport`, `Utility`, `TestConstants`
 - [ ] `{Entity}DtoBuilder` returns valid DTOs
 - [ ] No domain logic in entity shells (only `throw new NotImplementedException`)
-- [ ] EF.Packages shared types are consumed from packages, not reimplemented locally
+- [ ] `<packagePrefix>.*` shared base types are consumed from feed packages or `src/Packages/<packagePrefix>.*` projects per `packageStrategy` — never reimplemented in application/domain/host layers
 - [ ] Phase 4 scaffold structure validator passes
 
 Commands:
@@ -169,7 +188,7 @@ dotnet restore
 dotnet build
 ```
 
-No `dotnet test` required — test projects are empty or contain no test methods. Developer confirms the solution structure, no-op stubs, and EF.Packages references match the Phase 4 exit criteria above.
+No `dotnet test` required — test projects are empty or contain no test methods. Developer confirms the solution structure, no-op stubs, and `<packagePrefix>.*` references (feed packages and/or `src/Packages/<packagePrefix>.*` projects per `packageStrategy`) match the Phase 4 exit criteria above.
 
 ---
 

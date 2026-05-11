@@ -18,7 +18,7 @@ Fast-lookup answer to "what do I do next?" — refer to this before scrolling fo
 | External dependency cannot be stubbed locally | Mark as `deployment-only` in `resource-implementation.yaml`, generate a no-op stub anyway, log blocker in `HANDOFF.md`, continue. |
 | Sub-phase has produced 15+ generated files or 3+ build cycles | Checkpoint `HANDOFF.md` mid-session. Do not wait for the gate. |
 | Multiple files touched by a single structural error | Don't patch-fix. Roll back, log, re-scaffold the slice. |
-| Missing required input (`ProjectName`, custom NuGet feed, at least one entity) | Ask developer before proceeding. |
+| Missing required input (`ProjectName`, `packageStrategy` + `packagePrefix`, `customNugetFeeds` when feed/hybrid, at least one entity) | Ask developer before proceeding. |
 | Missing optional input (mode/profile/flag default) | Apply canonical default from [resource-implementation-schema.md](resource-implementation-schema.md), state assumption inline, record in `HANDOFF.md`. |
 
 Detail sections (Fail-Fast Protocol, Git Checkpoint Protocol, Missing-Inputs Protocol, Mid-Session Rollback Protocol, Mixed-Store Slice Gate) live in [../support/OPERATIONS.md](../support/OPERATIONS.md) — this table is the index.
@@ -44,7 +44,7 @@ This sizing does **not** change phase semantics, gates, or conflict-resolution o
   - [../patterns/infrastructure-wiring.md](../patterns/infrastructure-wiring.md) — Multi-cache config, Aspire resource wiring. Phase 5c, 5d.
   - [../patterns/expected-output-index.md](../patterns/expected-output-index.md) — Expected file layout when scaffolding is complete. On-demand verification.
   Prefer template-owned implementation detail over duplicating wiring; use pattern files for orchestration decisions across projects only.
-- **Load [../support/ef-packages-reference.md](../support/ef-packages-reference.md) before Phase 5a** to know which base types (DbContextBase, DomainResult, IRequestContext, etc.) come from the EF.Packages private feed. Do not regenerate these types.
+- **Load [../support/ef-packages-reference.md](../support/ef-packages-reference.md) before Phase 5a** to know which base types (DbContextBase, DomainResult, IRequestContext, etc.) are part of the shared base-contract set. These types are sourced as `<packagePrefix>.<Layer>` packages from `customNugetFeeds` when `packageStrategy: feed`, or as project references against `src/Packages/<packagePrefix>.<Layer>` when `packageStrategy: local` (and the listed layers when `packageStrategy: hybrid`). Do not regenerate these types into application/domain/host layers regardless of mode — they live in the `<packagePrefix>.*` layer only.
 - **Reference app — TaskFlow.** When a skill or template is ambiguous, consult it. Rules for when/how to consult, local sibling preference, and the do-not-copy-wholesale constraint live in [../support/reference-app.md](../support/reference-app.md). Use [../support/taskflow-proof-map.md](../support/taskflow-proof-map.md) for the phase → area index.
 - Generate code only in the user's new project directory.
 - Use `.slnx` (not legacy `.sln`).

@@ -144,26 +144,40 @@ Populated during Phase 3 by analyzing `resource-implementation.yaml` technology 
 | _e.g., `azd`_ | _IaC deployment_ | _5e_ | _`winget install Microsoft.Azd`_ | _[ ]_ |
 | _e.g., `uno-check`_ | _Uno workload validation_ | _5d_ | _`dotnet tool install -g uno.check`_ | _[ ]_ |
 
-### EF.Packages Feed Readiness
+### Shared Base-Type Readiness
 
-Required before Phase 4:
+The required checklist depends on `packageStrategy` from `resource-implementation.yaml`. Run the appropriate block.
+
+#### When `packageStrategy: feed` or `hybrid`
+
+Feed-supplied layers must restore cleanly before Phase 4. Required:
 
 - [ ] `nuget.config` contains `nuget.org`.
 - [ ] `nuget.config` contains every `customNugetFeeds` entry from `resource-implementation.yaml`.
-- [ ] `packageSourceMapping` maps `EF.*` to the private feed.
+- [ ] `packageSourceMapping` maps `<packagePrefix>.*` to the private feed.
 - [ ] `packageSourceMapping` maps `dotnet-ef` or `*` to `nuget.org`.
 - [ ] Local developer has package read access exposed through `NUGET_AUTH_TOKEN` or an approved credential provider.
-- [ ] `Directory.Packages.props` owns all `EF.*` package versions.
-- [ ] Project-level `EF.*` `<PackageReference>` entries have no `Version` attribute.
-- [ ] No EF.Packages shared type is generated locally.
+- [ ] `Directory.Packages.props` owns all `<packagePrefix>.*` package versions for feed-supplied layers.
+- [ ] Project-level `<PackageReference Include="<packagePrefix>.*">` entries have no `Version` attribute.
+- [ ] No shared base type generated locally **for layers the feed supplies**.
 
-Validation:
+#### When `packageStrategy: local` or `hybrid`
+
+Locally-generated layers (from `localPackageLayers`) must scaffold under `src/Packages/`. Required:
+
+- [ ] `packagePrefix` is set in `resource-implementation.yaml`.
+- [ ] Phase 4 will generate one packable project per entry in `localPackageLayers`, e.g., `src/Packages/<packagePrefix>.Domain`, `.Domain.Contracts`, `.Data`, `.Data.Contracts`, `.Common`, `.Common.Contracts` (per [`../support/ef-packages-reference.md`](../support/ef-packages-reference.md)).
+- [ ] Each packable project sets `IsPackable=true`, `<PackageId>=<packagePrefix>.<Layer>`, default version `0.1.0`.
+- [ ] Application/domain/host projects consume these via `<ProjectReference>` (no `Version` attribute, no `Directory.Packages.props` entry needed).
+- [ ] When `hybrid`: locally-generated layers use the **same** `packagePrefix` as the feed so they can be published into the feed later without renaming.
+
+Validation (both modes):
 
 ```powershell
 dotnet restore
 ```
 
-After Phase 4 creates projects, re-run `dotnet restore` to confirm all `EF.*` packages still resolve cleanly.
+After Phase 4 creates projects, re-run `dotnet restore` to confirm all `<packagePrefix>.*` references — package or project — resolve cleanly.
 
 ### Recommended MCP Servers
 
@@ -194,7 +208,8 @@ _During Phase 3, search for CLIs, MCP servers, and online resources matching pro
 
 | Risk | Mitigation |
 |---|---|
-| _e.g., Private NuGet feed access_ | _Engineer to configure feed auth before Phase 4_ |
+| _e.g., Private NuGet feed access (`feed`/`hybrid` only)_ | _Engineer to configure feed auth before Phase 4. If access is blocked at scaffold time, switch to `local` for affected layers and capture them in `localPackageLayers`._ |
+| _e.g., Locally-generated base contracts diverge from `support/ef-packages-reference.md`_ | _Generate strictly from the reference file; do not invent additional members. Re-verify type signatures against the file before Phase 5a._ |
 ```
 
 ## Usage
@@ -210,12 +225,12 @@ _During Phase 3, search for CLIs, MCP servers, and online resources matching pro
 
 Before starting Phase 4 (contract scaffolding), verify all of the following:
 
-- [ ] `nuget.config` validated (`dotnet restore` exits 0)
+- [ ] `nuget.config` validated (`dotnet restore` exits 0) — applies in `feed` and `hybrid`; in `local`, `nuget.config` only needs `nuget.org`
 - [ ] All open questions resolved or explicitly deferred with TODO
 - [ ] `scaffoldMode`, `testingProfile`, and all host flags confirmed
-- [ ] Custom NuGet feed URLs and auth configured (if any)
-- [ ] EF.Packages feed helper run or manually verified (`configure-ef-packages-feed.py`)
-- [ ] `dotnet restore` exits 0 with `NUGET_AUTH_TOKEN` set
+- [ ] `packageStrategy`, `packagePrefix`, `customNugetFeeds`, and `localPackageLayers` confirmed in `resource-implementation.yaml`
+- [ ] If `feed`/`hybrid`: NuGet feed helper run or manually verified (`configure-ef-packages-feed.py --prefix <packagePrefix>`); `NUGET_AUTH_TOKEN` set; `dotnet restore` exits 0
+- [ ] If `local`/`hybrid`: every layer in `localPackageLayers` matches a layer in [`../support/ef-packages-reference.md`](../support/ef-packages-reference.md); Phase 4 will generate `src/Packages/<packagePrefix>.<Layer>` packable projects for each
 - [ ] Developer reviews `implementation-plan.md` against `ai/implementation-plan.md` schema
 - [ ] Domain specification and resource implementation YAML files are complete
 - [ ] `UBIQUITOUS-LANGUAGE.md` and `DESIGN-DECISIONS.md` exist and match the domain/resource artifacts

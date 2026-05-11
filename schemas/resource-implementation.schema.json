@@ -4,7 +4,7 @@
   "title": "Resource Implementation",
   "description": "Phase 2 output: maps domain to Aspire/Azure resources and datatypes. Schema reference: ai/resource-implementation-schema.md",
   "type": "object",
-  "required": ["scaffoldMode", "testingProfile", "entities", "externalDependencyModes"],
+  "required": ["scaffoldMode", "testingProfile", "entities", "externalDependencyModes", "packageStrategy", "packagePrefix"],
   "properties": {
     "scaffoldMode": {
       "type": "string",
@@ -26,10 +26,29 @@
       "enum": ["starter", "full"],
       "default": "starter"
     },
+    "packageStrategy": {
+      "type": "string",
+      "enum": ["feed", "local", "hybrid"],
+      "default": "local",
+      "description": "How shared base-type contracts are sourced. feed: NuGet from customNugetFeeds. local: generated under src/Packages/<packagePrefix>.<Layer>. hybrid: feed plus locally-generated layers in localPackageLayers."
+    },
+    "packagePrefix": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z][A-Za-z0-9]*(\\.[A-Za-z][A-Za-z0-9]*)*$",
+      "description": "Prefix applied to every shared base-type artifact (e.g., 'EF', 'Contoso'). Produces packages/projects named <packagePrefix>.<Layer>. EF is the canonical example used by the reference app."
+    },
     "customNugetFeeds": {
       "type": "array",
       "items": { "type": "string" },
-      "default": []
+      "default": [],
+      "description": "Private NuGet feed URLs. Required when packageStrategy is feed or hybrid; ignored when local."
+    },
+    "localPackageLayers": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
+      "description": "Layer names generated under src/Packages/<packagePrefix>.<Layer> (e.g., Domain, Domain.Contracts, Data, Data.Contracts, Common, Common.Contracts). Required when packageStrategy is local (full layer set) or hybrid (layers the feed does not provide)."
     },
     "includeApi": { "type": "boolean", "default": true },
     "includeGateway": { "type": "boolean", "default": false },
@@ -111,6 +130,38 @@
     "entitlementPolicy": { "type": "object" },
     "ingestionSemantics": { "type": "object" }
   },
+  "allOf": [
+    {
+      "if": { "properties": { "packageStrategy": { "const": "feed" } }, "required": ["packageStrategy"] },
+      "then": {
+        "properties": {
+          "customNugetFeeds": { "minItems": 1 },
+          "localPackageLayers": { "maxItems": 0 }
+        },
+        "required": ["customNugetFeeds"]
+      }
+    },
+    {
+      "if": { "properties": { "packageStrategy": { "const": "local" } }, "required": ["packageStrategy"] },
+      "then": {
+        "properties": {
+          "customNugetFeeds": { "maxItems": 0 },
+          "localPackageLayers": { "minItems": 1 }
+        },
+        "required": ["localPackageLayers"]
+      }
+    },
+    {
+      "if": { "properties": { "packageStrategy": { "const": "hybrid" } }, "required": ["packageStrategy"] },
+      "then": {
+        "properties": {
+          "customNugetFeeds": { "minItems": 1 },
+          "localPackageLayers": { "minItems": 1 }
+        },
+        "required": ["customNugetFeeds", "localPackageLayers"]
+      }
+    }
+  ],
   "$defs": {
     "entityMapping": {
       "type": "object",

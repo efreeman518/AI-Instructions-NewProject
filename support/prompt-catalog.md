@@ -48,8 +48,10 @@ Load .instructions/START-AI.md and HANDOFF.md from the project root.
 Run the Tooling Check; use GitHub or Azure tooling only if this phase needs repo or cloud access.
 Generate an implementation plan per .instructions/ai/implementation-plan.md template.
 Read UBIQUITOUS-LANGUAGE.md and DESIGN-DECISIONS.md first. Populate the Decision Dependency Graph.
-Phase 3 pre-flight: configure the EF.Packages feed via `.instructions/scripts/configure-ef-packages-feed.py` if private packages are used,
-ensure `NUGET_AUTH_TOKEN` or an approved credential provider is available, and confirm `dotnet restore` exits 0. Verify `dotnet ef` is available.
+Phase 3 pre-flight branches on packageStrategy from resource-implementation.yaml:
+- feed or hybrid: configure the private NuGet feed via `.instructions/scripts/configure-ef-packages-feed.py --prefix <packagePrefix>`, ensure `NUGET_AUTH_TOKEN` or an approved credential provider is available.
+- local: no feed wiring; `nuget.config` only needs `nuget.org` (or may be absent). Phase 4 will generate `src/Packages/<packagePrefix>.*` projects from localPackageLayers.
+Confirm `dotnet restore` exits 0 in all modes. Verify `dotnet ef` is available.
 Flag open questions before writing implementation-plan.md to the project root.
 When the plan is reviewed and open questions resolved, update HANDOFF.md and close the session.
 ```

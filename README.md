@@ -69,7 +69,10 @@ Flags:
 
 After install:
 
-- [ ] Configure the private EF.Packages feed with `python .instructions/scripts/configure-ef-packages-feed.py --root . --feed-url https://nuget.pkg.github.com/{owner}/index.json --username {github-user}`.
+- [ ] Decide the shared base-type strategy (`packageStrategy` in `resource-implementation.yaml`):
+  - `feed` — consume `<packagePrefix>.*` from a private NuGet feed. Configure with `python .instructions/scripts/configure-ef-packages-feed.py --root . --feed-url https://nuget.pkg.github.com/{owner}/index.json --username {github-user} --prefix {packagePrefix}`.
+  - `local` — no private feed. Phase 4 generates `src/Packages/<packagePrefix>.*` packable projects you can publish later.
+  - `hybrid` — feed plus a `localPackageLayers` list for any gaps. Run the helper above for feed access; locally-generated projects use the same prefix.
 - [ ] Confirm `dotnet restore` exits 0.
 - [ ] Phase gates rely on `dotnet build` and `dotnet test`; the scaffold checklist at `support/final-scaffold-checklist.md` covers end-to-end acceptance.
 
@@ -161,7 +164,7 @@ Read the rest of this guide when you need setup details, MCP recommendations, or
 - Docker engine running (Docker Desktop not required) — Aspire relies on it for hosting local container services
 - VS Code + AI assistant
 - Local SQL Server/Azure SQL access for dev scenarios
-- GitHub Packages read access for the private EF.Packages NuGet feed; expose it through `NUGET_AUTH_TOKEN` or an approved credential provider before Phase 3/4 restore
+- For `packageStrategy: feed` or `hybrid` only — read access to the configured private NuGet feed (e.g., GitHub Packages for the canonical `EF.*` example); expose via `NUGET_AUTH_TOKEN` or an approved credential provider before Phase 3/4 restore. `packageStrategy: local` skips this entirely.
 - If using Uno UI:
   - `dotnet new install Uno.Templates`
   - `dotnet tool install -g uno.check` then `uno-check`
@@ -169,9 +172,19 @@ Read the rest of this guide when you need setup details, MCP recommendations, or
 
 Version policy: prefer latest stable packages and SDKs.
 
-### EF.Packages Feed Setup
+### Shared Base-Type Packaging
 
-The scaffold depends on private `EF.*` packages. Local restore requires package read access through `NUGET_AUTH_TOKEN` or an approved credential provider.
+Phase 2 resolves how shared base-type contracts (entity bases, repository bases, request context, results, paged response, specifications, messaging interfaces) are sourced. Three modes live in `resource-implementation.yaml` under `packageStrategy`:
+
+- **`feed`** — pre-built NuGet packages consumed from `customNugetFeeds` (e.g., the canonical `EF.*` example on GitHub Packages). Requires feed read access.
+- **`local`** — no private feed. Phase 4 generates one packable project per layer in `localPackageLayers` under `src/Packages/<packagePrefix>.<Layer>`. The solution consumes them via `<ProjectReference>`. Publish later with `dotnet pack` and migrate to `feed` when ready.
+- **`hybrid`** — feed plus locally-generated gaps. Layers the feed lacks live in `localPackageLayers` under the same prefix so they can be pushed into the feed later without renaming.
+
+`packagePrefix` is required in every mode; `EF` is the canonical example used throughout these instructions.
+
+#### `feed` or `hybrid` — Private Feed Setup
+
+Local restore requires package read access through `NUGET_AUTH_TOKEN` or an approved credential provider.
 
 Set the token in your shell rather than committing secrets or pasting PATs into chat:
 
@@ -179,14 +192,18 @@ Set the token in your shell rather than committing secrets or pasting PATs into 
 $env:NUGET_AUTH_TOKEN = "<package-read-token>"
 ```
 
-Then ensure `nuget.config` maps `EF.*` to the private feed and uses `%NUGET_AUTH_TOKEN%` for the feed password. Configure once, then verify with `dotnet restore`:
+Then ensure `nuget.config` maps `<packagePrefix>.*` to the private feed and uses `%NUGET_AUTH_TOKEN%` for the feed password. Configure once, then verify with `dotnet restore`:
 
 ```powershell
-python .instructions/scripts/configure-ef-packages-feed.py --root . --feed-url https://nuget.pkg.github.com/{owner}/index.json --username {github-user}
+python .instructions/scripts/configure-ef-packages-feed.py --root . --feed-url https://nuget.pkg.github.com/{owner}/index.json --username {github-user} --prefix {packagePrefix}
 dotnet restore
 ```
 
 Never commit a PAT. CI should inject the same token through secret variables.
+
+#### `local` — No Feed Setup Needed
+
+`nuget.config` only needs `nuget.org` (the file may be absent and NuGet's default applies). Phase 4 generates the packable projects from `localPackageLayers`. Verify with `dotnet restore` after Phase 4 — no auth token required.
 
 ## Repository Setup
 
@@ -323,6 +340,6 @@ These references are for **maintaining and developing the instruction set itself
 Useful script entrypoints:
 
 - `scripts/install-to-project.py` - copy the runtime payload into a consumer app's `.instructions/` directory and place harness entrypoints at the app root. `--verify` smoke-checks the install; `--verify-only` runs the smoke check without copying.
-- `scripts/configure-ef-packages-feed.py` - create/update target-app `nuget.config` for EF.Packages without writing PATs.
+- `scripts/configure-ef-packages-feed.py` - create/update target-app `nuget.config` for any private NuGet feed without writing PATs. Pass `--prefix <packagePrefix>` to map the appropriate `<packagePrefix>.*` pattern; the canonical EF.* example is the default. Only run for `packageStrategy: feed` or `hybrid`.
 - `scripts/validate-instructions.py` - author-side sanity check: relative-link integrity, phase-label canonical set, harness command-file shape, payload shape vs installer declaration. Run before committing edits to instruction files.
 

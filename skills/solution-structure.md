@@ -18,6 +18,13 @@ Define the canonical clean-architecture layout and dependency direction used by 
 
 ```
 src/
+├── Packages/                                       # only when packageStrategy: local or hybrid
+│   ├── {Prefix}.Domain/                            # generated only for layers in localPackageLayers
+│   ├── {Prefix}.Domain.Contracts/
+│   ├── {Prefix}.Data/
+│   ├── {Prefix}.Data.Contracts/
+│   ├── {Prefix}.Common/
+│   └── {Prefix}.Common.Contracts/
 ├── Domain/
 │   ├── {Project}.Domain.Model/
 │   └── {Project}.Domain.Shared/
@@ -64,6 +71,8 @@ Reference patterns: [../patterns/expected-output-index.md](../patterns/expected-
 
 Note: Domain rules and specifications live in `Domain.Model/Rules/` (or `Domain.Model/Specifications/`). A separate `Domain.Rules` project is not required.
 
+Note: `src/Packages/` exists only when `packageStrategy` is `local` or `hybrid` (set in `resource-implementation.yaml`). Generate one packable project per entry in `localPackageLayers`, matching the layer set in [`../support/ef-packages-reference.md`](../support/ef-packages-reference.md). Each project sets `IsPackable=true` and `<PackageId>=<Prefix>.<Layer>` so it can later be published to a feed and consumed via `<PackageReference>` without restructuring. When `packageStrategy: feed`, omit the `Packages/` folder entirely — the contracts come from `customNugetFeeds`.
+
 ---
 
 ## Dependency Direction (Contract)
@@ -71,6 +80,9 @@ Note: Domain rules and specifications live in `Domain.Model/Rules/` (or `Domain.
 Required flow:
 
 ```
+{Prefix}.Common.Contracts / {Prefix}.Domain.Contracts / {Prefix}.Data.Contracts   # local/hybrid only; otherwise NuGet packages
+        ^                            ^                          ^
+        |                            |                          |
 Domain.Shared <- Domain.Model
             \-> Application.Models <- Application.Contracts <- Application.Services
                                   \-> Application.Mappers   /
@@ -80,6 +92,8 @@ Application.Contracts -> Infrastructure.Repositories
 Application + Infrastructure -> {Host}.Bootstrapper
 {Host}.Bootstrapper -> host projects (API/Scheduler/FunctionApp)
 ```
+
+`src/Packages/<Prefix>.*` projects sit at the **bottom** of the dependency graph in `local`/`hybrid` mode — every other layer may depend on them, but they may not depend on any project-specific layer. In `feed` mode, this constraint is enforced by NuGet (packages can't reference local projects).
 
 ### Host Rules
 

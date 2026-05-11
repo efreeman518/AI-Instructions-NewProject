@@ -27,7 +27,7 @@ MVS is a profile, not a separate path. After MVS finishes you can promote to a r
 Same as the [README Prerequisites](../README.md#prerequisites), with these MVS-specific simplifications:
 
 - **Skip:** Uno templates, `uno-check`, Kiota, Functions Core Tools.
-- **Required:** `.NET SDK`, `git`, Python (for installer), Docker (only if you keep Aspire enabled — MVS keeps it off by default), GitHub Packages read for EF.Packages feed.
+- **Required:** `.NET SDK`, `git`, Python (for installer), Docker (only if you keep Aspire enabled — MVS keeps it off by default). Package feed access is conditional on `packageStrategy` (chosen in Phase 2): `feed`/`hybrid` needs read access to the configured private feed (e.g., GitHub Packages for the canonical `EF.*` example); `local` needs only `nuget.org`.
 
 ## Install
 
@@ -65,7 +65,11 @@ Write HANDOFF.md and close.
 ```text
 Load .instructions/START-AI.md and HANDOFF.md.
 Generate resource-implementation.yaml per ai/resource-implementation-schema.md.
-Set scaffoldMode: api-only. Set testingProfile: minimal.
+First, resolve packageStrategy + packagePrefix (Discovery question #1):
+  - feed: provide feed URL(s) + prefix (e.g., EF). Walk ef-packages-reference.md to confirm coverage; promote to hybrid if anything is missing.
+  - local: provide prefix only; the scaffold generates src/Packages/<Prefix>.* for every layer in ef-packages-reference.md.
+  - hybrid: feed URL(s) + prefix + localPackageLayers for layers the feed lacks.
+Then set scaffoldMode: api-only. Set testingProfile: minimal.
 Disable: gateway, uno-ui, blazor-ui, function-app, scheduler, aspire, multi-tenant, ai-services, messaging.
 Set every external dependency mode to lazy-optional.
 Update HANDOFF.md and close.
@@ -78,8 +82,10 @@ Update HANDOFF.md and close.
 ```text
 Load .instructions/START-AI.md and HANDOFF.md.
 Generate implementation-plan.md per ai/implementation-plan.md.
-Pre-flight: configure EF.Packages feed via scripts/configure-ef-packages-feed.py (if private packages are used)
-and confirm `dotnet restore` exits 0. Confirm `dotnet ef` is installed.
+Pre-flight branches on packageStrategy:
+  - feed/hybrid: configure the private feed via scripts/configure-ef-packages-feed.py --prefix <packagePrefix>.
+  - local: no feed wiring required; nuget.org-only nuget.config is fine.
+Confirm `dotnet restore` exits 0 in all modes. Confirm `dotnet ef` is installed.
 Tooling section: list only CLIs needed for an api-only scaffold (dotnet, dotnet-ef). Skip MCP discovery beyond Microsoft Docs + Context7.
 Update HANDOFF.md and close.
 ```

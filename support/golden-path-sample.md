@@ -254,8 +254,8 @@ Then walk through `support/final-scaffold-checklist.md`.
 ## Expected Final Shape
 
 - `Project` and `WorkItem` have complete domain models, EF configurations, repositories, DTOs, mappers, services, endpoints, builders, service tests, and endpoint tests.
-- EF.Packages types are consumed from NuGet, not reimplemented locally.
-- `Directory.Packages.props` owns all versions.
-- `nuget.config` maps `EF.*` to the private feed and `dotnet-ef` to `nuget.org`.
+- Shared base types live in `<packagePrefix>.*` only (feed packages and/or `src/Packages/<packagePrefix>.*` projects per `packageStrategy`), never reimplemented in application/domain/host layers.
+- `Directory.Packages.props` owns all NuGet versions (feed-supplied `<packagePrefix>.*` packages plus transitive deps).
+- For `packageStrategy: feed` or `hybrid`: `nuget.config` maps `<packagePrefix>.*` to the private feed and `dotnet-ef` to `nuget.org`. For `local`: `nuget.config` only needs `nuget.org` (or may be absent).
 - App starts through Aspire and API health returns 200.
 - No `NotImplementedException` remains in generated source.

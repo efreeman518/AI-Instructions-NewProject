@@ -1,14 +1,24 @@
-# Package Dependencies (EF.*)
+# Package Dependencies (Shared Base Types)
 
-Use this file as a compact contract map for private/shared packages.
+Use this file as a compact contract map for shared base-type packages/projects. The contracts described here are sourced one of three ways depending on `packageStrategy` (set in `resource-implementation.yaml`):
+
+| `packageStrategy` | How layers are consumed |
+|---|---|
+| `feed` | All base contracts come from a private NuGet feed (e.g., `EF.*` from GitHub Packages). Project files use `<PackageReference Include="<packagePrefix>.<Layer>">`. |
+| `local` | All base contracts are generated as packable projects under `src/Packages/<packagePrefix>.*` and consumed via `<ProjectReference>`. No private feed configured. |
+| `hybrid` | Feed-supplied layers use `<PackageReference>`; layers listed in `localPackageLayers` use `<ProjectReference>` against `src/Packages/<packagePrefix>.<Layer>`. Same prefix in both cases. |
+
+`EF` is the canonical example prefix used throughout these instructions, not a hard-coded default. Substitute your `packagePrefix` everywhere `EF.*` appears below.
 
 ## Sources
 
-- Core packages: <https://github.com/efreeman518/EF.Packages>
-- Enterprise packages: <https://github.com/efreeman518/EF.Packages.Enterprise>
+- Reference implementation (core): <https://github.com/efreeman518/EF.Packages>
+- Reference implementation (enterprise): <https://github.com/efreeman518/EF.Packages.Enterprise>
 - See [../patterns/expected-output-index.md](../patterns/expected-output-index.md).
 
-> **AI lookup rule:** This file provides a compact contract map. When you need full API signatures, constructor parameters, or method overloads for any `EF.*` base type (e.g., `TableRepositoryBase`, `IBlobRepository`, `ICosmosDbRepository`, `IKeyVaultManager`), use the GitHub MCP server to read the source from [EF.Packages](https://github.com/efreeman518/EF.Packages) or [EF.Packages.Enterprise](https://github.com/efreeman518/EF.Packages.Enterprise).
+These two repos define the canonical contract surface for all modes. In `local` or `hybrid` mode, the locally-generated `src/Packages/<packagePrefix>.*` projects must match the contracts in [`../support/ef-packages-reference.md`](../support/ef-packages-reference.md) (derived from these repos).
+
+> **AI lookup rule:** This file provides a compact contract map. When you need full API signatures, constructor parameters, or method overloads for any base type (e.g., `TableRepositoryBase`, `IBlobRepository`, `ICosmosDbRepository`, `IKeyVaultManager`), use the GitHub MCP server to read the source from [EF.Packages](https://github.com/efreeman518/EF.Packages) or [EF.Packages.Enterprise](https://github.com/efreeman518/EF.Packages.Enterprise) — they remain the canonical contract definition regardless of consumption mode.
 
 ## Latest, Not Pinned (Global Rule)
 
@@ -29,15 +39,25 @@ SDK upgrade discipline:
 
 ## Feed + Version Rules (Mandatory)
 
+### When `packageStrategy: feed` or `hybrid` (feed-supplied layers only)
+
 1. `nuget.config` must include `nuget.org` and all `customNugetFeeds` from [resource-implementation-schema.md](../ai/resource-implementation-schema.md).
-2. **Both private feeds** must be declared when Enterprise packages (`EF.FlowEngine`, `EF.FilterBuilder`) are used — they ship from the same GitHub Packages org:
+2. **Both private feeds** must be declared when Enterprise packages (`<packagePrefix>.FlowEngine`, `<packagePrefix>.FilterBuilder`) are used — for the canonical `EF.*` example they ship from the same GitHub Packages org:
    - `https://nuget.pkg.github.com/efreeman518/index.json` (covers `EF.*` pattern for both Core and Enterprise)
-3. Use central package versions in `Directory.Packages.props`.
+3. Use central package versions in `Directory.Packages.props` for every feed-supplied `<packagePrefix>.<Layer>`.
 4. After adding packages, restore and update to latest stable versions.
 5. Re-verify with `dotnet restore` and `dotnet build`.
 6. **Private feed auth:** GitHub Packages and other authenticated feeds require a PAT or token. Local dev stores credentials in `nuget.config` (user-level, not committed). CI/CD must pass credentials via environment variable or `dotnet nuget` auth step — see [cicd.md](cicd.md) for workflow setup. A 401 on restore means the feed credential is missing or expired.
 
-> **CPM + floating versions = NU1011.** When `ManagePackageVersionsCentrally=true`, every `<PackageVersion>` entry must use an exact version (e.g. `Version="<latest-stable>"` resolved at scaffold time). Wildcard/floating versions (e.g. `1.0.*`, `*`) are prohibited and cause restore to fail with NU1011. To use floating versions, set `ManagePackageVersionsCentrally=false` and add `Version="*"` directly to each `<PackageReference>`.
+### When `packageStrategy: local` or `hybrid` (locally-generated layers only)
+
+1. No `nuget.config` private-feed entry is required for layers in `localPackageLayers`. `nuget.org` is still mandatory.
+2. Each generated project under `src/Packages/<packagePrefix>.<Layer>/` sets `IsPackable=true`, `<PackageId>=<packagePrefix>.<Layer>`, `<Version>=0.1.0` (overridable).
+3. Application/domain/host projects consume locally-generated layers via `<ProjectReference Include="..\..\Packages\<packagePrefix>.<Layer>\<packagePrefix>.<Layer>.csproj" />` — no `<PackageVersion>` entry in `Directory.Packages.props`.
+4. Transitive NuGet dependencies of the generated projects (e.g., `Microsoft.EntityFrameworkCore`) still go through `Directory.Packages.props` central versions.
+5. To publish later: `dotnet pack src/Packages/<packagePrefix>.<Layer>` produces a `.nupkg` that can be pushed to any feed. After the layer is published and consumed via `<PackageReference>`, move the layer from `localPackageLayers` into the feed-supplied set and delete the local project.
+
+> **CPM + floating versions = NU1011.** When `ManagePackageVersionsCentrally=true`, every `<PackageVersion>` entry must use an exact version (e.g. `Version="<latest-stable>"` resolved at scaffold time). Wildcard/floating versions (e.g. `1.0.*`, `*`) are prohibited and cause restore to fail with NU1011. To use floating versions, set `ManagePackageVersionsCentrally=false` and add `Version="*"` directly to each `<PackageReference>`. This rule applies regardless of `packageStrategy`.
 
 ---
 
@@ -260,10 +280,11 @@ Pattern reference: [external-api.md](external-api.md)
 
 ## Generation Checklist
 
-- [ ] `nuget.config` includes `nuget.org` + all custom feeds
-- [ ] Local `NUGET_AUTH_TOKEN` or approved credential provider is configured for the private EF.Packages feed
-- [ ] `python .instructions/scripts/configure-ef-packages-feed.py --root . --feed-url <feed-url> --username <github-user>` has been run or equivalent config has been manually verified
-- [ ] `dotnet restore` exits 0 with `NUGET_AUTH_TOKEN` set before Phase 4
+- [ ] `nuget.config` includes `nuget.org`; for `packageStrategy: feed`/`hybrid` it also includes every entry in `customNugetFeeds`
+- [ ] For `packageStrategy: feed`/`hybrid`: local `NUGET_AUTH_TOKEN` or approved credential provider is configured for the private feed
+- [ ] For `packageStrategy: feed`/`hybrid`: `python .instructions/scripts/configure-ef-packages-feed.py --root . --feed-url <feed-url> --username <github-user> --prefix <packagePrefix>` has been run or equivalent config has been manually verified
+- [ ] For `packageStrategy: local`/`hybrid`: every layer in `localPackageLayers` has a corresponding `src/Packages/<packagePrefix>.<Layer>` project planned with `IsPackable=true` and `<PackageId>=<packagePrefix>.<Layer>`
+- [ ] `dotnet restore` exits 0 before Phase 4 (with `NUGET_AUTH_TOKEN` set when `feed`/`hybrid`)
 - [ ] `Directory.Packages.props` owns versions
 - [ ] `global.json` pins SDK with roll-forward policy
 - [ ] Correct package placement across Domain/Data/Application/Infrastructure hosts
