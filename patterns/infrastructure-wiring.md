@@ -1,6 +1,6 @@
 # Infrastructure Wiring Patterns
 
-Cross-project wiring for caching and Aspire orchestration. Load before Phase 5b when runtime services are enabled and before Phase 5c when optional hosts need shared infrastructure wiring.
+Cross-project wiring for caching and Aspire orchestration. Load in Phase 5b when runtime services are enabled. Reload in Phase 5c only when an enabled optional host needs shared infrastructure wiring.
 
 For base types used here, see [../support/ef-packages-reference.md](../support/ef-packages-reference.md).
 

@@ -139,10 +139,10 @@ Populated during Phase 3 by analyzing `resource-implementation.yaml` technology 
 
 | Tool | Needed for | Phase | Install | Verified |
 |---|---|---|---|---|
-| `dotnet-ef` | EF migrations | 5a | `dotnet tool install dotnet-ef` | [ ] |
-| _e.g., `func`_ | _Azure Functions host_ | _5d_ | _`npm i -g azure-functions-core-tools@4`_ | _[ ]_ |
-| _e.g., `azd`_ | _IaC deployment_ | _5e_ | _`winget install Microsoft.Azd`_ | _[ ]_ |
-| _e.g., `uno-check`_ | _Uno workload validation_ | _5d_ | _`dotnet tool install -g uno.check`_ | _[ ]_ |
+| `dotnet-ef` | EF migrations | 5a | Prefer repo-local: `dotnet new tool-manifest` then `dotnet tool install dotnet-ef`; user-global `dotnet tool install -g dotnet-ef` is acceptable | [ ] |
+| _e.g., `func`_ | _Azure Functions host_ | _5c_ | _`npm i -g azure-functions-core-tools@4`_ | _[ ]_ |
+| _e.g., `azd`_ | _IaC deployment/dry-run packaging_ | _5d_ | _`winget install Microsoft.Azd`_ | _[ ]_ |
+| _e.g., `uno-check`_ | _Uno workload validation_ | _5c_ | _`dotnet tool install -g uno.check`_ | _[ ]_ |
 
 ### Shared Base-Type Readiness
 
@@ -183,8 +183,8 @@ After Phase 4 creates projects, re-run `dotnet restore` to confirm all `<package
 
 | Server | Phases | Why | Available |
 |---|---|---|---|
-| _e.g., Azure MCP_ | _5c, 5e_ | _IaC validation, resource checks_ | _[ ]_ |
-| _e.g., Playwright MCP_ | _5e_ | _E2E test debugging_ | _[ ]_ |
+| _e.g., Azure MCP_ | _5d, 5e_ | _IaC validation, resource checks_ | _[ ]_ |
+| _e.g., Playwright MCP_ | _5d_ | _Hosted browser test debugging_ | _[ ]_ |
 
 ### Online Resources
 
@@ -192,9 +192,9 @@ For libraries/services with no CLI or MCP server, record documentation and repo 
 
 | Library/Service | Phase | Resource | URL |
 |---|---|---|---|
-| _e.g., FusionCache_ | _5c_ | _GitHub repo + wiki_ | _`https://github.com/ZiggyCreatures/FusionCache`_ |
-| _e.g., TickerQ_ | _5d_ | _NuGet readme + samples_ | _`https://github.com/user/TickerQ`_ |
-| _e.g., NetArchTest_ | _5e_ | _GitHub README_ | _`https://github.com/BenMorris/NetArchTest`_ |
+| _e.g., FusionCache_ | _5b_ | _GitHub repo + wiki_ | _`https://github.com/ZiggyCreatures/FusionCache`_ |
+| _e.g., TickerQ_ | _5c_ | _NuGet readme + samples_ | _`https://github.com/user/TickerQ`_ |
+| _e.g., NetArchTest_ | _5d_ | _GitHub README_ | _`https://github.com/BenMorris/NetArchTest`_ |
 
 ### Discovery Notes
 

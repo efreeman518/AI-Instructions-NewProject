@@ -32,10 +32,10 @@ Load this file on demand. Keep it out of the default phase context.
 | Phase 5b message handlers | `src/Application/TaskFlow.Application.MessageHandlers` | Domain-event and integration-event consumer pattern, separate from aggregate emission. |
 | Phase 5b storage / external infrastructure | `src/Infrastructure/TaskFlow.Infrastructure.Storage` | Blob, Service Bus, and Cosmos repositories with no-op stubs for unconfigured states. |
 | Phase 5b API endpoints | `src/Host/TaskFlow.Api` | Minimal API grouping, endpoint conventions, exception handling, and registration flow. |
-| Phase 5c runtime wiring | `src/Host/TaskFlow.Api`, `src/Host/TaskFlow.Bootstrapper`, `src/Host/Aspire/AppHost` | Middleware order, DI composition, app host resources, runtime config, and deployment shape. |
-| Phase 5c Aspire service defaults | `src/Host/Aspire/ServiceDefaults` | OpenTelemetry wiring, `/healthz` and `/readyz` defaults, shared host registration. |
-| Gateway | `src/Host/TaskFlow.Gateway` | YARP routing, token forwarding, claims transformation, and CORS wiring. |
-| Caching | API + Bootstrapper + cache registrations | FusionCache + Redis backplane patterns and cache-key conventions. |
+| Phase 5b runtime wiring | `src/Host/TaskFlow.Api`, `src/Host/TaskFlow.Bootstrapper`, `src/Host/Aspire/AppHost` | Middleware order, DI composition, app host resources, runtime config, and deployment shape. |
+| Phase 5b Aspire service defaults | `src/Host/Aspire/ServiceDefaults` | OpenTelemetry wiring, `/healthz` and `/readyz` defaults, shared host registration. |
+| Phase 5b gateway | `src/Host/TaskFlow.Gateway` | YARP routing, token forwarding, claims transformation, and CORS wiring. |
+| Phase 5b caching | API + Bootstrapper + cache registrations | FusionCache + Redis backplane patterns and cache-key conventions. |
 | Multitenancy | Request context handling in API + service layer | Tenant extraction, tenant boundary validation, global-admin bypass, tenant filter manipulation logging, `PreventTenantChange`, `ValidationHelper` delegation, `[LoggerMessage]` source-gen. |
 | Phase 5c scheduler | `src/Host/TaskFlow.Scheduler` | TickerQ job registration, cron jobs, and scheduled handler structure. |
 | Phase 5c functions | `src/Host/TaskFlow.Functions` | Function-project structure, trigger layout, and placeholder-host patterns. |

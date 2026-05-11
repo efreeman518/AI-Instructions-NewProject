@@ -28,7 +28,7 @@ Run once per machine/repo before beginning any scaffolding phase.
 - [ ] `.NET SDK` installed (`dotnet --version`)
 - [ ] Docker running (if Aspire uses SQL/Redis containers)
 - [ ] `nuget.config` includes `nuget.org` + all custom/private feeds (see Private Feed Auth below)
-- [ ] EF tools installed (`dotnet tool install -g dotnet-ef`)
+- [ ] EF tools available (`dotnet ef --version`; prefer repo-local tool manifest, user-global `dotnet-ef` is acceptable)
 - [ ] Functions Core Tools installed (`func --version`) *(if using Functions)*
 - [ ] Uno templates installed (`dotnet new install Uno.Templates`) *(if using Uno UI)*
 - [ ] Uno.Check installed (`dotnet tool install -g uno.check`) *(if using Uno UI)*

@@ -80,7 +80,7 @@ If you use this fallback, record it in `HANDOFF.md` and repo docs. Do not hand-e
 
 ### EF CLI Prerequisites
 
-Before running any migration command, ensure `dotnet ef` is available. If not installed globally, set up repo-local tooling:
+Before running any migration command, ensure `dotnet ef` is available. Prefer repo-local tooling for reproducibility; an existing user-global install is acceptable.
 
 ```powershell
 dotnet ef --version

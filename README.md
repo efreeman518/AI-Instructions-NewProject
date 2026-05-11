@@ -33,15 +33,15 @@ python scripts/install-to-project.py --target /path/to/your-app-repo
 # tip: run with --dry-run first to preview what gets copied
 ```
 
-**Windows Python launcher fallback chain.** Try in order; the first one that prints a version is the one to use for every `scripts/*.py` invocation in this repo:
+**Windows Python launcher fallback chain.** Install Python once per machine or user profile; do not rely on a repo-specific launcher for scaffold work across repos. Try in order; the first one that prints a version is the one to use for every `scripts/*.py` invocation:
 
 ```powershell
 python --version            # may resolve to Microsoft-Store stub; if it errors, try the next
 py -3 --version             # works only when the Python launcher (py.exe) is installed
-.venv\Scripts\python.exe --version   # works inside a project venv
+.venv\Scripts\python.exe --version   # source-repo fallback only; not the preferred cross-repo setup
 ```
 
-Then call the script with the same launcher, e.g. `python scripts/install-to-project.py --target C:\path\to\your-app` or `py -3 scripts/install-to-project.py --target ...` or `.venv\Scripts\python.exe scripts/install-to-project.py --target ...`. The same fallback applies to `configure-ef-packages-feed.py`, `validate-instructions.py`, and any other `scripts/*.py` invocation.
+Then call the script with the same machine/user-global launcher, e.g. `python scripts/install-to-project.py --target C:\path\to\your-app` or `py -3 scripts/install-to-project.py --target ...`. Use `.venv\Scripts\python.exe` only as a local authoring fallback. The same fallback applies to `configure-ef-packages-feed.py`, `validate-instructions.py`, and any other `scripts/*.py` invocation.
 
 What it places:
 
@@ -159,7 +159,7 @@ Read the rest of this guide when you need setup details, MCP recommendations, or
 ## Prerequisites
 
 - `git`
-- A current Python 3 to run `install-to-project.py`, `configure-ef-packages-feed.py`, and `validate-instructions.py`. **On Windows, no single launcher is universal:** `py -3` works on machines with the Python launcher installed, the bare `python` command works when a real Python is on PATH (it may resolve to the Microsoft-Store stub if not), and `.venv\Scripts\python.exe` works inside a project venv. Run `where python` and `where py` to see what's available, then pick the one that prints a real path. The scripts have no Python-version-specific syntax — any current 3.x works.
+- A current machine- or user-global Python 3 to run `install-to-project.py`, `configure-ef-packages-feed.py`, and `validate-instructions.py`. **On Windows, no single launcher is universal:** `py -3` works on machines with the Python launcher installed, and the bare `python` command works when a real Python is on PATH (it may resolve to the Microsoft-Store stub if not). Run `where python` and `where py` to see what's available, then pick the one that prints a real path. `.venv\Scripts\python.exe` is acceptable for source-repo authoring, but it is not the preferred cross-repo setup. The scripts have no Python-version-specific syntax — any current 3.x works.
 - Latest stable `.NET SDK`
 - Docker engine running (Docker Desktop not required) — Aspire relies on it for hosting local container services
 - VS Code + AI assistant

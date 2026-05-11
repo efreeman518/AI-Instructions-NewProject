@@ -37,6 +37,7 @@ includeIaC: true
 includeGitHubActions: false
 includeAzd: false
 includeAiServices: false
+useAspire: true
 ```
 
 ## Scaffold Configuration

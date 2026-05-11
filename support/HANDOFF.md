@@ -10,12 +10,17 @@ scaffoldMode: ""           # full | lite | api-only — drives load-set sizing (
 testingProfile: ""         # minimal | balanced | comprehensive
 contractsScaffolded: false # set true after Phase 4 completes
 enabledFeatures:
+  includeApi: true
+  useAspire: true
   includeGateway: false
   includeScheduler: false
   includeFunctionApp: false
   includeUnoUI: false
   includeBlazorUI: false
   includeNotifications: false
+  includeIaC: true
+  includeGitHubActions: false
+  includeAzd: false
   includeAiServices: false
 testStatus:                # updated per sub-phase — keys match TestCategory values
   unitTests: not-started   # TestCategory=Unit       — not-started | red | green
@@ -70,7 +75,7 @@ Out of scope for this session — do not attempt unless explicitly re-scoped:
 - Keep `domain-specification.yaml`, `resource-implementation.yaml`, `UBIQUITOUS-LANGUAGE.md`, and `DESIGN-DECISIONS.md` in the target project root.
 - `currentPhase` and `currentSubPhase` always describe the next work to run, not the phase just completed. Record completed gate evidence in `Completed` and `Validation`.
 - At Phase 1 close, summarize unresolved/deferred design decisions and confirm they do not block Phase 2.
-- Keep `enabledFeatures` flags in sync with `resource-implementation.yaml`.
+- Keep `enabledFeatures` flags in sync with `resource-implementation.yaml` canonical hosting/IaC/AI toggles.
 - For Phase 4, set `currentPhase: 5`, `currentSubPhase: 5a`, and `contractsScaffolded: true` after the gate passes. Phase 5a/5b require this flag.
 - For Phase 5a/5b, update `testStatus` as tests transition: `not-started` → `red` (tests written, failing) → `green` (implementation complete, tests passing). This tracks TDD progress across sessions.
 - For Phase 5c (Optional Hosts), update `hostGates` per-host as each host moves through `scaffolded` → `partially-validated` → `validated` or `blocked`. Do not mark the sub-phase complete until all enabled hosts reach `validated` or have a recorded blocker.
@@ -101,6 +106,16 @@ Issues encountered and fixed this session (so the next session does not re-inves
 - Command:
 - Result:
 - Notes:
+
+### Validation since the last AppHost change
+
+Use this section for Phase 5b runtime/Aspire evidence. Leave blank when `useAspire: false`.
+
+- AppHost changed:
+- Command:
+- Result:
+- Evidence:
+- Data-plane spot check:
 
 ### Per-Host Gate Status (Phase 5c)
 
