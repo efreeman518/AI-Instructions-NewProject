@@ -17,10 +17,10 @@ enabledFeatures:
   includeBlazorUI: false
   includeNotifications: false
   includeAiServices: false
-testStatus:                # updated per sub-phase
-  unitTests: not-started   # not-started | red | green
-  endpointTests: not-started
-  infrastructureTests: not-started
+testStatus:                # updated per sub-phase — keys match TestCategory values
+  unitTests: not-started   # TestCategory=Unit       — not-started | red | green
+  endpointTests: not-started # TestCategory=Endpoint
+  integrationTests: not-started # TestCategory=Integration (Phase 5d; Testcontainers SQL / real external services)
 hostGates:                 # Phase 5c per-host status: not-started | scaffolded | partially-validated | validated | blocked
   scheduler: not-started
   functionApp: not-started

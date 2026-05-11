@@ -32,6 +32,14 @@ dotnet run --project src/Host/Aspire/AppHost
 
 Verify the Aspire dashboard shows all enabled resources healthy before exercising endpoints.
 
+**Live smoke deferral.** The live AppHost boot may be skipped at the final-checklist stage when **all** of the following are recorded in the most recent sub-phase `HANDOFF.md`:
+
+- The sub-phase did not modify `Host/Aspire/AppHost` or the Aspire resource graph (record this fact explicitly, e.g., "AppHost / resource graph not modified this sub-phase").
+- A prior sub-phase recorded a green Aspire live boot in `HANDOFF.md` § Validation since the last AppHost change.
+- This session's `TestCategory=Unit`, `TestCategory=Endpoint`, and (where applicable) `TestCategory=Integration` runs were all green.
+
+If any condition is missing, run the live boot. When deferred, copy the prior green boot's discovery evidence into this session's `HANDOFF.md` § Validation and mark the row `deferred — see <prior-sub-phase>`.
+
 ---
 
 ## API Smoke
@@ -67,7 +75,7 @@ Use `curl`, HTTPie, REST Client, or Scalar. Record status codes and endpoint dis
 - [ ] Health endpoint returns 200.
 - [ ] OpenAPI/Scalar loads.
 - [ ] Aspire dashboard resources healthy when Aspire is enabled.
-- [ ] No generated source file contains `throw new NotImplementedException`.
+- [ ] No generated source file outside the **scaffold-skipped surface** contains `throw new NotImplementedException`. The skipped surface is limited to: (a) `NoOp*` fallback stubs in `Infrastructure.Stubs/` (or equivalent) registered via `TryAddSingleton`/`TryAddScoped` for entities the scaffold contracts but does not activate, and (b) override methods on `<packagePrefix>.*` repository/storage base types that are only reachable through those `NoOp*` stubs. Per [../ai/contract-scaffolding.md](../ai/contract-scaffolding.md), even these stubs should prefer safe defaults (`Result.Success`, empty collections, completed `Task`) — throwing is permitted only when no safe default exists for the return shape.
 - [ ] No scaffold placeholders remain in source/config.
 - [ ] No `<packagePrefix>.*` shared base type is reimplemented in application/domain/host layers — they live in feed packages or `src/Packages/<packagePrefix>.*` projects only, per `packageStrategy`.
 - [ ] Deployment-only dependencies are recorded as non-blocking residuals.

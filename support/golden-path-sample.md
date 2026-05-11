@@ -258,4 +258,4 @@ Then walk through `support/final-scaffold-checklist.md`.
 - `Directory.Packages.props` owns all NuGet versions (feed-supplied `<packagePrefix>.*` packages plus transitive deps).
 - For `packageStrategy: feed` or `hybrid`: `nuget.config` maps `<packagePrefix>.*` to the private feed and `dotnet-ef` to `nuget.org`. For `local`: `nuget.config` only needs `nuget.org` (or may be absent).
 - App starts through Aspire and API health returns 200.
-- No `NotImplementedException` remains in generated source.
+- No `NotImplementedException` remains in generated source, except inside the scaffold-skipped surface allowed by `support/final-scaffold-checklist.md` (`NoOp*` fallback stubs and base-type overrides reachable only through them).
