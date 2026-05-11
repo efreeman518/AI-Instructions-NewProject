@@ -65,10 +65,53 @@ src/
 ├── Directory.Packages.props
 ├── global.json
 ├── nuget.config
+├── .gitattributes
+├── .gitignore
+├── .editorconfig
 └── {SolutionName}.slnx
 ```
 
 Reference patterns: [../patterns/expected-output-index.md](../patterns/expected-output-index.md).
+
+### Required Root Files (Cross-Platform Hygiene)
+
+The scaffold drops `.gitattributes`, `.gitignore`, and `.editorconfig` at repo root on first generation.
+
+**`.gitattributes`** — pins working-tree line endings so Windows clients with `core.autocrlf=true` (installer default) don't spam `LF will be replaced by CRLF` warnings on every `git status` and don't block commits under `safecrlf=true`. Minimum content:
+
+```gitattributes
+* text=auto eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+*.png binary
+*.jpg binary
+*.ico binary
+```
+
+Add at scaffold time — retroactive `.gitattributes` requires `git add --renormalize .` to take effect.
+
+**`.gitignore`** — `dotnet new gitignore` baseline plus Aspire local volumes, Function App secrets, and coverage outputs. **The stock Visual Studio `.gitignore` has two rules that collide with this scaffold's folder names and silently exclude source from `git add` — patch both:**
+
+```gitignore
+# `src/Packages/` is a SOURCE folder in this repo (local `<packagePrefix>.*`
+# projects), not a NuGet restore folder. The stock `**/[Pp]ackages/*` rule
+# matches it case-insensitively on Windows (core.ignoreCase=true is the
+# default), so every `<packagePrefix>.*.csproj` under it gets skipped by
+# `git add` — local build passes, fresh CI clone fails with MSB3202.
+!src/Packages/
+!src/Packages/**
+src/Packages/**/bin/
+src/Packages/**/obj/
+```
+
+Also **remove the line `*.e2e`** from the stock template. It targets a legacy Visual Studio trace format this scaffold never produces, but it matches the `Test.E2E/` project directory case-insensitively on Windows and silently excludes the entire E2E test project from git.
+
+Failure mode is **invisible locally** (files on disk, build green) and surfaces only on a fresh clone or CI runner. The execution-gates post-generation step runs a `git ls-files` check to catch the same class of bug for any future scaffold folder whose name collides with a stock ignore pattern — see [../support/execution-gates.md](../support/execution-gates.md) § Tracked-Source Validation.
+
+**`.editorconfig`** — pinned tab/space + `end_of_line = lf` (belt-and-suspenders with `.gitattributes`).
+
+**Shell redirects:** scaffolded shell-agnostic scripts use `> /dev/null`, never `> NUL`. From git-bash, `> NUL` creates a real on-disk file named `NUL` that Win32 then can't open, breaking `git add -A`. Reserve `> nul` (lowercase) for files that only run under `cmd.exe`.
 
 Note: Domain rules and specifications live in `Domain.Model/Rules/` (or `Domain.Model/Specifications/`). A separate `Domain.Rules` project is not required.
 

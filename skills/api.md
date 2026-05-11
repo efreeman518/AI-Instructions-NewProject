@@ -87,10 +87,20 @@ In `Program.cs`, keep this order: service defaults/config → bootstrapper + API
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
 
-// Accept enum names as strings from all callers (e.g. "High" not 3).
-// Without this, minimal-API endpoints reject string enum values with BadHttpRequestException.
+// JSON contract: the API host's serializer shape MUST match the Refit client
+// and the endpoint-test deserializer. The Blazor / Uno Refit clients use
+// JsonStringEnumConverter (see ui-blazor.md). Without the matching converter
+// here, the host returns numeric enums and rejects string-enum bodies with
+// "JsonException: The JSON value could not be converted to <Enum>", surfacing
+// as a 400 on every list/filter/search request that carries an enum.
 builder.Services.ConfigureHttpJsonOptions(options =>
-    options.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
+{
+    options.SerializerOptions.Converters.Add(
+        new System.Text.Json.Serialization.JsonStringEnumConverter());
+    options.SerializerOptions.PropertyNameCaseInsensitive = true;
+    options.SerializerOptions.DefaultIgnoreCondition =
+        System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+});
 
 builder.AddServiceDefaults();
 services
@@ -104,6 +114,40 @@ var app = builder.Build().ConfigurePipeline();
 await app.RunStartupTasks();
 await app.RunAsync();
 ```
+
+### JSON Contract Across Hosts and Tests
+
+**Rule:** The JSON serializer shape is a contract between three places — keep all three aligned:
+
+1. **API host** — `ConfigureHttpJsonOptions(...)` (above) governs request **and** response serialization.
+2. **Refit client** (Blazor / Uno) — `SystemTextJsonContentSerializer(jsonOptions)` in [`ui-blazor.md`](ui-blazor.md) (`Program.cs`) and the analogous Uno wire-up.
+3. **Endpoint tests** — every `ReadFromJsonAsync<T>` / `PostAsJsonAsync<T>` call must use a shared `JsonSerializerOptions` instance with the same converters.
+
+If any of the three drifts, requests fail with `JsonException` on the host (string enum rejected as 400) or tests fail to deserialize valid responses (default `ReadFromJsonAsync` decodes numeric enums but not string enums).
+
+The endpoint test base must publish the shared options:
+
+```csharp
+// Test/Test.Support/JsonTestOptions.cs
+public static class JsonTestOptions
+{
+    public static readonly JsonSerializerOptions Default = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        Converters = { new JsonStringEnumConverter() },
+    };
+}
+```
+
+Endpoint tests then always pass it explicitly:
+
+```csharp
+var created = await response.Content.ReadFromJsonAsync<DefaultResponse<TaskItemDto>>(JsonTestOptions.Default);
+await client.PostAsJsonAsync("/api/task-items", new DefaultRequest<TaskItemDto> { Item = dto }, JsonTestOptions.Default);
+```
+
+Centralize on `JsonTestOptions.Default`; do **not** construct ad-hoc `JsonSerializerOptions` per test — drift between tests masks contract regressions.
 
 ### Standalone CORS (Without Aspire)
 
@@ -198,12 +242,18 @@ Required endpoint rules:
                      messages: errors, statusCodeOverride: StatusCodes.Status400BadRequest,
                      traceId: httpContext.TraceIdentifier, includeStackTrace: _problemDetailsIncludeStackTrace)));
    ```
-4. **Handler signature:** `HttpContext httpContext` must be the first parameter on every handler (needed for `traceId` in `ProblemDetailsHelper`). `CancellationToken` is the last parameter. `[FromServices]` injects other dependencies.
+4. **Handler signature:** `HttpContext httpContext` must be the first parameter on every handler (needed for `traceId` in `ProblemDetailsHelper`). `CancellationToken` is the last parameter. **Every service-typed parameter MUST carry an explicit `[FromServices]` attribute.** This is non-negotiable.
    ```csharp
    private static async Task<IResult> GetById(
        HttpContext httpContext,
        [FromServices] IMyService service, Guid id, CancellationToken ct)
    ```
+
+   **Why this is non-negotiable.** Without `[FromServices]`, minimal-API parameter binding falls back to `IServiceProviderIsService.IsService(type)` at *route discovery time* (before any request fires). If the type is registered → parameter is bound from DI; if **not** registered → parameter is inferred as `[FromBody]` and the host throws `System.InvalidOperationException: Body was inferred but the method does not allow inferred body parameters` at `app.MapGroup(...)`. The failure takes down **every** endpoint, not just the unregistered one.
+
+   This is especially fragile when a feature is gated per host (Cosmos-only services, Service Bus senders — see [bootstrapper.md](bootstrapper.md) § Conditional Dependency Pattern). The endpoint still references the service interface; the host that opted out of registering it then refuses to start with a misleading body-inference error.
+
+   **No exceptions:** add `[FromServices]` on the service parameter even for trivially-registered types. Treat any handler missing `[FromServices]` on a service parameter as a Phase 5b regression and fix it before the gate.
 5. Return `ProblemDetails` for errors (no raw strings). Always use `ProblemDetailsHelper.BuildProblemDetailsResponseMultiple` (or the singular variant for single-error cases) — never `TypedResults.BadRequest(string)`.
 6. Validate route/body ID consistency on update.
 7. Add OpenAPI metadata (`Produces*`, summary/tags).

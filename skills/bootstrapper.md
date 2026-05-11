@@ -99,6 +99,70 @@ using EF.BackgroundServices.Work;
 > **Note:** `AddBackgroundTaskQueue()` and `AddChannelBackgroundTaskQueue()` register different concrete types. If `AuditInterceptor` expects `ChannelBackgroundTaskQueue`, use `AddChannelBackgroundTaskQueueWithShutdownHandling()` — it registers both the queue and the hosted service that drains it on shutdown.
 ```
 
+## Conditional (Per-Host) Dependency Pattern
+
+Not every host wires every infrastructure client. The Functions host commonly omits `CosmosClient`, the Scheduler omits Service Bus senders, and Lite-mode API skips Redis. Any **shared** registration that depends on a client only some hosts have **must be opt-in**, not part of `RegisterInfrastructureServices` / `RegisterApplicationServices`.
+
+**Symptom of getting this wrong:** `UseDefaultServiceProvider(opt => opt.ValidateOnBuild = true)` throws at host startup with `"Unable to resolve service for type 'Microsoft.Azure.Cosmos.CosmosClient' while attempting to activate '{App}.Infrastructure.Cosmos.ActivityFeedRepository'."` — a host that never reads activity feed still fails to start because the registration is unconditional.
+
+### Rule
+
+Any service whose implementation depends on `CosmosClient`, `ServiceBusClient`, `IConnectionMultiplexer` (Redis), `BlobServiceClient`, or `TableServiceClient` is registered through a **feature-scoped extension** named `Register{Feature}Services(this IServiceCollection services, IConfiguration config)`. The extension is called **only by hosts that also wire the underlying Azure client** (`AddAzureCosmosClient`, `AddAzureServiceBusClient`, etc.).
+
+```csharp
+// Bootstrapper/Registration/RegisterServices.ActivityFeed.cs
+public static partial class RegisterServices
+{
+    public static IServiceCollection RegisterActivityFeedServices(
+        this IServiceCollection services, IConfiguration config)
+    {
+        services.AddScoped<IActivityFeedRepository, ActivityFeedRepository>();
+        services.AddScoped<IActivityFeedService, ActivityFeedService>();
+        return services;
+    }
+}
+```
+
+```csharp
+// Host/{App}.Api/Program.cs — opts in only when Cosmos is wired
+builder.AddAzureCosmosClient("ActivityFeedCosmos"); // Aspire-injected
+builder.Services
+    .RegisterInfrastructureServices(config)
+    .RegisterApplicationServices(config)
+    .RegisterActivityFeedServices(config);          // <- per-host opt-in
+
+// Host/{App}.Functions/Program.cs — does NOT call RegisterActivityFeedServices
+// because it has no AddAzureCosmosClient and no consumer of the feed.
+```
+
+**Do not** rely on `TryAdd*` or runtime null-checks inside `RegisterInfrastructureServices` to "auto-detect" whether the client is present. `ValidateOnBuild` runs before any first request, sees the unsatisfied `CosmosClient` dependency, and fails — comments like `// registered when a CosmosClient is in the container` are not enforcement.
+
+**Naming convention:** one feature → one `RegisterServices.{Feature}.cs` partial → one `Register{Feature}Services` extension. Apply to: Cosmos-backed features (activity feeds, audit ingest), Service Bus publishers/processors, Redis-only services (distributed locks, backplane caches), Event Hub producers/processors, and AI Search/Foundry clients.
+
+Record per-host opt-ins in `HANDOFF.md` under a `featureOptIns:` block so the next session knows which hosts call which extensions without re-reading every `Program.cs`.
+
+### `IOptions<T>` Settings Types Must Be Instantiable
+
+Any class bound via `IOptions<T>` / `Configure<T>` must be **concrete and parameterless-constructible**. `OptionsFactory<T>.Create` calls `Activator.CreateInstance<T>()` before the configure delegate runs, so an `abstract` settings base (even one with no abstract members) crashes the first consumer with `MissingMethodException: Cannot dynamically create an instance of type '…SettingsBase'`. Either drop `abstract` from the base or make the consumer generic in `TSettings`; do not bind via `IOptions<AbstractBase>`.
+
+### Symmetric `Configure<T>` Across Hosts
+
+Every host that registers a service-bus sender / processor / blob writer must **also** call the matching `services.Configure<{SettingsType}>(...)` with the entity path / container name. Skipping the configure block lets the host start green, then crashes on first publish with `"ServiceBusSenderSettingsBase.EntityPath is not configured"` (or equivalent) at the first send / first message processed.
+
+Treat it as a paired registration:
+
+```csharp
+// Symmetric in both API and Functions hosts:
+services.AddSingleton<IWebhookIngestSender, WebhookIngestSender>();
+services.Configure<ServiceBusSenderSettingsBase>(opts =>
+{
+    opts.EntityPath = "webhook-ingest";
+    opts.ServiceBusClientName = "servicebus";
+});
+```
+
+The Phase 5c gate (`function-app`, `background-services`, `messaging`) must verify that any host registering an `ISender` / `IProcessor` also configures its settings — a green build does not catch this.
+
 ## Startup Task Pattern
 
 > See [../patterns/data-layer-wiring.md](../patterns/data-layer-wiring.md).

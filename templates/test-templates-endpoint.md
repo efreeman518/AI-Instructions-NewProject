@@ -17,6 +17,22 @@ public async Task Given_ValidPayload_When_PostEntity_Then_Returns201() { }
 
 ---
 
+## Shared JSON Options (Required)
+
+Every `ReadFromJsonAsync<T>` / `PostAsJsonAsync<T>` call must pass `JsonTestOptions.Default` from `Test.Support`. Without it, responses carrying string enums (`"status": "InProgress"`) fail to deserialize against the default `JsonSerializerOptions` and tests pass-then-fail based on whether the API host happened to emit a numeric or named enum. The shared options align the test deserializer with the host's `ConfigureHttpJsonOptions` (see [../skills/api.md](../skills/api.md) § JSON Contract Across Hosts and Tests).
+
+```csharp
+// Required at the top of every endpoint test file
+using static {Project}.Test.Support.JsonTestOptions;
+
+var dto = await response.Content.ReadFromJsonAsync<DefaultResponse<{Entity}Dto>>(Default);
+await client.PostAsJsonAsync("/api/{entities}", request, Default);
+```
+
+If the test base evolves to wrap `HttpClient` in an extension method (e.g. `client.GetJsonAsync<T>("/api/...")`), the extension must close over `JsonTestOptions.Default` internally so no individual test forgets the converter set.
+
+---
+
 ## Shared WebApplicationFactoryBase (in Test.Support)
 
 The plumbing for swapping the production DbContext + interceptors + pooled factories with a test-mode store is identical between `Test.Endpoints` (in-memory) and `Test.E2E` (Testcontainers SQL). It lives once in `Test.Support` as `WebApplicationFactoryBase<TProgram, TTrxnContext, TQueryContext>`. Both projects derive thin specializations that only declare which options to use.
