@@ -37,6 +37,56 @@ SDK upgrade discipline:
 - Consult the vendor's official upgrade guide via MS Learn before bumping (e.g., `learn.microsoft.com/dotnet/aspire/get-started/upgrade-to-aspire-13`).
 - A file-naming or convention change introduced by a future SDK version (e.g., AppHost.cs in Aspire 13) MAY be adopted on the prior SDK if it is purely cosmetic and back-compatible — call out the rationale in the relevant skill file.
 
+## Minimize Third-Party Dependencies (Mandatory)
+
+**Default: do not add a new third-party package.** Prefer the BCL, `Microsoft.Extensions.*`, ASP.NET Core built-ins, and the reference-app stack already wired in TaskFlow. If a recurring pattern is missing, write a small extension method in the appropriate layer instead of pulling in a library.
+
+### Pre-approved third-party packages
+
+These are already part of the reference app and may be added without developer discussion when the pattern requires them. Use the canonical wiring from the reference app — do not re-evaluate the choice each time:
+
+| Package family | Purpose | Skill |
+|---|---|---|
+| `Yarp.ReverseProxy` | API gateway / reverse proxy | [gateway.md](gateway.md) |
+| `Scalar.AspNetCore` | OpenAPI UI | [api.md](api.md) |
+| `ZiggyCreatures.FusionCache.*` | Hybrid cache + Redis backplane | [caching.md](caching.md) |
+| `StackExchange.Redis` | Redis client (backplane / direct) | [caching.md](caching.md) |
+| `Moq` | Test doubles | [testing.md](testing.md) |
+| `NetArchTest.Rules` | Architecture tests | [testing.md](testing.md) |
+| `NBomber` | Load tests | [testing.md](testing.md) |
+| `Testcontainers.*` | Real-infra integration/E2E tests | [testing.md](testing.md) |
+| `BenchmarkDotNet` | Microbenchmarks | [testing.md](testing.md) |
+| `MudBlazor` | Blazor component library | [ui-blazor.md](ui-blazor.md) |
+| `Refit` / `Refit.HttpClientFactory` | Typed HTTP clients | [external-api.md](external-api.md) |
+| `Azure.*` (Identity, Storage, KeyVault, Cosmos, ServiceBus, EventGrid, EventHubs, AI) | Azure SDK | [azure-data-storage.md](azure-data-storage.md), [security.md](security.md), [messaging.md](messaging.md), [ai-integration.md](ai-integration.md) |
+| `Aspire.*` (Hosting + Aspire.Hosting.Testing) | Orchestration + integration tests | [bootstrapper.md](bootstrapper.md), [testing.md](testing.md) |
+
+Add only the specific sub-package needed (e.g., `Azure.Storage.Blobs`, not the entire SDK). Versions stay in `Directory.Packages.props` per the Latest, Not Pinned rule.
+
+### Any other package — discuss first
+
+Anything **not in the pre-approved table above** is not approved by default. The NuGet ecosystem is large; this section deliberately does not enumerate disallowed packages because the list would be endless and brittle. The rule is the opposite — **the pre-approved table is the allowlist**.
+
+Before adding any other package, pause and discuss with the developer. The bar is "**high value** that the reference-app stack cannot deliver." Justification must answer:
+
+1. What built-in (BCL / `Microsoft.Extensions.*` / ASP.NET Core) or reference-app pattern fails to cover this?
+2. Why is a small in-house extension method insufficient?
+3. What is the maintenance, license, and transitive-dependency cost?
+4. Could equivalent behavior live as a thin extension package under `src/Packages/<packagePrefix>.<Layer>` (so it benefits other scaffolded apps) instead of as a third-party dependency?
+
+If a candidate clears that bar, propose it explicitly to the developer with a one-paragraph rationale. Examples of common categories where teams reach for a package but the reference-app stack already covers the need: input validation, object mapping, assertion DSLs, alternate mocking frameworks, alternate JSON serializers. Default response in these categories: **write the extension or use what's already there.**
+
+### Build a shared package instead (preferred path)
+
+When a pattern recurs three or more times and no pre-approved package covers it cleanly, the answer is almost always **a small in-house extension**, not a NuGet dependency:
+
+1. Add the helper to the appropriate layer — `EF.Common` (cross-cutting), `EF.Domain` (domain-pure), or a project-local `*Extensions.cs` for app-specific behavior. If the pattern is reusable across scaffolded apps, promote it to a packable project under `src/Packages/<packagePrefix>.<Layer>` so future apps inherit it via the standard package strategy.
+2. Keep it minimal — one responsibility per extension method; no fluent builders that mimic a third-party DSL.
+3. Cover it with a unit test that pins the contract.
+4. Record the decision in `HANDOFF.md` so future sessions do not re-litigate the package-vs-extension trade-off.
+
+The goal is a small, owned dependency surface — every package added is one the team commits to tracking for CVEs, license changes, and major-version breakage.
+
 ## Feed + Version Rules (Mandatory)
 
 ### When `packageStrategy: feed` or `hybrid` (feed-supplied layers only)
