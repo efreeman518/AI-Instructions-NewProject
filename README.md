@@ -33,7 +33,7 @@ python scripts/install-to-project.py --target /path/to/your-app-repo
 # tip: run with --dry-run first to preview what gets copied
 ```
 
-**Windows Python launcher fallback chain.** Install Python once per machine or user profile; do not rely on a repo-specific launcher for scaffold work across repos. Try in order; the first one that prints a version is the one to use for every `scripts/*.py` invocation:
+**Windows Python launcher fallback chain.** Install Python once per machine or user profile; do not rely on a repo-specific launcher for scaffold work across repos. Verify the install with [support/python-setup.md](support/python-setup.md). Try in order; the first one that prints a version is the one to use for every `scripts/*.py` invocation:
 
 ```powershell
 python --version            # may resolve to Microsoft-Store stub; if it errors, try the next
@@ -159,7 +159,7 @@ Read the rest of this guide when you need setup details, MCP recommendations, or
 ## Prerequisites
 
 - `git`
-- A current machine- or user-global Python 3 to run `install-to-project.py`, `configure-ef-packages-feed.py`, and `validate-instructions.py`. **On Windows, no single launcher is universal:** `py -3` works on machines with the Python launcher installed, and the bare `python` command works when a real Python is on PATH (it may resolve to the Microsoft-Store stub if not). Run `where python` and `where py` to see what's available, then pick the one that prints a real path. `.venv\Scripts\python.exe` is acceptable for source-repo authoring, but it is not the preferred cross-repo setup. The scripts have no Python-version-specific syntax — any current 3.x works.
+- A current machine- or user-global Python 3 to run `install-to-project.py`, `configure-ef-packages-feed.py`, and `validate-instructions.py`; see [support/python-setup.md](support/python-setup.md). **On Windows, no single launcher is universal:** `py -3` works on machines with the Python launcher installed, and the bare `python` command works when a real Python is on PATH (it may resolve to the Microsoft-Store stub if not). Run `where python` and `where py` to see what's available, then pick the one that prints a real path. `.venv\Scripts\python.exe` is acceptable for source-repo authoring, but it is not the preferred cross-repo setup. The scripts have no Python-version-specific syntax — any current 3.x works.
 - Latest stable `.NET SDK`
 - Docker engine running (Docker Desktop not required) — Aspire relies on it for hosting local container services
 - VS Code + AI assistant
@@ -331,6 +331,7 @@ These references are for **maintaining and developing the instruction set itself
 - [support/prompt-catalog.md](support/prompt-catalog.md) - copy-paste prompts for starting or resuming a session
 - [support/phase-1-worked-example.md](support/phase-1-worked-example.md) - condensed transcript of the TaskFlow Phase 1 interview (pacing, branch recaps, mid-interview corrections)
 - [support/execution-gates.md](support/execution-gates.md) - canonical validation gates and operator setup checklist
+- [support/python-setup.md](support/python-setup.md) - Python install and launcher verification for scaffold scripts
 - [support/golden-path-sample.md](support/golden-path-sample.md) - canonical small sample for regression-checking scaffold instructions
 - [support/final-scaffold-checklist.md](support/final-scaffold-checklist.md) - final generated-app scaffold acceptance checklist
 - [support/troubleshooting.md](support/troubleshooting.md) - failure triage and recurring issue guidance

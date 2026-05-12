@@ -76,7 +76,7 @@ public class {Entity}RepositoryQuery({Project}DbContextQuery dbContext)
         SearchRequest<{Entity}SearchFilter> request, CancellationToken ct = default)
     {
         return await QueryPageProjectionAsync<{Entity}, {Entity}Dto>(
-            {Entity}Mapper.ProjectorSearch,
+            {Entity}Mapper.Projection, // Use ProjectorSearch only for an intentional lean grid shape.
             readNoLock: true,
             pageSize: request.PageSize,
             pageIndex: Math.Max(1, request.PageIndex),
@@ -202,7 +202,7 @@ return new PagedResponse<Category> { Data = data, ... };
 ```csharp
 // ✅ CORRECT — SQL-level projection, base class handles paging/count
 return await QueryPageProjectionAsync<Category, CategoryDto>(
-    CategoryMapper.ProjectorSearch,
+    CategoryMapper.Projection,
     readNoLock: true,
     pageSize: request.PageSize,
     pageIndex: Math.Max(1, request.PageIndex),
@@ -213,7 +213,7 @@ return await QueryPageProjectionAsync<Category, CategoryDto>(
     cancellationToken: ct).ConfigureAwait(ConfigureAwaitOptions.None);
 ```
 
-Every query repo search method must follow this pattern. The service layer then direct-returns the result without post-mapping.
+Every query repo search method must follow this pattern. Use `{Entity}Mapper.Projection` when the search result matches the canonical full DTO shape. Use `{Entity}Mapper.ProjectorSearch` only when the entity has a deliberately lean list/grid shape. The service layer then direct-returns the result without post-mapping.
 
 > **PageIndex pitfall:** `ComposeIQueryable` in EF.Data expects **1-based** `pageIndex` (it does `pageIndex - 1` internally). `SearchRequest<T>.PageIndex` defaults to `0`. Without `Math.Max(1, request.PageIndex)`, a default request produces a negative SQL `OFFSET`, crashing with `SqlException: The offset specified in a OFFSET clause may not be negative`.
 
@@ -256,7 +256,7 @@ The 2-param overload retries on `DbUpdateConcurrencyException` using the specifi
 - **Trxn repository**: Uses `{Project}DbContextTrxn` (tracking, audit interceptor, read-write)
 - **Query repository**: Uses `{Project}DbContextQuery` (NoTracking, read-only replica)
 - **UpdateFromDto** delegates to `DB.UpdateFromDto(entity, dto, relatedDeleteBehavior)` — a DbContext extension method (see updater-template.md)
-- Projectors (`{Entity}Mapper.ProjectorSearch`) used in query repo for efficient SQL translation
+- Projectors (`{Entity}Mapper.Projection` by default, `{Entity}Mapper.ProjectorSearch` for intentional lean grid shapes) used in query repo for efficient SQL translation
 - No `SaveChangesAsync` override on query repo — read-only by design
 - Entity-specific repositories for complex queries; `GenericRepositoryTrxn/Query` for simple CRUD
 - Use `ConfigureAwait(ConfigureAwaitOptions.None)` in repository methods (library code)

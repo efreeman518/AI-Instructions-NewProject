@@ -25,6 +25,7 @@ Run once per machine/repo before beginning any scaffolding phase.
 ### Development Tools
 
 - [ ] Git repo initialized with `.gitignore` for .NET, **patched** for this scaffold's `src/Packages/` source folder and `Test.E2E/` project (see [../skills/solution-structure.md](../skills/solution-structure.md) § Required Root Files → `.gitignore`)
+- [ ] Current machine- or user-global Python 3 installed for scaffold helper scripts. Verify from a fresh shell per [python-setup.md](python-setup.md); do not rely on a repo `.venv` as the machine launcher.
 - [ ] **Tracked-source validation** (post-generation): every `.csproj` under `src/` is tracked by git. Run after `git add .`:
    ```powershell
    $expected = Get-ChildItem -Recurse -Filter *.csproj src/ | ForEach-Object { (Resolve-Path $_.FullName).Path }

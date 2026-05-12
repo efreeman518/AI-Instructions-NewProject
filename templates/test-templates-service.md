@@ -173,6 +173,46 @@ public class {Entity}MapperTests
     }
 
     [TestMethod]
+    [TestCategory("Unit")]
+    public void {Entity}_CompiledProjection_AgreesWith_ToDto()
+    {
+        // Arrange
+        var entity = new {Entity}Builder().Build();
+
+        // Act
+        var fromCompiled = {Entity}Mapper.Projection.Compile()(entity);
+        var fromToDto = entity.ToDto();
+
+        // Assert
+        Assert.AreEqual(fromToDto.Id, fromCompiled.Id);
+        Assert.AreEqual(fromToDto.Name, fromCompiled.Name);
+        Assert.AreEqual(fromToDto.TenantId, fromCompiled.TenantId);
+        // Assert every scalar, owned-type flattened property, and collection count
+    }
+
+    [TestMethod]
+    [TestCategory("Unit")]
+    public void {Entity}_InlinedChildren_AgreeWith_ChildMappers()
+    {
+        // Arrange
+        var entity = new {Entity}Builder().Build();
+        var child = new {ChildEntity}Builder()
+            .With{Entity}Id(entity.Id)
+            .Build();
+        entity.{ChildEntity}s.Add(child);
+
+        // Act
+        var fullDto = entity.ToDto();
+        var expectedChild = entity.{ChildEntity}s.Single().ToDto();
+
+        // Assert
+        Assert.AreEqual(1, fullDto.{ChildEntity}s.Count);
+        Assert.AreEqual(expectedChild.Id, fullDto.{ChildEntity}s[0].Id);
+        Assert.AreEqual(expectedChild.{Entity}Id, fullDto.{ChildEntity}s[0].{Entity}Id);
+        // Assert every child property mirrored by the parent inline projection
+    }
+
+    [TestMethod]
     public void Given_ValidDto_When_MappedToEntity_Then_ReturnsValidDomainResult()
     {
         // Arrange
@@ -188,4 +228,5 @@ public class {Entity}MapperTests
 }
 ```
 
-> **Note:** Mapper tests require the entity `Create()` to be implemented (Phase 5a). Write mapper tests in Phase 5b after entity logic is available.
+> **Note:** Mapper tests require the entity `Create()` and test builders to be implemented (Phase 5a). Write mapper tests in Phase 5b after entity logic is available.
+> Add `{Entity}_InlinedChildren_AgreeWith_ChildMappers` only for parents whose `Projection` inlines child DTO collections.

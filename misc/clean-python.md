@@ -8,6 +8,10 @@ Goal: one current Python that works from any repo, plus only the older runtimes
 that are intentionally required by projects. Do not depend on a repo `.venv` as
 the machine's Python launcher.
 
+Related scaffold prereq check: `support/python-setup.md`. That file is the
+short installed-payload checklist; this runbook remains standalone for deeper
+Windows Python cleanup.
+
 ## Sources to Check First
 
 - Latest Windows releases: <https://www.python.org/downloads/windows/>
@@ -30,6 +34,11 @@ Choose one supported setup:
 
 Either setup is acceptable. Avoid leaving both fighting for `python`, `py`, and
 `pip`.
+
+PATH must expose the chosen launcher from a fresh shell. `python` should resolve
+to the intended runtime, and `py` should resolve to the intended install manager
+or launcher, or be intentionally absent. Do not treat an activated repo `.venv`
+as proof that machine/user PATH is healthy.
 
 ## Inventory Current State
 

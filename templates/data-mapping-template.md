@@ -109,39 +109,10 @@ namespace Application.Mappers;
 
 public static class {Entity}Mapper
 {
-    // ===== Entity → DTO (extension method) =====
-    public static {Entity}Dto ToDto(this {Entity} entity) =>
-        new()
-        {
-            Id = entity.Id,
-            TenantId = entity.TenantId,
-            Name = entity.Name,
-            Flags = entity.Flags,
-            {ChildEntity}s = entity.{ChildEntity}s.Select(c => c.ToDto()).ToList(),
-            Parent = entity.Parent?.ToDto()
-        };
-
-    // ===== DTO → Entity (factory, returns DomainResult) =====
-    public static DomainResult<{Entity}> ToEntity(this {Entity}Dto dto, Guid tenantId)
-    {
-        return {Entity}.Create(tenantId, dto.Name);
-    }
-
-    // ===== EF-Safe Projectors (Expression<Func<T, TDto>>) =====
-
-    // Minimal projection for lists/grids
-    public static readonly Expression<Func<{Entity}, {Entity}Dto>> ProjectorSearch =
-        entity => new {Entity}Dto
-        {
-            Id = entity.Id,
-            TenantId = entity.TenantId,
-            Name = entity.Name,
-            Flags = entity.Flags
-            // No child collections for search results
-        };
-
-    // Full projection for detail view
-    public static readonly Expression<Func<{Entity}, {Entity}Dto>> ProjectorFull =
+    // ===== Canonical full shape (EF-safe projection + compiled ToDto) =====
+    // Use this shape for detail/get queries and in-memory mapping. Keep child DTOs inline:
+    // EF cannot translate child .ToDto() method calls inside expressions.
+    public static readonly Expression<Func<{Entity}, {Entity}Dto>> Projection =
         entity => new {Entity}Dto
         {
             Id = entity.Id,
@@ -151,8 +122,40 @@ public static class {Entity}Mapper
             {ChildEntity}s = entity.{ChildEntity}s.Select(c => new {ChildEntity}Dto
             {
                 Id = c.Id,
-                // ... child properties
-            }).ToList()
+                {Entity}Id = c.{Entity}Id,
+                // ... child properties mapped directly
+            }).ToList(),
+            Parent = entity.Parent != null
+                ? new {Parent}Dto
+                {
+                    Id = entity.Parent.Id,
+                    // ... parent properties mapped directly
+                }
+                : null
+        };
+
+    private static readonly Func<{Entity}, {Entity}Dto> Compiled = Projection.Compile();
+
+    public static {Entity}Dto ToDto(this {Entity} entity) => Compiled(entity);
+
+    // ===== DTO → Entity (factory, returns DomainResult) =====
+    public static DomainResult<{Entity}> ToEntity(this {Entity}Dto dto, Guid tenantId)
+    {
+        return {Entity}.Create(tenantId, dto.Name);
+    }
+
+    // ===== Query-shape-only projectors (Expression<Func<T, TDto>>) =====
+
+    // Optional lean projection for lists/grids when search results intentionally differ
+    // from the canonical full shape. If search uses the full DTO shape, use Projection.
+    public static readonly Expression<Func<{Entity}, {Entity}Dto>> ProjectorSearch =
+        entity => new {Entity}Dto
+        {
+            Id = entity.Id,
+            TenantId = entity.TenantId,
+            Name = entity.Name,
+            Flags = entity.Flags
+            // No child collections for search results
         };
 
     // Lookup projection for dropdowns/autocompletes
@@ -164,35 +167,43 @@ public static class {Entity}Mapper
 ### File: Application/Mappers/{ChildEntity}Mapper.cs
 
 ```csharp
+using System.Linq.Expressions;
+
 namespace Application.Mappers;
 
 public static class {ChildEntity}Mapper
 {
-    public static {ChildEntity}Dto ToDto(this {ChildEntity} entity) =>
-        new()
-        {
-            Id = entity.Id,
-            // ... properties
-        };
-
-    public static readonly Expression<Func<{ChildEntity}, {ChildEntity}Dto>> ProjectorSearch =
+    public static readonly Expression<Func<{ChildEntity}, {ChildEntity}Dto>> Projection =
         entity => new {ChildEntity}Dto
         {
             Id = entity.Id,
             // ... properties
         };
+
+    private static readonly Func<{ChildEntity}, {ChildEntity}Dto> Compiled = Projection.Compile();
+
+    public static {ChildEntity}Dto ToDto(this {ChildEntity} entity) => Compiled(entity);
 }
 ```
 
 ### Mapper Rules
 
 - Mappers are **static classes** in `Application.Mappers/` -- separate project, no DI, no state
-- **`ToDto()`** -- Extension method on entity. Used after loading full entity with includes.
+- **`Projection`** -- Canonical full DTO shape. EF uses it with `.Select(Projection)`; `ToDto()` reuses its compiled delegate for in-memory mapping.
+- **`ToDto()`** -- Extension method on entity. Route through cached `Projection.Compile()` delegate, not a second hand-written mapping.
 - **`ToEntity()`** -- Extension method on DTO. Returns `DomainResult<T>` (delegates to domain factory).
-- **Projectors** -- `Expression<Func<T, TDto>>` for EF query projection. MUST be EF-safe (no method calls, no `ToString(format)`, no complex ternaries).
-- **Multiple projectors per entity** -- `ProjectorBasic` (minimal), `ProjectorSearch` (standard), `ProjectorFull` (complete with children), `ProjectorStaticItems` (lookup).
+- **Query-shape projectors** -- `ProjectorSearch` and `ProjectorStaticItems` are only for shapes with no `ToDto()` twin. Keep them EF-safe.
+- **Multiple projectors per entity** -- `Projection` is the canonical full shape. Add `ProjectorSearch` only when list/grid rows intentionally omit fields or children. Keep `ProjectorStaticItems` for lookup DTOs.
 - **No mapper registration** -- Static classes, no DI needed.
 - **No audit fields** -- Audit data (CreatedDate, CreatedBy, etc.) is managed by the `AuditInterceptor`, not mapped on DTOs
+
+### Compile-Projection Caveats
+
+- Use the compile-projection pattern only for DTO shapes that have both an EF call site and an in-memory call site. Query-only shapes (`ProjectorSearch`, `ProjectorStaticItems`) do not need compiled delegates.
+- `Projection` must stay EF-translatable and also evaluate correctly in memory. Use property access, explicit null checks (`entity.X != null ? entity.X.Y : null`), and inline `.Select(...).ToList()` for child collections.
+- Do not call mapper methods, `ToString(format)`, C#-only helpers, or complex ternaries inside `Projection`.
+- Owned-type flattening must satisfy both constraints. Example: `TaskItem.DateRange -> StartDate / DueDate` and `TaskItem.RecurrencePattern -> RecurrenceInterval / RecurrenceFrequency / RecurrenceEndDate` should use direct property access plus null checks.
+- A projection can translate in EF but still throw in memory if a navigation or owned value is unset on a hydrated entity. Mapper parity tests must exercise these paths.
 
 ## Child Collection Mapping
 
@@ -204,10 +215,11 @@ Child collections follow a consistent pattern across both DTOs and Mappers:
 - Child DTO lives in the same namespace as the parent: `Application.Models.{Entity}/`
 
 ### Mapper Side
-- **`ToDto()`** maps children inline: `entity.{ChildEntity}s.Select(c => c.ToDto()).ToList()`
+- **`Projection`** maps children inline with DTO constructors; EF cannot translate child `.ToDto()` calls inside expressions.
+- **`ToDto()`** routes through the cached compiled `Projection` delegate.
 - **`ToEntity()`** only creates the parent via the domain factory -- child collections are handled separately by `repoTrxn.UpdateFromDto()` in the service layer
-- **`ProjectorSearch`** omits child collections for performance (flat list/grid queries)
-- **`ProjectorFull`** includes child collections with inline projection (no method calls -- must remain EF-safe):
+- **`ProjectorSearch`** omits child collections for performance only when list/grid results intentionally use a lean shape
+- **`Projection`** includes child collections with inline projection (no method calls -- must remain EF-safe):
   ```csharp
   {ChildEntity}s = entity.{ChildEntity}s.Select(c => new {ChildEntity}Dto
   {
