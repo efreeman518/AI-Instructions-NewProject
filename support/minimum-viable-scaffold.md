@@ -20,7 +20,7 @@ You should reach a green `dotnet build` + `dotnet test` and a working `GET /heal
 | Production app with known scope (gateway, UI, scheduler, etc.) | Full [phase router](../START-AI.md) |
 | Adding to an already-scaffolded app | [vertical-slice-checklist.md](vertical-slice-checklist.md) |
 
-MVS is a profile, not a separate path. After MVS finishes you can promote to a richer profile by editing `resource-implementation.yaml` and running additional Phase 5 sub-phases.
+MVS is a profile, not a separate path. After MVS finishes you can promote to a richer profile by editing `.scaffold/resource-implementation.yaml` and running additional Phase 5 sub-phases.
 
 ## Prerequisites
 
@@ -54,17 +54,17 @@ Business: {one-sentence business description}.
 Single entity for now: {EntityName} with fields: {field1: type, field2: type, ...}.
 Run shared-understanding-interview.md but skip branches that don't apply to a single-entity API
 (messaging, scheduling, multi-host, multi-tenant unless explicitly required).
-Produce domain-specification.yaml, UBIQUITOUS-LANGUAGE.md, DESIGN-DECISIONS.md.
+Produce .scaffold/domain-specification.yaml, .scaffold/UBIQUITOUS-LANGUAGE.md, .scaffold/DESIGN-DECISIONS.md (create the .scaffold/ directory at project root if absent).
 Write HANDOFF.md and close.
 ```
 
-**Done when:** `domain-specification.yaml` defines exactly one entity. `DESIGN-DECISIONS.md` records that this is an MVS profile.
+**Done when:** `.scaffold/domain-specification.yaml` defines exactly one entity. `.scaffold/DESIGN-DECISIONS.md` records that this is an MVS profile.
 
 ### Phase 2 — Resource Definition (api-only)
 
 ```text
 Load .instructions/START-AI.md and HANDOFF.md.
-Generate resource-implementation.yaml per ai/resource-implementation-schema.md.
+Generate .scaffold/resource-implementation.yaml per ai/resource-implementation-schema.md.
 First, resolve packageStrategy + packagePrefix (Discovery question #1):
   - feed: provide feed URL(s) + prefix (e.g., EF). Walk ef-packages-reference.md to confirm coverage; promote to hybrid if anything is missing.
   - local: provide prefix only; the scaffold generates src/Packages/<Prefix>.* for every layer in ef-packages-reference.md.
@@ -75,13 +75,13 @@ Set every external dependency mode to lazy-optional.
 Update HANDOFF.md and close.
 ```
 
-**Done when:** `resource-implementation.yaml` has `scaffoldMode: api-only` and every optional flag is `false`. No external dep is in `deployment-only` or `emulator` mode.
+**Done when:** `.scaffold/resource-implementation.yaml` has `scaffoldMode: api-only` and every optional flag is `false`. No external dep is in `deployment-only` or `emulator` mode.
 
 ### Phase 3 — Implementation Plan
 
 ```text
 Load .instructions/START-AI.md and HANDOFF.md.
-Generate implementation-plan.md per ai/implementation-plan.md.
+Generate .scaffold/implementation-plan.md per ai/implementation-plan.md.
 Pre-flight branches on packageStrategy:
   - feed/hybrid: configure the private feed via scripts/configure-ef-packages-feed.py --prefix <packagePrefix>.
   - local: no feed wiring required; nuget.org-only nuget.config is fine.
@@ -157,13 +157,13 @@ If all three pass, MVS is complete.
 When you're ready to add scope:
 
 - **New entity:** [vertical-slice-checklist.md](vertical-slice-checklist.md) fast-path.
-- **Add a runtime concern** (caching, gateway, multi-tenant, observability, security): edit `resource-implementation.yaml` to enable the flag, run a 5b session loading only the new skill file.
-- **Add an optional host** (Function App, Scheduler, Uno UI, Blazor UI): enable the flag in `resource-implementation.yaml`, run a dedicated 5c session per host.
-- **Live auth or AI services:** enable in `resource-implementation.yaml`, run a 5e session.
+- **Add a runtime concern** (caching, gateway, multi-tenant, observability, security): edit `.scaffold/resource-implementation.yaml` to enable the flag, run a 5b session loading only the new skill file.
+- **Add an optional host** (Function App, Scheduler, Uno UI, Blazor UI): enable the flag in `.scaffold/resource-implementation.yaml`, run a dedicated 5c session per host.
+- **Live auth or AI services:** enable in `.scaffold/resource-implementation.yaml`, run a 5e session.
 - **Quality gates** (architecture tests, load, benchmarks): bump `testingProfile` and run a 5d session.
 
 ## Why this works
 
-MVS is the same instruction set, scoped down. Every gate, every artifact, every conflict-precedence rule still applies — the only difference is that `resource-implementation.yaml` flags most optional surfaces off, so the per-sub-phase load sets shrink, and 5c/5d/5e can be deferred until the API is real.
+MVS is the same instruction set, scoped down. Every gate, every artifact, every conflict-precedence rule still applies — the only difference is that `.scaffold/resource-implementation.yaml` flags most optional surfaces off, so the per-sub-phase load sets shrink, and 5c/5d/5e can be deferred until the API is real.
 
 If you find yourself wanting Gateway or UI or messaging mid-MVS, stop the MVS path and switch to the full [phase router](../START-AI.md). Mixing them produces incomplete artifacts.

@@ -23,7 +23,7 @@ Load this file on demand. Keep it out of the default phase context.
 
 | Phase / Concern | TaskFlow area to inspect | What it proves |
 |---|---|---|
-| Phase 1 shared language | `UBIQUITOUS-LANGUAGE.md`, `DESIGN-DECISIONS.md`, `domain-specification.yaml`, `implementation-plan.md` | Shared terminology, rejected synonyms, decision dependencies, and vertical slice order are explicit before code generation. |
+| Phase 1 shared language | `.scaffold/UBIQUITOUS-LANGUAGE.md`, `.scaffold/DESIGN-DECISIONS.md`, `.scaffold/domain-specification.yaml`, `.scaffold/implementation-plan.md` (TaskFlow itself currently keeps these at project root — new scaffolds put them under `.scaffold/`) | Shared terminology, rejected synonyms, decision dependencies, and vertical slice order are explicit before code generation. |
 | Phase 4 contract scaffolding | `src/Domain/TaskFlow.Domain.Model`, `src/Application/TaskFlow.Application.Contracts`, `src/Application/TaskFlow.Application.Models`, `src/Test/Test.Support` | Entity shells, contracts, DTOs, builders, and test infrastructure exist before TDD starts. |
 | Phase 5a domain model | `src/Domain/TaskFlow.Domain.Model` | `Create()` / `Update()` patterns, value objects, domain rules, and aggregate shape. |
 | Phase 5a domain shared | `src/Domain/TaskFlow.Domain.Shared` | Shared enums, value-object base types, cross-aggregate primitives. |

@@ -21,7 +21,7 @@ No external APIs, no notifications, no UI, no Functions, no scheduler, no AI ser
 
 ## Expected Phase 1 Output
 
-### `domain-specification.yaml`
+### `.scaffold/domain-specification.yaml`
 
 ```yaml
 ProjectName: WorkBoard
@@ -93,7 +93,7 @@ events: []
 workflows: []
 ```
 
-### `UBIQUITOUS-LANGUAGE.md`
+### `.scaffold/UBIQUITOUS-LANGUAGE.md`
 
 ```markdown
 # Ubiquitous Language - WorkBoard
@@ -120,7 +120,7 @@ workflows: []
 | `Task` | `WorkItem` | Avoid .NET type collision. |
 ```
 
-### `DESIGN-DECISIONS.md`
+### `.scaffold/DESIGN-DECISIONS.md`
 
 ```markdown
 # Design Decisions - WorkBoard
@@ -230,7 +230,7 @@ externalDependencyModes:
 
 Run these from the generated app root.
 
-After Phases 1–3, developer reviews the YAML artifacts (`domain-specification.yaml`, `UBIQUITOUS-LANGUAGE.md`, `DESIGN-DECISIONS.md`, `resource-implementation.yaml`, `implementation-plan.md`) against their schemas in `ai/`.
+After Phases 1–3, developer reviews the YAML artifacts (`.scaffold/domain-specification.yaml`, `.scaffold/UBIQUITOUS-LANGUAGE.md`, `.scaffold/DESIGN-DECISIONS.md`, `.scaffold/resource-implementation.yaml`, `.scaffold/implementation-plan.md`) against their schemas in `ai/`.
 
 After Phase 4:
 

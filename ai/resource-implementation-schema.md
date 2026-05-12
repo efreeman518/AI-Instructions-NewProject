@@ -2,13 +2,13 @@
 
 Maps domain constructs from [domain-specification-schema.md](domain-specification-schema.md) to concrete Aspire/Azure resources, datatypes, and infrastructure.
 
-**JSON Schema:** [`schemas/resource-implementation.schema.json`](../schemas/resource-implementation.schema.json) — use for programmatic validation of `resource-implementation.yaml`.
+**JSON Schema:** [`schemas/resource-implementation.schema.json`](../schemas/resource-implementation.schema.json) — use for programmatic validation of `.scaffold/resource-implementation.yaml`.
 
-**Prerequisite:** Complete Phase 1 domain definition first, including `domain-specification.yaml`, `UBIQUITOUS-LANGUAGE.md`, and `DESIGN-DECISIONS.md`.
+**Prerequisite:** Complete Phase 1 domain definition first, including `.scaffold/domain-specification.yaml`, `.scaffold/UBIQUITOUS-LANGUAGE.md`, and `.scaffold/DESIGN-DECISIONS.md`.
 
 ## Output Contract
 
-Write Phase 2 output to `resource-implementation.yaml` in the target project root. Do not write project artifacts under `.instructions/`; that directory is the installed runtime instruction payload.
+Write Phase 2 output to `.scaffold/resource-implementation.yaml` in the target project (create the `.scaffold/` directory at project root if absent). Do not write project artifacts under `.instructions/`; that directory is the installed runtime instruction payload.
 
 ## Canonical Defaults (Single Source of Truth)
 
@@ -66,7 +66,7 @@ Canonical layer names (must match `support/ef-packages-reference.md`): `Domain`,
 
 ## Decision Dependency Inputs
 
-Before choosing resources, read `DESIGN-DECISIONS.md` and resolve any parent decisions that affect resource mapping:
+Before choosing resources, read `.scaffold/DESIGN-DECISIONS.md` and resolve any parent decisions that affect resource mapping:
 
 - Tenant model before partition keys, schemas, databases, route shape, or query filters.
 - Entity ownership before relationship mapping, cascade behavior, store selection, and repository order.
@@ -74,7 +74,7 @@ Before choosing resources, read `DESIGN-DECISIONS.md` and resolve any parent dec
 - Compliance classification before retention, encryption, audit storage, and private endpoint choices.
 - External dependency mode before local emulator/no-op/lazy-optional wiring.
 
-If a resource choice changes Phase 1 language or ownership, reopen Phase 1 artifacts before finalizing `resource-implementation.yaml`.
+If a resource choice changes Phase 1 language or ownership, reopen Phase 1 artifacts before finalizing `.scaffold/resource-implementation.yaml`.
 
 ## Policy Inputs (Optional)
 

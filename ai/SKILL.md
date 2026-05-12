@@ -15,7 +15,7 @@ Fast-lookup answer to "what do I do next?" — refer to this before scrolling fo
 | Build red, second pass purely propagates the same fix (rename/namespace/file-move cascade) | One extra pass allowed. If new failure modes appear, stop and write `HANDOFF.md`. |
 | Build red after fix attempt(s) with new errors | Write `HANDOFF.md` with the blocker. Do not loop. |
 | Domain assumption looks wrong (entity shape, relationship) | Stop. Confirm with developer before continuing. See **Mid-Session Rollback Protocol** below. |
-| External dependency cannot be stubbed locally | Mark as `deployment-only` in `resource-implementation.yaml`, generate a no-op stub anyway, log blocker in `HANDOFF.md`, continue. |
+| External dependency cannot be stubbed locally | Mark as `deployment-only` in `.scaffold/resource-implementation.yaml`, generate a no-op stub anyway, log blocker in `HANDOFF.md`, continue. |
 | Sub-phase has produced 15+ generated files or 3+ build cycles | Checkpoint `HANDOFF.md` mid-session. Do not wait for the gate. |
 | Multiple files touched by a single structural error | Don't patch-fix. Roll back, log, re-scaffold the slice. |
 | Missing required input (`ProjectName`, `packageStrategy` + `packagePrefix`, `customNugetFeeds` when feed/hybrid, at least one entity) | Ask developer before proceeding. |
@@ -51,7 +51,7 @@ This sizing does **not** change phase semantics, gates, or conflict-resolution o
 - Use central package management (`Directory.Packages.props`).
 - **One public type per file** — universal rule across generated app code and `src/Packages/<Prefix>.*` vendored sources alike. File name matches the type. Lumped files (multiple DTOs, message types, nested helpers) are split at generation time, not deferred. See [../skills/solution-structure.md](../skills/solution-structure.md) § Non-Negotiables for the exception list.
 - After adding packages, update to latest stable and verify restore/build.
-- Record instruction gaps in `INSTRUCTION-GAPS.md` at the target project root (do not hot-edit installed `.instructions/` files mid-scaffold). Instruction maintainers can later copy approved findings into [../support/UPDATE-INSTRUCTIONS.md](../support/UPDATE-INSTRUCTIONS.md).
+- Record instruction gaps in `.scaffold/INSTRUCTION-GAPS.md` (do not hot-edit installed `.instructions/` files mid-scaffold). Create the `.scaffold/` directory at project root if absent. Instruction maintainers can later copy approved findings into [../support/UPDATE-INSTRUCTIONS.md](../support/UPDATE-INSTRUCTIONS.md).
 - Prefer latest stable .NET SDK and package releases. MCP server setup: see [../README.md](../README.md).
 - All mode/profile/flag defaults come from [resource-implementation-schema.md](resource-implementation-schema.md) (**Canonical Defaults**).
 
@@ -85,7 +85,7 @@ Before generating code in each Phase 5 sub-phase, ask the following clarificatio
 
 3. **5c — Optional Hosts (tests-after):**
    - **Ask clarification questions first:** for each enabled host, ask host-specific details (Function App triggers/bindings/outputs, Scheduler job types/schedules, Notification channels/templates, Uno UI target platforms/responsive needs)
-   - Load only the host-specific files matching the enabled hosts in `resource-implementation.yaml`. Uno UI stays a dedicated session. Gate: see [../support/execution-gates.md](../support/execution-gates.md) § 5c (per-host status recorded in `HANDOFF.md`).
+   - Load only the host-specific files matching the enabled hosts in `.scaffold/resource-implementation.yaml`. Uno UI stays a dedicated session. Gate: see [../support/execution-gates.md](../support/execution-gates.md) § 5c (per-host status recorded in `HANDOFF.md`).
 
 4. **5d — Quality + Delivery:**
    - **Ask clarification questions first:** code quality thresholds, load test requirements, benchmark baselines, CI-CD pipeline specifics

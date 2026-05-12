@@ -715,7 +715,7 @@ internal class InMemory{Entity}ViewRepository : I{Entity}ViewRepository
 }
 ```
 
-Skip this template when the project does not have a projection service / read-model store. Generate only when `resource-implementation.yaml` declares a projection/read-model boundary.
+Skip this template when the project does not have a projection service / read-model store. Generate only when `.scaffold/resource-implementation.yaml` declares a projection/read-model boundary.
 
 ---
 

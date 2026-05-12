@@ -262,7 +262,7 @@ Required endpoint rules:
 
 ## Custom Action Endpoints
 
-The six-route CRUD shape above is the default. When `domain-specification.yaml` declares a `customActions` entry on an entity (e.g. `Reschedule`, `Approve`, `Cancel`), or when a non-CRUD operation legitimately spans multiple entities (cross-entity aggregation, bulk import, workflow trigger), surface it as an additional route on the same entity's endpoint group rather than inventing a parallel controller.
+The six-route CRUD shape above is the default. When `.scaffold/domain-specification.yaml` declares a `customActions` entry on an entity (e.g. `Reschedule`, `Approve`, `Cancel`), or when a non-CRUD operation legitimately spans multiple entities (cross-entity aggregation, bulk import, workflow trigger), surface it as an additional route on the same entity's endpoint group rather than inventing a parallel controller.
 
 **Route convention.** Stateful actions on a single aggregate go under the entity route as `POST /{entities}/{id:guid}/{action-name}` (kebab-case action segment). Cross-entity queries that don't bind to a single id go under `POST /{entities}/search/{aggregate-name}` so search-style POST semantics carry through.
 

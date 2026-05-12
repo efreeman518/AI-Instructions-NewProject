@@ -69,7 +69,7 @@ Flags:
 
 After install:
 
-- [ ] Decide the shared base-type strategy (`packageStrategy` in `resource-implementation.yaml`):
+- [ ] Decide the shared base-type strategy (`packageStrategy` in `.scaffold/resource-implementation.yaml`):
   - `feed` — consume `<packagePrefix>.*` from a private NuGet feed. Configure with `python .instructions/scripts/configure-ef-packages-feed.py --root . --feed-url https://nuget.pkg.github.com/{owner}/index.json --username {github-user} --prefix {packagePrefix}`.
   - `local` — no private feed. Phase 4 generates `src/Packages/<packagePrefix>.*` packable projects you can publish later.
   - `hybrid` — feed plus a `localPackageLayers` list for any gaps. Run the helper above for feed access; locally-generated projects use the same prefix.
@@ -90,20 +90,20 @@ The goal is not to replace engineering judgment but to compress the multi day/we
 
 Phase 1 also creates durable collaboration artifacts before code planning starts:
 
-- `UBIQUITOUS-LANGUAGE.md` records accepted domain terms, rejected synonyms, states, commands/actions, roles, events, policies, and naming guidance so later AI sessions use consistent expressions.
-- `DESIGN-DECISIONS.md` records design choices and dependencies between decisions, so downstream resource and code choices do not silently contradict earlier domain answers.
+- `.scaffold/UBIQUITOUS-LANGUAGE.md` records accepted domain terms, rejected synonyms, states, commands/actions, roles, events, policies, and naming guidance so later AI sessions use consistent expressions.
+- `.scaffold/DESIGN-DECISIONS.md` records design choices and dependencies between decisions, so downstream resource and code choices do not silently contradict earlier domain answers.
 
 ### Phase-1 Artifact Lifecycle
 
-`domain-specification.yaml`, `UBIQUITOUS-LANGUAGE.md`, and `DESIGN-DECISIONS.md` are **living source of truth**, not snapshots. Every phase consumes them, so they must stay current as the project evolves — otherwise later AI sessions reason from a stale model and naming/decision drift creeps in.
+`.scaffold/domain-specification.yaml`, `.scaffold/UBIQUITOUS-LANGUAGE.md`, and `.scaffold/DESIGN-DECISIONS.md` are **living source of truth**, not snapshots. Every phase consumes them, so they must stay current as the project evolves — otherwise later AI sessions reason from a stale model and naming/decision drift creeps in.
 
 **When to update each:**
 
-- **New entity, term, role, event, or domain action** → append the term to `UBIQUITOUS-LANGUAGE.md` and update the relevant section of `domain-specification.yaml` (entity, customAction, event, etc.) before generating code. The `/vertical-slice` checklist enforces this as a pre-flight step.
-- **New design choice or revision of an earlier one** → append to `DESIGN-DECISIONS.md`. Do not silently rewrite earlier entries; mark the prior decision as superseded and link forward, so the dependency graph remains traceable.
-- **Schema or relationship change** → update `domain-specification.yaml` first, then propagate to EF configuration, repositories, DTOs, mappers, and tests in that order.
+- **New entity, term, role, event, or domain action** → append the term to `.scaffold/UBIQUITOUS-LANGUAGE.md` and update the relevant section of `.scaffold/domain-specification.yaml` (entity, customAction, event, etc.) before generating code. The `/vertical-slice` checklist enforces this as a pre-flight step.
+- **New design choice or revision of an earlier one** → append to `.scaffold/DESIGN-DECISIONS.md`. Do not silently rewrite earlier entries; mark the prior decision as superseded and link forward, so the dependency graph remains traceable.
+- **Schema or relationship change** → update `.scaffold/domain-specification.yaml` first, then propagate to EF configuration, repositories, DTOs, mappers, and tests in that order.
 
-**Drift signal.** If `UBIQUITOUS-LANGUAGE.md` and code identifiers diverge, the doc is wrong, not the code (per [support/final-scaffold-checklist.md](support/final-scaffold-checklist.md) language-failure rule). Update the doc to match accepted reality before changing code names. The same applies to `DESIGN-DECISIONS.md` — if the implemented architecture has moved past a recorded decision, supersede the entry rather than leaving the doc to contradict the code.
+**Drift signal.** If `.scaffold/UBIQUITOUS-LANGUAGE.md` and code identifiers diverge, the doc is wrong, not the code (per [support/final-scaffold-checklist.md](support/final-scaffold-checklist.md) language-failure rule). Update the doc to match accepted reality before changing code names. The same applies to `.scaffold/DESIGN-DECISIONS.md` — if the implemented architecture has moved past a recorded decision, supersede the entry rather than leaving the doc to contradict the code.
 
 **Mid-scaffold corrections.** When a domain misunderstanding surfaces mid-Phase-5 (entity purpose wrong, term mismatched, decision violated), [support/OPERATIONS.md](support/OPERATIONS.md) is the canonical recovery path: clarify with the user, update the Phase-1 artifacts, then re-scaffold the affected slice.
 
@@ -115,9 +115,9 @@ Each phase runs in its own AI session and produces artifacts the next phase cons
 
 | Phase | Purpose | Output |
 |---|---|---|
-| **1 — Domain Discovery** | Structured interview to reach shared understanding, define ubiquitous language, resolve decision dependencies, and capture entities, relationships, events, workflows, and business rules in pure business language — no implementation details. | `domain-specification.yaml`, `UBIQUITOUS-LANGUAGE.md`, `DESIGN-DECISIONS.md` |
-| **2 — Resource Definition** | Map each resource requirement to concrete technology choices — data stores, messaging, AI capabilities, hosting models. | `resource-implementation.yaml` |
-| **3 — Implementation Planning** | Resolve open questions, verify tooling (NuGet feeds, CLIs), discover project-specific CLIs and MCP servers, and produce a sequenced build plan. | `implementation-plan.md` |
+| **1 — Domain Discovery** | Structured interview to reach shared understanding, define ubiquitous language, resolve decision dependencies, and capture entities, relationships, events, workflows, and business rules in pure business language — no implementation details. | `.scaffold/domain-specification.yaml`, `.scaffold/UBIQUITOUS-LANGUAGE.md`, `.scaffold/DESIGN-DECISIONS.md` |
+| **2 — Resource Definition** | Map each resource requirement to concrete technology choices — data stores, messaging, AI capabilities, hosting models. | `.scaffold/resource-implementation.yaml` |
+| **3 — Implementation Planning** | Resolve open questions, verify tooling (NuGet feeds, CLIs), discover project-specific CLIs and MCP servers, and produce a sequenced build plan. | `.scaffold/implementation-plan.md` |
 | **4 — Contract Scaffolding** | Generate solution structure, interfaces, DTOs, entity shells, test infrastructure, and no-op DI stubs. Gate: `dotnet build` succeeds on the full solution. | Compilable skeleton |
 | **5 — Implementation (TDD)** | Build vertical slices entity-by-entity across sub-phases 5a–5e (Foundation, App Core + Runtime, Optional Hosts, Quality + Delivery, Integration). Phase 5a uses test-driven development (write tests first → red → implement → green); 5b is mixed (TDD for app/API, tests-after for runtime); 5c–5e are tests-after. | Production code + passing tests |
 
@@ -174,7 +174,7 @@ Version policy: prefer latest stable packages and SDKs.
 
 ### Shared Base-Type Packaging
 
-Phase 2 resolves how shared base-type contracts (entity bases, repository bases, request context, results, paged response, specifications, messaging interfaces) are sourced. Three modes live in `resource-implementation.yaml` under `packageStrategy`:
+Phase 2 resolves how shared base-type contracts (entity bases, repository bases, request context, results, paged response, specifications, messaging interfaces) are sourced. Three modes live in `.scaffold/resource-implementation.yaml` under `packageStrategy`:
 
 - **`feed`** — pre-built NuGet packages consumed from `customNugetFeeds` (e.g., the canonical `EF.*` example on GitHub Packages). Requires feed read access.
 - **`local`** — no private feed. Phase 4 generates one packable project per layer in `localPackageLayers` under `src/Packages/<packagePrefix>.<Layer>`. The solution consumes them via `<ProjectReference>`. Publish later with `dotnet pack` and migrate to `feed` when ready.
@@ -272,7 +272,7 @@ Optional additions: Git, Docker (`docker` CLI preferred), Memory, web-search MCP
 
 ### Tooling discovery
 
-Phase 3 analyzes `resource-implementation.yaml` technology choices and actively researches available CLIs and MCP servers for the project's specific libraries and services. Results are recorded in the implementation plan's **Tooling & Environment Readiness** section and verified at the start of each subsequent phase.
+Phase 3 analyzes `.scaffold/resource-implementation.yaml` technology choices and actively researches available CLIs and MCP servers for the project's specific libraries and services. Results are recorded in the implementation plan's **Tooling & Environment Readiness** section and verified at the start of each subsequent phase.
 
 **CLI → MCP → online resources:** Prefer CLI tools first (lowest token cost), then MCP servers for interactive exploration, then documentation URLs and GitHub repos the AI can fetch during implementation.
 
@@ -290,7 +290,7 @@ A short map of the repo so you know which directory owns what kind of content. U
 | `templates/` | Code-shape templates for generated artifacts (entity, EF config, repository, service, endpoint, tests) | Per-sub-phase, paired with the matching skill |
 | `patterns/` | Cross-project wiring (data layer, API host, infrastructure, expected output) | On-demand; index in `ai/SKILL.md` § Non-Negotiables |
 | `support/` | Operator-facing detail: execution gates, operations protocols, troubleshooting, HANDOFF template, MVS, golden path, prompt catalog, reference-app proof map | On failure, on session boundary, or on need |
-| `schemas/` | JSON Schemas for `domain-specification.yaml` and `resource-implementation.yaml` | Phase 1/2 validation |
+| `schemas/` | JSON Schemas for `.scaffold/domain-specification.yaml` and `.scaffold/resource-implementation.yaml` | Phase 1/2 validation |
 | `scripts/` | Author + operator tooling: install-to-project, configure-ef-packages-feed, validate-instructions | One-off |
 
 Rule of thumb when adding new content: it goes in `skills/` if it's "how to do X", in `templates/` if it's "the shape of the file you generate", in `patterns/` if it's "how multiple projects wire together", in `support/` if it's operator-facing, and in `ai/` only if it's phase orchestration the AI needs at session start.
@@ -303,7 +303,7 @@ Rule of thumb when adding new content: it goes in `skills/` if it's "how to do X
 | Production-ready with optional hosts | `scaffoldMode: full` |
 | Smallest viable scaffold (single API, defaults to all optional hosts off) | `scaffoldMode: api-only` |
 
-`scaffoldMode` drives load-set sizing per Phase 5 sub-phase; the optional-host toggles (`includeGateway`, `includeUnoUI`, `includeScheduler`, etc.) are independent flags in `resource-implementation.yaml` and can be enabled in any mode. `api-only` simply biases the defaults toward "off".
+`scaffoldMode` drives load-set sizing per Phase 5 sub-phase; the optional-host toggles (`includeGateway`, `includeUnoUI`, `includeScheduler`, etc.) are independent flags in `.scaffold/resource-implementation.yaml` and can be enabled in any mode. `api-only` simply biases the defaults toward "off".
 
 Defaults: [ai/resource-implementation-schema.md](ai/resource-implementation-schema.md) **Canonical Defaults**. Load-set sizing: [ai/SKILL.md](ai/SKILL.md) § Load-Set Sizing.
 

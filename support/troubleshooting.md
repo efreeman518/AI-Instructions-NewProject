@@ -10,7 +10,7 @@ This file is intentionally lightweight. Use it to decide **what the AI should do
 
 AI agents generate code. Engineers own environment and runtime setup.
 
-> All code generation and fixes apply to the **new project** only. If an error points to a `patterns/` file (see `ai/SKILL.md` § Non-Negotiables for the index), document the issue in `INSTRUCTION-GAPS.md` (in a consumer app) or `support/UPDATE-INSTRUCTIONS.md` (in this repo).
+> All code generation and fixes apply to the **new project** only. If an error points to a `patterns/` file (see `ai/SKILL.md` § Non-Negotiables for the index), document the issue in `.scaffold/INSTRUCTION-GAPS.md` (in a consumer app) or `support/UPDATE-INSTRUCTIONS.md` (in this repo).
 
 When an error appears:
 1. Classify it (code-generation vs infrastructure/tooling)
@@ -155,7 +155,7 @@ var functions = builder.AddProject<Projects.TaskFlow_Functions>("functions")
 
 Without the explicit `connectionName`, the Functions project falls back to `appsettings.json` (which may reference LocalDB or a non-existent server).
 4. **Avoid CREATE-on-every-restart patterns.** When using `GenerateCreateScript()` + batch execution to bootstrap third-party schemas, gate it behind an existence check (see [data-persistence-advanced.md](data-persistence-advanced.md) → Third-Party Operational Store Schemas). Running CREATE statements against existing tables produces `fail:` EF log spam on every restart with persistent data volumes.
-5. **Record the schema ownership model** in `HANDOFF.md` and `resource-implementation.yaml` so future sessions do not re-diagnose the same issue.
+5. **Record the schema ownership model** in `HANDOFF.md` and `.scaffold/resource-implementation.yaml` so future sessions do not re-diagnose the same issue.
 
 ---
 

@@ -2,7 +2,7 @@
 
 The scaffolded project depends on a set of shared base-type contracts (entity bases, repository bases, request context, results, paged response, specifications, messaging interfaces, etc.). The tables below describe those contracts and apply equally to every `packageStrategy`.
 
-How those contracts are delivered depends on `packageStrategy` in `resource-implementation.yaml`:
+How those contracts are delivered depends on `packageStrategy` in `.scaffold/resource-implementation.yaml`:
 
 | `packageStrategy` | Delivery |
 |---|---|

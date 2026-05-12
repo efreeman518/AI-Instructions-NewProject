@@ -24,7 +24,7 @@ You are executing the phased scaffolding workflow. Follow these steps exactly:
 - Conflict precedence: see `.instructions/ai/SKILL.md` § Non-Negotiables (canonical).
 - Checkpoint after 15+ generated files or 3+ build/fix cycles — update `HANDOFF.md` (project root).
 - After each phase gate passes, update `HANDOFF.md` and stop.
-- Record instruction gaps in `INSTRUCTION-GAPS.md` at the project root, do not modify instruction files.
+- Record instruction gaps in `.scaffold/INSTRUCTION-GAPS.md` (create `.scaffold/` at project root if absent). Do not modify instruction files.
 - Session model and load rules: see `.instructions/START-AI.md` § Session Model. TaskFlow rules: see `.instructions/support/reference-app.md`, plus `.instructions/ai/SKILL.md` Non-Negotiables.
 
 ## Phases

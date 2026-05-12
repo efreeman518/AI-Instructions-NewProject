@@ -1,6 +1,6 @@
 # TaskFlow Ubiquitous Language Sample
 
-Use this sample only as a reference for the shape and specificity expected from `UBIQUITOUS-LANGUAGE.md`. Do not copy TaskFlow terms into another domain unless the target business uses the same language.
+Use this sample only as a reference for the shape and specificity expected from `.scaffold/UBIQUITOUS-LANGUAGE.md`. Do not copy TaskFlow terms into another domain unless the target business uses the same language.
 
 Reference app local path: `C:\Users\EbenFreeman\source\repos\AI-Instructions-ReferenceApp`
 

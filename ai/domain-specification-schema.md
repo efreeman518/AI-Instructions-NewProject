@@ -2,16 +2,16 @@
 
 Pure business domain model — no implementation details, no datatypes, no databases.
 
-**JSON Schema:** [`schemas/domain-specification.schema.json`](../schemas/domain-specification.schema.json) — use for programmatic validation of `domain-specification.yaml`.
+**JSON Schema:** [`schemas/domain-specification.schema.json`](../schemas/domain-specification.schema.json) — use for programmatic validation of `.scaffold/domain-specification.yaml`.
 
 ## Output Contract
 
-Write Phase 1 output to `domain-specification.yaml` in the target project root. Do not write project artifacts under `.instructions/`; that directory is the installed runtime instruction payload.
+Write Phase 1 output to `.scaffold/domain-specification.yaml` in the target project (create the `.scaffold/` directory at project root if absent). Do not write project artifacts under `.instructions/`; that directory is the installed runtime instruction payload.
 
 Phase 1 also writes:
 
-- `UBIQUITOUS-LANGUAGE.md` — shared domain vocabulary for future AI/developer sessions.
-- `DESIGN-DECISIONS.md` — decision log and dependency graph for design choices.
+- `.scaffold/UBIQUITOUS-LANGUAGE.md` — shared domain vocabulary for future AI/developer sessions.
+- `.scaffold/DESIGN-DECISIONS.md` — decision log and dependency graph for design choices.
 
 Run the shared understanding interview before finalizing this YAML. See [shared-understanding-interview.md](shared-understanding-interview.md).
 
@@ -351,5 +351,5 @@ Before moving to Phase 2 (Resource Definition), verify all of the following:
 - [ ] `ProjectName` is set and valid (PascalCase, no spaces)
 - [ ] At least one entity is defined
 - [ ] If `aiCapabilities` is defined: every referenced entity exists, every `agentWorkflows` entry references defined entities, and `searchableFields` reference defined properties
-- [ ] `UBIQUITOUS-LANGUAGE.md` contains every entity, state, event, command/action, role, policy, and value object name from this file
-- [ ] `DESIGN-DECISIONS.md` records non-obvious choices and marks each blocking Phase 2 decision `confirmed`, `defaulted`, or `deferred`
+- [ ] `.scaffold/UBIQUITOUS-LANGUAGE.md` contains every entity, state, event, command/action, role, policy, and value object name from this file
+- [ ] `.scaffold/DESIGN-DECISIONS.md` records non-obvious choices and marks each blocking Phase 2 decision `confirmed`, `defaulted`, or `deferred`

@@ -181,11 +181,17 @@ Official docs: [chopratejas/headroom](https://github.com/chopratejas/headroom)
 Python install:
 
 ```bash
-python -m pip install "headroom-ai[all]"
+python -m pip install "headroom-ai[proxy]"
 headroom --help
 ```
 
-Windows note: if Python lives under a corporate, OneDrive-managed, or sandboxed profile, prefer a dedicated venv at `%USERPROFILE%\.headroom\venv` instead of `pip install --user`. See [Windows Troubleshooting](#windows-troubleshooting).
+Use `headroom-ai[all]` only when the extra ML/memory dependencies are needed and
+the machine has the build toolchain required by packages without wheels.
+
+Windows note: if Python lives under a corporate, OneDrive-managed, or sandboxed
+profile, prefer a stable user shim plus a Headroom-owned runtime under
+`%USERPROFILE%\.headroom\runtime` instead of `pip install --user` or direct
+shortcuts to a Python install folder. See [Windows Troubleshooting](#windows-troubleshooting).
 
 Node install, for TypeScript/Node apps:
 
@@ -288,20 +294,17 @@ headroom install apply --preset persistent-service --runtime python --scope user
 
 ## Windows Desktop Link For Manual Proxy Run
 
-Create a desktop shortcut that starts the proxy in a PowerShell window:
+Create a desktop shortcut that starts the proxy through the user-level launcher:
 
 ```powershell
 $desktop = [Environment]::GetFolderPath("Desktop")
-$target = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
-$args = "-NoExit -Command headroom proxy --port 8787 --no-telemetry"
 $shortcut = (New-Object -ComObject WScript.Shell).CreateShortcut("$desktop\Headroom Proxy.lnk")
-$shortcut.TargetPath = $target
-$shortcut.Arguments = $args
+$shortcut.TargetPath = "$env:USERPROFILE\.headroom\run-proxy.cmd"
 $shortcut.WorkingDirectory = $env:USERPROFILE
 $shortcut.Save()
 ```
 
-Use `--no-optimize` in the shortcut arguments when you want pass-through mode.
+Put `--no-optimize` in `run-proxy.cmd` when you want pass-through mode.
 
 ## Windows Troubleshooting
 
@@ -309,19 +312,107 @@ These notes come from a real Windows 11 install with Python 3.14 and a OneDrive-
 
 ### Recommended Windows Bring-Up
 
-Use a venv outside AppData, install proxy runtime dependencies explicitly, and route clients through the proxy with durable user environment variables:
+Use a stable user command shim, a Headroom-owned runtime, and durable routing
+environment variables. This survives Python path moves better than a shortcut
+that points directly at `C:\Python[latest]\Scripts\headroom.exe` or an old venv
+console script.
 
 ```powershell
-# 1. Build a venv outside AppData.
-& "$env:LOCALAPPDATA\Programs\Python\Python314\python.exe" -m venv "$env:USERPROFILE\.headroom\venv"
+# 1. Ensure a stable user PATH directory exists.
+New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.local\bin", "$env:USERPROFILE\.headroom" | Out-Null
+$userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+if (($userPath -split ";") -notcontains "$env:USERPROFILE\.local\bin") {
+  [Environment]::SetEnvironmentVariable("Path", "$env:USERPROFILE\.local\bin;$userPath", "User")
+}
 
-# 2. Install binary wheels only. Avoid source builds and [all] ML extras.
-& "$env:USERPROFILE\.headroom\venv\Scripts\python.exe" -m pip install --only-binary=:all: `
-    headroom-ai fastapi "uvicorn[standard]" "httpx[http2]" h2
+# 2. Store the package target outside the runtime so it can be changed later.
+# Use the latest binary-compatible spec for the current Python. If latest
+# source-builds and MSVC is not installed, pin the newest version with wheels.
+Set-Content -LiteralPath "$env:USERPROFILE\.headroom\package-spec.txt" `
+  -Encoding ASCII `
+  -Value "headroom-ai[proxy]==[known-binary-version]"
 
-# 3. Route AI clients through Headroom. Restart agents after setx.
+# 3. Create a stable command shim. It delegates to a PowerShell bootstrap that
+# owns the runtime and can rebuild it after Python upgrades.
+Set-Content -LiteralPath "$env:USERPROFILE\.local\bin\headroom.cmd" -Encoding ASCII -Value @'
+@echo off
+setlocal
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%USERPROFILE%\.headroom\headroom-shim.ps1" %*
+exit /b %ERRORLEVEL%
+'@
+
+# 4. Route AI clients through Headroom. Restart agents after setx.
 setx ANTHROPIC_BASE_URL "http://127.0.0.1:8787"
 setx OPENAI_BASE_URL    "http://127.0.0.1:8787/v1"
+```
+
+Create `%USERPROFILE%\.headroom\headroom-shim.ps1`. This compact shim rebuilds
+the runtime when the old base Python disappears, and handles hook startup
+without hanging the agent:
+
+```powershell
+param([Parameter(ValueFromRemainingArguments = $true)][string[]] $HeadroomArgs)
+$ErrorActionPreference = "Stop"
+
+$root = Join-Path $env:USERPROFILE ".headroom"
+$runtime = Join-Path $root "runtime"
+$runtimePython = Join-Path $runtime "Scripts\python.exe"
+$runtimeHeadroom = Join-Path $runtime "Scripts\headroom.exe"
+$packageSpecPath = Join-Path $root "package-spec.txt"
+
+function Resolve-BasePython {
+  $candidates = @(
+    @{ File = "py"; Args = @("-3") },
+    @{ File = "python"; Args = @() }
+  )
+  foreach ($candidate in $candidates) {
+    try {
+      $args = @($candidate.Args) + @("-c", "import sys; print(sys.executable)")
+      $out = & $candidate.File @args 2>$null
+      if ($LASTEXITCODE -eq 0 -and $out -and (Test-Path -LiteralPath $out[-1])) { return $out[-1] }
+    } catch { }
+  }
+  throw "No runnable Python found via py -3 or python."
+}
+
+function Reset-HeadroomRuntime {
+  $basePython = Resolve-BasePython
+  if (Test-Path -LiteralPath $runtime) { Remove-Item -LiteralPath $runtime -Recurse -Force }
+  & $basePython -m venv $runtime
+  & $runtimePython -m pip install --upgrade pip
+  $spec = (Get-Content -LiteralPath $packageSpecPath -Raw).Trim()
+  & $runtimePython -m pip install --upgrade --only-binary=:all: $spec
+}
+
+function Test-HeadroomRuntime {
+  if (-not (Test-Path -LiteralPath $runtimeHeadroom)) { return $false }
+  & $runtimeHeadroom --version *> $null
+  return ($LASTEXITCODE -eq 0)
+}
+
+function Test-ProxyReady {
+  try {
+    $r = Invoke-WebRequest -Uri "http://127.0.0.1:8787/readyz" -UseBasicParsing -TimeoutSec 2
+    return ($r.StatusCode -ge 200 -and $r.StatusCode -lt 300)
+  } catch { return $false }
+}
+
+if ($HeadroomArgs.Count -ge 2 -and $HeadroomArgs[0] -eq "shim" -and $HeadroomArgs[1] -eq "reset") {
+  Reset-HeadroomRuntime
+  exit 0
+}
+
+if (-not (Test-HeadroomRuntime)) { Reset-HeadroomRuntime }
+
+if ($HeadroomArgs.Count -ge 3 -and $HeadroomArgs[0] -eq "init" -and $HeadroomArgs[1] -eq "hook" -and $HeadroomArgs[2] -eq "ensure") {
+  if (-not (Test-ProxyReady)) {
+    Start-Process -FilePath (Join-Path $root "run-proxy.cmd") -WorkingDirectory $env:USERPROFILE -WindowStyle Hidden
+  }
+  exit 0
+}
+
+& $runtimeHeadroom @HeadroomArgs
+exit $LASTEXITCODE
 ```
 
 Create `%USERPROFILE%\.headroom\run-proxy.cmd`:
@@ -333,7 +424,7 @@ set HEADROOM_TELEMETRY=off
 set HEADROOM_REQUIRE_RUST_CORE=false
 echo === Headroom Proxy launching at %date% %time% ===
 echo.
-"%USERPROFILE%\.headroom\venv\Scripts\headroom.exe" proxy --port 8787 --host 127.0.0.1 --no-telemetry
+call "%USERPROFILE%\.local\bin\headroom.cmd" proxy --port 8787 --host 127.0.0.1 --no-telemetry
 set EXITCODE=%errorlevel%
 echo.
 echo === Headroom Proxy exited (exit code %EXITCODE%) ===
@@ -355,17 +446,18 @@ foreach ($dir in @([Environment]::GetFolderPath("Desktop"),
 }
 ```
 
-A simpler shortcut such as `powershell -NoExit -Command headroom proxy --port 8787 --no-telemetry` can work when `headroom.exe` resolves reliably from `PATH`. Prefer the `run-proxy.cmd` + venv `headroom.exe` form when diagnosing Explorer/PATH issues or Python install ambiguity.
+A simpler shortcut such as `powershell -NoExit -Command headroom proxy --port 8787 --no-telemetry` can work when `headroom.exe` resolves reliably from `PATH`. Prefer the `run-proxy.cmd` + user shim form when diagnosing Explorer/PATH issues, Python install ambiguity, or Python upgrades.
 
 ### Windows Failure Modes
 
-- `pip install --user headroom-ai` succeeds, but `ModuleNotFoundError: No module named 'headroom'` appears from another shell. Cause: AppData/user-site redirection or sandboxing. Fix: use `%USERPROFILE%\.headroom\venv`; verify with `python -c "import sys, site; print(site.getusersitepackages()); [print(p) for p in sys.path]"`.
-- Python 3.14 may lack a prebuilt `headroom._core` Rust wheel. Fix: set `HEADROOM_REQUIRE_RUST_CORE=false` for degraded pure-Python mode, or build the venv with Python 3.13 for full Rust-core support.
-- `pip install "headroom-ai[all]"` fails with MSVC errors. Cause: ML extras such as `hnswlib` and `py-rust-stemmers` may build from source. Fix: skip `[all]` and use `--only-binary=:all:` with `headroom-ai fastapi "uvicorn[standard]" "httpx[http2]" h2`.
-- Proxy exits with missing `fastapi`, `h2`, or HTTP/2 dependency errors. Fix: install the explicit runtime dependencies above; base `headroom-ai` does not always pull proxy extras.
+- `pip install --user headroom-ai` succeeds, but `ModuleNotFoundError: No module named 'headroom'` appears from another shell. Cause: AppData/user-site redirection or sandboxing. Fix: use a Headroom-owned runtime under `%USERPROFILE%\.headroom\runtime`; verify with `headroom --version` from a fresh shell.
+- Python 3.14 may lack a prebuilt `headroom._core` Rust wheel. Fix: set `HEADROOM_REQUIRE_RUST_CORE=false` for degraded pure-Python mode, or use a Python version with compatible wheels for full Rust-core support.
+- `pip install "headroom-ai[all]"` or latest `headroom-ai[proxy]` fails with MSVC `link.exe` errors. Cause: the selected version or extras may build Rust/native packages from source. Fix: install Visual Studio Build Tools with C++ support, or pin `package-spec.txt` to the newest Headroom version with Windows wheels for the current Python and run `headroom shim reset`.
+- Proxy exits with missing `fastapi`, `h2`, or HTTP/2 dependency errors. Fix: use `headroom-ai[proxy]`; base `headroom-ai` may not pull proxy extras.
 - `headroom install apply` fails with `[SC] OpenSCManager FAILED 5` or `schtasks ... Access is denied`. Cause: Windows service/task presets need admin rights. Fix: use a Startup folder `.lnk` pointing at `run-proxy.cmd`.
-- `python -m headroom` fails with `No module named headroom.__main__`. Fix: call the venv console script: `%USERPROFILE%\.headroom\venv\Scripts\headroom.exe`.
-- Global or AppData `headroom.exe` works in one shell but fails from Explorer with `The system cannot find the path specified`. Fix: call the venv `headroom.exe`; venv shims hardcode the venv Python.
+- `python -m headroom` fails with `No module named headroom.__main__`. Fix: call `headroom` through `%USERPROFILE%\.local\bin\headroom.cmd`; do not call the package as a module.
+- Global or AppData `headroom.exe` works in one shell but fails from Explorer with `The system cannot find the path specified`. Cause: console scripts or venv launchers hardcode the old Python path. Fix: keep only `%USERPROFILE%\.local\bin\headroom.cmd` on user PATH and let the shim rebuild `%USERPROFILE%\.headroom\runtime`.
+- `headroom init hook ensure` starts a foreground process and hangs the agent when the proxy is down. Fix: handle hook ensure in the user shim by starting `run-proxy.cmd` hidden and returning quickly after a `/readyz` probe.
 - A hidden launcher window flashes and disappears. Fix: keep `cmd` visible and use `pause >nul` on exit so crash output stays readable.
 - Port `8787` is already in use. Diagnose and stop the stale listener:
 
@@ -396,7 +488,7 @@ Invoke-RestMethod http://127.0.0.1:8787/stats
 
 Expected results:
 
-- Exactly one listener on port `8787`, owned by the venv Python.
+- Exactly one listener on port `8787`, owned by the Headroom runtime Python.
 - `/livez` reports alive.
 - `/readyz` reports ready.
 - `/health` may show `rust_core` disabled on Python 3.14; that is acceptable when `HEADROOM_REQUIRE_RUST_CORE=false`.

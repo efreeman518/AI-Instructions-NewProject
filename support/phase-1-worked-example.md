@@ -26,7 +26,7 @@ Working name TaskFlow (override anytime). I'll walk the standard Phase 1 branche
 Purpose → Actors → Language → Entities → Relationships → Lifecycle → Rules →
 Events/Workflows → Data → Security → Interfaces → Delivery. After each branch I'll
 give a recap and ask you to confirm or correct it. Final outputs are
-domain-specification.yaml, UBIQUITOUS-LANGUAGE.md, and DESIGN-DECISIONS.md.
+.scaffold/domain-specification.yaml, .scaffold/UBIQUITOUS-LANGUAGE.md, and .scaffold/DESIGN-DECISIONS.md.
 ```
 
 ---
@@ -49,7 +49,7 @@ DEV
 - TenantAdmin can cancel anyone's work-in-progress; TenantMember can only cancel their own. GlobalAdmin reopens completed/cancelled.
 ```
 
-The AI now records terms it just learned. **Watch this:** every accepted term goes into `UBIQUITOUS-LANGUAGE.md` immediately, not at the end.
+The AI now records terms it just learned. **Watch this:** every accepted term goes into `.scaffold/UBIQUITOUS-LANGUAGE.md` immediately, not at the end.
 
 ```text
 AI [Branch recap]
@@ -176,9 +176,9 @@ The lesson: the AI doesn't quietly accept an answer that contradicts an earlier 
 
 After all twelve branches, the YAML and the two markdown docs are written. See the full files in the reference app:
 
-- [TaskFlow `domain-specification.yaml`](https://github.com/efreeman518/AI-Instructions-ReferenceApp/blob/main/domain-specification.yaml)
-- [TaskFlow `UBIQUITOUS-LANGUAGE.md`](https://github.com/efreeman518/AI-Instructions-ReferenceApp/blob/main/UBIQUITOUS-LANGUAGE.md)
-- [TaskFlow `DESIGN-DECISIONS.md`](https://github.com/efreeman518/AI-Instructions-ReferenceApp/blob/main/DESIGN-DECISIONS.md)
+- [TaskFlow `.scaffold/domain-specification.yaml`](https://github.com/efreeman518/AI-Instructions-ReferenceApp/blob/main/.scaffold/domain-specification.yaml)
+- [TaskFlow `.scaffold/UBIQUITOUS-LANGUAGE.md`](https://github.com/efreeman518/AI-Instructions-ReferenceApp/blob/main/.scaffold/UBIQUITOUS-LANGUAGE.md)
+- [TaskFlow `.scaffold/DESIGN-DECISIONS.md`](https://github.com/efreeman518/AI-Instructions-ReferenceApp/blob/main/.scaffold/DESIGN-DECISIONS.md)
 
 Trimmed YAML fragment showing how the conversation lands as schema:
 

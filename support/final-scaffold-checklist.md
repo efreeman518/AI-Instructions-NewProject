@@ -67,10 +67,10 @@ Use `curl`, HTTPie, REST Client, or Scalar. Record status codes and endpoint dis
 - [ ] `dotnet restore`, `dotnet build`, and `dotnet test` pass. The full `dotnet test` (no filter) is green — every category the scaffold produces is either passing or `Assert.Inconclusive` / `[Ignore]` with a recorded reason. No test assembly aborts in `[AssemblyInitialize]`.
 - [ ] Every test that is `[Ignore]`'d or marked `Assert.Inconclusive` for a deferred external dep is named in `HANDOFF.md` § Scaffold Acceptance with the unblocking step.
 - [ ] All `EF.*` packages resolve from the configured private feed (`dotnet restore` succeeded with `NUGET_AUTH_TOKEN` set).
-- [ ] `UBIQUITOUS-LANGUAGE.md` and `DESIGN-DECISIONS.md` still match the generated entity, service, and endpoint names.
+- [ ] `.scaffold/UBIQUITOUS-LANGUAGE.md` and `.scaffold/DESIGN-DECISIONS.md` still match the generated entity, service, and endpoint names.
 - [ ] Generated solution shape matches `skills/solution-structure.md` (no missing project, no orphan no-op stub).
 - [ ] `HANDOFF.md` resume state is current: `currentPhase`, `currentSubPhase`, gate result, blockers, next load set.
-- [ ] `implementation-plan.md` open questions resolved or explicitly deferred with TODO.
+- [ ] `.scaffold/implementation-plan.md` open questions resolved or explicitly deferred with TODO.
 - [ ] Every enabled host has a recorded status in `HANDOFF.md`: `validated`, `partially-validated`, or `blocked` with reason.
 - [ ] At least one entity CRUD/search smoke cycle succeeds.
 - [ ] Health endpoint returns 200.
@@ -85,6 +85,13 @@ Use `curl`, HTTPie, REST Client, or Scalar. Record status codes and endpoint dis
 - [ ] No `<packagePrefix>.*` shared base type is reimplemented in application/domain/host layers — they live in feed packages or `src/Packages/<packagePrefix>.*` projects only, per `packageStrategy`.
 - [ ] **One public type per file** across all generated `.cs` files in `src/` (including `src/Packages/<Prefix>.*`). File name matches the type. Lumped files (multiple top-level public/internal types) are a failure unless they fall under the exception list in [../skills/solution-structure.md](../skills/solution-structure.md) § Non-Negotiables.
 - [ ] Deployment-only dependencies are recorded as non-blocking residuals.
+- [ ] **Project root is clean.** Only the following files/dirs are expected at the project root after scaffold completion:
+  - **Markdown:** `README.md`, `AGENTS.md`, `CLAUDE.md`, `HANDOFF.md`
+  - **.NET config:** `global.json`, `nuget.config`, `dotnet-tools.json`, `Directory.Packages.props`, `Directory.Build.props`, `*.slnx`
+  - **Ignore files:** `.gitignore`, `.dockerignore`, `.editorconfig`, `.gitattributes`
+  - **Dirs:** `src/`, `infra/` (when IaC enabled), `docs/` (optional), `.azure/` (optional), `.github/`, `.instructions/`, `.scaffold/`, `.vscode/` (optional), `.claude/` (optional)
+  - All Phase 1/2/3 generated artifacts (`domain-specification.yaml`, `resource-implementation.yaml`, `UBIQUITOUS-LANGUAGE.md`, `DESIGN-DECISIONS.md`, `implementation-plan.md`, `INSTRUCTION-GAPS.md`) live under `.scaffold/`, not at root.
+  - Anything else at root (`FOLLOWUP-PLAN.md`, `*.log`, `*.tmp`, ad-hoc notes) is leakage — investigate before declaring the scaffold complete. `FOLLOWUP-PLAN.md` is not a recognized scaffold artifact; if present, ask the developer where it came from.
 
 ---
 
@@ -93,6 +100,6 @@ Use `curl`, HTTPie, REST Client, or Scalar. Record status codes and endpoint dis
 - Build/test failure: one focused fix pass, rerun the exact failing command.
 - Feed failure: fix `nuget.config`, `Directory.Packages.props`, or project package references before changing code.
 - Structure failure: generate the missing scaffold artifact instead of loosening the validator.
-- Language failure: update `UBIQUITOUS-LANGUAGE.md` or `DESIGN-DECISIONS.md` to match the accepted domain model before changing code names.
+- Language failure: update `.scaffold/UBIQUITOUS-LANGUAGE.md` or `.scaffold/DESIGN-DECISIONS.md` to match the accepted domain model before changing code names.
 - Host/runtime failure: record blocker in `HANDOFF.md`, continue only if the failed host is optional or dependency-only.
-- Instruction gap: append to root `INSTRUCTION-GAPS.md` in the generated app.
+- Instruction gap: append to `.scaffold/INSTRUCTION-GAPS.md` in the generated app.

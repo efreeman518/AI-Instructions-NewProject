@@ -1,6 +1,6 @@
 # Shared Understanding Interview (Phase 1)
 
-Use this file during Phase 1 before writing `domain-specification.yaml`.
+Use this file during Phase 1 before writing `.scaffold/domain-specification.yaml`.
 
 Goal: interview the developer until the AI and developer share the same domain model, vocabulary, and decision context. Do not rush to YAML. The YAML is only valid after the interview branches below are confirmed, defaulted, or explicitly deferred.
 
@@ -8,11 +8,11 @@ Goal: interview the developer until the AI and developer share the same domain m
 
 ## Output Artifacts
 
-Phase 1 produces all three files in the target project root:
+Phase 1 produces all three files under `.scaffold/` in the target project (create the directory at project root if absent):
 
-1. `domain-specification.yaml`
-2. `UBIQUITOUS-LANGUAGE.md`
-3. `DESIGN-DECISIONS.md`
+1. `.scaffold/domain-specification.yaml`
+2. `.scaffold/UBIQUITOUS-LANGUAGE.md`
+3. `.scaffold/DESIGN-DECISIONS.md`
 
 Use [../templates/ubiquitous-language-template.md](../templates/ubiquitous-language-template.md) and [../templates/design-decisions-template.md](../templates/design-decisions-template.md).
 
@@ -20,8 +20,8 @@ Use [../templates/ubiquitous-language-template.md](../templates/ubiquitous-langu
 
 - Ask questions in small batches. Prefer 3-7 related questions per branch.
 - After each branch, summarize the current understanding and ask the developer to correct it.
-- Track every non-obvious choice in `DESIGN-DECISIONS.md`.
-- Track every accepted domain term, rejected synonym, state, event, action, role, and policy term in `UBIQUITOUS-LANGUAGE.md`.
+- Track every non-obvious choice in `.scaffold/DESIGN-DECISIONS.md`.
+- Track every accepted domain term, rejected synonym, state, event, action, role, and policy term in `.scaffold/UBIQUITOUS-LANGUAGE.md`.
 - Resolve dependent decisions in order. Do not finalize a child decision when its parent decision is open.
 - Use canonical defaults only where the instruction set defines them. State the default and record it.
 - If a decision is not needed for current scaffold correctness, mark it `deferred` with the phase that must revisit it.
@@ -96,4 +96,4 @@ Before writing Phase 1 outputs, confirm:
 - [ ] No open decision blocks Phase 2 resource mapping.
 - [ ] Developer has reviewed the final recap.
 
-Only then write `domain-specification.yaml`, `UBIQUITOUS-LANGUAGE.md`, and `DESIGN-DECISIONS.md`.
+Only then write `.scaffold/domain-specification.yaml`, `.scaffold/UBIQUITOUS-LANGUAGE.md`, and `.scaffold/DESIGN-DECISIONS.md`.

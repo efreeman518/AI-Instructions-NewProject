@@ -8,15 +8,15 @@ This phase produces the compilable skeleton that enables TDD red/green cycles in
 
 ## Inputs
 
-- `domain-specification.yaml` (from Phase 1)
-- `UBIQUITOUS-LANGUAGE.md` (from Phase 1)
-- `DESIGN-DECISIONS.md` (from Phase 1)
-- `resource-implementation.yaml` (from Phase 2)
-- `implementation-plan.md` (from Phase 3)
+- `.scaffold/domain-specification.yaml` (from Phase 1)
+- `.scaffold/UBIQUITOUS-LANGUAGE.md` (from Phase 1)
+- `.scaffold/DESIGN-DECISIONS.md` (from Phase 1)
+- `.scaffold/resource-implementation.yaml` (from Phase 2)
+- `.scaffold/implementation-plan.md` (from Phase 3)
 
 ## Pre-Gate
 
-Before generating projects, verify shared base-type readiness for the configured `packageStrategy` (set in `resource-implementation.yaml`):
+Before generating projects, verify shared base-type readiness for the configured `packageStrategy` (set in `.scaffold/resource-implementation.yaml`):
 
 ```powershell
 dotnet restore
@@ -46,7 +46,7 @@ Follow `solution-structure.md` exactly:
 
 ### 2. Contracts (Per Entity)
 
-For each entity defined in `resource-implementation.yaml`:
+For each entity defined in `.scaffold/resource-implementation.yaml`:
 
 **Interfaces:**
 ```csharp
@@ -66,7 +66,7 @@ public interface I{Entity}Service
 // Application.Contracts/Repositories/I{Entity}RepositoryQuery.cs
 ```
 
-Derive interface signatures from the entity's properties, relationships, and operations in `resource-implementation.yaml`. Use shared base types from `<packagePrefix>.*` (`IRepositoryBase`, `SearchRequest<T>`, `PagedResponse<T>`, etc.) — sourced from `customNugetFeeds` packages or `src/Packages/<packagePrefix>.*` projects per `packageStrategy`.
+Derive interface signatures from the entity's properties, relationships, and operations in `.scaffold/resource-implementation.yaml`. Use shared base types from `<packagePrefix>.*` (`IRepositoryBase`, `SearchRequest<T>`, `PagedResponse<T>`, etc.) — sourced from `customNugetFeeds` packages or `src/Packages/<packagePrefix>.*` projects per `packageStrategy`.
 
 **DTOs:**
 ```csharp
@@ -247,7 +247,7 @@ public class {App}DbContextQuery : {App}DbContextTrxn
 
 ## Entity Ordering
 
-Generate entities in dependency order: parent entities first, then children. Use the relationship graph from `resource-implementation.yaml` to determine ordering. An entity with no parent dependencies is generated first.
+Generate entities in dependency order: parent entities first, then children. Use the relationship graph from `.scaffold/resource-implementation.yaml` to determine ordering. An entity with no parent dependencies is generated first.
 
 ---
 
@@ -272,7 +272,7 @@ Developer reviews the scaffolded shape against the verification checklist below.
    - `currentPhase: "5"`
    - `currentSubPhase: "5a"`
    - `contractsScaffolded: true`
-   - Record the entity ordering used and any deviations from `resource-implementation.yaml`.
+   - Record the entity ordering used and any deviations from `.scaffold/resource-implementation.yaml`.
 3. Close session.
 
 ---
@@ -293,7 +293,7 @@ Developer reviews the scaffolded shape against the verification checklist below.
 
 - [ ] `.slnx` exists and includes all projects
 - [ ] `dotnet build` succeeds from solution root
-- [ ] Every entity from `resource-implementation.yaml` has: interface, DTO, entity shell, builders
+- [ ] Every entity from `.scaffold/resource-implementation.yaml` has: interface, DTO, entity shell, builders
 - [ ] All no-op stubs satisfy their interfaces (no abstract/unimplemented methods)
 - [ ] Test.Support contains `UnitTestBase`, `InMemoryDbBuilder`, `DbSupport`, `Utility`, `TestConstants`, `JsonTestOptions`, `LocalSqlSettings`, `WebApplicationFactoryBase`
 - [ ] `Test.Endpoints/CustomApiFactory.cs` and `Test.E2E/SqlApiFactory.cs` derive from `WebApplicationFactoryBase<Program, {App}DbContextTrxn, {App}DbContextQuery>` (do not duplicate the swap-out logic)

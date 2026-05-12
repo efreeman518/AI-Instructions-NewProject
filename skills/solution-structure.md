@@ -107,6 +107,18 @@ src/Packages/**/obj/
 
 Also **remove the line `*.e2e`** from the stock template. It targets a legacy Visual Studio trace format this scaffold never produces, but it matches the `Test.E2E/` project directory case-insensitively on Windows and silently excludes the entire E2E test project from git.
 
+**Add ignore patterns for scaffold-session leakage:** Aspire's local launcher and other tooling occasionally drop transient log files at project root (e.g. `c..tmpaspire-run.log`). These are not scaffold artifacts and should never be committed. Append:
+
+```gitignore
+# Scaffold-session leakage (transient logs from local tooling)
+/c..tmpaspire-run.log
+/*.tmpaspire-run.log
+**/aspire-run.log
+*.tmp.log
+```
+
+Note: `.scaffold/` is a **tracked** directory — it holds the Phase 1/2/3 artifacts (`domain-specification.yaml`, `resource-implementation.yaml`, `UBIQUITOUS-LANGUAGE.md`, `DESIGN-DECISIONS.md`, `implementation-plan.md`) plus `INSTRUCTION-GAPS.md`. Do not add `.scaffold/` to `.gitignore`.
+
 Failure mode is **invisible locally** (files on disk, build green) and surfaces only on a fresh clone or CI runner. The execution-gates post-generation step runs a `git ls-files` check to catch the same class of bug for any future scaffold folder whose name collides with a stock ignore pattern — see [../support/execution-gates.md](../support/execution-gates.md) § Tracked-Source Validation.
 
 **`.editorconfig`** — pinned tab/space + `end_of_line = lf` (belt-and-suspenders with `.gitattributes`).
@@ -115,7 +127,7 @@ Failure mode is **invisible locally** (files on disk, build green) and surfaces 
 
 Note: Domain rules and specifications live in `Domain.Model/Rules/` (or `Domain.Model/Specifications/`). A separate `Domain.Rules` project is not required.
 
-Note: `src/Packages/` exists only when `packageStrategy` is `local` or `hybrid` (set in `resource-implementation.yaml`). Generate one packable project per entry in `localPackageLayers`, matching the layer set in [`../support/ef-packages-reference.md`](../support/ef-packages-reference.md). Each project sets `IsPackable=true` and `<PackageId>=<Prefix>.<Layer>` so it can later be published to a feed and consumed via `<PackageReference>` without restructuring. When `packageStrategy: feed`, omit the `Packages/` folder entirely — the contracts come from `customNugetFeeds`.
+Note: `src/Packages/` exists only when `packageStrategy` is `local` or `hybrid` (set in `.scaffold/resource-implementation.yaml`). Generate one packable project per entry in `localPackageLayers`, matching the layer set in [`../support/ef-packages-reference.md`](../support/ef-packages-reference.md). Each project sets `IsPackable=true` and `<PackageId>=<Prefix>.<Layer>` so it can later be published to a feed and consumed via `<PackageReference>` without restructuring. When `packageStrategy: feed`, omit the `Packages/` folder entirely — the contracts come from `customNugetFeeds`.
 
 ---
 

@@ -24,7 +24,7 @@ Run scaffold instructions only when the user explicitly asks to:
 1. If this file is installed in a target app repository, load `.instructions/START-AI.md`.
 2. If working in the instruction repository itself, load `START-AI.md`.
 3. Follow the phase router and one-phase-per-session rule.
-4. Record scaffold gaps in `INSTRUCTION-GAPS.md` at the target project root.
+4. Record scaffold gaps in `.scaffold/INSTRUCTION-GAPS.md` (create the `.scaffold/` directory at project root if absent).
 
 For normal coding, review, docs, or maintenance tasks, ignore scaffold phase
 rules and use regular project context only.

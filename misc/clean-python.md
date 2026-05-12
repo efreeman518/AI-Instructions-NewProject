@@ -284,6 +284,50 @@ $parts = @($wanted + ($machinePath -split ";" | Where-Object { $_ -and $_ -notin
 Restart terminals and IDEs after PATH changes. Long-lived agent terminals often
 retain stale PATH until restarted.
 
+## Repair Python-Backed User Tools After Python Moves
+
+Tools installed with `pip`, `pipx`, or a project venv can leave console shims
+pointing at a Python path that no longer exists. This shows up as errors like:
+
+```text
+did not find executable at '...\Python[old]\python.exe'
+The term 'tool-name' is not recognized
+```
+
+Check user tools separately from Python itself:
+
+```powershell
+"Python"
+where.exe python
+python -c "import sys; print(sys.executable)"
+py -0p
+
+"Python-backed tools"
+where.exe headroom
+where.exe pipx
+Get-ChildItem "$env:USERPROFILE\.local\bin" -Filter "*.cmd" -ErrorAction SilentlyContinue
+Get-ChildItem "$env:USERPROFILE\.headroom" -Recurse -Filter "pyvenv.cfg" -ErrorAction SilentlyContinue |
+  ForEach-Object {
+    "== $($_.FullName)"
+    Get-Content -LiteralPath $_.FullName
+  }
+```
+
+Durable repair pattern:
+
+- Keep user command shims in a stable user PATH directory such as
+  `%USERPROFILE%\.local\bin`.
+- Keep tool-owned runtimes under tool-owned folders such as
+  `%USERPROFILE%\.headroom\runtime`; do not depend on global
+  `C:\Python[latest]\Scripts\tool.exe`.
+- Make the user command shim rebuild its runtime from current `py -3` or
+  `python` when the old base interpreter disappears.
+- For tools with background launchers or desktop shortcuts, point shortcuts at
+  the stable user shim or a tool-owned `run-*.cmd`, not at a Python install
+  directory that will change during upgrades.
+- Remove stale global console scripts after confirming the user shim works, so
+  `where.exe tool-name` has one canonical result.
+
 ## Remove Orphan Folders Only After Verification
 
 After uninstalling and repairing PATH, inspect common orphan locations:

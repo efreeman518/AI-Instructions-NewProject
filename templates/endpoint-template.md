@@ -138,7 +138,7 @@ public static class {Entity}Endpoints
 
 ## Custom Action Routes (Optional)
 
-Include only when `domain-specification.yaml` declares a `customActions` entry on `{Entity}` (e.g. `Reschedule`, `Approve`, `Cancel`). Map the action route inside the same `Map{Entity}Endpoints` extension so each entity's surface stays co-located. See [../skills/api.md](../skills/api.md) § Custom Action Endpoints for routing conventions and the request/response contract.
+Include only when `.scaffold/domain-specification.yaml` declares a `customActions` entry on `{Entity}` (e.g. `Reschedule`, `Approve`, `Cancel`). Map the action route inside the same `Map{Entity}Endpoints` extension so each entity's surface stays co-located. See [../skills/api.md](../skills/api.md) § Custom Action Endpoints for routing conventions and the request/response contract.
 
 ```csharp
 // Inside Map{Entity}Endpoints — add alongside the CRUD routes above:

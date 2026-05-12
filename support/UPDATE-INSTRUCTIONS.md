@@ -6,7 +6,7 @@
 
 ### For the Scaffolding Agent (writer)
 
-- **In an installed consumer app:** append findings to `INSTRUCTION-GAPS.md` in the target project root. Do not modify files under `.instructions/`.
+- **In an installed consumer app:** append findings to `.scaffold/INSTRUCTION-GAPS.md` (create the `.scaffold/` directory at project root if absent). Do not modify files under `.instructions/`.
 - **In this instruction repository:** append findings here as you encounter them — don't wait until the end of a session.
 - **Don't modify instruction files directly** during scaffolding. Capture the finding instead.
 - Each finding should be **actionable** — reference specific file paths, section names, and line ranges when possible.

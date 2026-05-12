@@ -29,11 +29,11 @@ When generating code from templates and skill files, substitute these placeholde
 | `{agent-route}` | Kebab-cased agent name | Agent endpoint route segment. |
 | `{Tool}` | Tool or function name | AI function tool class name. |
 | `{SearchIndex}` | Search config index name | Azure AI Search index name. |
-| `{ValueObject}` | Phase 1 language artifact | Value object term accepted in `UBIQUITOUS-LANGUAGE.md`. |
-| `{Role}` | Phase 1 language artifact | Actor or authorization role term accepted in `UBIQUITOUS-LANGUAGE.md`. |
-| `{State}` | Phase 1 language artifact | Lifecycle state term accepted in `UBIQUITOUS-LANGUAGE.md`. |
-| `{PolicyName}` | Phase 1 language artifact | Domain policy/rule term accepted in `UBIQUITOUS-LANGUAGE.md`. |
-| `{ExternalSystem}` | Phase 1 language artifact | External system term accepted in `UBIQUITOUS-LANGUAGE.md`. |
+| `{ValueObject}` | Phase 1 language artifact | Value object term accepted in `.scaffold/UBIQUITOUS-LANGUAGE.md`. |
+| `{Role}` | Phase 1 language artifact | Actor or authorization role term accepted in `.scaffold/UBIQUITOUS-LANGUAGE.md`. |
+| `{State}` | Phase 1 language artifact | Lifecycle state term accepted in `.scaffold/UBIQUITOUS-LANGUAGE.md`. |
+| `{PolicyName}` | Phase 1 language artifact | Domain policy/rule term accepted in `.scaffold/UBIQUITOUS-LANGUAGE.md`. |
+| `{ExternalSystem}` | Phase 1 language artifact | External system term accepted in `.scaffold/UBIQUITOUS-LANGUAGE.md`. |
 
 ## Casing Conventions
 

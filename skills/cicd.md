@@ -94,12 +94,12 @@ jobs:
       - run: dotnet restore src/{SolutionName}.slnx
 
       # Vulnerability audit per support/execution-gates.md § Vulnerability Audit
-      # High severity must be fixed or recorded in INSTRUCTION-GAPS.md
+      # High severity must be fixed or recorded in .scaffold/INSTRUCTION-GAPS.md
       - name: Vulnerability audit
         run: |
           dotnet list src/{SolutionName}.slnx package --vulnerable --include-transitive 2>&1 | tee vuln.log
           if grep -E '\bHigh\b' vuln.log; then
-            echo "::warning::High-severity vulnerable packages detected. Verify each is documented in INSTRUCTION-GAPS.md."
+            echo "::warning::High-severity vulnerable packages detected. Verify each is documented in .scaffold/INSTRUCTION-GAPS.md."
           fi
 
       - run: dotnet build src/{SolutionName}.slnx --no-restore --configuration Release

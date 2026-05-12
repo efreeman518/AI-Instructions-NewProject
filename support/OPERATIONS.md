@@ -57,7 +57,7 @@ When the AI discovers a fundamental assumption error (wrong entity design, incor
 4. **Decide recovery path:**
    - **Isolated error** (affects 1-2 files): `git stash pop`, fix the affected files, rebuild and re-test.
    - **Structural error** (wrong entity shape, missing relationship, bad inheritance): ask the developer before discarding work. Prefer `git stash branch recovery/<short-name>` or a targeted revert over `git checkout <last-checkpoint>`.
-   - **Domain misunderstanding** (entity purpose is wrong): go back to Phase 1 output, clarify with the user, update `domain-specification.yaml`, `UBIQUITOUS-LANGUAGE.md`, and `DESIGN-DECISIONS.md`, then re-scaffold the slice from scratch.
+   - **Domain misunderstanding** (entity purpose is wrong): go back to Phase 1 output, clarify with the user, update `.scaffold/domain-specification.yaml`, `.scaffold/UBIQUITOUS-LANGUAGE.md`, and `.scaffold/DESIGN-DECISIONS.md`, then re-scaffold the slice from scratch.
 5. **Document in HANDOFF.md:** Record what was rolled back and why, so the next session doesn't repeat the mistake.
 6. **Re-enter at the corrected sub-phase** using the Phase 5 file table in `ai/SKILL.md`.
 

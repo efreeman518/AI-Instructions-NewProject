@@ -13,7 +13,7 @@ All instruction files live under `.instructions/` in the project root. All file 
 1. Read `.instructions/support/vertical-slice-checklist.md` — it is your primary execution guide (fast-path section).
 2. Read `.instructions/ai/placeholder-tokens.md` for naming conventions.
 3. Load the templates listed in the checklist's "Load Set for Slice" section (under `.instructions/templates/`).
-4. If a `resource-implementation.yaml` exists in the project root, read it for `scaffoldMode` and `testingProfile`.
+4. If `.scaffold/resource-implementation.yaml` exists, read it for `scaffoldMode` and `testingProfile`.
 
 ## Pre-Flight
 
@@ -21,9 +21,9 @@ Before generating any files:
 
 - [ ] Verify the solution builds clean: `dotnet build`
 - [ ] Locate existing: `RegisterServices.cs`, DbContext files, `WebApplicationBuilderExtensions.cs`
-- [ ] Confirm `scaffoldMode` and `testingProfile` from `resource-implementation.yaml`
+- [ ] Confirm `scaffoldMode` and `testingProfile` from `.scaffold/resource-implementation.yaml`
 - [ ] If adding to a domain with existing entities, review their patterns for consistency
-- [ ] If this slice introduces a new domain term, role, event, custom action, or design decision, append it to `UBIQUITOUS-LANGUAGE.md` / `DESIGN-DECISIONS.md` and update `domain-specification.yaml` **before** generating code (see `.instructions/README.md` § Phase-1 Artifact Lifecycle)
+- [ ] If this slice introduces a new domain term, role, event, custom action, or design decision, append it to `.scaffold/UBIQUITOUS-LANGUAGE.md` / `.scaffold/DESIGN-DECISIONS.md` and update `.scaffold/domain-specification.yaml` **before** generating code (see `.instructions/README.md` § Phase-1 Artifact Lifecycle)
 
 ## Execution Order
 

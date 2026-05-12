@@ -14,8 +14,8 @@ Use this when adding a new entity to an **already-scaffolded** solution. Skip fu
 
 - [ ] Solution builds clean: `dotnet build`
 - [ ] Identify existing: `RegisterServices.cs`, `{App}DbContextTrxn`, `{App}DbContextQuery`, `WebApplicationBuilderExtensions.cs`
-- [ ] Confirm `scaffoldMode` and `testingProfile` from `resource-implementation.yaml`
-- [ ] If this slice introduces a new domain term, role, event, custom action, or design decision, append it to `UBIQUITOUS-LANGUAGE.md` / `DESIGN-DECISIONS.md` and update `domain-specification.yaml` **before** generating code (see [../README.md](../README.md) § Phase-1 Artifact Lifecycle)
+- [ ] Confirm `scaffoldMode` and `testingProfile` from `.scaffold/resource-implementation.yaml`
+- [ ] If this slice introduces a new domain term, role, event, custom action, or design decision, append it to `.scaffold/UBIQUITOUS-LANGUAGE.md` / `.scaffold/DESIGN-DECISIONS.md` and update `.scaffold/domain-specification.yaml` **before** generating code (see [../README.md](../README.md) § Phase-1 Artifact Lifecycle)
 
 ### Load Set for Slice
 

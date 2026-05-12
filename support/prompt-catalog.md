@@ -24,7 +24,7 @@ Generate a domain-specification YAML for a new application called {ProjectName}.
 The business is: {one-sentence business description}.
 Key entities: {entity list}.
 Follow .instructions/ai/shared-understanding-interview.md before writing final artifacts.
-Create domain-specification.yaml, UBIQUITOUS-LANGUAGE.md, and DESIGN-DECISIONS.md.
+Create .scaffold/domain-specification.yaml, .scaffold/UBIQUITOUS-LANGUAGE.md, and .scaffold/DESIGN-DECISIONS.md (create the .scaffold/ directory at project root if absent).
 Review each artifact against the Phase 1 schema before closing the session.
 When the artifacts are complete and reviewed, write HANDOFF.md to the project root and close the session.
 ```
@@ -35,7 +35,7 @@ When the artifacts are complete and reviewed, write HANDOFF.md to the project ro
 Load .instructions/START-AI.md and HANDOFF.md from the project root.
 Run the Tooling Check; use Microsoft Docs or Context7 only if current docs are needed.
 Generate the resource implementation YAML per .instructions/ai/resource-implementation-schema.md.
-Read DESIGN-DECISIONS.md first and resolve any parent decisions that affect resource mapping.
+Read .scaffold/DESIGN-DECISIONS.md first and resolve any parent decisions that affect resource mapping.
 Mode: {full|lite|api-only}. Testing profile: {minimal|balanced|comprehensive}.
 Declare externalDependencyModes for every external dependency before finalizing.
 When the YAML is complete and reviewed, update HANDOFF.md and close the session.
@@ -47,12 +47,12 @@ When the YAML is complete and reviewed, update HANDOFF.md and close the session.
 Load .instructions/START-AI.md and HANDOFF.md from the project root.
 Run the Tooling Check; use GitHub or Azure tooling only if this phase needs repo or cloud access.
 Generate an implementation plan per .instructions/ai/implementation-plan.md template.
-Read UBIQUITOUS-LANGUAGE.md and DESIGN-DECISIONS.md first. Populate the Decision Dependency Graph.
-Phase 3 pre-flight branches on packageStrategy from resource-implementation.yaml:
+Read .scaffold/UBIQUITOUS-LANGUAGE.md and .scaffold/DESIGN-DECISIONS.md first. Populate the Decision Dependency Graph.
+Phase 3 pre-flight branches on packageStrategy from .scaffold/resource-implementation.yaml:
 - feed or hybrid: configure the private NuGet feed via `.instructions/scripts/configure-ef-packages-feed.py --prefix <packagePrefix>`, ensure `NUGET_AUTH_TOKEN` or an approved credential provider is available.
 - local: no feed wiring; `nuget.config` only needs `nuget.org` (or may be absent). Phase 4 will generate `src/Packages/<packagePrefix>.*` projects from localPackageLayers.
 Confirm `dotnet restore` exits 0 in all modes. Verify `dotnet ef` is available.
-Flag open questions before writing implementation-plan.md to the project root.
+Flag open questions before writing .scaffold/implementation-plan.md.
 When the plan is reviewed and open questions resolved, update HANDOFF.md and close the session.
 ```
 
@@ -102,7 +102,7 @@ When gate passes, update HANDOFF.md and close session.
 ### 5c — Optional Hosts (Tests-After)
 
 ```text
-Scaffold only the enabled optional hosts named in resource-implementation.yaml: {scheduler/functionapp/uno-ui/blazor-ui/notifications}.
+Scaffold only the enabled optional hosts named in .scaffold/resource-implementation.yaml: {scheduler/functionapp/uno-ui/blazor-ui/notifications}.
 Update hostGates in HANDOFF.md per host as each reaches scaffolded → validated.
 Close session when all enabled hosts are validated (or blockers are recorded for deployment-only deps).
 ```
@@ -122,7 +122,7 @@ Update HANDOFF.md and close session.
 
 ```text
 Finalize auth: replace stubs with config-driven scaffold principal ({Entra|OAuth2|social|hybrid}).
-If `includeAiServices: true`, also scaffold AI integration: {search indexing/agent service} as enabled in resource-implementation.yaml.
+If `includeAiServices: true`, also scaffold AI integration: {search indexing/agent service} as enabled in .scaffold/resource-implementation.yaml.
 Gate: `dotnet build` + `dotnet test --filter TestCategory=Endpoint` (auth) + `dotnet test --filter TestCategory=Unit` (AI). When all enabled capabilities pass, update HANDOFF.md and close session.
 ```
 

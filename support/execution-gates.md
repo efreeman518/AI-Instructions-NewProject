@@ -45,7 +45,7 @@ Run once per machine/repo before beginning any scaffolding phase.
 
 ### Shared Base-Type Readiness (Phase 3 Pre-Flight)
 
-The required steps depend on `packageStrategy` (set in `resource-implementation.yaml`).
+The required steps depend on `packageStrategy` (set in `.scaffold/resource-implementation.yaml`).
 
 #### When `packageStrategy: feed` or `hybrid`
 
@@ -117,7 +117,7 @@ Gate: `dotnet restore` exits 0. All feed-supplied `{packagePrefix}.*` packages r
 
 No private feed is required. `nuget.config` only needs `nuget.org` (auto-default if the file is absent). Confirm:
 
-- `packagePrefix` is set in `resource-implementation.yaml`.
+- `packagePrefix` is set in `.scaffold/resource-implementation.yaml`.
 - `localPackageLayers` covers every layer in [`ef-packages-reference.md`](ef-packages-reference.md).
 - Phase 4 will generate one packable project per layer under `src/Packages/<packagePrefix>.<Layer>` with `IsPackable=true` and `<PackageId>=<packagePrefix>.<Layer>`.
 
@@ -135,15 +135,15 @@ Configure these in your AI client (VS Code `settings.json` or Claude Desktop con
 
 ### Tooling Verification (Phase 3 Gate)
 
-Phase 3 must populate the **Tooling & Environment Readiness** section of `implementation-plan.md`. Before closing Phase 3:
+Phase 3 must populate the **Tooling & Environment Readiness** section of `.scaffold/implementation-plan.md`. Before closing Phase 3:
 
 - [ ] All CLIs required by resource YAML technology choices are identified with install commands
 - [ ] MCP server discovery completed (npm search, MCP registry) for project-specific libraries
 - [ ] CLI preference applied: CLIs chosen over MCP servers where both exist (lower token cost)
 - [ ] Each CLI entry has a verified checkbox or an install command the operator can run before Phase 4
 - [ ] `dotnet restore` exits 0 (with `NUGET_AUTH_TOKEN` set when `packageStrategy: feed` or `hybrid`)
-- [ ] Developer reviews `UBIQUITOUS-LANGUAGE.md` and `DESIGN-DECISIONS.md` for completeness against `domain-specification.yaml`
-- [ ] Developer reviews `implementation-plan.md` against `ai/implementation-plan.md` schema
+- [ ] Developer reviews `.scaffold/UBIQUITOUS-LANGUAGE.md` and `.scaffold/DESIGN-DECISIONS.md` for completeness against `.scaffold/domain-specification.yaml`
+- [ ] Developer reviews `.scaffold/implementation-plan.md` against `ai/implementation-plan.md` schema
 
 ---
 
@@ -181,7 +181,7 @@ Required:
 
 Exit criteria:
 - [ ] Solution structure matches `skills/solution-structure.md`
-- [ ] Every entity from `resource-implementation.yaml` has: interface, DTO, entity shell, builders
+- [ ] Every entity from `.scaffold/resource-implementation.yaml` has: interface, DTO, entity shell, builders
 - [ ] All no-op stubs satisfy their interfaces
 - [ ] `RegisterServices.cs` wires all no-op stubs
 - [ ] Test.Support contains `UnitTestBase`, `InMemoryDbBuilder`, `DbSupport`, `Utility`, `TestConstants`, `JsonTestOptions`, `LocalSqlSettings`, `WebApplicationFactoryBase`
@@ -387,7 +387,7 @@ A scaffold may declare 5c complete with `[Ignore]` UI tests for unresolved exter
 Notifications (if `includeNotifications: true`):
 
 - [ ] Notification service interface registered in DI
-- [ ] Channel transports declared in `resource-implementation.yaml` have a stub or live implementation per their `externalDependencyMode`
+- [ ] Channel transports declared in `.scaffold/resource-implementation.yaml` have a stub or live implementation per their `externalDependencyMode`
 - [ ] Notification triggers (domain events from `notifications:` block) are wired to handlers
 - [ ] Notification unit tests pass (`dotnet test --filter "TestCategory=Unit&FullyQualifiedName~Notification"`)
 
@@ -482,11 +482,11 @@ If live AI endpoints are not yet provisioned, log them in `HANDOFF.md` as deploy
 
 ## Compiler-Warning Policy
 
-`dotnet build` exits 0 is the gate. New compiler/analyzer warnings introduced by generated code are either resolved or recorded in `INSTRUCTION-GAPS.md` with owner and rationale. `TreatWarningsAsErrors` is **off by default**; teams may opt in via `Directory.Build.props` once the codebase is warning-clean. Warnings from referenced packages or generated SDK code (EF migrations, source generators) do not block the gate.
+`dotnet build` exits 0 is the gate. New compiler/analyzer warnings introduced by generated code are either resolved or recorded in `.scaffold/INSTRUCTION-GAPS.md` with owner and rationale. `TreatWarningsAsErrors` is **off by default**; teams may opt in via `Directory.Build.props` once the codebase is warning-clean. Warnings from referenced packages or generated SDK code (EF migrations, source generators) do not block the gate.
 
 **What blocks the gate:**
 - `dotnet build` returns nonzero exit code.
-- A warning is suppressed without an entry in `INSTRUCTION-GAPS.md`.
+- A warning is suppressed without an entry in `.scaffold/INSTRUCTION-GAPS.md`.
 
 **What does NOT block the gate:**
 - Warnings from third-party packages.
@@ -504,8 +504,8 @@ dotnet list package --vulnerable --include-transitive
 ```
 
 Severity policy:
-- **High:** must be fixed (upgrade direct dependency or pin transitive) **or** recorded in `INSTRUCTION-GAPS.md` as a blocked deployment dependency with owner and target resolution date.
-- **Moderate:** logged in `INSTRUCTION-GAPS.md` only; tracked but does not block.
+- **High:** must be fixed (upgrade direct dependency or pin transitive) **or** recorded in `.scaffold/INSTRUCTION-GAPS.md` as a blocked deployment dependency with owner and target resolution date.
+- **Moderate:** logged in `.scaffold/INSTRUCTION-GAPS.md` only; tracked but does not block.
 - **Low:** team discretion.
 
 The audit is mandatory before pre-merge gate and as part of the Phase 5d quality regression. CI workflows must include the audit step (see [../skills/cicd.md](../skills/cicd.md)).
@@ -536,7 +536,7 @@ az bicep build --file infra/main.bicep
 
 - Code-generation failures: one focused AI fix pass, then re-run failing gate.
 - Infra/environment failures: log in `HANDOFF.md`, classify blocker, continue non-blocked scope.
-- Instruction gaps: in a consumer app, append to root `INSTRUCTION-GAPS.md`; in this instruction repository, append to `support/UPDATE-INSTRUCTIONS.md`.
+- Instruction gaps: in a consumer app, append to `.scaffold/INSTRUCTION-GAPS.md`; in this instruction repository, append to `support/UPDATE-INSTRUCTIONS.md`.
 - If a step fails, log the blocker in `HANDOFF.md` (see [HANDOFF.md template](HANDOFF.md)) and continue with non-blocked work.
 - Pattern reference: [../ai/SKILL.md](../ai/SKILL.md) § Non-Negotiables — pattern index for composition wiring.
 

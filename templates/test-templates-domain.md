@@ -112,7 +112,7 @@ public class {Entity}Tests
 }
 ```
 
-> **Child entity tests:** Include the `Add{ChildEntity}` and duplicate-child tests only when the entity has child collections defined in `resource-implementation.yaml`. Omit for leaf entities.
+> **Child entity tests:** Include the `Add{ChildEntity}` and duplicate-child tests only when the entity has child collections defined in `.scaffold/resource-implementation.yaml`. Omit for leaf entities.
 
 ---
 

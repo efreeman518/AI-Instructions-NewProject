@@ -2,7 +2,7 @@
 
 Produced after Phase 1 (domain definition) and Phase 2 (resource mapping) are complete. This is the bridge between design and code.
 
-**Create this file in the target project root as `implementation-plan.md`.**
+**Create this file as `.scaffold/implementation-plan.md` in the target project (create the `.scaffold/` directory at project root if absent).**
 
 Checkpoint commands and pass criteria are canonical in [../support/execution-gates.md](../support/execution-gates.md).
 
@@ -13,10 +13,10 @@ Checkpoint commands and pass criteria are canonical in [../support/execution-gat
 
 ## Inputs Summary
 
-- Domain specification: `domain-specification.yaml` (project root)
-- Resource mapping: `resource-implementation.yaml` (project root)
-- Ubiquitous language: `UBIQUITOUS-LANGUAGE.md`
-- Design decisions: `DESIGN-DECISIONS.md`
+- Domain specification: `.scaffold/domain-specification.yaml`
+- Resource mapping: `.scaffold/resource-implementation.yaml`
+- Ubiquitous language: `.scaffold/UBIQUITOUS-LANGUAGE.md`
+- Design decisions: `.scaffold/DESIGN-DECISIONS.md`
 - Mode: {{scaffoldMode}} | Testing: {{testingProfile}}
 - Enabled hosts: {{list}}
 
@@ -112,7 +112,7 @@ Resolve before Phase 5 starts:
 
 ## Decision Dependency Graph
 
-Keep this aligned with `DESIGN-DECISIONS.md`. Include every decision that affects code generation order, resource mapping, auth, external dependency mode, or endpoint contracts.
+Keep this aligned with `.scaffold/DESIGN-DECISIONS.md`. Include every decision that affects code generation order, resource mapping, auth, external dependency mode, or endpoint contracts.
 
 ```mermaid
 flowchart TD
@@ -131,7 +131,7 @@ flowchart TD
 
 ## Tooling & Environment Readiness
 
-Populated during Phase 3 by analyzing `resource-implementation.yaml` technology choices. The AI researches available CLIs, MCP servers, and online resources, then records findings here.
+Populated during Phase 3 by analyzing `.scaffold/resource-implementation.yaml` technology choices. The AI researches available CLIs, MCP servers, and online resources, then records findings here.
 
 **Preference order: CLI → MCP → online resources.** CLIs are most token-efficient with structured output. MCP servers add value for interactive exploration (docs, repos) when no CLI exists. When neither is available, record documentation URLs and GitHub repos the AI can fetch during later phases.
 
@@ -146,14 +146,14 @@ Populated during Phase 3 by analyzing `resource-implementation.yaml` technology 
 
 ### Shared Base-Type Readiness
 
-The required checklist depends on `packageStrategy` from `resource-implementation.yaml`. Run the appropriate block.
+The required checklist depends on `packageStrategy` from `.scaffold/resource-implementation.yaml`. Run the appropriate block.
 
 #### When `packageStrategy: feed` or `hybrid`
 
 Feed-supplied layers must restore cleanly before Phase 4. Required:
 
 - [ ] `nuget.config` contains `nuget.org`.
-- [ ] `nuget.config` contains every `customNugetFeeds` entry from `resource-implementation.yaml`.
+- [ ] `nuget.config` contains every `customNugetFeeds` entry from `.scaffold/resource-implementation.yaml`.
 - [ ] `packageSourceMapping` maps `<packagePrefix>.*` to the private feed.
 - [ ] `packageSourceMapping` maps `dotnet-ef` or `*` to `nuget.org`.
 - [ ] Local developer has package read access exposed through `NUGET_AUTH_TOKEN` or an approved credential provider.
@@ -165,7 +165,7 @@ Feed-supplied layers must restore cleanly before Phase 4. Required:
 
 Locally-generated layers (from `localPackageLayers`) must scaffold under `src/Packages/`. Required:
 
-- [ ] `packagePrefix` is set in `resource-implementation.yaml`.
+- [ ] `packagePrefix` is set in `.scaffold/resource-implementation.yaml`.
 - [ ] Phase 4 will generate one packable project per entry in `localPackageLayers`, e.g., `src/Packages/<packagePrefix>.Domain`, `.Domain.Contracts`, `.Data`, `.Data.Contracts`, `.Common`, `.Common.Contracts` (per [`../support/ef-packages-reference.md`](../support/ef-packages-reference.md)).
 - [ ] Each packable project sets `IsPackable=true`, `<PackageId>=<packagePrefix>.<Layer>`, default version `0.1.0`.
 - [ ] Application/domain/host projects consume these via `<ProjectReference>` (no `Version` attribute, no `Directory.Packages.props` entry needed).
@@ -228,12 +228,12 @@ Before starting Phase 4 (contract scaffolding), verify all of the following:
 - [ ] `nuget.config` validated (`dotnet restore` exits 0) — applies in `feed` and `hybrid`; in `local`, `nuget.config` only needs `nuget.org`
 - [ ] All open questions resolved or explicitly deferred with TODO
 - [ ] `scaffoldMode`, `testingProfile`, and all host flags confirmed
-- [ ] `packageStrategy`, `packagePrefix`, `customNugetFeeds`, and `localPackageLayers` confirmed in `resource-implementation.yaml`
+- [ ] `packageStrategy`, `packagePrefix`, `customNugetFeeds`, and `localPackageLayers` confirmed in `.scaffold/resource-implementation.yaml`
 - [ ] If `feed`/`hybrid`: NuGet feed helper run or manually verified (`configure-ef-packages-feed.py --prefix <packagePrefix>`); `NUGET_AUTH_TOKEN` set; `dotnet restore` exits 0
 - [ ] If `local`/`hybrid`: every layer in `localPackageLayers` matches a layer in [`../support/ef-packages-reference.md`](../support/ef-packages-reference.md); Phase 4 will generate `src/Packages/<packagePrefix>.<Layer>` packable projects for each
-- [ ] Developer reviews `implementation-plan.md` against `ai/implementation-plan.md` schema
+- [ ] Developer reviews `.scaffold/implementation-plan.md` against `ai/implementation-plan.md` schema
 - [ ] Domain specification and resource implementation YAML files are complete
-- [ ] `UBIQUITOUS-LANGUAGE.md` and `DESIGN-DECISIONS.md` exist and match the domain/resource artifacts
+- [ ] `.scaffold/UBIQUITOUS-LANGUAGE.md` and `.scaffold/DESIGN-DECISIONS.md` exist and match the domain/resource artifacts
 - [ ] Decision Dependency Graph is populated and has no unresolved blockers for Phase 4
 - [ ] Tooling & Environment Readiness section populated (CLIs identified, MCP discovery complete)
 - [ ] All required CLIs verified or install commands provided

@@ -391,7 +391,7 @@ env: [
 3. Keep config keys consistent across API/Gateway/Scheduler/Functions/UI.
 4. Use `Sentinel` + labels for App Configuration refresh strategy.
 5. In lite mode, keep to `appsettings` + User Secrets and add App Config/Key Vault later.
-6. Map compliance metadata from `resource-implementation.yaml` to configuration controls (classification labels, retention switches, audit flags).
+6. Map compliance metadata from `.scaffold/resource-implementation.yaml` to configuration controls (classification labels, retention switches, audit flags).
 
 ---
 

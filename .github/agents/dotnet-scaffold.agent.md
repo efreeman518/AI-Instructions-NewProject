@@ -16,7 +16,7 @@ All instruction files (skills, templates, support docs, schemas, scripts) live u
 
 ## Core Rules
 
-- Generate code in the project root only (`src/` — which contains `src/Test/...` for test projects — and root-level config). Never modify `.instructions/` — record gaps in `INSTRUCTION-GAPS.md` at the project root.
+- Generate code in the project root only (`src/` — which contains `src/Test/...` for test projects — and root-level config). Never modify `.instructions/` — record gaps in `.scaffold/INSTRUCTION-GAPS.md` (create `.scaffold/` at project root if absent).
 - One phase per session. Do not skip or combine phases.
 - After each gate passes, update `HANDOFF.md` and stop.
 - Conflict precedence: see `.instructions/ai/SKILL.md` § Non-Negotiables. TaskFlow reference-app rules: see `.instructions/support/reference-app.md`.

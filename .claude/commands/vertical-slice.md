@@ -13,14 +13,14 @@ You are adding a complete entity slice (domain → data → application → API 
 1. Read `.instructions/support/vertical-slice-checklist.md` — follow the fast-path section.
 2. Read `.instructions/ai/placeholder-tokens.md` for naming conventions.
 3. Load the templates listed in the checklist's "Load Set for Slice" section (under `.instructions/templates/`).
-4. If `resource-implementation.yaml` exists in the project root, read it for `scaffoldMode` and `testingProfile`.
+4. If `.scaffold/resource-implementation.yaml` exists, read it for `scaffoldMode` and `testingProfile`.
 
 ## Pre-Flight
 
 - Verify `dotnet build` passes on the existing solution.
 - Locate `RegisterServices.cs`, both DbContext files, and `WebApplicationBuilderExtensions.cs`.
 - Review existing entity patterns in the target project for consistency.
-- If this slice introduces a new domain term, role, event, custom action, or design decision, append it to `UBIQUITOUS-LANGUAGE.md` / `DESIGN-DECISIONS.md` and update `domain-specification.yaml` **before** generating code. These artifacts are the living source of truth for the project (see `.instructions/README.md` § Phase-1 Artifact Lifecycle).
+- If this slice introduces a new domain term, role, event, custom action, or design decision, append it to `.scaffold/UBIQUITOUS-LANGUAGE.md` / `.scaffold/DESIGN-DECISIONS.md` and update `.scaffold/domain-specification.yaml` **before** generating code. These artifacts are the living source of truth for the project (see `.instructions/README.md` § Phase-1 Artifact Lifecycle).
 
 ## Execution Order
 

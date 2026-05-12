@@ -34,7 +34,7 @@ hostGates:                 # Phase 5c per-host status: not-started | scaffolded 
   notifications: not-started
 resumeCommand: ""          # exact prompt to paste at the next session start
 toolingNotes: ""           # CLIs/MCPs discovered in Phase 3; note any missing or unavailable
-instructionGapsPath: "INSTRUCTION-GAPS.md"
+instructionGapsPath: ".scaffold/INSTRUCTION-GAPS.md"
 ```
 
 ## Next Step
@@ -72,15 +72,15 @@ Out of scope for this session — do not attempt unless explicitly re-scoped:
 
 ## Notes
 
-- Keep `domain-specification.yaml`, `resource-implementation.yaml`, `UBIQUITOUS-LANGUAGE.md`, and `DESIGN-DECISIONS.md` in the target project root.
+- Keep `domain-specification.yaml`, `resource-implementation.yaml`, `UBIQUITOUS-LANGUAGE.md`, and `DESIGN-DECISIONS.md` under `.scaffold/` in the target project. `HANDOFF.md` itself stays at project root.
 - `currentPhase` and `currentSubPhase` always describe the next work to run, not the phase just completed. Record completed gate evidence in `Completed` and `Validation`.
 - At Phase 1 close, summarize unresolved/deferred design decisions and confirm they do not block Phase 2.
-- Keep `enabledFeatures` flags in sync with `resource-implementation.yaml` canonical hosting/IaC/AI toggles.
+- Keep `enabledFeatures` flags in sync with `.scaffold/resource-implementation.yaml` canonical hosting/IaC/AI toggles.
 - For Phase 4, set `currentPhase: 5`, `currentSubPhase: 5a`, and `contractsScaffolded: true` after the gate passes. Phase 5a/5b require this flag.
 - For Phase 5a/5b, update `testStatus` as tests transition: `not-started` → `red` (tests written, failing) → `green` (implementation complete, tests passing). This tracks TDD progress across sessions.
 - For Phase 5c (Optional Hosts), update `hostGates` per-host as each host moves through `scaffolded` → `partially-validated` → `validated` or `blocked`. Do not mark the sub-phase complete until all enabled hosts reach `validated` or have a recorded blocker.
 - Note unresolved infra/auth/package-feed issues here rather than retrying them repeatedly.
-- Record instruction gaps in root `INSTRUCTION-GAPS.md`, not inside `.instructions/`, during consumer app scaffolding.
+- Record instruction gaps in `.scaffold/INSTRUCTION-GAPS.md`, not inside `.instructions/`, during consumer app scaffolding.
 - Keep entries short so the next AI turn can resume without reloading unnecessary docs.
 - Verify HANDOFF.md is well-formed (correct sub-phase, gate result, next-load-set populated, blockers itemized) before ending a phase session.
 - **Ephemeral URLs:** Do not record Aspire dashboard URLs, proxy ports, or host endpoints. These are assigned at runtime and change between launches. Instead, record the discovery method (e.g., "read dashboard URL from `dotnet run` output, then check resource list for host URLs").
