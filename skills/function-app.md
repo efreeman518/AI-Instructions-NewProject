@@ -86,6 +86,50 @@ Key constraints:
 
 ---
 
+## Per-Invocation Request Context (Multi-Tenant Functions)
+
+When the Functions host writes domain rows via the same `*Service.CreateAsync` / `UpdateAsync` paths the API uses, every service call resolves the **scoped** `IRequestContext<…>` to stamp `TenantId` and audit fields. The API path populates that context from JWT claims or the dev tenant header; the Functions worker has no `HttpContext`, so a naive scaffold falls back to a **singleton admin context with `TenantId = Guid.Empty`**, and every webhook-ingested row persists under the wrong tenant. The bug is invisible at the row level — SQL is happy — and only surfaces when a tenant-scoped query returns zero hits.
+
+**Rule:** Functions triggers that ingest tenant-scoped data must build a **per-invocation** `IRequestContext` from the trigger envelope (header, queue message property, blob metadata, Event Grid extended properties) and register it for the duration of the invocation. Do not ship a singleton admin context as a "temporary" placeholder — it ends up persisting wrong-tenant rows in production.
+
+```csharp
+public class WebhookProcessorFunction(
+    IServiceScopeFactory scopeFactory,
+    ILogger<WebhookProcessorFunction> logger)
+{
+    [Function(nameof(WebhookProcessorFunction))]
+    public async Task Run(
+        [ServiceBusTrigger("webhook-ingest", Connection = "servicebus")]
+            ServiceBusReceivedMessage message,
+        CancellationToken ct)
+    {
+        var tenantId = ResolveTenantId(message); // from envelope/property
+        var correlationId = message.CorrelationId ?? Guid.NewGuid().ToString();
+
+        await using var scope = scopeFactory.CreateAsyncScope();
+        var ctxAccessor = scope.ServiceProvider.GetRequiredService<IRequestContextAccessor>();
+        ctxAccessor.Current = new RequestContext<string, Guid?>(
+            correlationId, auditId: "webhook-ingest", tenantId: tenantId, roles: []);
+
+        var service = scope.ServiceProvider.GetRequiredService<I{Entity}Service>();
+        await service.CreateAsync(ParseDto(message), ct);
+    }
+}
+```
+
+`IRequestContextAccessor` is a scoped wrapper around an `AsyncLocal`/scoped field that `RegisterServices.RequestContext.cs` already creates the API factory against — reuse the same accessor, just write into it from the trigger instead of an HTTP middleware. The Bootstrapper registration becomes:
+
+```csharp
+// Already-scoped factory in RegisterServices.RequestContext.cs
+services.AddScoped<IRequestContext<string, Guid?>>(sp =>
+    sp.GetRequiredService<IRequestContextAccessor>().Current
+    ?? throw new InvalidOperationException("No request context set for this scope."));
+```
+
+A **singleton admin** `IRequestContext` is acceptable only for triggers that legitimately span tenants (cross-tenant reporting jobs, system maintenance timers). Document that decision per-trigger; do not let it leak into webhook ingestion.
+
+---
+
 ## Trigger Pattern
 
 Use primary-constructor DI + explicit function attributes:

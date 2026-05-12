@@ -311,6 +311,31 @@ When writing `HANDOFF.md`, record the **method to discover URLs** (e.g., "check 
 
 ---
 
+## Detecting Aspire at Runtime — Presence, Not Environment
+
+Hosts often need to know "am I being orchestrated by Aspire?" to decide whether to register real Azure clients vs. local no-op stubs. **Gate on the presence of an Aspire-injected connection string, not on `IHostEnvironment.IsEnvironment("Testing")` or any other environment name.**
+
+```csharp
+// CORRECT — presence-based
+var runningUnderAspire = !string.IsNullOrEmpty(
+    builder.Configuration.GetConnectionString("{App}DbContextTrxn"));
+
+if (runningUnderAspire)
+{
+    builder.AddAzureServiceBusClient("servicebus");
+    builder.Services.Replace(
+        ServiceDescriptor.Scoped<I{App}EventPublisher, ServiceBus{App}EventPublisher>());
+}
+```
+
+**Why not environment-name gates.** `WebApplicationFactory<Program>` sets `ASPNETCORE_ENVIRONMENT=Testing` via `UseEnvironment("Testing")`, and `DistributedApplicationTestingBuilder` propagates the same env name to **every child project** it brings up under test. A gate like `!builder.Environment.IsEnvironment("Testing")` therefore returns `false` in **both** WAF tier and Aspire-mesh tier — the API silently keeps its `NoOp` publishers, and integration events are dropped without an error. The bug is invisible (POST 201, row persisted) and only manifests when a downstream consumer fails to observe the event.
+
+The connection-string presence check distinguishes the two tiers correctly: WAF tier injects in-memory DbContext options (no connection string), Aspire tier injects real Aspire-resolved connection strings.
+
+Apply the same principle to Functions hosts, Worker hosts, and Scheduler hosts — any host that has both an Aspire path and a non-Aspire test path. If a host has **no** non-Aspire test path (i.e., always-Aspire), document that explicitly in the host's `Program.cs` and skip the gate entirely.
+
+---
+
 ## Debugging Individual Hosts
 
 When a multi-host Aspire run fails, isolate the problem by running hosts standalone:
