@@ -32,10 +32,12 @@ Quick lookup: "I need to scaffold X" → load these files.
 | Artifact | Template | Phase | Required Skill |
 |---|---|---|---|
 | Domain entity + rule tests | `test-templates-domain.md` | 5a | `skills/testing.md` |
-| Repository tests | `test-templates-repository.md` | 5a | `skills/testing.md` |
+| Repository tests (in-memory unit) | `test-templates-repository.md` | 5a | `skills/testing.md` |
+| Repository / pipeline integration (real SQL + Aspire) | `test-templates-integration.md` | 5a / 5b | `skills/testing.md` |
 | Service + mapper tests | `test-templates-service.md` | 5b | `skills/testing.md` |
-| Endpoint integration tests | `test-templates-endpoint.md` | 5b | `skills/testing.md` |
-| Architecture / E2E / Load / Benchmarks / Playwright | `test-templates-quality.md` | 5d | `skills/testing-quality.md` |
+| Endpoint contract tests + WAF base | `test-templates-endpoint.md` | 5b (base in 4) | `skills/testing.md` |
+| Multi-endpoint workflow E2E (Testcontainers SQL) | `test-templates-e2e.md` | 5b | `skills/testing.md` |
+| Architecture / Load / Benchmarks / Playwright | `test-templates-quality.md` | 5d | `skills/testing-quality.md` |
 | Complete reference (all tests) | `test-templates.md` | on-demand | `skills/testing.md` |
 
 Testing skills (two files only):
@@ -90,11 +92,11 @@ Scaffold either Uno Platform (multi-target WASM + mobile + desktop) or Blazor (S
 
 | Phase | Templates to Load |
 |---|---|
-| **4 — Contracts** | Solution structure + contracts (see `ai/contract-scaffolding.md`) |
-| **5a — Foundation (TDD)** | `entity-template`, `ef-configuration-template`, `repository-template`, `domain-rules-template`, `appsettings-template`, `updater-template` (if needed), **`test-templates-domain`**, **`test-templates-repository`** |
-| **5b — App Core + Runtime (TDD for app/API, tests-after for runtime)** | `data-mapping-template`, `service-template`, `endpoint-template`, `structure-validator-template`, `exception-handler-template`, `message-handler-template` (if events), `health-check-template`, **`test-templates-service`**, **`test-templates-endpoint`** |
+| **4 — Contracts** | Solution structure + contracts (see `ai/contract-scaffolding.md`) — also emits `Test.Support/WebApplicationFactoryBase`, `Test.Endpoints/CustomApiFactory`, `Test.E2E/SqlApiFactory`, `Test.Integration/AspireTestHost`, `Test.Integration/DbContextFactory` shells |
+| **5a — Foundation (TDD)** | `entity-template`, `ef-configuration-template`, `repository-template`, `domain-rules-template`, `appsettings-template`, **`updater-template` (required when entity has child collections)**, **`test-templates-domain`**, **`test-templates-repository`**, **`test-templates-integration`** (balanced+) |
+| **5b — App Core + Runtime (TDD for app/API, tests-after for runtime)** | `data-mapping-template`, `service-template`, `endpoint-template`, `structure-validator-template`, `exception-handler-template`, `message-handler-template` (if events), `health-check-template`, **`test-templates-service`**, **`test-templates-endpoint`**, **`test-templates-e2e`** (balanced+), `test-templates-integration` (pipeline tests, comprehensive) |
 | **5c — Optional Hosts** | `uno-ui-client-layer`, `uno-mvux-model-template`, `uno-xaml-page-template` (Uno); host-specific templates per enabled host |
-| **5d — Quality + Delivery** | **`test-templates-quality`**, `dockerfile-template` |
+| **5d — Quality + Delivery** | **`test-templates-quality`** (architecture + Playwright + Load + Benchmarks; Integration / E2E tiers are scaffolded earlier — 5d runs them as regression), `dockerfile-template` |
 | **5e — Integration (Auth + AI)** | `ai-search-template`, `agent-template` (when AI in scope) |
 
 > **Note:** Use the Phase Router in `START-AI.md` and the Phase 5 file table in `ai/SKILL.md` for authoritative per-phase file lists. This index is a human/AI quick-reference for "I need to scaffold X → load template Y".

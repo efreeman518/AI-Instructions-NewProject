@@ -184,20 +184,21 @@ Exit criteria:
 - [ ] Every entity from `resource-implementation.yaml` has: interface, DTO, entity shell, builders
 - [ ] All no-op stubs satisfy their interfaces
 - [ ] `RegisterServices.cs` wires all no-op stubs
-- [ ] Test.Support contains `UnitTestBase`, `InMemoryDbBuilder`, `DbSupport`, `Utility`, `TestConstants`
+- [ ] Test.Support contains `UnitTestBase`, `InMemoryDbBuilder`, `DbSupport`, `Utility`, `TestConstants`, `JsonTestOptions`, `LocalSqlSettings`, `WebApplicationFactoryBase`
+- [ ] `Test.Endpoints/CustomApiFactory.cs`, `Test.E2E/SqlApiFactory.cs`, `Test.Integration/AspireTestHost.cs`, `Test.Integration/DbContextFactory.cs` all compile and inherit/use the shared `WebApplicationFactoryBase` (no duplicated swap-out plumbing)
 - [ ] `{Entity}DtoBuilder` returns valid DTOs
 - [ ] No domain logic in entity shells (only `throw new NotImplementedException`)
 - [ ] `<packagePrefix>.*` shared base types are consumed from feed packages or `src/Packages/<packagePrefix>.*` projects per `packageStrategy` — never reimplemented in application/domain/host layers
 - [ ] Phase 4 scaffold structure validator passes
+- [ ] **Phase 4 test shells pass:** `dotnet test --filter "TestCategory=Unit|TestCategory=Endpoint"` exits 0 (no assemblies abort in `[AssemblyInitialize]`, no shells throw)
 
 Commands:
 
 ```powershell
 dotnet restore
 dotnet build
+dotnet test --filter "TestCategory=Unit|TestCategory=Endpoint"
 ```
-
-No `dotnet test` required — test projects are empty or contain no test methods. Developer confirms the solution structure, no-op stubs, and `<packagePrefix>.*` references (feed packages and/or `src/Packages/<packagePrefix>.*` projects per `packageStrategy`) match the Phase 4 exit criteria above.
 
 ---
 
@@ -285,8 +286,10 @@ Gate:
 - [ ] `dotnet build src/Host/Aspire/AppHost` succeeds
 - [ ] `dotnet run --project src/Host/Aspire/AppHost` starts resources
 - [ ] Dashboard reachable (URL from console output — do not reuse prior session URLs)
-- [ ] All registered resources show healthy in dashboard before testing endpoints
+- [ ] **All registered resources reach Running with no `Error`/`Critical` log entries from project-owned categories**
+- [ ] Health probes return 200: `/healthz` on every API/host project once that host declares itself ready (Aspire-registered UIs that don't expose health probes count as healthy when their root URL renders without exception)
 - [ ] Data-plane spot check: at least one backing store (SQL tables exist, Redis reachable, seed rows present) verified directly — not just via dashboard liveness
+- [ ] **Stub-mode external dependencies (`emulator`, `lazy-optional`, `no-op stub`, `deployment-only`) respond without throwing** — live cloud credentials are not required for this gate
 
 ### Gateway
 
@@ -364,13 +367,22 @@ Blazor UI (if `includeBlazorUI: true`):
 
 - [ ] Blazor host project builds (`dotnet build src/UI/{Project}.Blazor`)
 - [ ] Gateway/OpenAPI endpoint reachable for Refit client generation
-- [ ] App boots and at least one entity list/detail page renders against the scaffolded API
+- [ ] **Standalone clean start:** `dotnet run --project src/UI/{Project}.Blazor` reaches `Application started`, `/healthz` returns 200, the root URL renders without exceptions in console logs, and at least one entity list page loads (empty or seeded — both valid)
+- [ ] **Aspire-registered clean start (when Blazor is added to AppHost):** the Blazor resource reaches Running, dashboard logs are exception-free, and a Refit call from the Blazor host through the Gateway to the API returns data (or a typed empty state) — not a console exception
 - [ ] Auth path matches `AuthMode` (scaffold principal or live provider per Phase 5e)
 
 ```powershell
 dotnet build src/UI/{Project}.Blazor
 dotnet run --project src/UI/{Project}.Blazor
 ```
+
+Uno UI startup (post-build, in addition to the platform-target checks above):
+
+- [ ] **Standalone clean start:** the selected Uno target (`<tfm>-browserwasm` / `<tfm>-desktop` / `<tfm>-android`) launches and renders the shell with no WASM load errors / no desktop-host exceptions / no Android startup crashes
+- [ ] **Aspire-registered clean start (when an Uno host is added to AppHost):** the Uno resource reaches Running and serves its entry point without exception
+- [ ] At least one entity list page loads against the Gateway/API (empty or seeded data — both valid), proving the Kiota/Refit client resolves the configured backend URL
+
+A scaffold may declare 5c complete with `[Ignore]` UI tests for unresolved external auth/AI deps, but **not** with a UI host that throws on startup. See [../ai/SKILL.md](../ai/SKILL.md) § Scaffold Definition of Done.
 
 Notifications (if `includeNotifications: true`):
 

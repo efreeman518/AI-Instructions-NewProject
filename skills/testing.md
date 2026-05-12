@@ -65,15 +65,30 @@ Test/
 
 ## Harness Tiers (Critical)
 
-| Project | Harness | Test scope |
-|---|---|---|
-| `Test.Endpoints` | `WebApplicationFactory<TProgram>` in-memory | Single endpoint contract |
-| `Test.E2E` | `WebApplicationFactory<TProgram>` + Testcontainers SQL | Multi-endpoint workflow chain against real DB |
-| `Test.PlaywrightUI` | Real hosted stack (Aspire/docker-compose/preview) | Browser-driven UI |
+| Project | Harness | Test scope | Template |
+|---|---|---|---|
+| `Test.Unit` | Pure CLR + Moq | Domain rules, mappers, services with mocks | [test-templates-domain.md](../templates/test-templates-domain.md), [test-templates-repository.md](../templates/test-templates-repository.md), [test-templates-service.md](../templates/test-templates-service.md) |
+| `Test.Endpoints` | `WebApplicationFactory<TProgram>` + EF InMemory | Single endpoint contract: status code, response shape, validation, auth | [test-templates-endpoint.md](../templates/test-templates-endpoint.md) |
+| `Test.E2E` | `WebApplicationFactory<TProgram>` + Testcontainers SQL | Multi-endpoint workflows against real SQL: paged search distinct-page, projection round-trip, FK constraints, child aggregate lifecycle | [test-templates-e2e.md](../templates/test-templates-e2e.md) |
+| `Test.Integration` | Aspire `DistributedApplicationTestingBuilder` | Multi-resource distributed-app workflows: SQL + Azurite + Service Bus + Functions; audit-pipeline + projection-pipeline | [test-templates-integration.md](../templates/test-templates-integration.md) |
+| `Test.PlaywrightUI` | Real hosted stack (Aspire / docker-compose / preview) | Browser-driven UI | [testing-quality.md](testing-quality.md) § Hosted Browser UI |
+| `Test.Architecture` | `NetArchTest.Rules` | Layer dependency rules | [test-templates-quality.md](../templates/test-templates-quality.md) |
+| `Test.Load` | NBomber | Throughput / latency baselines | [test-templates-quality.md](../templates/test-templates-quality.md) |
+| `Test.Benchmarks` | BenchmarkDotNet | Per-operation micro-benchmarks | [test-templates-quality.md](../templates/test-templates-quality.md) |
 
 Rule: PlaywrightUI is a different harness. Never merge it with WAF tests.
 
-Default tier ladder: pure unit → `CustomApiFactory` (WAF + InMemory) → `SqlApiFactory` (WAF + Testcontainers SQL) → Aspire (multi-service).
+**Tier ladder — pick the cheapest tier that catches the failure mode you're testing.**
+
+```
+Pure unit (Test.Unit)
+  → CustomApiFactory (Test.Endpoints, WAF + InMemory)
+    → SqlApiFactory (Test.E2E, WAF + Testcontainers SQL)
+      → AspireTestHost (Test.Integration, distributed app)
+        → Hosted Playwright (Test.PlaywrightUI)
+```
+
+Phase 4 generates the WAF base in `Test.Support` and the `CustomApiFactory` / `SqlApiFactory` / `AspireTestHost` / `DbContextFactory` shells in their respective test projects so the ladder is wired before any Phase 5 tests are written. See [../ai/contract-scaffolding.md](../ai/contract-scaffolding.md) (`### 4. Test Infrastructure`).
 
 ### Aspire Tier By Reuse (documented exception)
 
@@ -378,10 +393,12 @@ public static async Task Cleanup(TestContext context)
 | Template | Phase | Purpose |
 |---|---|---|
 | [../templates/test-templates-domain.md](../templates/test-templates-domain.md) | 5a | Domain entity + rule tests |
-| [../templates/test-templates-repository.md](../templates/test-templates-repository.md) | 5a | Repository tests |
-| [../templates/test-templates-service.md](../templates/test-templates-service.md) | 5b | Service + mapper tests |
-| [../templates/test-templates-endpoint.md](../templates/test-templates-endpoint.md) | 5b | Endpoint integration tests via WAF |
-| [../templates/test-templates-quality.md](../templates/test-templates-quality.md) | 5d | Quality gates — load `testing-quality.md` instead |
+| [../templates/test-templates-repository.md](../templates/test-templates-repository.md) | 5a | Repository tests (in-memory unit) |
+| [../templates/test-templates-integration.md](../templates/test-templates-integration.md) | 5a / 5b | `AspireTestHost`, `DbContextFactory`, `{Entity}RepositoryIntegrationTests`, `AuditLogRepositoryAzuriteTests`, `ApiAuditPipelineTests`, `DomainEventPipelineTests` |
+| [../templates/test-templates-service.md](../templates/test-templates-service.md) | 5b | Service + mapper tests + consolidated `MapperProjectionParityTests` |
+| [../templates/test-templates-endpoint.md](../templates/test-templates-endpoint.md) | 5b | Endpoint contract tests via WAF + InMemory; `WebApplicationFactoryBase` reference |
+| [../templates/test-templates-e2e.md](../templates/test-templates-e2e.md) | 5b | `SqlApiFactory` + multi-endpoint `{Entity}WorkflowTests` against Testcontainers SQL |
+| [../templates/test-templates-quality.md](../templates/test-templates-quality.md) | 5d | Architecture / Playwright / Load / Benchmarks — load `testing-quality.md` instead |
 | [../templates/test-templates.md](../templates/test-templates.md) | on-demand | Full-reference fallback |
 
 ## Verification Checklist

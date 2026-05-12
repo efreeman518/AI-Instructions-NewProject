@@ -128,3 +128,24 @@ For each enabled optional host, record its individual gate result. Use `validate
 | Uno UI | | | | |
 | Blazor UI | | | | |
 | Notifications | | | | |
+
+## Scaffold Acceptance
+
+Filled out at the end of the final enabled Phase 5 sub-phase, before closing the scaffold. Mirrors the Scaffold Definition of Done in `ai/SKILL.md`.
+
+| Gate | Command | Result | Notes |
+|------|---------|--------|-------|
+| Build | `dotnet build` | | |
+| Tests (all categories) | `dotnet test` | | Include passing count, ignored count, inconclusive count |
+| Aspire AppHost startup | `dotnet run --project src/Host/Aspire/AppHost` | | Confirm every resource reached Running and `/healthz` returns 200 |
+| Blazor host (when enabled) | `dotnet run --project src/UI/{Project}.Blazor` | | Standalone + Aspire-registered (both) |
+| Uno host (when enabled) | `dotnet build src/UI/{Project}.UI -f <target>` + launch | | Per chosen platform target |
+| API smoke (one entity) | curl/HTTPie/Scalar against the gateway or API | | Record discovery method, not the ephemeral URL |
+
+### Deferred External Dependencies
+
+For every `[Ignore]` test or `Assert.Inconclusive` branch left in the scaffold, record: what it gates, what step unblocks it, and the named test/assembly that turns green when unblocked.
+
+| Test / Assembly | Gates | Unblocking Step | Owner |
+|-----------------|-------|-----------------|-------|
+| | | | |

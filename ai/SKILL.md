@@ -61,10 +61,10 @@ Each Phase 5 sub-phase loads its own file set. The base context (`ai/SKILL.md`, 
 
 | Sub-phase | Required skills | Required templates | On-demand |
 |---|---|---|---|
-| **5a Foundation (TDD)** | `domain-model`, `data-persistence`, `testing` | `entity`, `ef-configuration`, `repository`, `domain-rules`, `appsettings`, `test-templates-domain`, `test-templates-repository` | `azure-data-storage`, `updater-template` (non-SQL stores); `patterns/data-layer-wiring` (cross-project wiring) |
-| **5b App Core + Runtime/Edge (TDD for app/API, tests-after for runtime)** | `application-layer`, `bootstrapper`, `api`, `testing`, plus enabled runtime concerns: `gateway`, `multi-tenant`, `caching`, `aspire`, `configuration-secrets`, `observability`, `security` | `data-mapping`, `service`, `endpoint`, `message-handler`, `structure-validator`, `exception-handler`, `test-templates-service`, `test-templates-endpoint`, `health-check` | `patterns/api-host-wiring`, `patterns/infrastructure-wiring` |
+| **5a Foundation (TDD)** | `domain-model`, `data-persistence`, `testing` | `entity`, `ef-configuration`, `repository`, `domain-rules`, `appsettings`, `test-templates-domain`, `test-templates-repository`; **`updater-template` whenever any entity has child collections (1:N owned, M:N junction)** | `azure-data-storage` (non-SQL stores); `test-templates-integration` (balanced/comprehensive — fill the `{Entity}RepositoryIntegrationTests` shells generated in Phase 4); `patterns/data-layer-wiring` (cross-project wiring) |
+| **5b App Core + Runtime/Edge (TDD for app/API, tests-after for runtime)** | `application-layer`, `bootstrapper`, `api`, `testing`, plus enabled runtime concerns: `gateway`, `multi-tenant`, `caching`, `aspire`, `configuration-secrets`, `observability`, `security` | `data-mapping`, `service`, `endpoint`, `message-handler`, `structure-validator`, `exception-handler`, `test-templates-service`, `test-templates-endpoint`, `test-templates-e2e` (multi-endpoint workflows), `health-check` | `test-templates-integration` (audit pipeline + projection pipeline tests; comprehensive); `patterns/api-host-wiring`, `patterns/infrastructure-wiring` |
 | **5c Optional Hosts (tests-after)** | only the enabled host(s): `background-services`, `function-app`, `ui-uno` (index — load `ui-uno-shell`/`ui-uno-mvux`/`ui-uno-platforms` per task), `ui-blazor`, `notifications` | host-matching templates: `uno-mvux-model-template`, `uno-ui-client-layer`, `uno-xaml-page-template` | `ui-uno` is a dedicated-session set |
-| **5d Quality + Delivery** | `testing-quality`, `iac`, `cicd` | `test-templates-quality`, `dockerfile` | `testing` (only if revisiting unit/endpoint scaffolding); `messaging`, `grpc`, `external-api` (if used) |
+| **5d Quality + Delivery** | `testing-quality`, `iac`, `cicd` | `test-templates-quality` (architecture + Playwright + load + benchmarks), `dockerfile` | `testing` (only if revisiting unit/endpoint scaffolding); `test-templates-integration` / `test-templates-e2e` (if these tiers were skipped in 5a/5b); `messaging`, `grpc`, `external-api` (if used) |
 | **5e Integration (Auth + AI)** | `identity-management` (always); `ai-integration` (when `includeAiServices: true`) | `ai-search`, `agent` (when AI in scope) | scope AI further to search-only or agents-only as needed |
 
 Read the table once at the start of each Phase 5 sub-phase session, load the listed files, proceed.
@@ -132,6 +132,28 @@ Generate one complete slice, validate, then move to next slice.
 - Keep Aspire config and IaC names aligned
 - Start with minimal viable profiles, promote later
 - **Seed deterministic startup data early.** For scaffold, demo, or local-development modes, generate seed data for the minimum required user/profile/domain state so that first-run UI and API flows work against real records. Do not spend time hardening first-run UX around empty datasets — seed first, polish later.
+
+## Scaffold Definition of Done
+
+A scaffolded solution is **not complete** until all of the following hold. Treat these as hard gates — if any fail, fix before declaring the scaffold finished, or record the deviation in `HANDOFF.md` with the specific dependency or sub-phase that's blocking.
+
+1. **`dotnet build` is green on the full solution** (every project under `src/`, including all test projects). No warnings as errors that the scaffold introduces; warnings inherited from the package strategy are acceptable but flagged in `HANDOFF.md`.
+2. **`dotnet test` is green for every test category the scaffold produces.** Specifically:
+   - `Unit`, `Endpoint`, `Architecture`, `Mapper` — all pass.
+   - `Integration`, `E2E`, `PlaywrightUI`, `Load`, `Benchmark` — pass when their backing infrastructure is available; otherwise the affected test methods (not whole assemblies) must mark themselves `Assert.Inconclusive` with a reason, or carry `[Ignore("Reason: <external dep not yet wired>")]`. A test assembly that aborts in `[AssemblyInitialize]` because infrastructure failed to start is **not** acceptable — apply the assembly-initializer safety pattern from [../skills/testing.md](../skills/testing.md) § Assembly Initializer Safety.
+   - No flaky-pass: a green run must be reproducible. If a test passes intermittently, treat it as failed.
+3. **The Aspire AppHost starts cleanly.** `dotnet run --project Host/Aspire/AppHost` reaches the dashboard with every registered resource in the **Running** state and no exceptions in resource logs. Health probes (`/healthz`, `/readyz`) return 200 on every API/host project once each declares itself ready. External dependencies in `emulator`, `lazy-optional`, `no-op stub`, or `deployment-only` mode count as healthy when their stub/emulator path responds — live cloud credentials are not required.
+4. **Every UI host starts cleanly — Aspire-registered AND standalone.**
+   - **Aspire-registered UI hosts** (Blazor server, Blazor WASM host, Uno host when added to AppHost): when the AppHost starts in (3), the UI resource reaches **Running**, the dashboard logs are exception-free, navigating to the root URL renders the layout (no white screen, no DI exception, no missing Refit client crash), and at least one entity list page loads (empty or seeded data — both are valid).
+   - **Standalone UI hosts** run cleanly with their canonical launch command:
+     - Blazor: `dotnet run --project Host/{Project}.Blazor` reaches `Application started`, `/healthz` returns 200, the root URL renders without exception in console logs.
+     - Uno WASM: `dotnet run --project Host/{Project}.UI -f net9.0-browserwasm` (or the project's primary TFM) serves without WASM load errors; the shell renders.
+     - Uno Desktop / Mobile: the head project builds and launches via its platform target; the shell renders. Smoke check only — full platform-specific QA is out of scope for scaffold completion.
+   - Backend connectivity from UI: the canonical Refit/Kiota client resolves the configured Gateway/API URL via `appsettings`. If the API is up, a UI page that calls one read endpoint returns data (or a typed empty state) — not a console exception.
+5. **All UI/API/Function host startup logs are quiet by Information-level.** Aspire dashboard logs should show no `Error`/`Critical` entries from project-owned categories during a healthy start. Acceptable: framework warnings (AspNetCore initialization, EF model validation messages already filtered in [../skills/testing.md](../skills/testing.md)). Unacceptable: stack traces from `Program.cs`, DI resolution failures, missing config exceptions, `NotImplementedException` from a no-op stub being unexpectedly resolved.
+6. **External-dependency deferrals are recorded.** Any `[Ignore]` test, `Assert.Inconclusive` branch, or `deployment-only` external dep is named in `HANDOFF.md` with: (a) what it gates, (b) what step unblocks it (e.g., "wire Entra tenant ID"), (c) the test/assembly that flips green once unblocked. A scaffold may declare itself complete with deferrals present; it may not declare itself complete with un-explained deferrals.
+
+The scaffold author runs gates 1–5 from the target project root and pastes the relevant tail of each output into `HANDOFF.md` § Scaffold Acceptance before closing the final Phase 5 session.
 
 ---
 

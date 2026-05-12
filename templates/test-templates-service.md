@@ -230,3 +230,78 @@ public class {Entity}MapperTests
 
 > **Note:** Mapper tests require the entity `Create()` and test builders to be implemented (Phase 5a). Write mapper tests in Phase 5b after entity logic is available.
 > Add `{Entity}_InlinedChildren_AgreeWith_ChildMappers` only for parents whose `Projection` inlines child DTO collections.
+
+---
+
+## Consolidated Mapper Parity Class
+
+Per-entity `{Entity}MapperTests` classes cover `ToDto`, `ToEntity`, and child-inline parity per entity. **In addition**, scaffold a single consolidated `MapperProjectionParityTests` class that pins the compile-projection / `ToDto` agreement for every mapper in one place. This is a small file but it's the cheapest catch for drift across the whole mapper layer.
+
+### File: `Test/Test.Unit/Mappers/MapperProjectionParityTests.cs`
+
+```csharp
+using {Project}.Application.Mappers;
+using {Project}.Domain.Model;
+using Test.Support;
+using Test.Support.Builders;
+
+namespace Test.Unit.Mappers;
+
+/// <summary>
+/// Parity guards for the compile-projection pattern. Each mapper exposes a single canonical
+/// Projection expression; ToDto reuses the compiled delegate so EF (server-side) and in-memory
+/// code paths cannot drift.
+///
+/// For simple mappers the parity check is trivially true (ToDto IS the compiled projection),
+/// but the tests still verify the expression compiles and surfaces all expected fields — i.e.
+/// the projection is a real full shape, not a forgotten subset.
+///
+/// For aggregate roots with inlined child projections the test additionally guards against
+/// drift between the parent's inline projection (EF cannot translate child .ToDto() calls)
+/// and each child mapper's own ToDto path.
+///
+/// Owned-type flattening (DateRange / Money / RecurrencePattern → scalar columns) is also
+/// exercised: it must remain EF-translatable AND evaluate correctly in-memory.
+/// </summary>
+[TestClass]
+public class MapperProjectionParityTests
+{
+    [TestMethod]
+    [TestCategory("Unit")]
+    public void {Entity}_CompiledProjection_AgreesWith_ToDto()
+    {
+        var entity = new {Entity}Builder().Build();
+        var fromCompiled = {Entity}Mapper.Projection.Compile()(entity);
+        var fromToDto = entity.ToDto();
+
+        Assert.AreEqual(fromToDto.Id, fromCompiled.Id);
+        Assert.AreEqual(fromToDto.Name, fromCompiled.Name);
+        // Assert every scalar, owned-type flattened property, and collection count.
+    }
+
+    [TestMethod]
+    [TestCategory("Unit")]
+    public void {Entity}_InlinedChildren_AgreeWith_ChildMappers()
+    {
+        // Only generate this method for aggregate roots whose Projection inlines child DTOs.
+        var entity = new {Entity}Builder().Build();
+        entity.{ChildEntity}s.Add(new {ChildEntity}Builder().With{Entity}Id(entity.Id).Build());
+
+        var fullDto = entity.ToDto();
+        var expectedChild = entity.{ChildEntity}s.Single().ToDto();
+
+        Assert.AreEqual(1, fullDto.{ChildEntity}s.Count);
+        Assert.AreEqual(expectedChild.Id, fullDto.{ChildEntity}s[0].Id);
+        // Assert every child property the parent inline projection emits.
+    }
+
+    // One test method per entity. Group by aggregate when entities share a builder.
+}
+```
+
+### Why both layouts coexist
+
+- Per-entity `{Entity}MapperTests` is the home for `ToDto`/`ToEntity`/owned-type-specific tests — they assert mapper behavior, not just parity.
+- Consolidated `MapperProjectionParityTests` is the **one-stop guard** that "EF expression and compiled in-memory delegate emit the same shape" — easy to scan when mapper changes are reviewed, and harder to drift than scattered per-entity duplicates of the same assertion.
+
+Generate the parity class once at scaffold time; add a method per entity as each mapper is built in Phase 5b. Do not duplicate the `*_CompiledProjection_AgreesWith_ToDto` test in the per-entity file when the same assertion already lives in the consolidated class.

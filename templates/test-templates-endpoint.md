@@ -37,13 +37,39 @@ If the test base evolves to wrap `HttpClient` in an extension method (e.g. `clie
 
 The plumbing for swapping the production DbContext + interceptors + pooled factories with a test-mode store is identical between `Test.Endpoints` (in-memory) and `Test.E2E` (Testcontainers SQL). It lives once in `Test.Support` as `WebApplicationFactoryBase<TProgram, TTrxnContext, TQueryContext>`. Both projects derive thin specializations that only declare which options to use.
 
+> **Phase 4 generates this file.** The shared base is part of the contract-scaffolding output (see [../ai/contract-scaffolding.md](../ai/contract-scaffolding.md), `### 4. Test Infrastructure`) so the solution builds and both `Test.Endpoints` and `Test.E2E` compile before Phase 5 begins. The shape below is the canonical reference.
+
 `Test/Test.Support/WebApplicationFactoryBase.cs`:
 
 ```csharp
+using EF.Data;
+using EF.Data.Interceptors;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
+
+namespace Test.Support;
+
+/// <summary>
+/// Shared base for WebApplicationFactory-based test factories.
+///
+/// Subclasses override BuildTrxnOptions and BuildQueryOptions to choose the test database
+/// (in-memory for endpoint contract tests, Testcontainers SQL for E2E workflow tests).
+///
+/// Removes the standard pooled-DbContext + interceptor + scoped-factory plumbing that the
+/// production host registers, then re-registers test-mode contexts using TestDbContextFactory.
+///
+/// Constrained to DbContextBase&lt;string, Guid?&gt; — the EF.Packages canonical audit/tenant
+/// shape. Apps that deviate from these types must override ConfigureWebHost directly rather
+/// than using this base.
+/// </summary>
 public abstract class WebApplicationFactoryBase<TProgram, TTrxnContext, TQueryContext> : WebApplicationFactory<TProgram>
     where TProgram : class
-    where TTrxnContext : DbContext
-    where TQueryContext : DbContext
+    where TTrxnContext : DbContextBase<string, Guid?>
+    where TQueryContext : DbContextBase<string, Guid?>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -71,8 +97,17 @@ public abstract class WebApplicationFactoryBase<TProgram, TTrxnContext, TQueryCo
     {
         services.RemoveAll<AuditInterceptor<string, Guid?>>();
         services.RemoveAll<ConnectionNoLockInterceptor>();
-        // Removes: TTrxnContext, TQueryContext, DbContextOptions<TTrxn|TQuery>, DbContextOptions,
-        //          IDbContextFactory<TTrxn|TQuery>, DbContextScopedFactory<...>, DbContextPool partial-name match
+
+        WebApplicationFactoryHelpers.RemoveDescriptorsByServiceType(services, typeof(TTrxnContext));
+        WebApplicationFactoryHelpers.RemoveDescriptorsByServiceType(services, typeof(TQueryContext));
+        WebApplicationFactoryHelpers.RemoveDescriptorsByServiceType(services, typeof(DbContextOptions<TTrxnContext>));
+        WebApplicationFactoryHelpers.RemoveDescriptorsByServiceType(services, typeof(DbContextOptions<TQueryContext>));
+        WebApplicationFactoryHelpers.RemoveDescriptorsByServiceType(services, typeof(DbContextOptions));
+        WebApplicationFactoryHelpers.RemoveDescriptorsByServiceType(services, typeof(IDbContextFactory<TTrxnContext>));
+        WebApplicationFactoryHelpers.RemoveDescriptorsByServiceType(services, typeof(IDbContextFactory<TQueryContext>));
+        WebApplicationFactoryHelpers.RemoveDescriptorsByServiceType(services, typeof(DbContextScopedFactory<TTrxnContext, string, Guid?>));
+        WebApplicationFactoryHelpers.RemoveDescriptorsByServiceType(services, typeof(DbContextScopedFactory<TQueryContext, string, Guid?>));
+        WebApplicationFactoryHelpers.RemoveDescriptorsByImplPartialName(services, "DbContextPool");
     }
 }
 
@@ -86,7 +121,24 @@ public static class WebApplicationFactoryHelpers
 {
     public static TContext CreateContext<TContext>(DbContextOptions options) where TContext : DbContext
     {
-        // Reflection-based ctor invoke bypasses DbContextBase's `required` member enforcement.
+        var genericOptionsType = typeof(DbContextOptions<>).MakeGenericType(typeof(TContext));
+        var ctor = typeof(TContext).GetConstructor([genericOptionsType])
+                ?? typeof(TContext).GetConstructor([typeof(DbContextOptions)]);
+        return (TContext)ctor!.Invoke([options]);
+    }
+
+    public static void RemoveDescriptorsByServiceType(IServiceCollection services, Type serviceType)
+    {
+        foreach (var d in services.Where(d => d.ServiceType == serviceType).ToList())
+            services.Remove(d);
+    }
+
+    public static void RemoveDescriptorsByImplPartialName(IServiceCollection services, string partialName)
+    {
+        foreach (var d in services.Where(d =>
+            d.ImplementationType?.FullName?.Contains(partialName) == true
+            || d.ServiceType.FullName?.Contains(partialName) == true).ToList())
+            services.Remove(d);
     }
 }
 ```
@@ -130,7 +182,11 @@ That's the entire file. The pooled-context swap, interceptor removal, factory pl
 
 ## Test.E2E derived factory (Testcontainers SQL)
 
-`Test/Test.E2E/SqlApiFactory.cs` is identical except the options use `UseSqlServer(connectionString)` and the class also manages the container lifecycle (start/stop). See [test-templates-quality.md](test-templates-quality.md).
+`Test/Test.E2E/SqlApiFactory.cs` is identical except the options use `UseSqlServer(connectionString)` and the class manages a static Testcontainers SQL lifecycle (`StartContainerAsync` / `StopContainerAsync`). Full template: [test-templates-e2e.md](test-templates-e2e.md) § SqlApiFactory.
+
+## Multi-resource Integration tier
+
+When a test needs **more than just SQL** (Azurite Table Storage, Service Bus emulator, the full API + audit pipeline, projection-store handoffs), do not extend `WebApplicationFactoryBase`. Use the Aspire-managed `AspireTestHost` + `DbContextFactory` piggyback pattern from [test-templates-integration.md](test-templates-integration.md). The WAF base is for HTTP-in-API-out testing; the Aspire fixture is for distributed-app verification.
 
 ---
 

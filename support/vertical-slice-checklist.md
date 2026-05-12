@@ -23,9 +23,10 @@ Use this when adding a new entity to an **already-scaffolded** solution. Skip fu
 2. `ai/placeholder-tokens.md`
 3. Backend templates: `entity-template.md`, `ef-configuration-template.md`, `repository-template.md`, `data-mapping-template.md`, `service-template.md`, `endpoint-template.md`, `structure-validator-template.md`
 4. If domain rules needed: `domain-rules-template.md`
-5. If child collections: `updater-template.md`
-6. If Uno UI enabled: `uno-mvux-model-template.md`, `uno-xaml-page-template.md`, `uno-ui-client-layer.md`
-7. If Blazor UI enabled: `skills/ui-blazor.md` — add a Refit method group, entity list page, and entity new/edit page
+5. **If child collections (1:N owned or M:N junction): `updater-template.md` is required** — the repository's `UpdateFromDto` delegates to a DbContext extension method that uses `CollectionUtility.SyncCollectionWithResult` to add/update/remove children in one call. Without this, aggregate edits silently drop client-side removals.
+6. Test templates per profile (see § Test Slice below): `test-templates-domain.md`, `test-templates-repository.md`, `test-templates-service.md`, `test-templates-endpoint.md`, and for balanced+ profiles `test-templates-integration.md` + `test-templates-e2e.md`
+7. If Uno UI enabled: `uno-mvux-model-template.md`, `uno-xaml-page-template.md`, `uno-ui-client-layer.md`
+8. If Blazor UI enabled: `skills/ui-blazor.md` — add a Refit method group, entity list page, and entity new/edit page
 
 ### Slice Execution Order
 
@@ -33,14 +34,17 @@ Use this when adding a new entity to an **already-scaffolded** solution. Skip fu
 2. Create EF configuration in `Infrastructure.Data`
 3. Add `DbSet<{Entity}>` to both DbContexts
 4. Create repository interface + implementations (Trxn + Query)
-5. Create DTO + SearchFilter in `Application.Models`
-6. Create mapper in `Application.Mappers`
-7. Create StructureValidator in `Application.Services/Rules`
-8. Create service + interface
-9. Create endpoint
-10. Wire DI in `RegisterServices.cs` (repos + service)
-11. Map endpoints in `WebApplicationBuilderExtensions.cs`
-12. Run migration: `dotnet ef migrations add Add{Entity} ...`
+5. **If child collections: create `{Entity}Updater.cs` under `Infrastructure.Repositories/Updaters/`** — DbContext extension method using `CollectionUtility.SyncCollectionWithResult`. Repository's `UpdateFromDto` delegates here.
+6. Create DTO + SearchFilter in `Application.Models`
+7. Create mapper in `Application.Mappers` (canonical `Projection` + compiled `ToDto` + `ToEntity`; child collections inlined in `Projection` — EF can't translate child `.ToDto()` calls)
+8. Add a method to `MapperProjectionParityTests.cs` for the new mapper
+9. Create StructureValidator in `Application.Services/Rules`
+10. Create service + interface (use `repoTrxn.UpdateFromDto(entity, dto, RelatedDeleteBehavior.RelationshipAndEntity)` in `UpdateAsync` for aggregate roots so client-side child removals hard-delete)
+11. Create endpoint
+12. Wire DI in `RegisterServices.cs` (repos + service)
+13. Map endpoints in `WebApplicationBuilderExtensions.cs`
+14. Run migration: `dotnet ef migrations add Add{Entity} ...`
+15. Write tests in the order matching the profile: Unit → Endpoint → Integration (real SQL via Aspire piggyback) → E2E (multi-endpoint workflow).
 
 ### Wiring Checklist
 
@@ -117,21 +121,27 @@ dotnet ef migrations add Add{Entity} --project src/Infrastructure/{Project}.Infr
 
 ## Test Slice (Recommended)
 
-| File Path | Template |
-|---|---|
-| `src/Test/Test.Unit/Domain/{Entity}Tests.cs` | [test-templates-domain.md](../templates/test-templates-domain.md) |
-| `src/Test/Test.Unit/Services/{Entity}ServiceTests.cs` | [test-templates-service.md](../templates/test-templates-service.md) |
-| `src/Test/Test.Unit/Repositories/{Entity}RepositoryTrxnTests.cs` | [test-templates-repository.md](../templates/test-templates-repository.md) |
-| `src/Test/Test.Unit/Repositories/{Entity}RepositoryQueryTests.cs` | [test-templates-repository.md](../templates/test-templates-repository.md) |
-| `src/Test/Test.Unit/Mappers/{Entity}MapperTests.cs` | [test-templates-service.md](../templates/test-templates-service.md) |
-| `src/Test/Test.Endpoints/Endpoints/{Entity}EndpointsTests.cs` | [test-templates-endpoint.md](../templates/test-templates-endpoint.md) |
-| `src/Test/Test.Architecture/` updates | [test-templates-quality.md](../templates/test-templates-quality.md) |
+| File Path | Template | Profile |
+|---|---|---|
+| `src/Test/Test.Unit/Domain/{Entity}Tests.cs` | [test-templates-domain.md](../templates/test-templates-domain.md) | all |
+| `src/Test/Test.Unit/Domain/{Entity}RulesTests.cs` (when rules exist) | [test-templates-domain.md](../templates/test-templates-domain.md) | all |
+| `src/Test/Test.Unit/Services/{Entity}ServiceTests.cs` | [test-templates-service.md](../templates/test-templates-service.md) | all |
+| `src/Test/Test.Unit/Repositories/{Entity}RepositoryTrxnTests.cs` | [test-templates-repository.md](../templates/test-templates-repository.md) | all |
+| `src/Test/Test.Unit/Repositories/{Entity}RepositoryQueryTests.cs` | [test-templates-repository.md](../templates/test-templates-repository.md) | all |
+| `src/Test/Test.Unit/Mappers/{Entity}MapperTests.cs` | [test-templates-service.md](../templates/test-templates-service.md) | all |
+| `src/Test/Test.Unit/Mappers/MapperProjectionParityTests.cs` (add a method per entity) | [test-templates-service.md](../templates/test-templates-service.md) | all |
+| `src/Test/Test.Endpoints/Endpoints/{Entity}EndpointsTests.cs` | [test-templates-endpoint.md](../templates/test-templates-endpoint.md) | all |
+| `src/Test/Test.Integration/{Entity}RepositoryIntegrationTests.cs` | [test-templates-integration.md](../templates/test-templates-integration.md) | balanced+ |
+| `src/Test/Test.E2E/{Entity}WorkflowTests.cs` | [test-templates-e2e.md](../templates/test-templates-e2e.md) | balanced+ |
+| `src/Test/Test.Architecture/` updates | [test-templates-quality.md](../templates/test-templates-quality.md) | balanced+ |
 
 ### Required Test Gate by Profile
 
-- `minimal`: Unit + Endpoint
-- `balanced`: Unit + Endpoint + Integration + Architecture
-- `comprehensive`: Balanced + E2E + Load + Benchmark (where enabled)
+- `minimal`: Unit + Endpoint pass; mapper parity test exists.
+- `balanced`: Minimal + `{Entity}RepositoryIntegrationTests` (real SQL via Aspire piggyback) + `{Entity}WorkflowTests` (multi-endpoint workflow against Testcontainers SQL) + Architecture pass.
+- `comprehensive`: Balanced + Load + Benchmark (where enabled) + audit-pipeline / projection-pipeline integration tests where the entity participates in either.
+
+For composite slices, include at least one integration scenario that traverses all participating entities.
 
 For composite slices, include at least one integration scenario that traverses all participating entities.
 

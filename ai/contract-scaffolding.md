@@ -141,6 +141,9 @@ public class {Entity} : EntityBase, ITenantEntity<Guid>
 - `DbSupport.cs` — test DB wiring for integration tests
 - `Utility.cs` — config builder + random string helper
 - `TestConstants.cs` — `DefaultTenantId`, `SystemUserId`
+- `JsonTestOptions.cs` — shared `JsonSerializerOptions` mirroring the API host's `ConfigureHttpJsonOptions` (case-insensitive + `JsonStringEnumConverter`). Required so endpoint / E2E tests deserialize string enums consistently. See [test-templates-endpoint.md](../templates/test-templates-endpoint.md) § Shared JSON Options.
+- `LocalSqlSettings.cs` — exposes a single `SharedSaPassword` constant used by the Aspire test host fixture to drive `Parameters:sql-password` (matches the AppHost parameter name). Keep this in `Test.Support` so both `Test.E2E` and `Test.Integration` consume the same value.
+- `WebApplicationFactoryBase.cs` — abstract `WebApplicationFactory<TProgram>` that removes pooled-EF + interceptor + scoped-factory plumbing and re-registers test-mode contexts. Constrained to `DbContextBase<string, Guid?>` (the EF.Packages canonical audit/tenant shape). Both `Test.Endpoints/CustomApiFactory` and `Test.E2E/SqlApiFactory` derive from it — see [test-templates-endpoint.md](../templates/test-templates-endpoint.md) § Shared WebApplicationFactoryBase for the full file shape.
 
 **Test Data Builders (per entity):**
 ```csharp
@@ -172,15 +175,22 @@ public class {Entity}DtoBuilder
 }
 ```
 
-**WebApplicationFactory base classes (consumed by `Test.Endpoints` and `Test.E2E`):**
-- `CustomApiFactory<TProgram>` — `WebApplicationFactory` with in-memory DB and no `IHostedService`. Place in `Test.Endpoints` initially; the follow-up refactor (see plan) consolidates it into `Test.Support` so both `Test.Endpoints` and `Test.E2E` derive from a single shared base.
-- `EndpointTestBase` / `DbIntegrationTestBase` — HTTP client factory + DB reset helpers
+**WebApplicationFactory plumbing (generated in Phase 4, consumed by `Test.Endpoints` and `Test.E2E`):**
+
+The shared base is the **single source of truth** for swapping the production DbContext + interceptors + pooled factories with a test-mode store. Both `Test.Endpoints` (in-memory) and `Test.E2E` (Testcontainers SQL) derive thin specializations. Phase 4 generates all three files so the solution builds end-to-end before Phase 5 begins.
+
+- `Test/Test.Support/WebApplicationFactoryBase.cs` — generic base class + `TestDbContextFactory<T>` + `WebApplicationFactoryHelpers` (reflection-based context creation that bypasses `required` member enforcement, descriptor removal helpers). Full file shape: [test-templates-endpoint.md](../templates/test-templates-endpoint.md) § Shared WebApplicationFactoryBase.
+- `Test/Test.Endpoints/CustomApiFactory.cs` — derived factory using `UseInMemoryDatabase`. ~10 lines — overrides only `BuildTrxnOptions` / `BuildQueryOptions`.
+- `Test/Test.E2E/SqlApiFactory.cs` — derived factory using `UseSqlServer` against a Testcontainers SQL container, with static `StartContainerAsync` / `StopContainerAsync` lifecycle helpers. Full file shape: [test-templates-e2e.md](../templates/test-templates-e2e.md) § SqlApiFactory.
+- `Test/Test.Integration/AspireTestHost.cs` — assembly-scoped fixture starting the full Aspire AppHost graph (API + Functions + SQL + Azurite) once via `[AssemblyInitialize]`. Full file shape: [test-templates-integration.md](../templates/test-templates-integration.md) § AspireTestHost.
+- `Test/Test.Integration/DbContextFactory.cs` — internal helper that builds `{App}DbContextTrxn` / `{App}DbContextQuery` instances pointed at `AspireTestHost.ConnectionString` so SQL-only and projection tests piggyback on the shared Aspire SQL container instead of starting a parallel Testcontainers stack.
+- `EndpointTestBase` (optional) — HTTP client helper used by endpoint test classes.
 
 **Empty test project shells:**
 - `Test.Unit/` — project file with MSTest + Moq references, no test classes yet (Phase 5a adds them)
-- `Test.Integration/` — project file with MSTest + Testcontainers + EF, no test classes yet (Phase 5d adds service-level integration tests against real external services as part of the quality regression)
-- `Test.Endpoints/` — project file with MSTest + `Microsoft.AspNetCore.Mvc.Testing`, no test classes yet (Phase 5b adds endpoint contract tests via WebApplicationFactory)
-- `Test.E2E/` — project file with MSTest + `Microsoft.AspNetCore.Mvc.Testing` + Testcontainers, no test classes yet (Phase 5d adds multi-endpoint workflow tests against Testcontainers SQL)
+- `Test.Integration/` — project file with MSTest + Testcontainers + Aspire.Hosting.Testing + Azure.Data.Tables; references `AppHost`, `Test.Support`, and every Application/Infrastructure project. Contains the `AspireTestHost` + `DbContextFactory` shells from above. Phase 5a populates `{Entity}RepositoryIntegrationTests`; Phase 5b populates `ApiAuditPipelineTests`, `DomainEventPipelineTests`, `AuditLogRepositoryAzuriteTests`. See [test-templates-integration.md](../templates/test-templates-integration.md).
+- `Test.Endpoints/` — project file with MSTest + `Microsoft.AspNetCore.Mvc.Testing`, derived `CustomApiFactory`, no test classes yet (Phase 5b adds endpoint contract tests via WAF)
+- `Test.E2E/` — project file with MSTest + `Microsoft.AspNetCore.Mvc.Testing` + Testcontainers, derived `SqlApiFactory`, no test classes yet (Phase 5b adds multi-endpoint workflow tests against Testcontainers SQL — see [test-templates-e2e.md](../templates/test-templates-e2e.md))
 
 ### 5. No-Op DI Stubs
 
@@ -246,9 +256,12 @@ Generate entities in dependency order: parent entities first, then children. Use
 ```powershell
 dotnet restore
 dotnet build
+dotnet test --filter "TestCategory=Unit|TestCategory=Endpoint"
 ```
 
-The entire solution — including all test projects — must compile successfully. `dotnet restore` must succeed against the configured private feed (with `NUGET_AUTH_TOKEN` set). All tests are either absent (empty projects) or trivially pass. No `dotnet test` run is required at this gate. Developer reviews the scaffolded shape against the verification checklist below.
+The entire solution — including all test projects — must compile successfully. `dotnet restore` must succeed against the configured private feed (with `NUGET_AUTH_TOKEN` set). At Phase 4, the only tests present are the trivially-passing shells emitted alongside the contract — they must all pass (no project should fail to discover tests, fail to assembly-init, or leave the runner red). Tests that exercise external infrastructure (`[TestCategory("Integration")]`, `[TestCategory("E2E")]`) are populated in Phase 5 and may use `Assert.Inconclusive` / `[Ignore]` with a reason until the dependency is wired.
+
+Developer reviews the scaffolded shape against the verification checklist below.
 
 ---
 
@@ -282,11 +295,15 @@ The entire solution — including all test projects — must compile successfull
 - [ ] `dotnet build` succeeds from solution root
 - [ ] Every entity from `resource-implementation.yaml` has: interface, DTO, entity shell, builders
 - [ ] All no-op stubs satisfy their interfaces (no abstract/unimplemented methods)
-- [ ] Test.Support contains `UnitTestBase`, `InMemoryDbBuilder`, `DbSupport`, `Utility`, `TestConstants`
+- [ ] Test.Support contains `UnitTestBase`, `InMemoryDbBuilder`, `DbSupport`, `Utility`, `TestConstants`, `JsonTestOptions`, `LocalSqlSettings`, `WebApplicationFactoryBase`
+- [ ] `Test.Endpoints/CustomApiFactory.cs` and `Test.E2E/SqlApiFactory.cs` derive from `WebApplicationFactoryBase<Program, {App}DbContextTrxn, {App}DbContextQuery>` (do not duplicate the swap-out logic)
+- [ ] `Test.Integration/AspireTestHost.cs` and `Test.Integration/DbContextFactory.cs` exist (even when no tests reference them yet — Phase 5 fills them)
 - [ ] Test data `{Entity}DtoBuilder` returns valid DTOs
 - [ ] `RegisterServices.cs` wires all no-op stubs
 - [ ] No domain logic in entity shells (only `throw new NotImplementedException`)
 - [ ] No local reimplementation of `<packagePrefix>.*` shared base types into application/domain/host layers (they live in feed packages or `src/Packages/<packagePrefix>.*` only)
 - [ ] `dotnet restore` exits 0. For `feed`/`hybrid`: `NUGET_AUTH_TOKEN` is set and all feed-supplied `<packagePrefix>.*` packages resolve. For `local`/`hybrid`: every layer in `localPackageLayers` exists as a project under `src/Packages/<packagePrefix>.<Layer>` and is referenced via `<ProjectReference>`
+- [ ] `dotnet test --filter "TestCategory=Unit|TestCategory=Endpoint"` exits 0 (Phase 4 shells must pass — no red, no aborted assemblies)
+- [ ] Aspire AppHost starts cleanly: `dotnet run --project Host/Aspire/AppHost` reaches `Application started` for every registered resource with no exceptions in the dashboard, and `/healthz` returns 200 on every host project. Stub-mode external deps (`emulator`, `lazy-optional`, `no-op stub`, `deployment-only`) are acceptable; live cloud auth is not required.
 - [ ] Developer reviews the scaffolded shape against the items above
 - [ ] Token placeholders follow [placeholder-tokens.md](placeholder-tokens.md)

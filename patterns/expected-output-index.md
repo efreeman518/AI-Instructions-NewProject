@@ -55,15 +55,30 @@ Expected file layout when scaffolding is complete. All paths relative to project
 ## Testing
 | Artifact | Path |
 |---|---|
-| Unit (domain) | `Test/Test.Unit/Domain/TodoItemTests.cs` |
-| Unit (mapper) | `Test/Test.Unit/Application/TodoItemMapperTests.cs` |
-| Service-level integration | `Test/Test.Integration/Repositories/CategoryRepositoryIntegrationTests.cs` |
-| Architecture | `Test/Test.Architecture/LayerDependencyTests.cs` |
-| Test support | `Test/Test.Support/UnitTestBase.cs`, `InMemoryDbBuilder.cs`, `DbSupport.cs` |
-| Endpoint contract tests | `Test/Test.Endpoints/Endpoints/CategoryEndpointsTests.cs` |
-| Workflow E2E tests | `Test/Test.E2E/Workflows/CategoryWorkflowTests.cs` |
-| Custom factory | `Test/Test.Endpoints/CustomApiFactory.cs` (or shared via `Test/Test.Support/`) |
-| Playwright UI | `Test/Test.PlaywrightUI/Pages/CategoryCrudTests.cs` (browser; runs against hosted stack) |
+| Test support — shared WAF base | `Test/Test.Support/WebApplicationFactoryBase.cs` (with `TestDbContextFactory<T>` + `WebApplicationFactoryHelpers`) |
+| Test support — JSON options | `Test/Test.Support/JsonTestOptions.cs` |
+| Test support — shared constants | `Test/Test.Support/TestConstants.cs`, `LocalSqlSettings.cs` |
+| Test support — utilities | `Test/Test.Support/UnitTestBase.cs`, `InMemoryDbBuilder.cs`, `DbSupport.cs` |
+| Test support — builders | `Test/Test.Support/Builders/{Entity}Builder.cs`, `{Entity}DtoBuilder.cs` (one of each per entity) |
+| Unit (domain) | `Test/Test.Unit/Domain/{Entity}Tests.cs`, `{Entity}RulesTests.cs` |
+| Unit (mapper, per entity) | `Test/Test.Unit/Mappers/{Entity}MapperTests.cs` |
+| Unit (mapper parity, consolidated) | `Test/Test.Unit/Mappers/MapperProjectionParityTests.cs` |
+| Unit (services) | `Test/Test.Unit/Services/{Entity}ServiceTests.cs` |
+| Unit (repositories) | `Test/Test.Unit/Repositories/{Entity}RepositoryTrxnTests.cs`, `{Entity}RepositoryQueryTests.cs` |
+| Endpoint contract tests | `Test/Test.Endpoints/Endpoints/{Entity}EndpointsTests.cs` |
+| Endpoint factory | `Test/Test.Endpoints/CustomApiFactory.cs` (derives from `Test.Support/WebApplicationFactoryBase`) |
+| E2E factory | `Test/Test.E2E/SqlApiFactory.cs` (Testcontainers SQL, static lifecycle) |
+| E2E workflow tests | `Test/Test.E2E/{Entity}WorkflowTests.cs` |
+| Integration — Aspire fixture | `Test/Test.Integration/AspireTestHost.cs` (full distributed app + lifecycle) |
+| Integration — DB context factory | `Test/Test.Integration/DbContextFactory.cs` (piggyback on `AspireTestHost.ConnectionString`) |
+| Integration — repo integration | `Test/Test.Integration/{Entity}RepositoryIntegrationTests.cs` (migrations + CRUD + tenant filter + M:N) |
+| Integration — audit pipeline (Azurite) | `Test/Test.Integration/AuditLogRepositoryAzuriteTests.cs` |
+| Integration — API audit pipeline | `Test/Test.Integration/ApiAuditPipelineTests.cs` |
+| Integration — projection pipeline | `Test/Test.Integration/DomainEventPipelineTests.cs` |
+| Architecture | `Test/Test.Architecture/*DependencyTests.cs` |
+| Playwright UI | `Test/Test.PlaywrightUI/Pages/{Entity}CrudTests.cs` (browser; runs against hosted stack) |
+| Load | `Test/Test.Load/{Entity}LoadTests.cs` |
+| Benchmark | `Test/Test.Benchmarks/{Entity}Benchmarks.cs` |
 
 ## Aspire
 | Artifact | Path |

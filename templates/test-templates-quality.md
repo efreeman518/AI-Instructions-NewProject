@@ -206,104 +206,16 @@ public class {Entity}Benchmarks
 
 ---
 
-## Integration Tests (TestContainers)
+## Integration & E2E Tests (moved to dedicated templates)
 
-For real-database integration tests using TestContainers. Add `Testcontainers.MsSql` and `Microsoft.EntityFrameworkCore.SqlServer` to `Test.Integration`.
+The Integration (`Test.Integration`) and E2E (`Test.E2E`) tiers are scaffolded during Phase 5a/5b — not Phase 5d. The patterns live in their own templates:
 
-> **Naming:** `DatabaseFixture` is correct for this Testcontainers-only fixture (single SQL container). If the fixture grows to wrap a full Aspire `DistributedApplication` (DB + Functions + Storage + lifecycle), rename it to `AspireTestHost` and split DB-context creation helpers into a separate `DbContextFactory`. See [../skills/testing.md](../skills/testing.md) → *Aspire Test Host (recipe)*.
+- [test-templates-integration.md](test-templates-integration.md) — `AspireTestHost`, `DbContextFactory`, `{Entity}RepositoryIntegrationTests`, `AuditLogRepositoryAzuriteTests`, `ApiAuditPipelineTests`, `DomainEventPipelineTests`.
+- [test-templates-e2e.md](test-templates-e2e.md) — `SqlApiFactory`, `{Entity}WorkflowTests` (full CRUD + paged search + child-aggregate workflows against Testcontainers SQL).
 
-### File: `Test/Test.Integration/DatabaseFixture.cs`
+Phase 5d treats these tiers as **regression scope**, not generation scope: run them as part of the final quality gate (`dotnet test --filter "TestCategory=Integration|TestCategory=E2E"`) but do not re-generate fixtures here. If a sub-phase skipped its tier earlier (e.g., `api-only` scaffold), load the matching template on-demand and back-fill.
 
-```csharp
-using Testcontainers.MsSql;
-using Microsoft.EntityFrameworkCore;
-
-[assembly: AssemblyInitialize(typeof(DatabaseFixture))]
-[assembly: AssemblyCleanup(typeof(DatabaseFixture))]
-
-[TestClass]
-public sealed class DatabaseFixture
-{
-    private static MsSqlContainer _container = null!;
-    public static string ConnectionString { get; private set; } = null!;
-
-    [AssemblyInitialize]
-    public static async Task Initialize(TestContext _)
-    {
-        _container = new MsSqlBuilder().Build();
-        await _container.StartAsync();
-        ConnectionString = _container.GetConnectionString();
-    }
-
-    [AssemblyCleanup]
-    public static async Task Cleanup()
-    {
-        await _container.DisposeAsync();
-    }
-
-    public static {App}DbContextTrxn CreateTrxnContext()
-    {
-        var options = new DbContextOptionsBuilder<{App}DbContextTrxn>()
-            .UseSqlServer(ConnectionString)
-            .Options;
-        return new {App}DbContextTrxn(options) { AuditId = "integration-test" };
-    }
-
-    public static {App}DbContextQuery CreateQueryContext()
-    {
-        var options = new DbContextOptionsBuilder<{App}DbContextQuery>()
-            .UseSqlServer(ConnectionString)
-            .Options;
-        return new {App}DbContextQuery(options) { AuditId = "integration-test" };
-    }
-}
-```
-
-> **AuditId bypass:** `DbContextBase` has `required string AuditId`. Set it directly when constructing contexts outside DI. The `DesignTimeDbContextFactory` uses the same pattern.
-
-> **SaveChangesAsync:** Use `SaveChangesAsync(OptimisticConcurrencyWinner.ClientWins)` — the parameterless overload throws `NotImplementedException`.
-
-### File: `Test/Test.Integration/MigrationAndRepositoryTests.cs`
-
-```csharp
-[TestClass]
-[TestCategory("Integration")]
-public class MigrationAndRepositoryTests
-{
-    [TestMethod]
-    public async Task Given_CleanDatabase_When_MigrationsApplied_Then_SchemaCreatedSuccessfully()
-    {
-        await using var db = DatabaseFixture.CreateTrxnContext();
-        await db.Database.MigrateAsync();
-        var tables = db.Model.GetEntityTypes().Select(e => e.GetTableName()).Distinct().ToList();
-        Assert.IsTrue(tables.Count > 0);
-    }
-
-    [TestMethod]
-    public async Task Given_MigratedDatabase_When_EntityCrud_Then_PersistsAndRetrievesCorrectly()
-    {
-        await using var db = DatabaseFixture.CreateTrxnContext();
-        await db.Database.MigrateAsync();
-
-        var entity = new {Entity}Builder().Build();
-        db.{Entity}s.Add(entity);
-        await db.SaveChangesAsync(OptimisticConcurrencyWinner.ClientWins);
-
-        var loaded = await db.{Entity}s.FindAsync(entity.Id);
-        Assert.IsNotNull(loaded);
-    }
-
-    [TestMethod]
-    public async Task Given_MultiTenantData_When_QueryWithTenantFilter_Then_OnlyReturnsTenantData()
-    {
-        await using var db = DatabaseFixture.CreateTrxnContext();
-        await db.Database.MigrateAsync();
-        // Seed entities for two different tenants, verify filter isolation
-    }
-}
-```
-
-> **Docker requirement:** TestContainers needs Docker Desktop running. Mark integration tests with `[TestCategory("Integration")]` and run separately from unit/endpoint tests in CI.
+> **Docker requirement:** Integration / E2E tiers need Docker Desktop running (Testcontainers + Azurite). In CI, run them with `--filter "TestCategory=Integration|TestCategory=E2E"` separately from unit/endpoint tests so a missing daemon fails fast instead of cascading.
 
 ---
 
