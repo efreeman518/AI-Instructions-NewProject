@@ -24,16 +24,9 @@ Run once per machine/repo before beginning any scaffolding phase.
 
 ### Development Tools
 
-- [ ] Git repo initialized with `.gitignore` for .NET, **patched** for this scaffold's `src/Packages/` source folder and `Test.E2E/` project (see [../skills/solution-structure.md](../skills/solution-structure.md) § Required Root Files → `.gitignore`)
+- [ ] Git repo initialized with `.gitignore` for .NET, **patched** for this scaffold's `src/Packages/` source folder and `Test.E2E/` project (see [../skills/solution-structure.md](../skills/solution-structure.md) § Required Root Files (Cross-Platform Hygiene))
 - [ ] Current machine- or user-global Python 3 installed for scaffold helper scripts. Verify from a fresh shell per [python-setup.md](python-setup.md); do not rely on a repo `.venv` as the machine launcher.
-- [ ] **Tracked-source validation** (post-generation): every `.csproj` under `src/` is tracked by git. Run after `git add .`:
-   ```powershell
-   $expected = Get-ChildItem -Recurse -Filter *.csproj src/ | ForEach-Object { (Resolve-Path $_.FullName).Path }
-   $tracked  = git ls-files 'src/**/*.csproj' | ForEach-Object { (Resolve-Path $_).Path }
-   $missing  = Compare-Object $expected $tracked -PassThru | Where-Object SideIndicator -eq '<='
-   if ($missing) { throw ".csproj files excluded by .gitignore: $missing" }
-   ```
-   Failure means a `.gitignore` rule is silently shadowing a source folder. Fix the `.gitignore` (do **not** force-add the excluded files — the next scaffold folder will hit the same hidden rule). This catch generalizes: any future folder name that collides with stock VS ignore patterns surfaces here, not on a CI fresh clone.
+- [ ] Tracked-source validation runs after `git add .` — see [Tracked-Source Validation](#tracked-source-validation) below.
 - [ ] `.NET SDK` installed (`dotnet --version`)
 - [ ] Docker running (if Aspire uses SQL/Redis containers)
 - [ ] `nuget.config` includes `nuget.org` + all custom/private feeds (see Private Feed Auth below)
@@ -42,6 +35,19 @@ Run once per machine/repo before beginning any scaffolding phase.
 - [ ] Uno templates installed (`dotnet new install Uno.Templates`) *(if using Uno UI)*
 - [ ] Uno.Check installed (`dotnet tool install -g uno.check`) *(if using Uno UI)*
 - [ ] Kiota CLI installed (`dotnet tool install -g Microsoft.OpenApi.Kiota`) *(if using Uno UI)*
+
+### Tracked-Source Validation
+
+Post-generation check: every `.csproj` under `src/` must be tracked by git. Run after `git add .`:
+
+```powershell
+$expected = Get-ChildItem -Recurse -Filter *.csproj src/ | ForEach-Object { (Resolve-Path $_.FullName).Path }
+$tracked  = git ls-files 'src/**/*.csproj' | ForEach-Object { (Resolve-Path $_).Path }
+$missing  = Compare-Object $expected $tracked -PassThru | Where-Object SideIndicator -eq '<='
+if ($missing) { throw ".csproj files excluded by .gitignore: $missing" }
+```
+
+Failure means a `.gitignore` rule is silently shadowing a source folder. Fix the `.gitignore` (do **not** force-add the excluded files — the next scaffold folder will hit the same hidden rule). This generalizes: any future folder whose name collides with stock VS ignore patterns surfaces here, not on a CI fresh clone.
 
 ### Shared Base-Type Readiness (Phase 3 Pre-Flight)
 

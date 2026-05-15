@@ -29,6 +29,13 @@ import re
 import sys
 from pathlib import Path
 
+# Force UTF-8 stdout/stderr so non-ASCII characters in messages (e.g. → arrow,
+# § section sign) don't crash on Windows consoles that default to cp1252.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 # Directories the runtime payload should ship. Must match install-to-project.py.

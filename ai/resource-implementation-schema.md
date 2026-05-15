@@ -32,6 +32,8 @@ includeScheduler: false
 includeUnoUI: false
 includeBlazorUI: false
 includeNotifications: false
+includeFlowEngine: false
+flowEngineDbStrategy: same-db-separate-schema  # same-db-separate-schema | separate-db
 
 includeIaC: true
 includeGitHubActions: false
@@ -239,6 +241,8 @@ Options: Azure Service Bus, Event Grid, Event Hubs. See [skills/messaging.md](..
 | `includeUnoUI` | `false` | |
 | `includeBlazorUI` | `false` | |
 | `includeNotifications` | `false` | |
+| `includeFlowEngine` | `false` | Enables `EF.FlowEngine` (durable JSON workflow orchestration). Generates a dedicated FE DbContext + registration partial + workflow seeding + admin endpoints + test project. See [../skills/flowengine.md](../skills/flowengine.md). |
+| `flowEngineDbStrategy` | `same-db-separate-schema` | `same-db-separate-schema` (Variant A — preserves atomic outbox; default), `separate-db` (Variant B/C — outbox best-effort). See [../support/ef-packages-reference.md](../support/ef-packages-reference.md) § FlowEngine Data-Layout Variants. |
 
 ### UI Hosting (if applicable)
 

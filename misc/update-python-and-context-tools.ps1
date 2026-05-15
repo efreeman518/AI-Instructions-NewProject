@@ -3,17 +3,10 @@
 .SYNOPSIS
   Idempotent setup: clean Python environment, update RTK and Headroom to
   LATEST stable versions (resolved at runtime), disable all telemetry, and
-  configure user-global agent harness integrations (Claude Code, Codex, and
-  the Copilot CLI). VS Code Copilot is intentionally NOT configured here —
-  it has no machine-level instructions location, so it would only leave a
-  stray project-relative .github/ folder.
-
-  Machine/user scoped: this script writes only to %USERPROFILE%, machine/user
-  env vars, and global tool configs — never to the current directory. It is
-  safe to run from anywhere.
+  configure all agent harnesses (Claude Code, Codex, Copilot).
 
   Safe to re-run at any time. headroom-ai version is resolved to the latest
-  release that has a Windows cp313 binary wheel — never a source-build version.
+  release that has a Windows-installable wheel — never triggers a source build.
 
 .PARAMETERS
   -DryRun              Audit all actions without making changes.
@@ -39,56 +32,45 @@ param(
     [switch]$DryRun,
     [switch]$SkipPythonUpdate,
     [switch]$SkipVersionCheck,
-    [int]$HeadroomTimeout = 0   # 0 = wait forever; pass 30 to cap cold-start waits
+    [int]$HeadroomTimeout = 0   # 0 = wait forever; pass e.g. 30 to cap cold-start waits
 )
 
 $ErrorActionPreference = "Continue"
 Set-StrictMode -Off
 
-# Telemetry off in this session immediately
+# Suppress headroom telemetry in this session immediately — before any headroom call
 $env:HEADROOM_TELEMETRY         = "off"
 $env:HEADROOM_REQUIRE_RUST_CORE = "false"
 
-# ── Fallback versions (used only if live resolution fails) ─────────────────────
+# ── Fallback versions — used only if live upstream queries fail ────────────────
 $FallbackHeadroomVersion = "0.20.15"
 $FallbackRtkVersion      = "0.38.0"
 
 # ── Fixed config ───────────────────────────────────────────────────────────────
 $ProxyPort       = 8787
-$RtkBinDir       = "$env:USERPROFILE\.local\bin"
-$HeadroomRoot    = "$env:USERPROFILE\.headroom"
-$HeadroomRuntime = "$HeadroomRoot\runtime"
-$PackageSpec     = "$HeadroomRoot\package-spec.txt"
-$RunProxyCmd     = "$HeadroomRoot\run-proxy.cmd"
-$HeadroomShim    = "$RtkBinDir\headroom.cmd"
-$ShimPs1         = "$HeadroomRoot\headroom-shim.ps1"
+$RtkBinDir       = "$env:USERPROFILE\.local\bin"      # stable user bin dir for rtk + headroom shims
+$HeadroomRoot    = "$env:USERPROFILE\.headroom"       # headroom home: runtime, shim scripts, config
+$HeadroomRuntime = "$HeadroomRoot\runtime"            # isolated Python venv for headroom-ai
+$PackageSpec     = "$HeadroomRoot\package-spec.txt"   # records the pinned headroom-ai version
+$RunProxyCmd     = "$HeadroomRoot\run-proxy.cmd"      # full proxy launcher (used by shortcuts)
+$EnsureProxyCmd  = "$HeadroomRoot\headroom-proxy-ensure.cmd"  # lightweight hook (used by Copilot/Codex)
+$HeadroomShim    = "$RtkBinDir\headroom.cmd"          # user-facing headroom command shim
+$ShimPs1         = "$HeadroomRoot\headroom-shim.ps1"  # PowerShell backend for the shim
 
-# ── Helpers ────────────────────────────────────────────────────────────────────
+# ── Output helpers ─────────────────────────────────────────────────────────────
 function Write-Step ([string]$m) { Write-Host "`n=== $m ===" -ForegroundColor Cyan }
 function Write-OK   ([string]$m) { Write-Host "  OK  : $m"  -ForegroundColor Green }
 function Write-Warn ([string]$m) { Write-Host "  WARN: $m"  -ForegroundColor Yellow }
 function Write-Fail ([string]$m) { Write-Host "  FAIL: $m"  -ForegroundColor Red }
 function Write-Info ([string]$m) { Write-Host "  $m" }
 
+# Wraps any action block — prints a dry-run notice instead of executing when -DryRun is set
 function Invoke-Maybe ([scriptblock]$sb, [string]$desc) {
     if ($DryRun) { Write-Host "  [DryRun] $desc" -ForegroundColor DarkGray; return }
     & $sb
 }
 
-# True if a JSON-ish file actually contains // or /* */ comments (JSONC).
-# The GitHub Copilot CLI writes its ~/.copilot/config.json as JSONC ("// This
-# file is managed automatically."), which crashes headroom-ai 0.20.x's
-# `init copilot` (plain json.loads -> JSONDecodeError at line 1 col 1).
-function Test-IsJsonc ([string]$path) {
-    if (-not (Test-Path -LiteralPath $path)) { return $false }
-    try {
-        $raw = Get-Content -LiteralPath $path -Raw -ErrorAction Stop
-        # crude but sufficient: a // or /* near the start, before the first {
-        $head = if ($raw.Length -gt 400) { $raw.Substring(0,400) } else { $raw }
-        return ($head -match '(^|\r?\n)\s*//' -or $head -match '/\*')
-    } catch { return $false }
-}
-
+# Returns $true if version string $a is >= version string $b (strips non-numeric prefixes)
 function Test-VersionGte ([string]$a, [string]$b) {
     try {
         $va = [version]($a -replace '^[^\d]*')
@@ -97,6 +79,7 @@ function Test-VersionGte ([string]$a, [string]$b) {
     } catch { return $false }
 }
 
+# Stops any process listening on $port; returns $true if anything was stopped
 function Stop-PortListener ([int]$port) {
     $listeners = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue
     if (-not $listeners) { return $false }
@@ -111,7 +94,9 @@ function Stop-PortListener ([int]$port) {
     return $true
 }
 
-# Run headroom --version, respecting $HeadroomTimeout (0 = no timeout)
+# Runs headroom --version, optionally with a timeout.
+# $HeadroomTimeout = 0 means wait forever (default); any positive value caps via a background job.
+# The shim cold-starts a Python runtime on first call, which can take several seconds.
 function Get-HeadroomVersion {
     if ($HeadroomTimeout -gt 0) {
         $job = Start-Job { headroom --version 2>&1 }
@@ -133,31 +118,33 @@ function Get-HeadroomVersion {
 # ══════════════════════════════════════════════════════════════════════════════
 Write-Step "PHASE 0 — Resolve latest versions"
 
-# ── headroom-ai: find latest version with a Windows cp313 binary wheel ─────────
-# The PyPI /json endpoint only returns the latest release. We need /pypi/<pkg>/json
-# which includes all releases so we can filter by wheel availability.
+# ── headroom-ai: PyPI JSON API ────────────────────────────────────────────────
+# The /pypi/<pkg>/json endpoint returns ALL releases with their file lists.
+# We iterate releases to find the highest stable version that ships a wheel
+# installable on Windows without a source build (no MSVC required).
+# Acceptable wheel tags:
+#   cp313-cp313-win_amd64   compiled Windows wheel
+#   py3-none-any            pure Python, any platform
+#   cp313-none-any          compiled but platform-neutral
+# Excluded: manylinux / linux / macos / darwin — these won't install on Windows.
 $HeadroomVersion = $null
 if (-not $SkipVersionCheck) {
-    Write-Info "Querying PyPI for latest headroom-ai with Windows cp313 wheel..."
+    Write-Info "Querying PyPI for latest headroom-ai with Windows-installable wheel..."
     try {
         $pypi = Invoke-RestMethod "https://pypi.org/pypi/headroom-ai/json" `
                     -TimeoutSec 15 -ErrorAction Stop
 
-        # releases deserializes as PSCustomObject in PowerShell — iterate via PSObject.Properties
+        # PyPI releases deserializes as PSCustomObject in PowerShell, not a hashtable.
+        # Must iterate via .PSObject.Properties; .Keys returns null on PSCustomObject.
         $candidateVersions = $pypi.releases.PSObject.Properties | ForEach-Object {
             $ver   = $_.Name
             $files = $_.Value
-            # Accept any wheel that can install on Windows without a source build:
-            #   - cp313-cp313-win_amd64  (compiled Windows wheel)
-            #   - py3-none-any           (pure Python, any platform)
-            #   - cp313-none-any         (compiled, any platform)
-            # Exclude: manylinux / linux / macos / darwin (won't install on Windows)
             $hasInstallableWheel = $files | Where-Object {
                 $_.filename -match '\.whl$' -and
                 $_.filename -notmatch 'manylinux|linux|macos|darwin'
             }
             if ($hasInstallableWheel) { $ver }
-        } | Where-Object { $_ -and $_ -notmatch 'a\d|b\d|rc\d' } |  # stable only
+        } | Where-Object { $_ -and $_ -notmatch 'a\d|b\d|rc\d' } |  # stable releases only
             ForEach-Object {
                 try { [version]($_ -replace '^[^\d]*') } catch { $null }
             } | Where-Object { $_ -ne $null } |
@@ -167,7 +154,7 @@ if (-not $SkipVersionCheck) {
             $HeadroomVersion = $candidateVersions[0].ToString()
             Write-OK "headroom-ai latest with installable Windows wheel: $HeadroomVersion"
         } else {
-            Write-Warn "No cp313 Windows wheel found in any release — falling back"
+            Write-Warn "No installable Windows wheel found in any release — falling back"
         }
     } catch {
         Write-Warn "PyPI query failed: $($_.Exception.Message)"
@@ -180,6 +167,8 @@ if (-not $HeadroomVersion) {
 $HeadroomSpec = "headroom-ai[proxy]==$HeadroomVersion"
 
 # ── RTK: GitHub Releases API ──────────────────────────────────────────────────
+# Queries the latest release and finds the Windows x86_64 MSVC zip asset.
+# Falls back to constructing the canonical URL if the asset list doesn't match.
 $RtkVersion     = $null
 $RtkDownloadUrl = $null
 if (-not $SkipVersionCheck) {
@@ -196,6 +185,7 @@ if (-not $SkipVersionCheck) {
         $RtkDownloadUrl = if ($asset) {
             $asset.browser_download_url
         } else {
+            # Construct canonical URL if asset pattern didn't match
             "https://github.com/rtk-ai/rtk/releases/download/v$RtkVersion/rtk-x86_64-pc-windows-msvc.zip"
         }
         Write-OK "RTK latest: $RtkVersion  ($( if ($asset) { $asset.name } else { 'URL constructed' } ))"
@@ -209,7 +199,9 @@ if (-not $RtkVersion) {
     Write-Warn "Using fallback RTK version: $RtkVersion"
 }
 
-# ── Python: parse python.org for latest stable ────────────────────────────────
+# ── Python: parse python.org downloads page for latest stable ─────────────────
+# Used to give an accurate version comparison when checking if upgrade is needed.
+# Not used to drive the actual install — that goes through py / Install Manager.
 $PythonLatest = $null
 if (-not $SkipVersionCheck -and -not $SkipPythonUpdate) {
     Write-Info "Querying python.org for latest stable Windows release..."
@@ -218,7 +210,7 @@ if (-not $SkipVersionCheck -and -not $SkipPythonUpdate) {
                       -UseBasicParsing -TimeoutSec 15 -ErrorAction Stop
         $stableVersions = [regex]::Matches($dlPage.Content, 'Python (3\.\d+\.\d+)</a>') |
             ForEach-Object { $_.Groups[1].Value } |
-            Where-Object   { $_ -notmatch 'a\d|b\d|rc\d' } |
+            Where-Object   { $_ -notmatch 'a\d|b\d|rc\d' } |  # exclude pre-releases
             ForEach-Object { [version]$_ } |
             Sort-Object -Descending
         if ($stableVersions) {
@@ -254,6 +246,8 @@ try { py -0p 2>&1 | ForEach-Object { Write-Info "  $_" } } catch { Write-Warn "p
 Write-Info "RTK:"
 try { Write-Info "  $(rtk --version 2>&1)" } catch { Write-Warn "rtk not found" }
 
+# headroom --version cold-starts the shim's Python runtime on first call.
+# Get-HeadroomVersion respects -HeadroomTimeout (0 = no timeout, the default).
 Write-Info "Headroom:"
 try {
     $hrVer = Get-HeadroomVersion
@@ -283,6 +277,9 @@ Write-Step "PHASE 2 — Clear stale Python env pins and py.ini overrides"
 
 $stamp = Get-Date -Format "yyyyMMddHHmmss"
 
+# Clear user-scope env vars that can break a good Python install.
+# PYTHONHOME / PYTHONPATH in particular cause "No module named encodings" errors
+# if they point at a different Python version than the one being invoked.
 foreach ($var in "PY_PYTHON","PY_PYTHON3","PYTHONHOME","PYTHONPATH","PYTHON_MANAGER_DEFAULT") {
     $val = [Environment]::GetEnvironmentVariable($var, "User")
     if ($val) {
@@ -291,6 +288,8 @@ foreach ($var in "PY_PYTHON","PY_PYTHON3","PYTHONHOME","PYTHONPATH","PYTHON_MANA
     }
 }
 
+# py.ini files can pin the launcher to an old minor version (e.g. [defaults] python=3.9).
+# Back them up with a timestamp suffix before removing so they can be recovered if needed.
 foreach ($ini in @("$env:LocalAppData\py.ini","$env:AppData\py.ini","C:\Windows\py.ini")) {
     if (Test-Path -LiteralPath $ini) {
         $content = Get-Content -LiteralPath $ini -Raw
@@ -311,20 +310,13 @@ Write-Step "PHASE 3 — Python runtime update"
 if ($SkipPythonUpdate) {
     Write-Info "Skipping (-SkipPythonUpdate set)"
 } else {
-    # Detect the new Python Install Manager vs the legacy C:\Windows\py.exe.
-    # NOTE: `& py list 2>&1` returns an ARRAY of lines. `$array -notmatch "x"`
-    # returns the SUBSET of lines that don't match — always truthy when any
-    # line differs — so the old `-notmatch ... -and -notmatch ...` test was
-    # effectively always $true and we ran broken `py install ...` on legacy
-    # launchers. Join to one string and POSITIVELY test for the legacy
-    # signature instead.
+    # Distinguish the new Python Install Manager (supports 'py list', 'py install')
+    # from the legacy Python Launcher (C:\Windows\py.exe) which only supports 'py -X.Y'.
     $isNewMgr = $false
     try {
-        $pyListText = (& py list 2>&1 | Out-String)
-        $looksLegacy = ($pyListText -match 'legacy py\.exe' -or
-                        $pyListText -match "command is unavailable" -or
-                        $pyListText -match "can't open file")
-        $isNewMgr = -not $looksLegacy
+        $pyList = & py list 2>&1
+        # Legacy launcher prints "WARNING: ... legacy py.exe command" on unsupported subcommands
+        $isNewMgr = ($pyList -notmatch "WARNING.*legacy" -and $pyList -notmatch "unavailable")
     } catch { }
 
     if ($isNewMgr) {
@@ -341,13 +333,14 @@ if ($SkipPythonUpdate) {
         Write-Info "Installed runtimes:"
         py -0p 2>&1 | ForEach-Object { Write-Info "  $_" }
     } else {
+        # Legacy py.exe — cannot run 'py install'. Check if Python is at least current.
         Write-Warn "Legacy Python Launcher detected (C:\Windows\py.exe) — 'py install' unavailable."
         try {
             $current = ((python --version 2>&1) -replace 'Python ').Trim()
             Write-OK "Active Python: $current"
             if ($PythonLatest) {
                 if (Test-VersionGte -a $current -b $PythonLatest) {
-                    Write-OK "Already at or above latest stable ($PythonLatest)"
+                    Write-OK "Already at or above latest stable ($PythonLatest) — no upgrade needed"
                 } else {
                     Write-Warn "Installed: $current  |  Latest: $PythonLatest"
                     Write-Warn "To upgrade Python and unlock 'py install' management:"
@@ -370,6 +363,7 @@ try { Write-Info "  pip: $(python -m pip --version 2>&1)" } catch { }
 # ══════════════════════════════════════════════════════════════════════════════
 Write-Step "PHASE 4 — Stop Headroom proxy on :$ProxyPort"
 
+# Must stop before updating the runtime so pip doesn't hit locked files.
 Invoke-Maybe {
     $stopped = Stop-PortListener -port $ProxyPort
     if ($stopped) { Write-OK "Proxy stopped" }
@@ -385,7 +379,8 @@ Invoke-Maybe {
     New-Item -ItemType Directory -Force -Path $RtkBinDir, $HeadroomRoot | Out-Null
 } "create dirs"
 
-# Check if runtime already matches target version
+# Check if runtime already matches target version — skip the venv rebuild if so.
+# The venv rebuild wipes and recreates the entire runtime, which takes 1-3 minutes.
 $runtimeHR    = "$HeadroomRuntime\Scripts\headroom.exe"
 $needsRebuild = $true
 if (Test-Path -LiteralPath $runtimeHR) {
@@ -400,14 +395,20 @@ if (Test-Path -LiteralPath $runtimeHR) {
     } catch { Write-Info "Runtime probe failed — rebuilding" }
 }
 
-# Always rewrite shim files (idempotent, trivially cheap)
+# Always rewrite all shim files — they're small and idempotent. This ensures
+# any behavioural fix (telemetry, hook fast-path, env vars) is always current.
+
 Write-Info "Writing package-spec.txt..."
 Invoke-Maybe {
+    # Records the exact headroom-ai version installed in the runtime venv.
+    # The shim's Reset-HeadroomRuntime function reads this to rebuild from scratch.
     Set-Content -LiteralPath $PackageSpec -Encoding ASCII -Value $HeadroomSpec
 } "write package-spec.txt ($HeadroomSpec)"
 
 Write-Info "Writing headroom.cmd..."
 Invoke-Maybe {
+    # Thin batch wrapper so 'headroom' resolves from any shell without needing
+    # Python on PATH. Delegates to the PowerShell shim for all logic.
     Set-Content -LiteralPath $HeadroomShim -Encoding ASCII -Value @'
 @echo off
 setlocal
@@ -428,6 +429,9 @@ $runtimePython   = Join-Path $runtime "Scripts\python.exe"
 $runtimeHeadroom = Join-Path $runtime "Scripts\headroom.exe"
 $packageSpecPath = Join-Path $root "package-spec.txt"
 
+# Finds a Python 3.13 interpreter for rebuilding the headroom runtime venv.
+# Prefers py -3.13 (Install Manager) then py -3 then system python.
+# Headroom-ai ships cp313 wheels; 3.13 is the safest base for binary installs.
 function Resolve-BasePython {
     foreach ($c in @(
         @{cmd="py";    args=@("-3.13","-c","import sys;print(sys.executable)")},
@@ -441,11 +445,14 @@ function Resolve-BasePython {
             if ($LASTEXITCODE -eq 0 -and $last -and (Test-Path -LiteralPath $last)) { return $last }
         } catch { }
     }
+    # Hard fallback to known install path
     $fb = "$env:LOCALAPPDATA\Programs\Python\Python313\python.exe"
     if (Test-Path -LiteralPath $fb) { return $fb }
     throw "No runnable Python 3.13 found for headroom runtime rebuild."
 }
 
+# Wipes and rebuilds the runtime venv from scratch using the current package-spec.txt.
+# Uses --only-binary=:all: to guarantee no MSVC source build occurs.
 function Reset-HeadroomRuntime {
     $base = Resolve-BasePython
     if (Test-Path -LiteralPath $runtime) { Remove-Item -LiteralPath $runtime -Recurse -Force }
@@ -456,12 +463,14 @@ function Reset-HeadroomRuntime {
     if ($LASTEXITCODE -ne 0) { throw "headroom-ai install failed" }
 }
 
+# Checks that headroom.exe is present and runnable in the runtime venv.
 function Test-HeadroomRuntime {
     if (-not (Test-Path -LiteralPath $runtimeHeadroom)) { return $false }
     & $runtimeHeadroom --version *> $null
     return ($LASTEXITCODE -eq 0)
 }
 
+# Checks if the proxy is already serving on :8787.
 function Test-ProxyReady {
     try {
         $r = Invoke-WebRequest -Uri "http://127.0.0.1:8787/readyz" -UseBasicParsing -TimeoutSec 2
@@ -469,24 +478,32 @@ function Test-ProxyReady {
     } catch { return $false }
 }
 
+# Manual runtime reset: headroom shim reset
 if ($HeadroomArgs.Count -ge 2 -and
     $HeadroomArgs[0] -eq "shim" -and $HeadroomArgs[1] -eq "reset") {
     Reset-HeadroomRuntime; exit 0
 }
 
+# Self-heal: rebuild runtime if missing or broken before any real command
 if (-not (Test-HeadroomRuntime)) { Reset-HeadroomRuntime }
 
+# Fast-path hook: called by Copilot/Codex on every request to ensure the proxy is running.
+# Skip full runtime load — just check the port directly and start proxy if needed.
+# The lightweight headroom-proxy-ensure.cmd is now the preferred hook target (< 1s),
+# but this branch handles the case where the shim is still invoked directly.
 if ($HeadroomArgs.Count -ge 3 -and
     $HeadroomArgs[0] -eq "init" -and
     $HeadroomArgs[1] -eq "hook" -and
     $HeadroomArgs[2] -eq "ensure") {
-    if (-not (Test-ProxyReady)) {
+    $listening = (netstat -an 2>$null | Select-String ":8787 " | Select-String "LISTENING")
+    if (-not $listening) {
         Start-Process -FilePath "$root\run-proxy.cmd" `
             -WorkingDirectory $env:USERPROFILE -WindowStyle Hidden
     }
     exit 0
 }
 
+# Normal headroom command — pass through to the runtime executable
 $env:HEADROOM_TELEMETRY         = "off"
 $env:HEADROOM_REQUIRE_RUST_CORE = "false"
 & $runtimeHeadroom @HeadroomArgs
@@ -496,6 +513,8 @@ exit $LASTEXITCODE
 
 Write-Info "Writing run-proxy.cmd..."
 Invoke-Maybe {
+    # Full proxy launcher used by Desktop/Startup shortcuts.
+    # Sets all noise-suppression env vars so the console window stays clean.
     Set-Content -LiteralPath $RunProxyCmd -Encoding ASCII -Value @'
 @echo off
 title Headroom Proxy (port 8787)
@@ -503,6 +522,11 @@ set HEADROOM_TELEMETRY=off
 set HEADROOM_REQUIRE_RUST_CORE=false
 set TRANSFORMERS_VERBOSITY=error
 set TOKENIZERS_PARALLELISM=false
+set HF_HUB_VERBOSITY=error
+set HF_HUB_DISABLE_PROGRESS_BARS=1
+set HUGGINGFACE_HUB_VERBOSITY=error
+set HTTPX_LOG_LEVEL=warning
+set PYTHONWARNINGS=ignore::UserWarning
 echo === Headroom Proxy launching at %date% %time% ===
 echo.
 call "%USERPROFILE%\.local\bin\headroom.cmd" proxy --port 8787 --host 127.0.0.1 --no-telemetry
@@ -514,7 +538,27 @@ pause >nul
 '@
 } "write run-proxy.cmd"
 
-# Ensure .local\bin on user PATH
+Write-Info "Writing headroom-proxy-ensure.cmd (lightweight hook for Copilot/Codex)..."
+Invoke-Maybe {
+    # This is the preferred hook target for Copilot and Codex.
+    # The default 'headroom init hook ensure' routes through headroom.cmd -> PowerShell ->
+    # Python runtime, which takes 3-8s on a cold start and trips Copilot's 15s hook timeout.
+    # This .cmd does a direct netstat port check in <100ms with no PS or Python startup cost.
+    Set-Content -LiteralPath $EnsureProxyCmd -Encoding ASCII -Value @'
+@echo off
+:: Lightweight proxy-ensure hook — no PowerShell startup, just a TCP port check.
+:: Called by Copilot/Codex hooks on every request; must complete well under 15s.
+set PORT=8787
+netstat -an 2>nul | findstr /C:":%PORT% " | findstr /C:"LISTENING" >nul 2>&1
+if %ERRORLEVEL% equ 0 exit /b 0
+:: Port not listening — start the proxy hidden and exit immediately.
+:: The proxy window opens asynchronously; the hook does not wait for it to be ready.
+start "" /b cmd /c ""%USERPROFILE%\.headroom\run-proxy.cmd"" >nul 2>&1
+exit /b 0
+'@
+} "write headroom-proxy-ensure.cmd"
+
+# Ensure .local\bin is on user PATH so headroom.cmd and rtk.exe resolve from any shell
 $userPath  = [Environment]::GetEnvironmentVariable("Path","User")
 $pathParts = $userPath -split ";" | Where-Object { $_ }
 if ($pathParts -notcontains $RtkBinDir) {
@@ -524,7 +568,9 @@ if ($pathParts -notcontains $RtkBinDir) {
     } "add $RtkBinDir to user PATH"
 }
 
-# Rebuild runtime if needed
+# Rebuild the headroom runtime venv if the installed version doesn't match the target.
+# Uses Python 3.13 as the base interpreter — headroom-ai ships cp313 binary wheels
+# for Windows, so this avoids any MSVC source build requirement.
 if ($needsRebuild) {
     Invoke-Maybe {
         $basePy = $null
@@ -551,15 +597,20 @@ if ($needsRebuild) {
         Write-Info "Base Python: $basePy ($(& $basePy --version 2>&1))"
         $runtimePy = "$HeadroomRuntime\Scripts\python.exe"
 
+        Write-Info "Wiping old runtime..."
         if (Test-Path -LiteralPath $HeadroomRuntime) {
             Remove-Item -LiteralPath $HeadroomRuntime -Recurse -Force
         }
+
+        Write-Info "Creating venv..."
         & $basePy -m venv $HeadroomRuntime
         if ($LASTEXITCODE -ne 0) { Write-Fail "venv creation failed"; return }
 
         & $runtimePy -m pip install --upgrade pip --quiet
 
-        Write-Info "Installing $HeadroomSpec (binary-only — wheel already verified)..."
+        # --only-binary=:all: prevents pip from attempting a source build.
+        # Phase 0 already verified this version has an installable wheel, so this should succeed.
+        Write-Info "Installing $HeadroomSpec (binary-only — wheel verified in Phase 0)..."
         & $runtimePy -m pip install --only-binary=:all: $HeadroomSpec
         if ($LASTEXITCODE -ne 0) {
             Write-Fail "headroom-ai wheel install failed. Version $HeadroomVersion may lack a cp313 Windows wheel."
@@ -583,6 +634,8 @@ $rtkExe     = "$RtkBinDir\rtk.exe"
 $currentRtk = $null
 try { $currentRtk = (& rtk --version 2>&1).Trim() } catch { }
 
+# Skip download if already at or above the target — Test-VersionGte handles
+# cases where RTK is newer than the resolved version (e.g. 0.39.0 vs 0.38.0).
 if ($currentRtk -and (Test-VersionGte -a $currentRtk -b $RtkVersion)) {
     Write-OK "RTK already at or above v${RtkVersion}: $currentRtk — skipping download"
 } else {
@@ -617,19 +670,21 @@ if ($currentRtk -and (Test-VersionGte -a $currentRtk -b $RtkVersion)) {
 # ══════════════════════════════════════════════════════════════════════════════
 Write-Step "PHASE 7 — Disable telemetry + configure all agent harnesses"
 
-# Refresh session PATH so rtk + headroom resolve
+# Refresh session PATH so rtk + headroom resolve from their install locations
 $env:Path = "$RtkBinDir;" +
             [Environment]::GetEnvironmentVariable("Path","Machine") + ";" +
             [Environment]::GetEnvironmentVariable("Path","User")
 
-# Disable RTK telemetry first — before any init that might phone home
+# Disable RTK telemetry BEFORE any init calls — rtk init phones home once per day
+# and hangs visibly for several seconds while doing so.
 Write-Info "Disabling RTK telemetry..."
 Invoke-Maybe {
     rtk telemetry disable 2>&1 | ForEach-Object { Write-Info "  $_" }
     Write-OK "RTK telemetry disabled"
 } "rtk telemetry disable"
 
-# Disable Headroom telemetry: CLI + persist via setx
+# Disable Headroom telemetry via CLI and also persist via setx so all future
+# shells and the proxy window inherit HEADROOM_TELEMETRY=off automatically.
 Write-Info "Disabling Headroom telemetry..."
 Invoke-Maybe {
     headroom telemetry disable 2>&1 | ForEach-Object { Write-Info "  $_" }
@@ -637,67 +692,52 @@ Invoke-Maybe {
     Write-OK "Headroom telemetry disabled (CLI + HEADROOM_TELEMETRY=off persisted)"
 } "headroom telemetry disable"
 
-# Harness init writes to user-global config dirs, but some sub-commands
-# (notably `rtk init --copilot`) also scaffold a project-relative `.github/`
-# in the CURRENT directory. This script is machine/user scoped — it must not
-# leave artifacts in whatever folder it happened to be launched from. Run the
-# init block from $env:USERPROFILE so any stray relative writes land in HOME
-# (harmless, and where user-global config belongs anyway), then restore.
-Push-Location $env:USERPROFILE
-try {
-    # RTK harness init
-    # NOTE: --copilot is intentionally excluded. VS Code Copilot has no
-    # user-global instructions location (its only convention is a
-    # project-level .github/copilot-instructions.md), so there is nothing
-    # for it to do at machine scope — it would only create a stray
-    # .github/ folder. Per-project Copilot setup, if wanted, is a separate
-    # `rtk init --copilot` run inside that project.
-    foreach ($flag in "--auto-patch","--codex") {
-        Write-Info "rtk init -g $flag"
-        Invoke-Maybe {
-            rtk init -g $flag 2>&1 | ForEach-Object { Write-Info "  $_" }
-        } "rtk init -g $flag"
-    }
+# RTK harness init — registers hooks and instruction files for each agent
+foreach ($flag in "--auto-patch","--codex","--copilot") {
+    Write-Info "rtk init -g $flag"
     Invoke-Maybe {
-        rtk init --show 2>&1 | ForEach-Object { Write-Info "  $_" }
-    } "rtk init --show"
+        rtk init -g $flag 2>&1 | ForEach-Object { Write-Info "  $_" }
+    } "rtk init -g $flag"
+}
+Invoke-Maybe {
+    rtk init --show 2>&1 | ForEach-Object { Write-Info "  $_" }
+} "rtk init --show"
 
-    # Headroom harness init (copilot here targets the Copilot CLI, which
-    # does have a user-global config — kept). The copilot target is fragile:
-    # headroom-ai 0.20.x's `init copilot` does a plain json.loads on
-    # ~/.copilot/config.json, which the Copilot CLI writes as JSONC
-    # ("// This file is managed automatically."). That throws a JSONDecodeError
-    # traceback. We don't rewrite Copilot's own managed file; instead, skip the
-    # copilot init when the config is JSONC and surface a one-line warning, and
-    # trap any other failure so it doesn't dump a Python traceback into the log.
-    $copilotConfig = Join-Path $env:USERPROFILE ".copilot\config.json"
-    foreach ($agent in "claude","codex","copilot") {
-        if ($agent -eq "copilot" -and (Test-IsJsonc $copilotConfig)) {
-            Write-Warn "Skipping 'headroom init -g copilot': $copilotConfig is JSONC (// comments)."
-            Write-Warn "  headroom-ai $HeadroomVersion can't parse it (json.loads -> JSONDecodeError)."
-            Write-Warn "  Workaround: temporarily strip the leading // comment lines from that file,"
-            Write-Warn "  run 'headroom init -g copilot' by hand, then it's fine; or wait for a"
-            Write-Warn "  headroom-ai release that handles JSONC (the 0.21.x line currently has no"
-            Write-Warn "  Windows wheel, so this machine stays on $HeadroomVersion)."
-            continue
-        }
-        Write-Info "headroom init -g $agent"
-        Invoke-Maybe {
-            try {
-                headroom init -g $agent 2>&1 | ForEach-Object { Write-Info "  $_" }
-                if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) {
-                    Write-Warn "headroom init -g $agent exited $LASTEXITCODE (see lines above)"
-                }
-            } catch {
-                Write-Warn "headroom init -g $agent failed: $($_.Exception.Message)"
-            }
-        } "headroom init -g $agent"
-    }
-} finally {
-    Pop-Location
+# Headroom harness init — writes global instruction files for each agent
+foreach ($agent in "claude","codex","copilot") {
+    Write-Info "headroom init -g $agent"
+    Invoke-Maybe {
+        headroom init -g $agent 2>&1 | ForEach-Object { Write-Info "  $_" }
+    } "headroom init -g $agent"
 }
 
-# Durable routing env vars
+# Patch the Copilot hook to use the lightweight proxy-ensure.cmd instead of the
+# default 'headroom init hook ensure' command. The default routes through the PS
+# shim + Python runtime and can take 3-8s, tripping Copilot's 15s hook timeout.
+# headroom-proxy-ensure.cmd does a netstat port check in under 100ms.
+Write-Info "Patching Copilot hook to use lightweight proxy-ensure.cmd..."
+Invoke-Maybe {
+    # Headroom writes its Copilot hook config to a global location during init.
+    # We patch it to point at the lightweight ensure cmd if the key exists.
+    $globalHook = "$env:USERPROFILE\.config\headroom\copilot-hook.json"
+    foreach ($f in @($globalHook)) {
+        if (Test-Path -LiteralPath $f) {
+            $json = Get-Content -LiteralPath $f -Raw | ConvertFrom-Json
+            if ($json.hookCommand -or $json.hook_command) {
+                $json | Add-Member -Force -NotePropertyName "hookCommand" -NotePropertyValue $EnsureProxyCmd
+                $json | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $f -Encoding UTF8
+                Write-OK "Patched hook config: $f"
+            }
+        }
+    }
+    # Also persist the path via setx so any hook runner that reads this env var
+    # can find the lightweight cmd without needing the full headroom chain.
+    setx HEADROOM_ENSURE_CMD $EnsureProxyCmd | Out-Null
+    Write-OK "HEADROOM_ENSURE_CMD set to: $EnsureProxyCmd"
+} "patch copilot hook to lightweight ensure cmd"
+
+# Set durable routing env vars so all agents send requests through the proxy.
+# setx writes to the registry — effective in all new shells and agent processes.
 Write-Info "Setting ANTHROPIC_BASE_URL + OPENAI_BASE_URL via setx..."
 Invoke-Maybe {
     setx ANTHROPIC_BASE_URL "http://127.0.0.1:$ProxyPort"    | Out-Null
@@ -710,6 +750,8 @@ Invoke-Maybe {
 # ══════════════════════════════════════════════════════════════════════════════
 Write-Step "PHASE 8 — Desktop and Startup shortcuts"
 
+# Create shortcuts in both Desktop and Startup so the proxy can be launched
+# manually and also auto-starts on Windows login.
 Invoke-Maybe {
     $shell = New-Object -ComObject WScript.Shell
     foreach ($dir in @([Environment]::GetFolderPath("Desktop"),
@@ -730,10 +772,14 @@ Invoke-Maybe {
 Write-Step "PHASE 9 — Start Headroom proxy"
 
 Invoke-Maybe {
+    # Clear the port first in case anything is still holding it from before Phase 4
     Stop-PortListener -port $ProxyPort | Out-Null
+
     $env:HEADROOM_TELEMETRY         = "off"
     $env:HEADROOM_REQUIRE_RUST_CORE = "false"
     Start-Process -FilePath $RunProxyCmd -WorkingDirectory $env:USERPROFILE -WindowStyle Normal
+
+    # Poll /readyz for up to 20s — proxy needs a few seconds to initialize
     Write-Info "Proxy window launched. Polling /readyz (up to 20s)..."
     $ready = $false
     for ($i = 0; $i -lt 5 -and -not $ready; $i++) {
@@ -744,6 +790,7 @@ Invoke-Maybe {
             $ready = $true
         } catch { }
     }
+
     if ($ready) { Write-OK "Proxy ready on :$ProxyPort" }
     else        { Write-Warn "Proxy did not respond to /readyz — check the console window" }
 } "start headroom proxy"
@@ -753,6 +800,7 @@ Invoke-Maybe {
 # ══════════════════════════════════════════════════════════════════════════════
 Write-Step "PHASE 10 — Final verification"
 
+# Reload PATH so verification uses the same state any new shell will see
 $env:Path = [Environment]::GetEnvironmentVariable("Path","Machine") + ";" +
             [Environment]::GetEnvironmentVariable("Path","User")
 
@@ -774,8 +822,9 @@ try {
 try {
     $pyListFinal = & py list 2>&1
     if ($pyListFinal -match "WARNING.*legacy") {
-        # Only warn if Python is also out of date; if current, just note it at INFO level
-        $currentPyVer = ((python --version 2>&1) -replace 'Python ').Trim()
+        # Only escalate to WARN if Python itself is also out of date.
+        # If Python is current, the legacy launcher is a cosmetic issue, not an action item.
+        $currentPyVer    = ((python --version 2>&1) -replace 'Python ').Trim()
         $pythonOutOfDate = $PythonLatest -and -not (Test-VersionGte -a $currentPyVer -b $PythonLatest)
         if ($pythonOutOfDate) {
             Write-Warn "Legacy Python Launcher + Python out of date (installed: $currentPyVer, latest: $PythonLatest)."
@@ -802,7 +851,10 @@ Write-Info ""
 Write-Info "── Headroom (shim) ────────────────────────────────────────"
 try {
     Write-Info "  version  : $(Get-HeadroomVersion)"
-    # 'No deployment profile named default' is expected when using Startup shortcut (not a service)
+
+    # 'No deployment profile named default' is expected — it means headroom is not
+    # installed as a Windows service or scheduled task, which is correct here.
+    # We use the Startup folder shortcut instead, which is simpler and more visible.
     $hsStatus = headroom install status 2>&1
     $hsStatus | Where-Object { $_ -notmatch "No deployment profile" } |
         ForEach-Object { Write-Info "    $_" }
@@ -821,7 +873,8 @@ foreach ($ep in "/livez","/readyz","/health","/stats") {
             "/readyz" { Write-OK "/readyz : status=$($resp.status) ready=$($resp.ready) version=$($resp.version) rust_core=$($resp.rust_core)" }
             "/health" { Write-OK "/health : status=$($resp.status) version=$($resp.version) rust_core=$($resp.rust_core)" }
             "/stats"  {
-                # Extract scalar fields only — avoids JSON depth truncation on nested objects
+                # Extract named scalar fields only — avoids JSON depth truncation warnings
+                # that occur when serializing the full nested stats object.
                 Write-OK "/stats  : requests_total=$($resp.requests_total) tokens_saved_total=$($resp.tokens_saved_total) cache_hits=$($resp.cache_hits) uptime_seconds=$($resp.uptime_seconds)"
             }
         }
@@ -833,6 +886,7 @@ Write-Info "── Routing + telemetry env vars (user scope) ──────�
 Write-Info "  ANTHROPIC_BASE_URL  : $([Environment]::GetEnvironmentVariable('ANTHROPIC_BASE_URL','User'))"
 Write-Info "  OPENAI_BASE_URL     : $([Environment]::GetEnvironmentVariable('OPENAI_BASE_URL','User'))"
 Write-Info "  HEADROOM_TELEMETRY  : $([Environment]::GetEnvironmentVariable('HEADROOM_TELEMETRY','User'))"
+Write-Info "  HEADROOM_ENSURE_CMD : $([Environment]::GetEnvironmentVariable('HEADROOM_ENSURE_CMD','User'))"
 
 Write-Host "`n=== Done ===" -ForegroundColor Green
 Write-Host @"
@@ -843,10 +897,11 @@ Pass criteria:
   rtk      -> v$RtkVersion or newer, telemetry disabled
   headroom -> v$HeadroomVersion (wheel-installable, shim runtime), telemetry disabled
   /livez + /readyz -> healthy
-  /health  -> ready (rust_core:disabled is OK)
+  /health  -> ready (rust_core:disabled is OK on Python 3.13 without Rust wheel)
   /stats   -> counters visible
   ANTHROPIC_BASE_URL + OPENAI_BASE_URL -> set via setx
   HEADROOM_TELEMETRY -> off
+  HEADROOM_ENSURE_CMD -> points to lightweight proxy-ensure.cmd
 
 Action required after this script:
   Restart Claude Code, Codex, and any IDE so they pick up the new setx vars.

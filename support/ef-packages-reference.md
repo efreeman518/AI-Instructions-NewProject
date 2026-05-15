@@ -307,6 +307,25 @@ JSON-defined, durable workflow orchestration engine with pluggable backends (sta
 | `EF.FlowEngine.AdminApi` | REST management endpoints for workflow monitoring |
 | `EF.FlowEngine.Testing` | Test helpers and fixtures |
 
+### FlowEngine Data-Layout Variants
+
+When `includeFlowEngine: true`, the integrator picks a `flowEngineDbStrategy`. The choice is **load-bearing** because FE's atomic-outbox guarantee depends on FE state + outbox living in the same DbContext / transaction scope.
+
+| Variant | `flowEngineDbStrategy` | DB / Schema | Outbox guarantee | When to choose |
+|---|---|---|---|---|
+| **A** (default) | `same-db-separate-schema` | App DB, FE schema (`flowengine`), separate `__EFMigrationsHistory_FlowEngine` | **Atomic.** State save and outbox publish commit in one transaction. `message`/`integration`/`agent` nodes are exactly-effected once the workflow advances. | Default for any new scaffold. Operational simplicity wins. |
+| **B** | `separate-db` | Dedicated FE database, FE schema | **Best-effort.** State and outbox are in the same FE DB so FE-internal atomicity holds — but cross-DB failure modes between FE and the app DB are no longer transactional from the app's perspective. | Compliance separation, independent scaling, or per-tenant FE isolation. |
+| **C** | `separate-db` + cross-publisher relay | Dedicated FE database; FE `message` nodes routed through the app's existing at-least-once publisher | **Best-effort + relay** — degrades the same way as B, but the integrator wires FE outbox events to the app's transactional publisher to recover atomicity at the app boundary. | Variant B is required but cross-publisher relay is acceptable. |
+
+**Failure mode in B/C.** A crash between FE state-save and FE outbox-publish is the same window FE closes for Variant A — but FE's atomic guarantee no longer extends across the app's boundary. Loss surface: `message`, `integration`, and `agent` node side effects. Not state.
+
+**What the scaffold emits per variant.**
+
+- Variant A: dedicated FE DbContext via interface composition (see [../skills/flowengine.md](../skills/flowengine.md)), FE schema constant, FE migration-history table constant, single connection string.
+- Variant B/C: same DbContext shape, **separate connection string** (e.g., `ConnectionStrings:FlowEngine`), Aspire resource entry for the FE DB, and a warning entry in `HANDOFF.md` naming the outbox degradation. Variant C additionally requires the integrator to wire FE message nodes to the app's existing publisher — the scaffold emits a `// TODO: [CONFIGURE]` stub in `RegisterServices.FlowEngine.cs` where the relay would attach.
+
+Record the choice (and, for B/C, the relay plan) in `.scaffold/DESIGN-DECISIONS.md`.
+
 ### Runtime Filter Builder (EF.FilterBuilder)
 
 Translates declarative `FilterSet` JSON/objects into LINQ `Expression<Func<T, bool>>` at runtime. Use when API consumers or workflow steps need to specify query filters without server-side code changes.

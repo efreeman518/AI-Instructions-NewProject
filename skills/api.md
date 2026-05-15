@@ -251,7 +251,7 @@ Required endpoint rules:
 
    **Why this is non-negotiable.** Without `[FromServices]`, minimal-API parameter binding falls back to `IServiceProviderIsService.IsService(type)` at *route discovery time* (before any request fires). If the type is registered → parameter is bound from DI; if **not** registered → parameter is inferred as `[FromBody]` and the host throws `System.InvalidOperationException: Body was inferred but the method does not allow inferred body parameters` at `app.MapGroup(...)`. The failure takes down **every** endpoint, not just the unregistered one.
 
-   This is especially fragile when a feature is gated per host (Cosmos-only services, Service Bus senders — see [bootstrapper.md](bootstrapper.md) § Conditional Dependency Pattern). The endpoint still references the service interface; the host that opted out of registering it then refuses to start with a misleading body-inference error.
+   This is especially fragile when a feature is gated per host (Cosmos-only services, Service Bus senders — see [bootstrapper.md](bootstrapper.md) § Conditional (Per-Host) Dependency Pattern). The endpoint still references the service interface; the host that opted out of registering it then refuses to start with a misleading body-inference error.
 
    **No exceptions:** add `[FromServices]` on the service parameter even for trivially-registered types. Treat any handler missing `[FromServices]` on a service parameter as a Phase 5b regression and fix it before the gate.
 5. Return `ProblemDetails` for errors (no raw strings). Always use `ProblemDetailsHelper.BuildProblemDetailsResponseMultiple` (or the singular variant for single-error cases) — never `TypedResults.BadRequest(string)`.
