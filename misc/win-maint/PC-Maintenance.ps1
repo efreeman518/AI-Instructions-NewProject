@@ -501,6 +501,9 @@ if ($Mode -eq "Deep") {
         Write-Log ("  {0,-40} {1,-8} {2}" -f $_.FriendlyName, $_.MediaType, $_.HealthStatus) $color
     }
 
+    # runs a quick scan of Windows Defender to check for malware — not a full scan since this is meant to be run weekly in Quick mode as well
+    Start-MpScan -ScanType QuickScan
+
 } # end Deep mode
 
 
