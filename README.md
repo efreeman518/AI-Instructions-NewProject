@@ -2,6 +2,8 @@
 
 Pragmatic instruction set for AI-assisted scaffolding of C#/.NET applications and services.
 
+**Profile structure.** Phase 1 (domain discovery, ubiquitous language, design decisions) is a **universal core** — stack-agnostic and reusable. Phases 2-5 (resource definition, planning, contracts, implementation) run under the **C#/.NET/Azure profile** indexed at [profiles/csharp-dotnet-azure.md](profiles/csharp-dotnet-azure.md). That is the only profile shipped today; the boundary is documented so a second profile (e.g. TypeScript/Node, Python/FastAPI) could plug in later without restructuring the repo.
+
 ## AI Agents & Harnesses - Quick Start
 
 Clone this repo then run the install script to copy the instruction files into any target app repository root folder. The installer copies runtime instructions into `<app>/.instructions/` and places thin harness entrypoints at the app root. Scaffold rules stay app-scoped; do not put phase routing, TaskFlow rules, or generated-code conventions in global Codex, Claude, or Copilot instruction files.
@@ -48,7 +50,7 @@ What it places:
 | Source in this repo | Destination in your app | Mode |
 |---|---|---|
 | `README.md`, `CLAUDE.md`, `START-AI.md` | `<app>/.instructions/` | copy |
-| `ai/`, `patterns/`, `schemas/`, `skills/`, `support/`, `templates/`, `scripts/` | `<app>/.instructions/` | copy |
+| `ai/`, `patterns/`, `profiles/`, `schemas/`, `skills/`, `support/`, `templates/`, `scripts/` | `<app>/.instructions/` | copy |
 | `AGENTS.md` | `<app>/AGENTS.md` (Codex-style CLI agents) | merge |
 | `CLAUDE.md` | `<app>/CLAUDE.md` (Claude Code project memory) | merge |
 | `.github/copilot-instructions.md` | `<app>/.github/copilot-instructions.md` (Copilot global guidance) | merge |
@@ -119,13 +121,13 @@ Each phase runs in its own AI session and produces artifacts the next phase cons
 
 | Phase | Purpose | Output |
 |---|---|---|
-| **1 — Domain Discovery** | Structured interview to reach shared understanding, define ubiquitous language, resolve decision dependencies, and capture entities, relationships, events, workflows, and business rules in pure business language — no implementation details. | `.scaffold/domain-specification.yaml`, `.scaffold/UBIQUITOUS-LANGUAGE.md`, `.scaffold/DESIGN-DECISIONS.md` |
-| **2 — Resource Definition** | Map each resource requirement to concrete technology choices — data stores, messaging, AI capabilities, hosting models. | `.scaffold/resource-implementation.yaml` |
-| **3 — Implementation Planning** | Resolve open questions, verify tooling (NuGet feeds, CLIs), discover project-specific CLIs and MCP servers, and produce a sequenced build plan. | `.scaffold/implementation-plan.md` |
-| **4 — Contract Scaffolding** | Generate solution structure, interfaces, DTOs, entity shells, test infrastructure, and no-op DI stubs. Gate: `dotnet build` succeeds on the full solution. | Compilable skeleton |
-| **5 — Implementation (TDD)** | Build vertical slices entity-by-entity across sub-phases 5a–5e (Foundation, App Core + Runtime, Optional Hosts, Quality + Delivery, Integration). Phase 5a uses test-driven development (write tests first → red → implement → green); 5b is mixed (TDD for app/API, tests-after for runtime); 5c–5e are tests-after. | Production code + passing tests |
+| **1 — Domain Discovery** *(universal)* | Structured interview to reach shared understanding, define ubiquitous language, resolve decision dependencies, and capture entities, relationships, events, workflows, and business rules in pure business language — no implementation details. | `.scaffold/domain-specification.yaml`, `.scaffold/UBIQUITOUS-LANGUAGE.md`, `.scaffold/DESIGN-DECISIONS.md` |
+| **2 — Resource Definition** *(C#/.NET/Azure profile)* | Map each resource requirement to concrete technology choices — data stores, messaging, AI capabilities, hosting models. | `.scaffold/resource-implementation.yaml` |
+| **3 — Implementation Planning** *(C#/.NET/Azure profile)* | Resolve open questions, verify tooling (NuGet feeds, CLIs), discover project-specific CLIs and MCP servers, and produce a sequenced build plan. | `.scaffold/implementation-plan.md` |
+| **4 — Contract Scaffolding** *(C#/.NET/Azure profile)* | Generate solution structure, interfaces, DTOs, entity shells, test infrastructure, and no-op DI stubs. Gate: `dotnet build` succeeds on the full solution. | Compilable skeleton |
+| **5 — Implementation (TDD)** *(C#/.NET/Azure profile)* | Build vertical slices entity-by-entity across sub-phases 5a–5e (Foundation, App Core + Runtime, Optional Hosts, Quality + Delivery, Integration). Phase 5a uses test-driven development (write tests first → red → implement → green); 5b is mixed (TDD for app/API, tests-after for runtime); 5c–5e are tests-after. | Production code + passing tests |
 
-Phase details: [START-AI.md](START-AI.md) § Phase Router.
+Phase 1 is stack-agnostic; Phase 2+ is the C#/.NET/Azure profile. See [profiles/csharp-dotnet-azure.md](profiles/csharp-dotnet-azure.md) for the file index, and [START-AI.md](START-AI.md) § Profiles and § Phase Router for routing detail.
 
 ## Approach
 
@@ -238,6 +240,8 @@ Expected shape (note `AGENTS.md`, `.github/agents/`, and `.claude/commands/` liv
       resource-implementation-schema.md
       implementation-plan.md
       placeholder-tokens.md
+    profiles/
+      csharp-dotnet-azure.md       # active stack profile (file index)
     support/
       HANDOFF.md
       execution-gates.md
@@ -290,6 +294,7 @@ A short map of the repo so you know which directory owns what kind of content. U
 | Root scoped pickers: `.claude/commands/` (Claude slash commands), `.github/agents/` (Copilot agent picker) | Harness-specific scaffold launchers | Selected only for scaffold, vertical-slice, or brownfield-adoption work |
 | `START-AI.md` in this repo / `.instructions/START-AI.md` in installed apps | Canonical bootstrap: session router, phase router, load rules, reference-app pointer | Loaded only after explicit scaffold request |
 | `ai/` | Phase orchestration: schemas, interview, contract scaffolding, TDD protocol, placeholder tokens, Phase 5 file table (`SKILL.md`) | Per-phase routing |
+| `profiles/` | Per-stack profile indexes. Lists which Phase 2-5 files belong to each profile. Today: `csharp-dotnet-azure.md` (the only profile shipped) | Reference; consulted to confirm the active stack mapping |
 | `skills/` | Reusable how-to per concern (domain, data, API, gateway, caching, identity, testing, UI, etc.) | Per-sub-phase, by `SKILL.md` file table |
 | `templates/` | Code-shape templates for generated artifacts (entity, EF config, repository, service, endpoint, tests) | Per-sub-phase, paired with the matching skill |
 | `patterns/` | Cross-project wiring (data layer, API host, infrastructure, expected output) | On-demand; index in `ai/SKILL.md` § Non-Negotiables |

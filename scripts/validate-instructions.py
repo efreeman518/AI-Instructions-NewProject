@@ -42,7 +42,7 @@ if hasattr(sys.stderr, "reconfigure"):
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 # Directories the runtime payload should ship. Must match install-to-project.py.
-EXPECTED_RUNTIME_DIRS = {"ai", "patterns", "schemas", "skills", "support", "templates", "scripts"}
+EXPECTED_RUNTIME_DIRS = {"ai", "patterns", "profiles", "schemas", "skills", "support", "templates", "scripts"}
 
 # Author-side directories that must NOT be in the runtime payload.
 AUTHOR_ONLY_DIRS = {"tests", ".github/workflows", ".githooks", ".vscode", ".venv", ".tmp"}

@@ -1,4 +1,6 @@
-# New Business Project — C#/.NET Scaffolding Skill
+# C#/.NET/Azure Profile — Phase 5 Skill Set
+
+This file owns the Phase 5 load sets, non-negotiables, and concern routing for the **C#/.NET/Azure profile**. Phase 1 is the universal core and runs without a profile loaded; profile-bound files start at Phase 2. Profile index: [../profiles/csharp-dotnet-azure.md](../profiles/csharp-dotnet-azure.md).
 
 ## Purpose
 

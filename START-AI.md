@@ -48,7 +48,7 @@ Is HANDOFF.md present?
         Brownfield adoption   → load ai/adopt-codebase.md (replaces Phase 1)
 ```
 
-**Brownfield adoption.** When `src/` already contains a buildable C#/.NET solution and no `.scaffold/` artifacts exist (or they're stale), use the adoption flow instead of the Phase 1 interview. The adoption flow derives Phase-1 artifacts from code inspection, then hands off into the regular workflow at Phase 2. Detail: [`ai/adopt-codebase.md`](ai/adopt-codebase.md).
+**Brownfield adoption (C#/.NET/Azure profile only).** When `src/` already contains a buildable C#/.NET solution and no `.scaffold/` artifacts exist (or they're stale), use the adoption flow instead of the Phase 1 interview. The adoption flow derives Phase-1 artifacts from code inspection, then hands off into the regular workflow at Phase 2. Detail: [`ai/adopt-codebase.md`](ai/adopt-codebase.md).
 
 ## Tooling Check
 
@@ -58,20 +58,26 @@ Prefer CLIs over MCP over online resources. Use Microsoft Docs or Context7 when 
 
 See `ai/SKILL.md` § Non-Negotiables (canonical).
 
+## Profiles
+
+Phase 1 is the **universal core** — domain discovery, ubiquitous language, design decisions in pure business language with no stack assumptions. Phases 2-5 run under a **stack profile** that maps the Phase 1 output to concrete resources, plans, contracts, and implementation skills.
+
+The only profile shipped today is **C#/.NET/Azure**, indexed at [`profiles/csharp-dotnet-azure.md`](profiles/csharp-dotnet-azure.md) (in this repo) or `.instructions/profiles/csharp-dotnet-azure.md` (in installed apps). Every Phase 2-5 file referenced below is part of that profile.
+
 ## Phase Router
 
 Each phase = one session. Load only the files listed for the current phase.
 
-- **Phase 1 (Domain Discovery):** `ai/shared-understanding-interview.md`, `ai/domain-specification-schema.md`, `templates/ubiquitous-language-template.md`, `templates/design-decisions-template.md`. Walk every interview branch until the developer confirms, defaults, or defers each. Output: `.scaffold/domain-specification.yaml`, `.scaffold/UBIQUITOUS-LANGUAGE.md`, `.scaffold/DESIGN-DECISIONS.md` in target project (create the `.scaffold/` directory at project root if absent). Gate: developer reviews each artifact against its schema. → `HANDOFF.md` (project root) → close.
-- **Phase 2 (Resource Definition):** `ai/resource-implementation-schema.md` + `.scaffold/DESIGN-DECISIONS.md`. Ask clarification questions for unresolved resource decisions, API surface, external integrations, scaling, caching, messaging, optional workloads. Output: `.scaffold/resource-implementation.yaml` with `externalDependencyModes` declared for every external dep. Gate: developer review. → `HANDOFF.md` → close.
-- **Phase 3 (Implementation Plan):** `ai/implementation-plan.md` + Phase 1/2 schemas + project YAMLs (under `.scaffold/`). Pre-flight branches on `packageStrategy` (resolved in Phase 2):
+- **Phase 1 (Domain Discovery — universal):** `ai/shared-understanding-interview.md`, `ai/domain-specification-schema.md`, `templates/ubiquitous-language-template.md`, `templates/design-decisions-template.md`. Walk every interview branch until the developer confirms, defaults, or defers each. Output: `.scaffold/domain-specification.yaml`, `.scaffold/UBIQUITOUS-LANGUAGE.md`, `.scaffold/DESIGN-DECISIONS.md` in target project (create the `.scaffold/` directory at project root if absent). Gate: developer reviews each artifact against its schema. → `HANDOFF.md` (project root) → close.
+- **Phase 2 (Resource Definition — C#/.NET/Azure profile):** `ai/resource-implementation-schema.md` + `.scaffold/DESIGN-DECISIONS.md`. Ask clarification questions for unresolved resource decisions, API surface, external integrations, scaling, caching, messaging, optional workloads. Output: `.scaffold/resource-implementation.yaml` with `externalDependencyModes` declared for every external dep. Gate: developer review. → `HANDOFF.md` → close.
+- **Phase 3 (Implementation Plan — C#/.NET/Azure profile):** `ai/implementation-plan.md` + Phase 1/2 schemas + project YAMLs (under `.scaffold/`). Pre-flight branches on `packageStrategy` (resolved in Phase 2):
   - `feed` or `hybrid` — configure the private NuGet feed with the verified Python launcher from `support/python-setup.md`: `python {instructionsRoot}/scripts/configure-ef-packages-feed.py --root . --feed-url <url> --username <github-user> --prefix <packagePrefix>` (`{instructionsRoot}` is `.instructions` in an installed app and `.` in this repo); confirm `NUGET_AUTH_TOKEN` or an approved credential provider is available.
   - `local` — no feed wiring required. Phase 4 generates `src/Packages/<packagePrefix>.*` projects from `localPackageLayers` and the solution references them via `<ProjectReference>`.
   - `hybrid` only — Phase 4 also generates `src/Packages/<packagePrefix>.*` projects for every layer in `localPackageLayers`; layers covered by the feed remain `<PackageReference>` against `customNugetFeeds`.
 
   In every mode: verify `dotnet ef` is available. Prefer repo-local tooling (`dotnet new tool-manifest` then `dotnet tool install dotnet-ef` if missing); an existing user-global `dotnet-ef` is acceptable. Identify required CLIs/MCP servers per phase; populate the **Tooling & Environment Readiness** section of the plan. Output: `.scaffold/implementation-plan.md`. Gate: `dotnet restore` exits 0 + developer review of `.scaffold/implementation-plan.md`. → `HANDOFF.md` → close.
-- **Phase 4 (Contract Scaffolding):** `ai/contract-scaffolding.md`, `skills/solution-structure.md`, `skills/package-dependencies.md`, `ai/placeholder-tokens.md`, `support/ef-packages-reference.md`. Generates: solution structure, interfaces, DTOs, entity shells, test infrastructure, no-op DI stubs. Gate: `dotnet build` succeeds on full solution including test projects. Set `currentPhase: 5`, `currentSubPhase: 5a`, and `contractsScaffolded: true` in `HANDOFF.md`. → close.
-- **Phase 5 (Implementation):** one session per sub-phase (5a–5e: Foundation, App Core + Runtime, Optional Hosts, Quality + Delivery, Integration). Base: `ai/SKILL.md` + `ai/placeholder-tokens.md` + `ai/tdd-protocol.md` + `support/ef-packages-reference.md`. Per-sub-phase file lists are in `ai/SKILL.md` (Phase 5 file table). Gate per sub-phase: `dotnet build` + `dotnet test` (filter as appropriate). After the final enabled sub-phase, walk through `support/final-scaffold-checklist.md` manually.
+- **Phase 4 (Contract Scaffolding — C#/.NET/Azure profile):** `ai/contract-scaffolding.md`, `skills/solution-structure.md`, `skills/package-dependencies.md`, `ai/placeholder-tokens.md`, `support/ef-packages-reference.md`. Generates: solution structure, interfaces, DTOs, entity shells, test infrastructure, no-op DI stubs. Gate: `dotnet build` succeeds on full solution including test projects. Set `currentPhase: 5`, `currentSubPhase: 5a`, and `contractsScaffolded: true` in `HANDOFF.md`. → close.
+- **Phase 5 (Implementation — C#/.NET/Azure profile):** one session per sub-phase (5a–5e: Foundation, App Core + Runtime, Optional Hosts, Quality + Delivery, Integration). Base: `ai/SKILL.md` + `ai/placeholder-tokens.md` + `ai/tdd-protocol.md` + `support/ef-packages-reference.md`. Per-sub-phase file lists are in `ai/SKILL.md` (Phase 5 file table). Gate per sub-phase: `dotnet build` + `dotnet test` (filter as appropriate). After the final enabled sub-phase, walk through `support/final-scaffold-checklist.md` manually.
 
 ## Reference Application
 

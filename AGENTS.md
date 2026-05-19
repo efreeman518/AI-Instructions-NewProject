@@ -20,6 +20,8 @@ Run scaffold instructions only when the user explicitly asks to:
 - add a scaffolded vertical slice/entity;
 - adopt the scaffold onto an existing C#/.NET solution (load `.instructions/ai/adopt-codebase.md` instead of running Phase 1).
 
+Phase 1 is the universal core (stack-agnostic). Phases 2-5 run under the C#/.NET/Azure profile — see `profiles/csharp-dotnet-azure.md` (this repo) or `.instructions/profiles/csharp-dotnet-azure.md` (installed apps). Vertical-slice and brownfield-adoption flows are profile-bound.
+
 ## Scaffold Boot
 
 1. If this file is installed in a target app repository, load `.instructions/START-AI.md`.

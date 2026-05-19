@@ -41,6 +41,7 @@ INSTRUCTIONS_FILES = [
 INSTRUCTIONS_DIRS = [
     "ai",
     "patterns",
+    "profiles",
     "schemas",
     "skills",
     "support",
