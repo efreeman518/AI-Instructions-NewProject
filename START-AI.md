@@ -5,9 +5,9 @@ Bootstrap for `.instructions/` payloads. Load this file first when scaffold work
 ## Harness Adapter Rule
 
 - **CLI agents (`AGENTS.md`):** proceed only when scaffolding is explicitly requested.
-- **GitHub Copilot:** `dotnet-scaffold` runs the phase router; `vertical-slice` loads `support/vertical-slice-checklist.md`.
-- **Claude commands:** `/scaffold` runs the phase router; `/vertical-slice` loads the slice checklist.
-- **Generic assistants:** prompt with `Load .instructions/START-AI.md and run the scaffold router.`
+- **GitHub Copilot:** `dotnet-scaffold` runs the phase router; `vertical-slice` loads `support/vertical-slice-checklist.md`; `scaffold-adopt` runs the brownfield adoption flow from `ai/adopt-codebase.md`.
+- **Claude commands:** `/scaffold` runs the phase router; `/vertical-slice` loads the slice checklist; `/scaffold-adopt` runs the brownfield adoption flow from `ai/adopt-codebase.md`.
+- **Generic assistants:** prompt with `Load .instructions/START-AI.md and run the scaffold router.` For brownfield adoption, prompt with `Load .instructions/ai/adopt-codebase.md and run the adoption flow against this solution.`
 - **Path rule:** in an installed app, paths are under `.instructions/`; in this repo, paths are root-relative.
 
 ## Session Model
@@ -26,14 +26,29 @@ This rule is the same regardless of the model's context window. Lost-in-the-midd
 
 Load-set sizing is derived from `scaffoldMode` (`api-only` → required-only; `lite`/`full` → required + on-demand). See [`ai/SKILL.md`](ai/SKILL.md) § Load-Set Sizing.
 
+## Phase-1 Artifact Lifecycle Rule
+
+`.scaffold/domain-specification.yaml`, `.scaffold/UBIQUITOUS-LANGUAGE.md`, and `.scaffold/DESIGN-DECISIONS.md` are the **binding source of truth** for the project. Every phase consumes them; every session must keep them current.
+
+**Rule of thumb:** *Fix the artifact first, then the code. When drift exists, the artifact loses to code reality.*
+
+- **New term, role, event, action, or design decision introduced this session** → update the relevant Phase-1 artifact **before** generating the code that uses it.
+- **Drift discovered** (code identifier or implemented decision diverges from artifact) → update the artifact to match accepted reality, then continue.
+- **Domain misunderstanding surfaces mid-Phase-5** → stop, clarify with the developer, update Phase-1 artifacts, then re-scaffold the affected slice. See [`support/OPERATIONS.md`](support/OPERATIONS.md) § Mid-Session Rollback Protocol.
+
+Canonical detail (what to update where, supersede vs rewrite, do-not-delete): [`README.md`](README.md) § Phase-1 Artifact Lifecycle. Verify currency at session close in `HANDOFF.md` (see [`support/HANDOFF.md`](support/HANDOFF.md) § Phase-1 Artifact Currency).
+
 ## Session Start Router
 
 ```
 Is HANDOFF.md present?
   YES → Resume from currentPhase/currentSubPhase. Skip Phase Router.
-  NO  → New project → Phase Router
-        New entity  → load support/vertical-slice-checklist.md fast-path only
+  NO  → New project          → Phase Router
+        New entity            → load support/vertical-slice-checklist.md fast-path only
+        Brownfield adoption   → load ai/adopt-codebase.md (replaces Phase 1)
 ```
+
+**Brownfield adoption.** When `src/` already contains a buildable C#/.NET solution and no `.scaffold/` artifacts exist (or they're stale), use the adoption flow instead of the Phase 1 interview. The adoption flow derives Phase-1 artifacts from code inspection, then hands off into the regular workflow at Phase 2. Detail: [`ai/adopt-codebase.md`](ai/adopt-codebase.md).
 
 ## Tooling Check
 

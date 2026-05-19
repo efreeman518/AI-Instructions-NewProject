@@ -81,8 +81,10 @@ SECTION_TAIL_CONNECTOR = re.compile(
 REQUIRED_COMMAND_HEADINGS = {
     ".claude/commands/scaffold.md": ["Instructions", "Rules"],
     ".claude/commands/vertical-slice.md": ["Instructions", "Pre-Flight", "Rules"],
+    ".claude/commands/scaffold-adopt.md": ["Instructions", "Pre-Flight", "Rules"],
     ".github/agents/dotnet-scaffold.agent.md": ["Bootstrap", "Core Rules"],
     ".github/agents/vertical-slice.agent.md": ["Bootstrap", "Pre-Flight", "Constraints"],
+    ".github/agents/scaffold-adopt.agent.md": ["Bootstrap", "Pre-Flight", "Constraints"],
 }
 
 

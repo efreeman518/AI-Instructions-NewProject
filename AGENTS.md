@@ -17,7 +17,8 @@ Run scaffold instructions only when the user explicitly asks to:
 
 - scaffold a new .NET app or service;
 - continue an existing scaffold phase;
-- add a scaffolded vertical slice/entity.
+- add a scaffolded vertical slice/entity;
+- adopt the scaffold onto an existing C#/.NET solution (load `.instructions/ai/adopt-codebase.md` instead of running Phase 1).
 
 ## Scaffold Boot
 

@@ -85,6 +85,19 @@ Out of scope for this session — do not attempt unless explicitly re-scoped:
 - Verify HANDOFF.md is well-formed (correct sub-phase, gate result, next-load-set populated, blockers itemized) before ending a phase session.
 - **Ephemeral URLs:** Do not record Aspire dashboard URLs, proxy ports, or host endpoints. These are assigned at runtime and change between launches. Instead, record the discovery method (e.g., "read dashboard URL from `dotnet run` output, then check resource list for host URLs").
 
+## Phase-1 Artifact Currency
+
+Verify before closing the session. Per [../START-AI.md](../START-AI.md) § Phase-1 Artifact Lifecycle Rule, *fix the artifact first, then the code; when drift exists, the artifact loses to code reality.*
+
+- [ ] No new domain term, role, event, or action was introduced this session without an entry in `.scaffold/UBIQUITOUS-LANGUAGE.md`.
+- [ ] No new entity, relationship, lifecycle state, or schema change was introduced without updating `.scaffold/domain-specification.yaml`.
+- [ ] No new design decision (or revision of an earlier one) was introduced without an entry in `.scaffold/DESIGN-DECISIONS.md` (mark superseded entries; do not silently rewrite).
+- [ ] If drift was discovered between code and artifacts, the artifacts were updated to match accepted reality before closing.
+
+Notes on artifact updates this session (term added, decision superseded, schema reshaped):
+
+- 
+
 ## Residual Environment Note
 
 Known local or CI quirks not resolved this session:

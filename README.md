@@ -10,14 +10,14 @@ Clone this repo then run the install script to copy the instruction files into a
 
 Each harness has a project-memory file (auto-loaded on session start) and, where supported, a scoped command/agent picker. The three project-memory files (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`) play the same role for their respective tools — the installer writes all three so any agent that opens the repo finds its native entrypoint.
 
-| Harness | Project-memory file | Scoped command/agent picker | Full scaffold | Vertical slice |
-|---|---|---|---|---|
-| Codex CLI (and other CLI agents that read `AGENTS.md`) | `AGENTS.md` | — (no stable convention yet) | Prompt: `Load .instructions/START-AI.md and run the scaffold router` | Prompt: `Load .instructions/support/vertical-slice-checklist.md` |
-| GitHub Copilot in VS Code | `.github/copilot-instructions.md` | `.github/agents/` | Select `dotnet-scaffold` agent | Select `vertical-slice` agent |
-| Claude Code / Claude VS Code | `CLAUDE.md` | `.claude/commands/` | `/scaffold <domain>` | `/vertical-slice <Entity>` |
-| Generic AI assistant | — (point it at `.instructions/START-AI.md` manually) | — | Prompt: `Load .instructions/START-AI.md and run the scaffold router` | Prompt: `Load .instructions/support/vertical-slice-checklist.md` |
+| Harness | Project-memory file | Scoped command/agent picker | Full scaffold | Vertical slice | Brownfield adoption |
+|---|---|---|---|---|---|
+| Codex CLI (and other CLI agents that read `AGENTS.md`) | `AGENTS.md` | — (no stable convention yet) | Prompt: `Load .instructions/START-AI.md and run the scaffold router` | Prompt: `Load .instructions/support/vertical-slice-checklist.md` | Prompt: `Load .instructions/ai/adopt-codebase.md and run the adoption flow` |
+| GitHub Copilot in VS Code | `.github/copilot-instructions.md` | `.github/agents/` | Select `dotnet-scaffold` agent | Select `vertical-slice` agent | Select `scaffold-adopt` agent |
+| Claude Code / Claude VS Code | `CLAUDE.md` | `.claude/commands/` | `/scaffold <domain>` | `/vertical-slice <Entity>` | `/scaffold-adopt` |
+| Generic AI assistant | — (point it at `.instructions/START-AI.md` manually) | — | Prompt: `Load .instructions/START-AI.md and run the scaffold router` | Prompt: `Load .instructions/support/vertical-slice-checklist.md` | Prompt: `Load .instructions/ai/adopt-codebase.md and run the adoption flow` |
 
-All harnesses follow the same flow: scaffold sessions boot from `.instructions/START-AI.md`, resume from `HANDOFF.md` if present, run one phase, write `HANDOFF.md`, stop. Vertical-slice sessions load `.instructions/support/vertical-slice-checklist.md` and generate one full entity stack against the gate.
+All harnesses follow the same flow: scaffold sessions boot from `.instructions/START-AI.md`, resume from `HANDOFF.md` if present, run one phase, write `HANDOFF.md`, stop. Vertical-slice sessions load `.instructions/support/vertical-slice-checklist.md` and generate one full entity stack against the gate. **Brownfield adoption** replaces the Phase 1 interview with a code-inspection pass that derives `.scaffold/domain-specification.yaml`, `.scaffold/UBIQUITOUS-LANGUAGE.md`, and `.scaffold/DESIGN-DECISIONS.md` from the existing solution; the project then continues into Phase 2 identically to a greenfield scaffold. Detail: [ai/adopt-codebase.md](ai/adopt-codebase.md).
 
 Canonical execution rules: [START-AI.md](START-AI.md) (session model, phase router) and [support/execution-gates.md](support/execution-gates.md) (gate commands).
 
@@ -95,7 +95,11 @@ Phase 1 also creates durable collaboration artifacts before code planning starts
 
 ### Phase-1 Artifact Lifecycle
 
+> **Rule of thumb:** *Fix the artifact first, then the code. When drift exists, the artifact loses to code reality.*
+
 `.scaffold/domain-specification.yaml`, `.scaffold/UBIQUITOUS-LANGUAGE.md`, and `.scaffold/DESIGN-DECISIONS.md` are **living source of truth**, not snapshots. Every phase consumes them, so they must stay current as the project evolves — otherwise later AI sessions reason from a stale model and naming/decision drift creeps in.
+
+This rule is enforced at every session boundary: [START-AI.md](START-AI.md) § Phase-1 Artifact Lifecycle Rule, [ai/SKILL.md](ai/SKILL.md) § Non-Negotiables and § Scaffold Definition of Done, and the per-session check in [support/HANDOFF.md](support/HANDOFF.md) § Phase-1 Artifact Currency.
 
 **When to update each:**
 
