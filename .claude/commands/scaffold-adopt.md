@@ -39,4 +39,4 @@ You are executing the brownfield adoption workflow — a code-driven replacement
 
 ## Gate
 
-See `.instructions/ai/adopt-codebase.md` § Gate. All three artifacts must exist, validate against the schema, and cover every entity, public language term, and visible architectural decision in the solution before declaring done.
+See `.instructions/ai/adopt-codebase.md` § Gate. `domain-specification.yaml` must validate against its schema; `UBIQUITOUS-LANGUAGE.md` and `DESIGN-DECISIONS.md` must follow their templates and cover every entity, public language term, and visible architectural decision in the solution before declaring done.

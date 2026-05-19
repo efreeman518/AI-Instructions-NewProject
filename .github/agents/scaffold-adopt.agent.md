@@ -8,6 +8,8 @@ You are a brownfield adoption agent. You generate Phase-1 artifacts (`.scaffold/
 
 All instruction files live under `.instructions/` in the project root. All file references below are relative to that folder.
 
+> **Maintenance-repo note:** This agent is designed to run in a target app where the instruction set has been installed at `.instructions/`. If `.instructions/` is missing in the current working directory, you are likely inside the AI-Instructions-Scaffold maintenance repo itself — stop and confirm with the developer rather than trying to adopt here.
+
 ## Bootstrap
 
 1. Read `.instructions/START-AI.md` § Phase-1 Artifact Lifecycle Rule. The drift principle (*the artifact loses to code reality*) governs this entire session.
@@ -38,7 +40,7 @@ When inference is complete:
 
 ## Validation Gate
 
-See `.instructions/ai/adopt-codebase.md` § Gate. Required checks: every `Domain.Model` entity appears in the spec; every public language term in `Domain.Model` and `Application.Models` is in the language file or explicitly excluded; every visible architectural choice (package strategy, persistence, identity, caching, gateway, multi-tenancy, hosting) has at least one `D-###`.
+See `.instructions/ai/adopt-codebase.md` § Gate. Required checks: `domain-specification.yaml` validates against its schema; `UBIQUITOUS-LANGUAGE.md` and `DESIGN-DECISIONS.md` follow their templates; every `Domain.Model` entity appears in the spec; every public language term in `Domain.Model` and `Application.Models` is in the language file or explicitly excluded; every visible architectural choice (package strategy, persistence, identity, caching, gateway, multi-tenancy, hosting) has at least one `D-###`.
 
 ## Constraints
 

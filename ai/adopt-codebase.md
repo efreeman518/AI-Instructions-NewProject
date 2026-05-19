@@ -91,7 +91,8 @@ When inference completes and the three artifacts are written:
 
 Before declaring the adopt session complete:
 
-- [ ] All three artifacts exist under `.scaffold/` and pass the schema check at [domain-specification-schema.md](domain-specification-schema.md).
+- [ ] `.scaffold/domain-specification.yaml` exists and validates against [domain-specification-schema.md](domain-specification-schema.md).
+- [ ] `.scaffold/UBIQUITOUS-LANGUAGE.md` and `.scaffold/DESIGN-DECISIONS.md` exist, follow their templates, and satisfy the coverage checks below.
 - [ ] Every entity in `Domain.Model/Entities/` appears in `domain-specification.yaml`.
 - [ ] Every public type/property name in `Domain.Model` and `Application.Models` is either in `UBIQUITOUS-LANGUAGE.md` or explicitly excluded (e.g., framework base types).
 - [ ] At least one `D-###` exists for each visible architectural choice: package strategy, persistence stack, identity provider (if present), caching (if present), gateway (if present), multi-tenancy (if present), hosting model.

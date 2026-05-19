@@ -183,8 +183,10 @@ SMOKE_CHECK_HARNESS_ENTRYPOINTS = [
     ".github/copilot-instructions.md",
     ".claude/commands/scaffold.md",
     ".claude/commands/vertical-slice.md",
+    ".claude/commands/scaffold-adopt.md",
     ".github/agents/dotnet-scaffold.agent.md",
     ".github/agents/vertical-slice.agent.md",
+    ".github/agents/scaffold-adopt.agent.md",
 ]
 
 

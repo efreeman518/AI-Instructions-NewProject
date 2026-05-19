@@ -135,7 +135,7 @@ The instruction set is designed around three core ideas:
 Five phases prevent hallucinated architecture by ensuring verified context before code is written. Phase 4 produces a compilable skeleton so that Phase 5a/5b can follow a strict red/green TDD cycle — tests are written against contracts before any implementation exists. See [ai/tdd-protocol.md](ai/tdd-protocol.md).
 
 **2. Skills and templates as composable units.**
-Implementation knowledge is split into 32 skill files (how things work) and 27 template files plus a `templates/index.md` index (what to generate). The Phase Router in `START-AI.md` and the Phase 5 file table in `ai/SKILL.md` tell the agent which files to load for the current phase or sub-phase.
+Implementation knowledge is split into focused skill files (how things work) and template files plus a `templates/index.md` index (what to generate). The Phase Router in `START-AI.md` and the Phase 5 file table in `ai/SKILL.md` tell the agent which files to load for the current phase or sub-phase.
 
 **3. Composition patterns, not documentation alone.**
 Pattern files in `patterns/` document how generated components wire together across projects — database context pooling, API startup sequences, request context resolution, cache configuration, and Aspire resource wiring. The pattern index lives in `ai/SKILL.md` § Non-Negotiables (one bullet per pattern, with the phase to load it). This grounds the generated output in proven, real-world patterns rather than abstract descriptions.
@@ -287,7 +287,7 @@ A short map of the repo so you know which directory owns what kind of content. U
 | Folder | Owns | Loaded when |
 |---|---|---|
 | Root project-memory files: `AGENTS.md` (Codex / CLI agents), `CLAUDE.md` (Claude), `.github/copilot-instructions.md` (Copilot) — three vendor-specific entrypoints, same role | Harness discovery and explicit scaffold trigger detection | Auto-loaded by the harness; must stay thin |
-| Root scoped pickers: `.claude/commands/` (Claude slash commands), `.github/agents/` (Copilot agent picker) | Harness-specific scaffold launchers | Selected only for scaffold or vertical-slice work |
+| Root scoped pickers: `.claude/commands/` (Claude slash commands), `.github/agents/` (Copilot agent picker) | Harness-specific scaffold launchers | Selected only for scaffold, vertical-slice, or brownfield-adoption work |
 | `START-AI.md` in this repo / `.instructions/START-AI.md` in installed apps | Canonical bootstrap: session router, phase router, load rules, reference-app pointer | Loaded only after explicit scaffold request |
 | `ai/` | Phase orchestration: schemas, interview, contract scaffolding, TDD protocol, placeholder tokens, Phase 5 file table (`SKILL.md`) | Per-phase routing |
 | `skills/` | Reusable how-to per concern (domain, data, API, gateway, caching, identity, testing, UI, etc.) | Per-sub-phase, by `SKILL.md` file table |

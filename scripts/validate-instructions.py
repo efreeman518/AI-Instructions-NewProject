@@ -12,9 +12,12 @@ Checks:
   - Phase labels in instruction prose match the canonical set
     (Phase 1, Phase 2, Phase 3, Phase 4, Phase 5, 5a, 5b, 5c, 5d, 5e).
   - Each .claude/commands/*.md and .github/agents/*.md has the expected sections.
+  - Each scaffold command/agent carries the maintenance-repo guard that stops
+    accidental generation when `.instructions/` is missing.
   - The payload shape declared in install-to-project.py covers every top-level
     runtime directory present in this repo (catches "added skills/foo, forgot
     to wire it into the installer" mistakes).
+  - Installer smoke checks cover every first-class harness entrypoint.
   - Section-anchor existence: when prose says ``[label](file.md) § Section Name``
     or ``file.md → Section Name`` (with the path in backticks), verify the named
     section exists as a heading in the target file. Catches refs left dangling
@@ -85,6 +88,20 @@ REQUIRED_COMMAND_HEADINGS = {
     ".github/agents/dotnet-scaffold.agent.md": ["Bootstrap", "Core Rules"],
     ".github/agents/vertical-slice.agent.md": ["Bootstrap", "Pre-Flight", "Constraints"],
     ".github/agents/scaffold-adopt.agent.md": ["Bootstrap", "Pre-Flight", "Constraints"],
+}
+
+MAINTENANCE_GUARD_PHRASES = ["Maintenance-repo note", "If `.instructions/` is missing"]
+
+EXPECTED_SMOKE_CHECK_HARNESS_ENTRYPOINTS = {
+    "AGENTS.md",
+    "CLAUDE.md",
+    ".github/copilot-instructions.md",
+    ".claude/commands/scaffold.md",
+    ".claude/commands/vertical-slice.md",
+    ".claude/commands/scaffold-adopt.md",
+    ".github/agents/dotnet-scaffold.agent.md",
+    ".github/agents/vertical-slice.agent.md",
+    ".github/agents/scaffold-adopt.agent.md",
 }
 
 
@@ -255,6 +272,17 @@ def check_command_shape(findings: Findings) -> None:
                 findings.err(path, f"missing required heading '## {heading}'")
 
 
+def check_maintenance_guards(findings: Findings) -> None:
+    for rel in REQUIRED_COMMAND_HEADINGS:
+        path = REPO_ROOT / rel
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8")
+        for phrase in MAINTENANCE_GUARD_PHRASES:
+            if phrase not in text:
+                findings.err(path, f"missing maintenance-repo guard phrase: {phrase}")
+
+
 def check_payload_shape(findings: Findings) -> None:
     """Compare what install-to-project.py copies vs what's actually present at the repo root."""
     installer = REPO_ROOT / "scripts" / "install-to-project.py"
@@ -285,6 +313,19 @@ def check_payload_shape(findings: Findings) -> None:
         elif not any(target.iterdir()):
             findings.warn(installer, f"declared payload dir '{d}/' is empty")
 
+    smoke_match = re.search(r"SMOKE_CHECK_HARNESS_ENTRYPOINTS\s*=\s*\[(.*?)\]", text, re.DOTALL)
+    if not smoke_match:
+        findings.err(installer, "could not parse SMOKE_CHECK_HARNESS_ENTRYPOINTS list")
+        return
+    smoke_declared = set(re.findall(r'"([^"]+)"', smoke_match.group(1)))
+    if smoke_declared != EXPECTED_SMOKE_CHECK_HARNESS_ENTRYPOINTS:
+        missing = EXPECTED_SMOKE_CHECK_HARNESS_ENTRYPOINTS - smoke_declared
+        extra = smoke_declared - EXPECTED_SMOKE_CHECK_HARNESS_ENTRYPOINTS
+        if missing:
+            findings.err(installer, f"SMOKE_CHECK_HARNESS_ENTRYPOINTS missing first-class entrypoints: {sorted(missing)}")
+        if extra:
+            findings.err(installer, f"SMOKE_CHECK_HARNESS_ENTRYPOINTS contains unexpected entries: {sorted(extra)}")
+
 
 def main() -> int:
     findings = Findings()
@@ -297,6 +338,7 @@ def main() -> int:
         check_section_anchors(path, findings, headings_cache)
 
     check_command_shape(findings)
+    check_maintenance_guards(findings)
     check_payload_shape(findings)
 
     print(f"validated {len(md_files)} markdown file(s) under {REPO_ROOT}")
