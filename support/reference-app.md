@@ -21,6 +21,7 @@ For a phase-by-phase pointer map into the reference app, use [taskflow-proof-map
 
 ## Rules
 
+- Do not install the scaffold `.instructions/` payload into TaskFlow during normal maintenance. TaskFlow is the proof/reference implementation; install into it only when deliberately testing installer smoke behavior.
 - Do not copy TaskFlow files wholesale — use as a verified example and generate code matching the target project's domain.
 - When stuck on how a pattern should look in practice, consult TaskFlow before inventing a new approach.
 - Treat TaskFlow as a live codebase reference whenever local clone or GitHub MCP access is available. If neither access path is available, note the gap in `HANDOFF.md` and continue with the current instruction set.
