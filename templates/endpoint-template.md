@@ -11,6 +11,8 @@
 
 ## File: Host/{Host}.Api/Endpoints/{Entity}Endpoints.cs
 
+Endpoint templates map relative routes only. The API host owns the outer route group and versioning decision, for example `/api/v1/{entity}` for public domain endpoints. Do not bake `/api`, `/v1`, tenant segments, gateway prefixes, health routes, or admin routes into entity endpoint classes.
+
 ```csharp
 using Microsoft.AspNetCore.Mvc;
 
@@ -191,3 +193,7 @@ For kebab-case route segments, use `{entity-route}` in route definitions.
 
 **TaskFlow proof (local):** `../AI-Instructions-ReferenceApp/src/Host/TaskFlow.Api/Endpoints/TaskItemEndpoints.cs`
 **TaskFlow proof (remote fallback):** <https://github.com/efreeman518/AI-Instructions-ReferenceApp/blob/main/src/Host/TaskFlow.Api/Endpoints/TaskItemEndpoints.cs>
+
+## CQRS Endpoint Variant
+
+When `applicationStyle: cqrs`, keep route and DTO contracts aligned with the service endpoint, but inject `IRequestHandler<TRequest,TResponse>` for the specific command/query. Do not inject `I{Entity}Service` from CQRS endpoints and do not add a central dispatch step; this keeps route -> request -> handler flow visible at the endpoint.

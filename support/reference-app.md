@@ -24,3 +24,9 @@ For a phase-by-phase pointer map into the reference app, use [taskflow-proof-map
 - Do not copy TaskFlow files wholesale — use as a verified example and generate code matching the target project's domain.
 - When stuck on how a pattern should look in practice, consult TaskFlow before inventing a new approach.
 - Treat TaskFlow as a live codebase reference whenever local clone or GitHub MCP access is available. If neither access path is available, note the gap in `HANDOFF.md` and continue with the current instruction set.
+
+## CQRS Reference App
+
+The TaskFlow reference app demonstrates side-by-side service and CQRS endpoint registration. Default configuration is `Application:Style=Service`; set `TASKFLOW_APPLICATION_STYLE=Cqrs` or `Application:Style=Cqrs` to map CQRS endpoints and register handlers. CQRS handlers use the existing repository contracts directly. CQRS endpoints avoid central request dispatchers, request buses, and generic `Send()` entrypoints so each route shows the exact request and handler it invokes.
+
+TaskFlow also demonstrates the route-versioning boundary: public domain API routes are versioned under `/api/v1/*`, while operational and host-management routes stay unversioned (`/health/*`, `/alive`, `/healthz`, `/api/flowengine/*`, and Functions host health `/api/health`). Azure Functions business HTTP triggers mirror the public versioned contract under the Functions default `/api` prefix.

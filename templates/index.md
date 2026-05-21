@@ -109,3 +109,10 @@ Generated when `includeFlowEngine: true` in `.scaffold/resource-implementation.y
 | **5e — Integration (Auth + AI)** | `ai-search-template`, `agent-template` (when AI in scope) |
 
 > **Note:** Use the Phase Router in `START-AI.md` and the Phase 5 file table in `ai/SKILL.md` for authoritative per-phase file lists. This index is a human/AI quick-reference for "I need to scaffold X → load template Y".
+
+## CQRS Templates
+
+- [cqrs-handler-template.md](cqrs-handler-template.md) — command/query handler shape.
+- [cqrs-endpoint-template.md](cqrs-endpoint-template.md) — direct handler endpoint mapping.
+- [cqrs-validation-template.md](cqrs-validation-template.md) — custom validation decorator pattern.
+- [test-templates-cqrs.md](test-templates-cqrs.md) — handler, validation, and architecture tests.

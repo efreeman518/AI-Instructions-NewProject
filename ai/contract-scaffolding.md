@@ -307,3 +307,10 @@ Developer reviews the scaffolded shape against the verification checklist below.
 - [ ] Aspire AppHost starts cleanly: `dotnet run --project Host/Aspire/AppHost` reaches `Application started` for every registered resource with no exceptions in the dashboard, and `/healthz` returns 200 on every host project. Stub-mode external deps (`emulator`, `lazy-optional`, `no-op stub`, `deployment-only`) are acceptable; live cloud auth is not required.
 - [ ] Developer reviews the scaffolded shape against the items above
 - [ ] Token placeholders follow [placeholder-tokens.md](placeholder-tokens.md)
+
+### Application Style Branch
+
+Read `applicationStyle` from `.scaffold/resource-implementation.yaml` before generating Phase 4 contracts. Default is `service`.
+
+- `service`: generate `I{Entity}Service`, service implementation stubs, and service endpoint templates.
+- `cqrs`: generate command/query request records, one handler per request, `AddDecoratedRequestHandler<TRequest,TResponse,THandler>()`, CQRS endpoint templates, and custom validation decorators. Keep repository contracts shared; do not add CQRS-specific repositories unless they add domain value.

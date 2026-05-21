@@ -77,6 +77,39 @@ AGENT_COPIES = [
 ]
 
 
+def adapt_installed_entrypoint_links(src: Path, content: str) -> str:
+    """Root harness files are copied outside .instructions, so author-side links need installed paths."""
+    src_rel = src.as_posix()
+    if src_rel.endswith("AGENTS.md"):
+        return content.replace(
+            "[README.md](README.md)",
+            "[.instructions/README.md](.instructions/README.md)",
+        )
+    if src_rel.endswith("CLAUDE.md"):
+        return (
+            content.replace(
+                "[README.md](README.md)",
+                "[.instructions/README.md](.instructions/README.md)",
+            )
+            .replace(
+                "[profiles/csharp-dotnet-azure.md](profiles/csharp-dotnet-azure.md)",
+                "[.instructions/profiles/csharp-dotnet-azure.md](.instructions/profiles/csharp-dotnet-azure.md)",
+            )
+        )
+    if src_rel.endswith(".github/copilot-instructions.md"):
+        return (
+            content.replace(
+                "[README.md](../README.md)",
+                "[.instructions/README.md](../.instructions/README.md)",
+            )
+            .replace(
+                "[../profiles/csharp-dotnet-azure.md](../profiles/csharp-dotnet-azure.md)",
+                "[../.instructions/profiles/csharp-dotnet-azure.md](../.instructions/profiles/csharp-dotnet-azure.md)",
+            )
+        )
+    return content
+
+
 class Planner:
     def __init__(self, dry_run: bool, update: bool):
         self.dry_run = dry_run
@@ -119,7 +152,7 @@ class Planner:
 
     def merge_file(self, src: Path, dst: Path, label: str) -> None:
         """Copy src to dst; if dst exists, append src inside sentinel markers (idempotent)."""
-        src_content = src.read_text(encoding="utf-8")
+        src_content = adapt_installed_entrypoint_links(src, src.read_text(encoding="utf-8"))
         if dst.exists():
             dst_content = dst.read_text(encoding="utf-8")
             if MERGE_SENTINEL_START in dst_content:
@@ -146,7 +179,7 @@ class Planner:
             print(f"  {action} {label}")
             if not self.dry_run:
                 dst.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(src, dst)
+                dst.write_text(src_content, encoding="utf-8")
             self.copied += 1
 
     def summary(self) -> None:

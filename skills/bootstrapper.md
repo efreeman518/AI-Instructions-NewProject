@@ -280,3 +280,7 @@ After generating the Bootstrapper, confirm:
 
 **TaskFlow proof (local):** `../AI-Instructions-ReferenceApp/src/Host/TaskFlow.Bootstrapper/RegisterServices.cs` + `../AI-Instructions-ReferenceApp/src/Host/TaskFlow.Bootstrapper/Registration/RegisterServices.*.cs` (Application, Infrastructure, Database, Caching, RequestContext partials)
 **TaskFlow proof (remote fallback):** <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Host/TaskFlow.Bootstrapper>
+
+## Application Style Registration
+
+Resolve application style from `TASKFLOW_APPLICATION_STYLE`, then `Application:Style`, defaulting to `Service`. Register shared application services once. In CQRS mode, add command/query handlers with `AddDecoratedRequestHandler<TRequest,TResponse,THandler>()`; endpoint registration chooses the CQRS endpoint set. Keep service registrations when other hosts or AI tools still consume `I{Entity}Service`.

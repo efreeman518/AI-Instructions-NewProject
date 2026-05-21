@@ -422,3 +422,9 @@ public static async Task Cleanup(TestContext context)
 - [ ] `[AssemblyCleanup]` uses the `TestContext` overload and bounds `StopAsync` with `.WaitAsync(CleanupTimeout)`.
 - [ ] Env vars set for AppHost are saved/restored in cleanup.
 - [ ] Aspire-tier fixture is named for what it wraps (`AspireTestHost` for full distributed app, not `DatabaseFixture`).
+
+## CQRS Test Routing
+
+For `applicationStyle: cqrs`, run endpoint and E2E tests in both modes by overriding `Application:Style` or `TASKFLOW_APPLICATION_STYLE`. The same HTTP contract tests should pass against service endpoints and CQRS endpoints.
+
+Add CQRS handler tests for use-case flow and validation decorator tests where custom validators exist.

@@ -110,3 +110,14 @@ Use these links first. If a branch or path has moved, search inside the same rep
 - A skill or template describes a pattern but the concrete shape is still ambiguous.
 - You need to verify that the instruction set already has a working example.
 - You want a fast pointer into TaskFlow without searching the whole repo.
+
+## Application Style Proof
+
+TaskFlow now proves both application styles:
+
+- Service endpoints: existing `I{Entity}Service` route mapping.
+- CQRS endpoints: equivalent routes mapped directly to command/query handlers.
+- Shared contracts: Domain, Infrastructure, UI clients, DTOs, and route contracts remain stable.
+- Route versioning: public domain API routes are `/api/v1/*`; operational/admin/health surfaces stay unversioned (`/health/*`, `/alive`, `/healthz`, `/api/flowengine/*`, Functions host health `/api/health`).
+- Guardrails: avoid central request dispatchers, request buses, and generic `Send()` entrypoints; no CQRS-specific repository layer.
+- Reason: endpoint -> request -> handler wiring stays explicit and can be checked by tests/code review.

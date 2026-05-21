@@ -239,3 +239,6 @@ Before starting Phase 4 (contract scaffolding), verify all of the following:
 - [ ] All required CLIs verified or install commands provided
 - [ ] Implementation plan reviewed and approved by human
 
+## Application Style
+
+Phase 2/3 plans must name `applicationStyle: service | cqrs` before project scaffolding. `service` uses the standard `I{Entity}Service` implementation path. `cqrs` adds request records, focused handlers, decorated handler registration, custom validators, and CQRS endpoint classes while keeping DTO contracts and routes stable.

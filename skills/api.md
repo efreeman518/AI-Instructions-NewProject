@@ -179,28 +179,60 @@ Note: Aspire-hosted deployments typically handle CORS through the gateway — on
 
 ## Pipeline + Versioned Groups
 
+Use an explicit route-versioning boundary. Public business/domain API contracts should normally live under a versioned group such as `/api/v1/*`. Operational, host-management, health, gateway, and package-owned admin surfaces should stay unversioned unless they are part of the public client contract. Examples: `/health/*`, `/alive`, `/healthz`, `/api/flowengine/*`, gateway root/proxy health, and Azure Functions host health (`/api/health` with the Functions default prefix).
+
+Endpoint classes should map relative routes only; the host decides whether the containing group is versioned.
+
+Keep API version metadata in one host-owned type so routing, API versioning, OpenAPI, Scalar, tests, and clients do not drift:
+
+```csharp
+internal static class ApiContract
+{
+    public const string Title = "{App} API";
+    public const string Description = "Multi-tenant {App} API";
+    public const string ApiExplorerGroupNameFormat = "'v'VVV";
+    public const string VersionedRoutePrefix = "/api/v{apiVersion:apiVersion}";
+
+    public static readonly ApiDocument V1 = new(new ApiVersion(1, 0), "v1");
+    public static readonly IReadOnlyList<ApiDocument> SupportedDocuments = [V1];
+
+    public static ApiVersion DefaultVersion => V1.Version;
+    public static string DefaultGroupName => V1.GroupName;
+}
+
+internal sealed record ApiDocument(ApiVersion Version, string GroupName)
+{
+    public string DisplayName => GroupName;
+}
+```
+
 `WebApplicationBuilderExtensions.cs` must preserve middleware order:
 SecurityHeaders → CorrelationId → ExceptionHandler → RateLimiter → CORS → Authentication → Authorization.
 
 Map versioned groups and apply policy at the group level (adjust route pattern to project needs — tenant-scoped, versioned, or simple `/api/` prefix):
 
 ```csharp
-// Simple pattern (default)
+// Simple pattern for unversioned/internal routes when a versioned public contract is not needed.
 app.MapGroup("/api/categories")
     .WithTags("Categories")
     .RequireAuthorization()
     .MapCategoryEndpoints(problemDetailsIncludeStackTrace);
 
-// Versioned + tenant-scoped pattern (when needed)
-var apiVersionSet = app.NewApiVersionSet()
-    .HasApiVersion(new ApiVersion(1, 0))
+// Versioned public contract pattern.
+var apiVersionSetBuilder = app.NewApiVersionSet()
     .ReportApiVersions()
-    .Build();
+foreach (var document in ApiContract.SupportedDocuments)
+    apiVersionSetBuilder.HasApiVersion(document.Version);
 
-app.MapGroup("v{apiVersion:apiVersion}/tenant/{tenantId}/{entity}")
+var apiVersionSet = apiVersionSetBuilder.Build();
+
+var api = app.MapGroup(ApiContract.VersionedRoutePrefix)
     .WithApiVersionSet(apiVersionSet)
-    .RequireAuthorization("TenantMatch")
-    .Map{Entity}Endpoints(problemDetailsIncludeStackTrace);
+    .MapToApiVersion(ApiContract.DefaultVersion)
+    .RequireAuthorization("TenantMatch");
+
+api.MapGroup("/categories")
+    .MapCategoryEndpoints(problemDetailsIncludeStackTrace);
 ```
 
 ## Endpoint Contract
@@ -355,19 +387,25 @@ Gate OpenAPI and Scalar behind `OpenApiSettings:Enable` in appsettings:
 ```csharp
 if (config.GetValue<bool>("OpenApiSettings:Enable"))
 {
-    services.AddOpenApi(options =>
+    foreach (var document in ApiContract.SupportedDocuments)
     {
-        options.AddDocumentTransformer((document, context, ct) =>
+        services.AddOpenApi(document.GroupName, options =>
         {
-            document.Info = new()
+            options.ShouldInclude = apiDescription =>
+                string.Equals(apiDescription.GroupName, document.GroupName, StringComparison.OrdinalIgnoreCase);
+
+            options.AddDocumentTransformer((openApiDocument, context, ct) =>
             {
-                Title = "{App} API",
-                Version = "v1",
-                Description = "Multi-tenant {App} API"
-            };
-            return Task.CompletedTask;
+                openApiDocument.Info = new()
+                {
+                    Title = ApiContract.Title,
+                    Version = document.DisplayName,
+                    Description = ApiContract.Description
+                };
+                return Task.CompletedTask;
+            });
         });
-    });
+    }
 }
 ```
 
@@ -376,14 +414,16 @@ In `ConfigurePipeline()`:
 ```csharp
 if (app.Configuration.GetValue<bool>("OpenApiSettings:Enable"))
 {
-    app.MapOpenApi();           // serves /openapi/v1.json
+    app.MapOpenApi();           // serves /openapi/{documentName}.json
     app.MapScalarApiReference(options =>
     {
-        options.WithTitle("{App} API");
+        options.WithTitle(ApiContract.Title);
         options.WithTheme(ScalarTheme.Moon);
     });
 }
 ```
+
+Each supported API version gets its own JSON document, for example `/openapi/v1.json` and `/openapi/v2.json`. The `ShouldInclude` filter keeps v1-only, v2-only, and shared endpoints in the correct document according to their API Explorer group.
 
 Endpoint OpenAPI metadata — add to every endpoint:
 

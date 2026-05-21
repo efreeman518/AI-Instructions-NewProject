@@ -32,6 +32,12 @@
       "default": "local",
       "description": "How shared base-type contracts are sourced. feed: NuGet from customNugetFeeds. local: generated under src/Packages/<packagePrefix>.<Layer>. hybrid: feed plus locally-generated layers in localPackageLayers."
     },
+    "applicationStyle": {
+      "type": "string",
+      "enum": ["service", "cqrs"],
+      "default": "service",
+      "description": "Application-layer style. service uses I{Entity}Service endpoints; cqrs uses command/query handlers plus CQRS endpoint mappings."
+    },
     "packagePrefix": {
       "type": "string",
       "minLength": 1,

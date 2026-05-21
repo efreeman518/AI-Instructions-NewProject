@@ -97,3 +97,7 @@ Before writing Phase 1 outputs, confirm:
 - [ ] Developer has reviewed the final recap.
 
 Only then write `.scaffold/domain-specification.yaml`, `.scaffold/UBIQUITOUS-LANGUAGE.md`, and `.scaffold/DESIGN-DECISIONS.md`.
+
+## Application Style Decision
+
+Capture this up front in Phase 1: `applicationStyle: service | cqrs` (default `service`). Explain whether HTTP endpoints should inject `I{Entity}Service` or specific CQRS handlers. If `cqrs`, preserve DTO/routes unless the domain discovery proves a route change is required.

@@ -251,3 +251,9 @@ catch (Exception ex)
 
 **TaskFlow proof (local):** `../AI-Instructions-ReferenceApp/src/Application/TaskFlow.Application.Services/TaskItemService.cs` + `Rules/ServiceErrorMessages.cs`, plus mappers at `../AI-Instructions-ReferenceApp/src/Application/TaskFlow.Application.Mappers/TaskItemMapper.cs`
 **TaskFlow proof (remote fallback):** <https://github.com/efreeman518/AI-Instructions-ReferenceApp/blob/main/src/Application/TaskFlow.Application.Services/TaskItemService.cs>
+
+## Service vs CQRS
+
+The application layer supports two scaffold styles: `service` and `cqrs`. `service` keeps use-case flow inside `I{Entity}Service` implementations. `cqrs` keeps use-case flow inside command/query handlers and maps endpoints directly to specific handlers. CQRS avoids central request dispatchers, request buses, and generic `Send()` entrypoints so route-to-handler flow remains explicit and handler registration stays reviewable.
+
+CQRS validation uses project-owned validators plus a handler decorator. Do not add FluentValidation or other third-party validation packages for the CQRS path.

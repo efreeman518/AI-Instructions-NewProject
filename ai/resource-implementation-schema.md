@@ -490,3 +490,7 @@ Before moving to Phase 3 (Implementation Plan), verify all of the following:
 - [ ] If `packageStrategy: hybrid` — `customNugetFeeds` has at least one entry **and** `localPackageLayers` lists only the layers the feed does not provide
 - [ ] `externalDependencyModes` declared for every external dependency
 - [ ] If `includeAiServices: true`: Foundry project name set, at least one model defined, each agent references a defined model, search indexes reference defined entities
+
+## applicationStyle
+
+Optional. Values: `service` or `cqrs`. Default: `service`. Choose before Phase 4 so scaffolding emits either service implementations/endpoints or CQRS request records, handlers, decorated registrations, custom validators, and direct handler endpoints.

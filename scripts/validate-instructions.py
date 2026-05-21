@@ -39,7 +39,9 @@ if hasattr(sys.stdout, "reconfigure"):
 if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+INSTRUCTIONS_ROOT = Path(__file__).resolve().parent.parent
+APP_ROOT = INSTRUCTIONS_ROOT.parent if INSTRUCTIONS_ROOT.name == ".instructions" else INSTRUCTIONS_ROOT
+REPO_ROOT = INSTRUCTIONS_ROOT
 
 # Directories the runtime payload should ship. Must match install-to-project.py.
 EXPECTED_RUNTIME_DIRS = {"ai", "patterns", "profiles", "schemas", "skills", "support", "templates", "scripts"}
@@ -48,8 +50,10 @@ EXPECTED_RUNTIME_DIRS = {"ai", "patterns", "profiles", "schemas", "skills", "sup
 AUTHOR_ONLY_DIRS = {"tests", ".github/workflows", ".githooks", ".vscode", ".venv", ".tmp"}
 
 # Markdown roots to walk. Skip vendored/temporary trees.
-SCAN_ROOTS = ["ai", "patterns", "schemas", "skills", "support", "templates", ".claude", ".github"]
-TOP_LEVEL_MD = ["README.md", "START-AI.md", "CLAUDE.md", "AGENTS.md"]
+RUNTIME_SCAN_ROOTS = ["ai", "patterns", "schemas", "skills", "support", "templates"]
+HARNESS_SCAN_ROOTS = [".claude", ".github"]
+INSTRUCTIONS_TOP_LEVEL_MD = ["README.md", "START-AI.md", "CLAUDE.md"]
+APP_TOP_LEVEL_MD = ["AGENTS.md", "CLAUDE.md"]
 
 EXCLUDE_PARTS = {"__pycache__", ".git", ".venv", ".tmp", ".vscode", ".githooks", "tests", "bin", "obj", "node_modules"}
 
@@ -127,7 +131,7 @@ class Findings:
             for path, msg in self.errors:
                 grouped.setdefault(path, []).append(msg)
             for path in sorted(grouped, key=lambda p: str(p)):
-                print(f"  {path.relative_to(REPO_ROOT).as_posix()}")
+                print(f"  {display_path(path)}")
                 for msg in grouped[path]:
                     print(f"    - {msg}")
 
@@ -138,28 +142,49 @@ class Findings:
             for path, msg in self.warnings:
                 grouped_w.setdefault(path, []).append(msg)
             for path in sorted(grouped_w, key=lambda p: str(p)):
-                print(f"  {path.relative_to(REPO_ROOT).as_posix()}")
+                print(f"  {display_path(path)}")
                 for msg in grouped_w[path]:
                     print(f"    - {msg}")
 
         return 1 if self.errors else 0
 
 
+def display_path(path: Path) -> str:
+    for root in (INSTRUCTIONS_ROOT, APP_ROOT):
+        try:
+            return path.relative_to(root).as_posix()
+        except ValueError:
+            continue
+    return str(path)
+
+
 def iter_markdown_files() -> list[Path]:
-    files: list[Path] = []
-    for top in TOP_LEVEL_MD:
-        p = REPO_ROOT / top
+    files_by_path: dict[Path, None] = {}
+    for top in INSTRUCTIONS_TOP_LEVEL_MD:
+        p = INSTRUCTIONS_ROOT / top
         if p.exists():
-            files.append(p)
-    for root in SCAN_ROOTS:
-        base = REPO_ROOT / root
+            files_by_path[p] = None
+    for top in APP_TOP_LEVEL_MD:
+        p = APP_ROOT / top
+        if p.exists():
+            files_by_path[p] = None
+    for root in RUNTIME_SCAN_ROOTS:
+        base = INSTRUCTIONS_ROOT / root
         if not base.exists():
             continue
         for path in base.rglob("*.md"):
-            if any(part in EXCLUDE_PARTS for part in path.relative_to(REPO_ROOT).parts):
+            if any(part in EXCLUDE_PARTS for part in path.relative_to(INSTRUCTIONS_ROOT).parts):
                 continue
-            files.append(path)
-    return files
+            files_by_path[path] = None
+    for root in HARNESS_SCAN_ROOTS:
+        base = APP_ROOT / root
+        if not base.exists():
+            continue
+        for path in base.rglob("*.md"):
+            if any(part in EXCLUDE_PARTS for part in path.relative_to(APP_ROOT).parts):
+                continue
+            files_by_path[path] = None
+    return list(files_by_path.keys())
 
 
 def check_links(path: Path, findings: Findings) -> None:
@@ -251,7 +276,7 @@ def check_section_anchors(path: Path, findings: Findings, headings_cache: dict[P
                 continue
             headings = collect_headings(candidate, headings_cache)
             if not heading_matches_section(headings, section):
-                rel = candidate.relative_to(REPO_ROOT).as_posix() if REPO_ROOT in candidate.parents or candidate == REPO_ROOT else candidate.name
+                rel = display_path(candidate)
                 findings.err(
                     path,
                     f"line {line_no}: section anchor not found — {rel} has no heading matching '{section}'",
@@ -260,7 +285,7 @@ def check_section_anchors(path: Path, findings: Findings, headings_cache: dict[P
 
 def check_command_shape(findings: Findings) -> None:
     for rel, required_headings in REQUIRED_COMMAND_HEADINGS.items():
-        path = REPO_ROOT / rel
+        path = APP_ROOT / rel
         if not path.exists():
             findings.err(path, "expected command/agent file is missing")
             continue
@@ -274,7 +299,7 @@ def check_command_shape(findings: Findings) -> None:
 
 def check_maintenance_guards(findings: Findings) -> None:
     for rel in REQUIRED_COMMAND_HEADINGS:
-        path = REPO_ROOT / rel
+        path = APP_ROOT / rel
         if not path.exists():
             continue
         text = path.read_text(encoding="utf-8")
@@ -285,7 +310,7 @@ def check_maintenance_guards(findings: Findings) -> None:
 
 def check_payload_shape(findings: Findings) -> None:
     """Compare what install-to-project.py copies vs what's actually present at the repo root."""
-    installer = REPO_ROOT / "scripts" / "install-to-project.py"
+    installer = INSTRUCTIONS_ROOT / "scripts" / "install-to-project.py"
     if not installer.exists():
         findings.err(installer, "install-to-project.py is missing — payload shape unverifiable")
         return
@@ -307,7 +332,7 @@ def check_payload_shape(findings: Findings) -> None:
 
     # Each declared dir must exist in the repo with at least one file.
     for d in declared:
-        target = REPO_ROOT / d
+        target = INSTRUCTIONS_ROOT / d
         if not target.exists() or not target.is_dir():
             findings.err(installer, f"declared payload dir '{d}/' missing or not a directory")
         elif not any(target.iterdir()):
@@ -341,7 +366,9 @@ def main() -> int:
     check_maintenance_guards(findings)
     check_payload_shape(findings)
 
-    print(f"validated {len(md_files)} markdown file(s) under {REPO_ROOT}")
+    print(f"validated {len(md_files)} markdown file(s) under {INSTRUCTIONS_ROOT}")
+    if APP_ROOT != INSTRUCTIONS_ROOT:
+        print(f"app root: {APP_ROOT}")
     print()
     return findings.report()
 
