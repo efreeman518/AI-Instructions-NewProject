@@ -314,3 +314,4 @@ Read `applicationStyle` from `.scaffold/resource-implementation.yaml` before gen
 
 - `service`: generate `I{Entity}Service`, service implementation stubs, and service endpoint templates.
 - `cqrs`: generate command/query request records, one handler per request, `AddDecoratedRequestHandler<TRequest,TResponse,THandler>()`, CQRS endpoint templates, and custom validation decorators. Keep repository contracts shared; do not add CQRS-specific repositories unless they add domain value.
+- `switch`: generate both service and CQRS endpoint templates plus `ApplicationStyle` / `ApplicationStyleResolver`; route mapping selects one endpoint set through `Application:Style` or `<APP>_APPLICATION_STYLE`.

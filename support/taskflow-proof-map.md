@@ -42,13 +42,15 @@ Load this file on demand. Keep it out of the default phase context.
 | Phase 5c Uno UI | `src/UI/TaskFlow.Uno` | UI project structure, feature grouping, and gateway-backed client flow. |
 | Phase 5c Uno core | `src/UI/TaskFlow.Uno.Core` | Plain single-TFM class library extracted from the Uno project so business logic and Kiota client are unit-testable without the Uno SDK. |
 | Phase 5c Blazor host | `src/UI/TaskFlow.Blazor` | Blazor alternative to Uno UI; same Gateway-backed client flow. |
+| Phase 5c React UI | `src/UI/TaskFlow.React` | React + TypeScript Vite SPA alternative; same Gateway-backed client flow, Vite proxy/Aspire JavaScript host wiring, dark-mode persistence, and full workflow parity. |
 | Phase 4 Test infrastructure | `src/Test/Test.Support/WebApplicationFactoryBase.cs`, `src/Test/Test.Endpoints/CustomApiFactory.cs`, `src/Test/Test.E2E/SqlApiFactory.cs`, `src/Test/Test.Integration/AspireTestHost.cs`, `src/Test/Test.Integration/DbContextFactory.cs` | Shared WAF base constrained to `DbContextBase<string, Guid?>`; thin derived factories per harness; Aspire fixture with full distributed-app lifecycle + per-call `.WaitAsync` discipline; integration `DbContextFactory` piggybacks on `AspireTestHost.ConnectionString`. |
 | Phase 5a integration tier | `src/Test/Test.Integration/MigrationAndRepositoryTests.cs` | EF migrations apply against real SQL; CRUD + child includes + M:N junction navigation + tenant query filter + polymorphic-attachment index checks against the migrated schema. |
 | Phase 5b integration tier | `src/Test/Test.Integration/AuditLogRepositoryAzuriteTests.cs`, `src/Test/Test.Integration/ApiAuditPipelineTests.cs`, `src/Test/Test.Integration/DomainEventPipelineTests.cs` | Audit-pipeline against real Azurite (partition/row key shapes); full HTTP request → audit middleware → Azurite read-back with polling helper; projection pipeline reads through query-side repos and emits view documents. |
 | Phase 5b E2E tier | `src/Test/Test.E2E/SqlApiFactory.cs`, `src/Test/Test.E2E/TaskItemCrudE2ETests.cs` | Static Testcontainers SQL lifecycle on the derived `SqlApiFactory`; multi-endpoint workflows (CRUD round-trip, paged search across distinct pages, child-aggregate lifecycles) against real SQL. |
 | Mapper parity (consolidated) | `src/Test/Test.Unit/Mappers/MapperProjectionParityTests.cs` | Single class pinning compile-projection / `ToDto` agreement for every mapper + inlined-child parity for aggregate roots + owned-type flattening parity. |
 | Phase 5d quality (.NET test projects) | `src/Test/Test.Unit`, `src/Test/Test.Integration`, `src/Test/Test.Endpoints`, `src/Test/Test.E2E`, `src/Test/Test.Architecture`, `src/Test/Test.Load`, `src/Test/Test.Benchmarks`, `src/Test/Test.Support` | `dotnet test`-runnable test project layout and quality-gate coverage. |
-| Phase 5d browser UI tests | `src/Test/Test.PlaywrightUI` | TaskFlow currently uses a Node.js Playwright suite (`npm test`, **not** a `dotnet test` target). **Scaffold output diverges:** templates (`test-templates-quality.md`) and CI (`skills/cicd.md`) generate a C# MSTest + `Microsoft.Playwright.MSTest` project. New scaffolded apps follow the C# pattern; consult TaskFlow only for hosted-stack orchestration shape, not the test language. |
+| Phase 5d browser UI tests | `src/Test/Test.PlaywrightUI` | TaskFlow uses a Node.js Playwright suite (`npm test`, **not** a `dotnet test` target), including a dedicated React project with env-driven base URL for Aspire's dynamic Vite port. **Scaffold output may diverge:** C# MSTest + `Microsoft.Playwright.MSTest` remains valid; consult TaskFlow for hosted-stack orchestration shape, test data isolation, dynamic base URL, and CRUD/shell coverage. |
+| Phase 5d mobile UI tests | `src/Test/Test.Mobile`, `src/UI/TaskFlow.Uno/TaskFlow.Uno.csproj` | MSTest + Appium Android smoke tests are opt-in, use a Debug Uno Android package with mocks first, and require `dotnet restore src/UI/TaskFlow.Uno/TaskFlow.Uno.csproj -p:BuildAllUnoTargets=true` before the `TargetFrameworkOverride=net10.0-android --no-restore` build so Android Skia runtime packages are in the asset graph. |
 | Phase 5e auth | `AuthConfiguration`, `ScaffoldAuthHandler`, gateway claims forwarding flow | Scaffold auth, Entra-ready wiring, and API claim enrichment path. |
 | Phase 5e AI | `src/Infrastructure/TaskFlow.Infrastructure.AI`, commented AI resources in AppHost | AI service placement, deployment-only stance, and config-driven activation. |
 
@@ -83,12 +85,14 @@ Use these links first. If a branch or path has moved, search inside the same rep
 | Uno UI | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/UI/TaskFlow.Uno> |
 | Uno core (testable) | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/UI/TaskFlow.Uno.Core> |
 | Blazor host | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/UI/TaskFlow.Blazor> |
+| React UI | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/UI/TaskFlow.React> |
 | Test support | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Test/Test.Support> |
 | Unit tests | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Test/Test.Unit> |
 | Architecture tests | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Test/Test.Architecture> |
 | Endpoint tests | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Test/Test.Endpoints> |
 | E2E tests | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Test/Test.E2E> |
-| Playwright UI tests (TaskFlow uses Node — scaffold generates C# MSTest) | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Test/Test.PlaywrightUI> |
+| Playwright UI tests (TaskFlow uses Node; scaffold may use Node or C# MSTest) | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Test/Test.PlaywrightUI> |
+| Mobile UI tests (MSTest + Appium) | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Test/Test.Mobile> |
 
 ---
 

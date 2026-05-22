@@ -20,8 +20,10 @@ This replaces the old 3-page pattern (List + Detail + Create/Edit). The entity p
 
 ## List Page
 
+List item templates must not use `Button` as the root element. Put navigation attached properties on the item surface and reserve buttons for explicit row actions.
+
 ```xml
-<Page x:Class="{Project}.UI.Views.{Entity}ListPage"
+<Page x:Class="{Project}.Uno.Views.{Entity}ListPage"
       x:Name="{Entity}ListRoot"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -70,33 +72,27 @@ This replaces the old 3-page pattern (List + Detail + Create/Edit). The entity p
                     <ListView ItemsSource="{Binding Data}" SelectionMode="None">
                         <ListView.ItemTemplate>
                             <DataTemplate>
-                                <Button uen:Navigation.Request="{Entity}Item"
+                                <Border Style="{StaticResource ListItemCardStyle}"
+                                        uen:Navigation.Request="{Entity}Item"
                                         uen:Navigation.Data="{Binding}"
-                                        HorizontalAlignment="Stretch"
-                                        HorizontalContentAlignment="Stretch"
-                                        Background="Transparent"
-                                        BorderThickness="0"
-                                        Padding="0" Margin="0,2"
-                                        Foreground="{ThemeResource OnSurfaceBrush}">
-                                    <Border Style="{StaticResource ListItemCardStyle}">
-                                        <Grid ColumnSpacing="12">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-                                            <FontIcon Grid.Column="0" Glyph="&#xE9D5;" FontSize="16"
-                                                      Foreground="{ThemeResource PrimaryBrush}"
-                                                      VerticalAlignment="Center" />
-                                            <TextBlock Grid.Column="1" Text="{Binding Title}"
-                                                       Style="{StaticResource BodyStrongTextBlockStyle}"
-                                                       TextTrimming="CharacterEllipsis" />
-                                            <Border Grid.Column="2" Style="{StaticResource BadgeStyle}">
-                                                <TextBlock Text="{Binding Status}" Style="{StaticResource BadgeTextStyle}" />
-                                            </Border>
-                                        </Grid>
-                                    </Border>
-                                </Button>
+                                        AutomationProperties.Name="{Binding Title}">
+                                    <Grid ColumnSpacing="12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <FontIcon Grid.Column="0" Glyph="&#xE9D5;" FontSize="16"
+                                                  Foreground="{ThemeResource PrimaryBrush}"
+                                                  VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="1" Text="{Binding Title}"
+                                                   Style="{StaticResource BodyStrongTextBlockStyle}"
+                                                   TextTrimming="CharacterEllipsis" />
+                                        <Border Grid.Column="2" Style="{StaticResource BadgeStyle}">
+                                            <TextBlock Text="{Binding Status}" Style="{StaticResource BadgeTextStyle}" />
+                                        </Border>
+                                    </Grid>
+                                </Border>
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
@@ -115,7 +111,7 @@ This replaces the old 3-page pattern (List + Detail + Create/Edit). The entity p
 ## Entity Page (Unified Add/Edit + Children)
 
 ```xml
-<Page x:Class="{Project}.UI.Views.{Entity}Page"
+<Page x:Class="{Project}.Uno.Views.{Entity}Page"
       x:Name="{Entity}Root"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -246,7 +242,7 @@ This replaces the old 3-page pattern (List + Detail + Create/Edit). The entity p
 ## Code-Behind (same for all pages)
 
 ```csharp
-namespace {Project}.UI.Views;
+namespace {Project}.Uno.Views;
 
 public sealed partial class {Entity}ListPage : Page
 {
@@ -255,7 +251,7 @@ public sealed partial class {Entity}ListPage : Page
 ```
 
 ```csharp
-namespace {Project}.UI.Views;
+namespace {Project}.Uno.Views;
 
 public sealed partial class {Entity}Page : Page
 {

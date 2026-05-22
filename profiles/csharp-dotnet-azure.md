@@ -13,7 +13,7 @@ A clean-architecture C#/.NET solution with:
 - Entity Framework Core data access with audit/tenant interceptors and integration tests using Testcontainers SQL.
 - ASP.NET Core minimal-API host with `WebApplicationFactoryBase` test infrastructure.
 - Aspire AppHost orchestration and Azure-ready hosting patterns.
-- Optional hosts: YARP Gateway, Azure Functions, TickerQ scheduler, notifications, Blazor server/WASM, Uno (desktop / WASM / mobile).
+- Optional hosts: YARP Gateway, Azure Functions, TickerQ scheduler, notifications, Blazor server/WASM, React/Vite SPA, Uno (desktop / WASM / mobile).
 - Shared base-type contracts (`EntityBase`, `DbContextBase`, `DomainResult`, `IRepositoryBase`, `IRequestContext`) sourced as `<packagePrefix>.*` packages via one of three strategies: `feed`, `local`, or `hybrid`.
 - Azure integrations as no-op stubs by default (Entra, Key Vault, AI Search, Foundry, ACS), promoted to live only when configured.
 
@@ -24,7 +24,7 @@ Phase 2-5 content. Everything below assumes a C#/.NET/Azure target and reference
 ### `ai/`
 
 - [`ai/resource-implementation-schema.md`](../ai/resource-implementation-schema.md) — Phase 2: maps domain to `packageStrategy`, `customNugetFeeds`, `localPackageLayers`, Aspire resources, SQL/CosmosDB/Table/Blob datastores.
-- [`ai/implementation-plan.md`](../ai/implementation-plan.md) — Phase 3: NuGet feed wiring, `dotnet ef` tooling, Aspire, Function App, Uno platforms.
+- [`ai/implementation-plan.md`](../ai/implementation-plan.md) — Phase 3: NuGet feed wiring, `dotnet ef` tooling, Aspire, Function App, React/Vite, Uno platforms.
 - [`ai/contract-scaffolding.md`](../ai/contract-scaffolding.md) — Phase 4: `.slnx`, `Directory.Packages.props`, `DbContextBase<Guid, Guid>`, EF interceptors, `WebApplicationFactoryBase`, Testcontainers SQL.
 - [`ai/SKILL.md`](../ai/SKILL.md) — Phase 5 load sets, sub-phase routing, non-negotiables, scaffold definition of done. Title reads "C#/.NET/Azure Profile — Phase 5 Skill Set."
 - [`ai/adopt-codebase.md`](../ai/adopt-codebase.md) — brownfield adoption (replaces Phase 1 interview by reading existing C# code: `Domain.Model`, EF configurations, DI registrations, `nuget.config`, Aspire `AppHost`).
@@ -33,7 +33,7 @@ Phase 2-5 content. Everything below assumes a C#/.NET/Azure target and reference
 
 ### `skills/`
 
-All files. Each is a stack-specific how-to (EF data persistence, ASP.NET Core API, Bootstrapper DI, Aspire wiring, multi-tenant, caching, security, identity, observability, configuration-secrets, gateway, messaging, gRPC, external-api, AI integration, AI search, agent, Blazor, Uno UI shell/MVUX/platforms, function-app, background-services, notifications, FlowEngine, IaC, CI/CD, testing, testing-quality, domain-model, application-layer, solution-structure, package-dependencies).
+All files. Each is a stack-specific how-to (EF data persistence, ASP.NET Core API, Bootstrapper DI, Aspire wiring, multi-tenant, caching, security, identity, observability, configuration-secrets, gateway, messaging, gRPC, external-api, AI integration, AI search, agent, Blazor, React/Vite UI, Uno UI shell/MVUX/platforms, function-app, background-services, notifications, FlowEngine, IaC, CI/CD, testing, testing-quality, domain-model, application-layer, solution-structure, package-dependencies).
 
 ### `templates/`
 
@@ -51,7 +51,7 @@ C#-specific operator content:
 - [`support/execution-gates.md`](../support/execution-gates.md) — `dotnet build` / `dotnet test` / `dotnet run` gates per phase.
 - [`support/vertical-slice-checklist.md`](../support/vertical-slice-checklist.md) — single-entity fast path.
 - [`support/final-scaffold-checklist.md`](../support/final-scaffold-checklist.md) — solution-level acceptance.
-- [`support/taskflow-proof-map.md`](../support/taskflow-proof-map.md) — pointer to the TaskFlow reference app (Aspire + dual DbContext + YARP + Uno).
+- [`support/taskflow-proof-map.md`](../support/taskflow-proof-map.md) — pointer to the TaskFlow reference app (Aspire + dual DbContext + YARP + Uno + Blazor + React).
 - [`support/reference-app.md`](../support/reference-app.md) — consultation rules for TaskFlow.
 - [`support/OPERATIONS.md`](../support/OPERATIONS.md) — fail-fast, git checkpoint, missing-inputs, rollback, mixed-store gate. C#-bound through its examples; the operational concepts are reusable.
 - [`support/phase-1-worked-example.md`](../support/phase-1-worked-example.md) — transcript from the TaskFlow Phase 1 interview. Phase 1 itself is universal, but this example is a C#-bound illustration.

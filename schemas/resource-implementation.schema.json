@@ -34,9 +34,9 @@
     },
     "applicationStyle": {
       "type": "string",
-      "enum": ["service", "cqrs"],
+      "enum": ["service", "cqrs", "switch"],
       "default": "service",
-      "description": "Application-layer style. service uses I{Entity}Service endpoints; cqrs uses command/query handlers plus CQRS endpoint mappings."
+      "description": "Application endpoint/application shape. service emits service endpoints only. cqrs emits CQRS request handlers/endpoints only. switch emits both and gates route mapping via Application:Style plus <APP>_APPLICATION_STYLE."
     },
     "packagePrefix": {
       "type": "string",
@@ -54,7 +54,7 @@
       "type": "array",
       "items": { "type": "string" },
       "default": [],
-      "description": "Layer names generated under src/Packages/<packagePrefix>.<Layer> (e.g., Domain, Domain.Contracts, Data, Data.Contracts, Common, Common.Contracts). Required when packageStrategy is local (full layer set) or hybrid (layers the feed does not provide)."
+      "description": "Layer names generated under src/Packages/<packagePrefix>.<Layer> (e.g., Domain, Domain.Contracts, Data, Data.Contracts, Common, Common.Contracts, CQRS). Required when packageStrategy is local (full layer set) or hybrid (layers the feed does not provide)."
     },
     "includeApi": { "type": "boolean", "default": true },
     "includeGateway": { "type": "boolean", "default": false },
@@ -62,6 +62,7 @@
     "includeScheduler": { "type": "boolean", "default": false },
     "includeUnoUI": { "type": "boolean", "default": false },
     "includeBlazorUI": { "type": "boolean", "default": false },
+    "includeReactUI": { "type": "boolean", "default": false },
     "includeNotifications": { "type": "boolean", "default": false },
     "includeFlowEngine": {
       "type": "boolean",

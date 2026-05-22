@@ -322,7 +322,7 @@ Assemblies that always need the mesh (`Test.E2E` style) keep the `[AssemblyIniti
 
 ### Opt-In Graph Scope via Env Flag
 
-When the production AppHost graph includes resources that aren't needed for every test run (Gateway + Blazor UI, Function App, Notifications), gate their `AddProject` calls in `AppHost.cs` on an env var the test fixture sets **before** `CreateAsync`:
+When the production AppHost graph includes resources that aren't needed for every test run (Gateway + Blazor UI, React/Vite UI, Function App, Notifications), gate their `AddProject` / `AddViteApp` calls in `AppHost.cs` on an env var the test fixture sets **before** `CreateAsync`:
 
 ```csharp
 // AppHost.cs
@@ -336,6 +336,8 @@ SetEnvVar("{APP}_INCLUDE_BLAZOR", "true");
 ```
 
 This mirrors the reference app's `TASKFLOW_INCLUDE_FUNCTIONS`/`TASKFLOW_ASPIRE_TESTING` flags. Each opt-in flag is **default-off in tests** (kept on for `dotnet run --project AppHost`). The `IsAspireTesting()` check in AppHost decides the default-off; the test fixture flips one flag per resource it needs. Document the flag set in `HANDOFF.md` so the next session knows the env-var contract.
+
+For React/Vite, use the same pattern around `AddViteApp(...)` and pass the Gateway endpoint (or API endpoint when Gateway is disabled) through `VITE_API_BASE_URL`. Browser tests still use the actual Vite resource URL as their base URL.
 
 ### Async call discipline
 
@@ -425,6 +427,6 @@ public static async Task Cleanup(TestContext context)
 
 ## CQRS Test Routing
 
-For `applicationStyle: cqrs`, run endpoint and E2E tests in both modes by overriding `Application:Style` or `TASKFLOW_APPLICATION_STYLE`. The same HTTP contract tests should pass against service endpoints and CQRS endpoints.
+For `applicationStyle: switch`, run endpoint and E2E tests in both modes by overriding `Application:Style` or `<APP>_APPLICATION_STYLE`. The same HTTP contract tests should pass against service endpoints and CQRS endpoints. For `applicationStyle: cqrs`, run the same HTTP contract suite against CQRS endpoints as the only mapped endpoint set.
 
 Add CQRS handler tests for use-case flow and validation decorator tests where custom validators exist.

@@ -107,6 +107,8 @@ The goal is a small, owned dependency surface — every package added is one the
 4. Transitive NuGet dependencies of the generated projects (e.g., `Microsoft.EntityFrameworkCore`) still go through `Directory.Packages.props` central versions.
 5. To publish later: `dotnet pack src/Packages/<packagePrefix>.<Layer>` produces a `.nupkg` that can be pushed to any feed. After the layer is published and consumed via `<PackageReference>`, move the layer from `localPackageLayers` into the feed-supplied set and delete the local project.
 
+If `applicationStyle` is `cqrs` or `switch`, include `CQRS` in `localPackageLayers` for `packageStrategy: local`/`hybrid`. The generated project is `src/Packages/<packagePrefix>.CQRS/<packagePrefix>.CQRS.csproj` and is referenced by `{Project}.Application.Cqrs` and CQRS-focused tests via `<ProjectReference>`.
+
 > **CPM + floating versions = NU1011.** When `ManagePackageVersionsCentrally=true`, every `<PackageVersion>` entry must use an exact version (e.g. `Version="<latest-stable>"` resolved at scaffold time). Wildcard/floating versions (e.g. `1.0.*`, `*`) are prohibited and cause restore to fail with NU1011. To use floating versions, set `ManagePackageVersionsCentrally=false` and add `Version="*"` directly to each `<PackageReference>`. This rule applies regardless of `packageStrategy`.
 
 ---
@@ -220,6 +222,26 @@ Other key types:
 - expression/predicate helpers for EF-safe composition
 - `CollectionUtility` (non-domain sync helpers)
 - `NotFoundException`
+
+---
+
+### `EF.CQRS`
+
+Add when `applicationStyle` is `cqrs` or `switch`.
+
+| Type | Used For |
+|---|---|
+| `IRequest<TResponse>` | Marker for commands and queries with a typed response |
+| `ICommand<TResponse>` | Write request marker |
+| `IQuery<TResponse>` | Read request marker |
+| `IRequestHandler<TRequest,TResponse>` | Single request handler contract |
+| `IRequestValidator<TRequest>` | Optional request validator contract |
+| `RequestValidationResult` | Validator result with one or more errors |
+| `IValidationResponseFactory<TResponse>` | Converts validation errors to the app response shape |
+| `ValidationRequestHandlerDecorator<TRequest,TResponse>` | Decorates handlers with validation before execution |
+| `AddDecoratedRequestHandler<TRequest,TResponse,THandler>()` | Registers handler plus validation decorator |
+
+No MediatR, dispatcher, request bus, or generic `Send` API is part of this package. CQRS endpoints inject the specific `IRequestHandler<TRequest,TResponse>` they need.
 
 ---
 
@@ -345,4 +367,5 @@ Pattern reference: [external-api.md](external-api.md)
   - `DomainResult.Errors` → `IReadOnlyList<DomainError>`
   - `Result.Errors` → `IReadOnlyList<string>`
 - [ ] Internal message bus namespaces are correct
+- [ ] If `applicationStyle` is `cqrs` or `switch`: `<packagePrefix>.CQRS` is sourced by feed or local project, and no MediatR/dispatcher package was added
 - [ ] Azure client factories and package-required DI wiring are registered

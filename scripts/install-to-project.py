@@ -153,22 +153,21 @@ class Planner:
     def merge_file(self, src: Path, dst: Path, label: str) -> None:
         """Copy src to dst; if dst exists, append src inside sentinel markers (idempotent)."""
         src_content = adapt_installed_entrypoint_links(src, src.read_text(encoding="utf-8"))
+        block = (
+            MERGE_SENTINEL_START
+            + "\n"
+            + src_content.strip()
+            + "\n"
+            + MERGE_SENTINEL_END
+        )
         if dst.exists():
             dst_content = dst.read_text(encoding="utf-8")
-            if MERGE_SENTINEL_START in dst_content:
-                print(f"  [skip]  {label} (already merged)")
-                self.skipped += 1
-                return
-            merged = (
-                dst_content.rstrip("\n")
-                + "\n\n"
-                + MERGE_SENTINEL_START
-                + "\n"
-                + src_content.strip()
-                + "\n"
-                + MERGE_SENTINEL_END
-                + "\n"
-            )
+            if MERGE_SENTINEL_START in dst_content and MERGE_SENTINEL_END in dst_content:
+                before, rest = dst_content.split(MERGE_SENTINEL_START, 1)
+                _, after = rest.split(MERGE_SENTINEL_END, 1)
+                merged = before.rstrip("\n") + "\n\n" + block + after
+            else:
+                merged = dst_content.rstrip("\n") + "\n\n" + block + "\n"
             action = "[dry-run]" if self.dry_run else "[merge]"
             print(f"  {action} {label}")
             if not self.dry_run:

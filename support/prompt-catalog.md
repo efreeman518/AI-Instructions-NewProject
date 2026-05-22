@@ -102,7 +102,7 @@ When gate passes, update HANDOFF.md and close session.
 ### 5c — Optional Hosts (Tests-After)
 
 ```text
-Scaffold only the enabled optional hosts named in .scaffold/resource-implementation.yaml: {scheduler/functionapp/uno-ui/blazor-ui/notifications}.
+Scaffold only the enabled optional hosts named in .scaffold/resource-implementation.yaml: {scheduler/functionapp/uno-ui/blazor-ui/react-ui/notifications}.
 Update hostGates in HANDOFF.md per host as each reaches scaffolded → validated.
 Close session when all enabled hosts are validated (or blockers are recorded for deployment-only deps).
 ```

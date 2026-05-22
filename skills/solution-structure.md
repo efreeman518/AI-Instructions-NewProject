@@ -24,6 +24,7 @@ src/
 │   ├── {Prefix}.Domain.Contracts/
 │   ├── {Prefix}.Data/
 │   ├── {Prefix}.Data.Contracts/
+│   ├── {Prefix}.CQRS/                              # when applicationStyle: cqrs or switch
 │   ├── {Prefix}.Common/
 │   └── {Prefix}.Common.Contracts/
 ├── Domain/
@@ -34,6 +35,7 @@ src/
 │   ├── {Project}.Application.Mappers/
 │   ├── {Project}.Application.Models/
 │   ├── {Project}.Application.Services/
+│   ├── {Project}.Application.Cqrs/                 # when applicationStyle: cqrs or switch
 │   └── {Project}.Application.MessageHandlers/
 ├── Infrastructure/
 │   ├── {Project}.Infrastructure.Data/
@@ -51,7 +53,9 @@ src/
 │       └── ServiceDefaults/
 ├── UI/
 │   ├── {Host}.Uno/                     # optional
-│   └── {Host}.Uno.Core/                # optional
+│   ├── {Host}.Uno.Core/                # optional
+│   ├── {Host}.Blazor/                  # optional
+│   └── {Host}.React/                   # optional
 ├── Test/
 │   ├── Test.Unit/                    # mocked unit tests
 │   ├── Test.Integration/             # service-level vs real external services (Testcontainers SQL, real cache, etc.)
@@ -127,7 +131,7 @@ Failure mode is **invisible locally** (files on disk, build green) and surfaces 
 
 Note: Domain rules and specifications live in `Domain.Model/Rules/` (or `Domain.Model/Specifications/`). A separate `Domain.Rules` project is not required.
 
-Note: `src/Packages/` exists only when `packageStrategy` is `local` or `hybrid` (set in `.scaffold/resource-implementation.yaml`). Generate one packable project per entry in `localPackageLayers`, matching the layer set in [`../support/ef-packages-reference.md`](../support/ef-packages-reference.md). Each project sets `IsPackable=true` and `<PackageId>=<Prefix>.<Layer>` so it can later be published to a feed and consumed via `<PackageReference>` without restructuring. When `packageStrategy: feed`, omit the `Packages/` folder entirely — the contracts come from `customNugetFeeds`.
+Note: `src/Packages/` exists only when `packageStrategy` is `local` or `hybrid` (set in `.scaffold/resource-implementation.yaml`). Generate one packable project per entry in `localPackageLayers`, matching the layer set in [`../support/ef-packages-reference.md`](../support/ef-packages-reference.md). Each project sets `IsPackable=true` and `<PackageId>=<Prefix>.<Layer>` so it can later be published to a feed and consumed via `<PackageReference>` without restructuring. When `applicationStyle` is `cqrs` or `switch`, include `<Prefix>.CQRS` in this local/feed layer set. When `packageStrategy: feed`, omit the `Packages/` folder entirely — the contracts come from `customNugetFeeds`.
 
 ---
 
@@ -142,6 +146,7 @@ Required flow:
 Domain.Shared <- Domain.Model
             \-> Application.Models <- Application.Contracts <- Application.Services
                                   \-> Application.Mappers   /
+                                  \-> Application.Cqrs
                                                 \-> Application.MessageHandlers
 Domain.Model -> Infrastructure.Data -> Infrastructure.Repositories
 Application.Contracts -> Infrastructure.Repositories
@@ -221,6 +226,7 @@ Resolve `<latest-installed-stable-sdk>` from `dotnet --list-sdks` at scaffold ti
 | `Application.Mappers` | `Application.Models`, `Domain.Model`, `Domain.Shared` |
 | `Application.Contracts` | `Application.Models`, `Domain.Model`, `Domain.Shared` |
 | `Application.Services` | `Application.Contracts`, `Application.Mappers`, `Application.Models`, domain projects |
+| `Application.Cqrs` | `Application.Contracts`, `Application.Mappers`, `Application.Models`, domain projects, `<Prefix>.CQRS` |
 | `Infrastructure.Data` | domain projects |
 | `Infrastructure.Repositories` | `Application.Contracts`, `Infrastructure.Data` |
 | `{Host}.Bootstrapper` | app/infrastructure implementations |

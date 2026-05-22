@@ -56,6 +56,7 @@ Checkpoint commands and pass criteria are canonical in [../support/execution-gat
 - [ ] Function app (if enabled)
 - [ ] Uno UI (if enabled; dedicated session preferred)
 - [ ] Blazor UI (if enabled)
+- [ ] React UI (if enabled)
 - [ ] Notifications (if enabled)
 - [ ] Write per-host smoke tests
 - [ ] **Checkpoint:** `dotnet build`, each enabled host responds, `dotnet test` passes; per-host gate status recorded in `HANDOFF.md`
@@ -143,6 +144,11 @@ Populated during Phase 3 by analyzing `.scaffold/resource-implementation.yaml` t
 | _e.g., `func`_ | _Azure Functions host_ | _5c_ | _`npm i -g azure-functions-core-tools@4`_ | _[ ]_ |
 | _e.g., `azd`_ | _IaC deployment/dry-run packaging_ | _5d_ | _`winget install Microsoft.Azd`_ | _[ ]_ |
 | _e.g., `uno-check`_ | _Uno workload validation_ | _5c_ | _`dotnet tool install -g uno.check`_ | _[ ]_ |
+| _e.g., `wasm-tools` workload_ | _Uno browserwasm build_ | _5c_ | _`dotnet workload install wasm-tools`_ | _[ ]_ |
+| _e.g., `.NET Android workload`_ | _Uno Android build/emulator test_ | _5c/5d_ | _`dotnet workload install android`_ | _[ ]_ |
+| _e.g., `Android SDK / emulator`_ | _Uno Android device smoke tests_ | _5d_ | _Install Android Studio or SDK command-line tools with Platform-Tools, Emulator, one recent platform, and one AVD_ | _[ ]_ |
+| _e.g., `.NET iOS workload`_ | _Uno iOS compile gate or macOS CI_ | _5c/5d_ | _`dotnet workload install ios`; simulator/device UI tests require macOS_ | _[ ]_ |
+| _e.g., `node` / `npm`_ | _React/Vite UI build and Playwright_ | _5c/5d_ | _Install current Node.js LTS_ | _[ ]_ |
 
 ### Shared Base-Type Readiness
 
@@ -241,4 +247,4 @@ Before starting Phase 4 (contract scaffolding), verify all of the following:
 
 ## Application Style
 
-Phase 2/3 plans must name `applicationStyle: service | cqrs` before project scaffolding. `service` uses the standard `I{Entity}Service` implementation path. `cqrs` adds request records, focused handlers, decorated handler registration, custom validators, and CQRS endpoint classes while keeping DTO contracts and routes stable.
+Phase 2/3 plans must name `applicationStyle: service | cqrs | switch` before project scaffolding. `service` uses the standard `I{Entity}Service` implementation path. `cqrs` adds request records, focused handlers, decorated handler registration, custom validators, and CQRS endpoint classes while keeping DTO contracts and routes stable. `switch` generates both endpoint sets and validates `Application:Style=Service` and `Application:Style=Cqrs`.

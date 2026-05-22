@@ -83,8 +83,11 @@ Application/
 ├── Application.Models/
 ├── Application.Services/
 │   └── Rules/
+├── Application.Cqrs/            # when applicationStyle: cqrs or switch
 └── Application.MessageHandlers/
 ```
+
+When `applicationStyle` is `cqrs` or `switch`, also generate `{Project}.Application.Cqrs` with `Requests/`, `Handlers/`, `Registration/`, and optional `Validation/` folders.
 
 ---
 
@@ -139,6 +142,19 @@ Flow pattern:
 - Create: validate -> boundary -> map/domain create -> persist.
 - Update: validate -> load -> boundary -> apply updater -> persist.
 - Delete: load (optional) -> boundary -> delete/return success.
+
+## CQRS Application Style
+
+When `.scaffold/resource-implementation.yaml` sets `applicationStyle: cqrs` or `switch`, add `{Project}.Application.Cqrs` alongside services:
+
+- `Requests/` contains one command/query record per endpoint operation and implements `ICommand<TResponse>` or `IQuery<TResponse>`.
+- `Handlers/` contains one `IRequestHandler<TRequest,TResponse>` implementation per request. No handler implements `I{Entity}Service`.
+- `Registration/` owns `CqrsHandlerRegistrationCatalog` plus `Add{Project}CqrsApplication(...)`.
+- `Validation/` owns CQRS-specific `IRequestValidator<TRequest>` implementations when validation should happen before handler execution.
+
+Use `EF.CQRS` / `<packagePrefix>.CQRS` only for handler contracts, validators, decorator registration, and validation response factories. Do not add MediatR, a dispatcher, a request bus, or a generic `Send` method. Minimal API endpoints inject the specific handler they call.
+
+For greenfield scaffolds, CQRS handlers should orchestrate the same repositories, mappers, validators, tenant rules, cache, and event publishers that services use. For brownfield refactors, a CQRS handler may delegate to an existing service only when that preserves established behavior and the architecture tests still prove the CQRS layer has no host/infrastructure dependency and does not implement service contracts.
 
 ## Policy-Driven Orchestration
 
@@ -237,6 +253,7 @@ catch (Exception ex)
 - [ ] `ErrorConstants` exists in `Application.Contracts` with shared error keys
 - [ ] `ServiceErrorMessages` exists in `Application.Services/Rules`
 - [ ] service implements `I{Entity}Service` and uses repo split correctly
+- [ ] when `applicationStyle` is `cqrs` or `switch`: `{Project}.Application.Cqrs` contains request/handler pairs and handler registration catalog
 - [ ] service has `BuildResponse` helper method
 - [ ] service uses `nameof({Entity})` in boundary-validator and error messages
 - [ ] **[Multi-tenant only]** `ITenantEntityDto` defined, `DefaultResponse` includes `TenantInfoDto?`
@@ -254,6 +271,6 @@ catch (Exception ex)
 
 ## Service vs CQRS
 
-The application layer supports two scaffold styles: `service` and `cqrs`. `service` keeps use-case flow inside `I{Entity}Service` implementations. `cqrs` keeps use-case flow inside command/query handlers and maps endpoints directly to specific handlers. CQRS avoids central request dispatchers, request buses, and generic `Send()` entrypoints so route-to-handler flow remains explicit and handler registration stays reviewable.
+The application layer supports three scaffold styles: `service`, `cqrs`, and `switch`. `service` keeps use-case flow inside `I{Entity}Service` implementations. `cqrs` keeps use-case flow inside command/query handlers and maps endpoints directly to specific handlers. `switch` emits both endpoint sets and selects one through `Application:Style` / `<APP>_APPLICATION_STYLE`. CQRS avoids central request dispatchers, request buses, and generic `Send()` entrypoints so route-to-handler flow remains explicit and handler registration stays reviewable.
 
 CQRS validation uses project-owned validators plus a handler decorator. Do not add FluentValidation or other third-party validation packages for the CQRS path.

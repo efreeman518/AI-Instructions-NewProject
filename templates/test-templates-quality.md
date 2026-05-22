@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Generates** | `Test/Test.Architecture/**`, `Test/Test.PlaywrightUI/**`, `Test/Test.Load/**`, `Test/Test.Benchmarks/**` |
+| **Generates** | `Test/Test.Architecture/**`, `Test/Test.PlaywrightUI/**`, `Test/Test.Mobile/**` (when Uno native mobile testing is enabled), `Test/Test.Load/**`, `Test/Test.Benchmarks/**` |
 | **Requires** | Core implementation phases complete (5a–5c) |
 | **Phase** | 5d (Quality + Delivery) |
 | **Protocol** | These tests are written AFTER implementation. Unit/endpoint/integration tests already exist from 5a/5b/5c. Phase 5d adds quality gates and runs a full regression. |
@@ -69,6 +69,8 @@ public class ApplicationDependencyTests : BaseTest
 > **Data-assertion rule:** Never assert specific row counts, page counts, or seeded titles (e.g. `"Showing 1 to 10 of 14"`, `"Build dashboard UI"`). These break against shared dev databases with accumulating test data. Assert structural UI strings only: headers, labels, empty-state text.
 >
 > **MudBlazor timing:** Always `waitFor` inputs before fill and use 15 s timeout for delete dialogs as defined in [../skills/testing-quality.md](../skills/testing-quality.md) § Hosted Browser UI.
+>
+> **Base URL:** Use an environment variable per UI surface. Aspire can assign dynamic ports to UI hosts, especially React/Vite apps. Do not hard-code a previous dashboard URL.
 
 ### File: `Test/Test.PlaywrightUI/Tests/{Entity}CrudTests.cs`
 
@@ -79,7 +81,9 @@ public class ApplicationDependencyTests : BaseTest
 [TestCategory("E2E")]
 public class {Entity}CrudTests : PageTest
 {
-    private const string BaseUrl = "https://localhost:44318";
+    private static readonly string BaseUrl =
+        System.Environment.GetEnvironmentVariable("{APP}_UI_BASE_URL")
+        ?? "https://localhost:44318";
 
     public override BrowserNewContextOptions ContextOptions() => new() { IgnoreHTTPSErrors = true };
 
@@ -154,6 +158,28 @@ public class {Entity}PageObject(IPage page)
     }
 }
 ```
+
+---
+
+## Mobile UI Tests (MSTest + Appium, optional)
+
+Generate `Test/Test.Mobile` only when Uno native mobile testing is in scope. Keep this suite opt-in so normal `dotnet test` does not require an emulator, device, or Appium server.
+
+Rules:
+
+- Use MSTest if the scaffold's test stack is MSTest. Do not introduce NUnit only for mobile smoke tests.
+- Android local runs require Appium CLI/server and the UiAutomator2 driver.
+- Build the Android package from a full Uno restore graph:
+
+```powershell
+dotnet restore src/UI/{Project}.Uno/{Project}.Uno.csproj -p:BuildAllUnoTargets=true
+dotnet build src/UI/{Project}.Uno/{Project}.Uno.csproj -p:TargetFrameworkOverride=$(LatestStableTfm)-android -p:UseMocks=true --no-restore -m:1
+```
+
+- Mark tests `[TestCategory("MobileUI")]`.
+- Default `TASKFLOW_MOBILE_TESTS_ENABLED` / `{APP}_MOBILE_TESTS_ENABLED` to `false`; when disabled, tests should log setup guidance and return without touching Appium.
+- Android smoke acceptance: App launches, native surface renders, screenshot is non-empty, and page source can be captured for triage.
+- iOS simulator/device execution is macOS-only. Windows may compile shared test code and record iOS execution as blocked unless a Mac host or macOS CI runner exists.
 
 ---
 

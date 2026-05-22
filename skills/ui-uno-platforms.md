@@ -9,6 +9,37 @@ Companion files:
 
 ---
 
+## Platform Target Build Rules
+
+Build one Uno target at a time. The project owns target selection through `TargetFrameworkOverride`; do not pass `-f`.
+
+When the Uno project defaults to a fast single target such as browserwasm, restore all enabled Uno targets before Android/iOS package builds. `TargetFrameworkOverride` on build is not enough if `project.assets.json` was last restored for browserwasm only; the Android package can miss `Uno.WinUI.Runtime.Skia.Android` and crash before app code runs.
+
+```powershell
+dotnet restore src/UI/{Project}.Uno/{Project}.Uno.csproj -p:BuildAllUnoTargets=true
+dotnet build src/UI/{Project}.Uno/{Project}.Uno.csproj -p:TargetFrameworkOverride=$(LatestStableTfm)-browserwasm --no-restore -m:1
+dotnet build src/UI/{Project}.Uno/{Project}.Uno.csproj -p:TargetFrameworkOverride=$(LatestStableTfm)-android --no-restore -m:1
+dotnet build src/UI/{Project}.Uno/{Project}.Uno.csproj -p:TargetFrameworkOverride=$(LatestStableTfm)-ios --no-restore -m:1
+```
+
+Use serial builds (`-m:1`) for platform sweeps. Uno platform targets share `obj/` assets and `project.assets.json`; parallel builds can race and produce misleading restore/build failures.
+
+Before diagnosing a platform runtime failure, inspect the restored asset graph:
+
+```powershell
+Select-String -Path src/UI/{Project}.Uno/obj/project.assets.json -Pattern "Uno.WinUI.Runtime.Skia.Android"
+```
+
+If that package is absent for an Android Skia build, fix restore scope first. Do not switch to native renderer or rewrite platform startup code until a clean Skia template or reference app fails the same way.
+
+Expected platform files:
+
+- Android: `Platforms/Android/AndroidManifest.xml`, `Main.Android.cs`, `MainActivity.Android.cs`, `Resources/`.
+- iOS: `Platforms/iOS/Info.plist`, `Entitlements.plist`, `Main.iOS.cs`, `PrivacyInfo.xcprivacy`, launch images.
+- WebAssembly: `Platforms/WebAssembly/WasmScripts/AppManifest.js`.
+
+Windows can keep an iOS compile gate when the .NET iOS workload is available, but iOS simulator/device UI testing requires macOS or a Mac build host.
+
 ## WASM Debugging Ladder
 
 When a Uno WASM build or runtime failure occurs, follow this fixed validation order before applying broader hosting rewrites:
@@ -165,6 +196,38 @@ Filter by a known text prefix (e.g. `"E2E-"`) to avoid hitting status chips or o
 
 After several in-session navigations, the WASM router can lag. Increase assertion timeouts for pages loaded later in the shared-page lifecycle (use 60 s after 3+ prior navigations).
 
+## Mobile Test Strategy
+
+Use a layered strategy instead of trying to make every test run on every device target:
+
+- **WASM mobile viewport smoke**: Playwright with iPhone/Pixel-sized viewports validates responsive shell, navigation, forms, and empty/error states quickly on Windows.
+- **Android emulator smoke**: Prefer MSTest + Appium when the scaffold's test stack is MSTest. Run against a Debug Android build with `/p:UseMocks=true` first. Prove launch, shell render, first navigation, and one create/edit workflow before live backend tests.
+- **Android live E2E**: Keep a tiny Aspire-backed suite for Gateway/API connectivity. Use `10.0.2.2` for local backend URLs and avoid broad CRUD duplication already covered by service/API tests.
+- **iOS UI tests**: Plan for macOS CI or a Mac host. Windows can maintain compile checks and shared MVUX/service tests, but cannot run iOS simulator/device UI tests locally.
+
+Prefer mocks for deterministic native smoke tests and reserve live mobile tests for wiring risks: host networking, auth, TLS/certs, and platform startup.
+
+Recommended Android local test flow:
+
+```powershell
+dotnet restore src/UI/{Project}.Uno/{Project}.Uno.csproj -p:BuildAllUnoTargets=true
+dotnet build src/UI/{Project}.Uno/{Project}.Uno.csproj -p:TargetFrameworkOverride=$(LatestStableTfm)-android -p:UseMocks=true --no-restore -m:1
+
+npm install -g appium
+appium driver install uiautomator2
+appium driver doctor uiautomator2
+appium
+```
+
+Run mobile UI tests as opt-in tests. Do not make device tests part of the default `dotnet test` gate unless the runner guarantees an emulator/device and Appium server.
+
+```powershell
+$env:{APP}_MOBILE_TESTS_ENABLED = "true"
+$env:{APP}_MOBILE_PLATFORM = "Android"
+$env:{APP}_ANDROID_APP_PATH = "src/UI/{Project}.Uno/bin/Debug/$(LatestStableTfm)-android/{package-id}-Signed.apk"
+dotnet test src/Test/Test.Mobile/Test.Mobile.csproj --filter TestCategory=MobileUI
+```
+
 ---
 
 ## Generated Code Intervention Rule
@@ -200,15 +263,36 @@ Before writing any `emulator`, `adb`, or SDK tool command, resolve the actual SD
 
 Do not assume SDK tools are on `PATH`.
 
+Install requirements on Windows:
+
+- Android Studio or command-line SDK tools.
+- Android SDK Platform-Tools, Android Emulator, and a recent Android platform.
+- A recent x64 or arm64 system image and an AVD.
+- Hardware virtualization enabled in BIOS/Windows features.
+- `dotnet workload install android` for Android builds.
+
 ### Embedded Assemblies for Sideloading
 
 When building for manual ADB sideloading (`dotnet build` + `adb install`), always set in the Android TFM `PropertyGroup`:
 
 ```xml
 <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
+<AndroidEnableAssemblyCompression>false</AndroidEnableAssemblyCompression>
+<AndroidStoreUncompressedFileExtensions>.so;$(AndroidStoreUncompressedFileExtensions)</AndroidStoreUncompressedFileExtensions>
 ```
 
 The default Debug mode uses **Fast Deployment**, which expects the .NET tooling to push managed assemblies to the device separately after install. A bare APK installed without that push crashes immediately with _"No assemblies found … Assuming this is part of Fast Deployment"_. Lock this property into the project file permanently for any project that supports manual sideloading — do not rely on a command-line override.
+
+When installing a built APK directly, prefer a full install:
+
+```powershell
+adb install --no-incremental -r "src/UI/{Project}.Uno/bin/Debug/$(LatestStableTfm)-android/{package-id}-Signed.apk"
+```
+
+If the app crashes before app code runs, collect logcat and classify the failure:
+
+- `No assemblies found ... Assuming this is part of Fast Deployment`: APK was built/installed with fast-deployment assumptions. Fix the Android packaging properties above.
+- `System.MethodAccessException` inside `Uno.UI.Xaml.Controls.NativeWindowWrapper`: check the NuGet asset graph first. A browserwasm-only restore can omit Android Skia runtime packages even when the Android build later succeeds.
 
 ### Emulator Host Networking
 
@@ -279,11 +363,11 @@ Uno.Resizetizer requires asset filenames to be **lowercase**, containing only al
 
 ## CI Requirements
 
-When the solution includes a Uno WASM project, CI workflows must install the `wasm-tools` workload before build:
+When the solution includes a Uno WASM project, CI workflows must install the `wasm-tools` workload before build. Add `android` when Android is in scope. Add iOS build jobs only on macOS runners.
 
 ```yaml
 - name: Install required workloads
-  run: dotnet workload install wasm-tools
+  run: dotnet workload install wasm-tools android
 ```
 
 Without this, the build fails with `UNOWA0001: Native WebAssembly assets were detected, but the wasm-tools workload could not be located.`

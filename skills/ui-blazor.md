@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Scaffold a Blazor UI (Server or WebAssembly) that calls the **Gateway** (YARP), not backend APIs directly. This is the alternative to [ui-uno.md](ui-uno.md) — pick one or offer both as siblings under `src/UI/`.
+Scaffold a Blazor UI (Server or WebAssembly) that calls the **Gateway** (YARP), not backend APIs directly. This is an alternative to [ui-uno.md](ui-uno.md) and [ui-react.md](ui-react.md) — pick one or offer explicit siblings under `src/UI/`.
 
 - **UI**: MudBlazor shell + components
 - **State**: `FloatService` (scoped singleton) shared across layout and pages — **not** cascading parameters

@@ -133,7 +133,7 @@ Git checkpoint after gate passes.
 
 Infrastructure and optional host phases do not follow TDD. Instead, implement first, then write tests at the end of the session to verify behavior.
 
-5c tests: optional host smoke tests, scheduler/function trigger tests, Uno or Blazor client tests when applicable.
+5c tests: optional host smoke tests, scheduler/function trigger tests, and Uno/Blazor/React client tests when applicable.
 
 5d tests: architecture, load, benchmark, E2E, vulnerability, and delivery checks according to `testingProfile`.
 

@@ -1,6 +1,6 @@
 # CQRS Endpoint Template
 
-Use for `applicationStyle: cqrs`. Endpoints keep the same HTTP routes and DTO contracts as service endpoints, but inject the specific command/query handler instead of `I{Entity}Service`.
+Use for `applicationStyle: cqrs` or `switch`. Endpoints keep the same HTTP routes and DTO contracts as service endpoints, but inject the specific command/query handler instead of `I{Entity}Service`.
 
 Map relative routes only. The API host owns the outer route group and versioning decision, for example `/api/v1/{entity}` for public domain endpoints. Operational, health, gateway, Functions host-health, and package-owned admin endpoints stay outside the entity/CQRS endpoint template unless they are explicit business API contracts.
 
@@ -20,7 +20,7 @@ group.MapPost("/", async (
 });
 ```
 
-Register only one endpoint set at runtime:
+For `applicationStyle: switch`, register only one endpoint set at runtime:
 
 ```csharp
 var style = ApplicationStyleResolver.Resolve(config[ApplicationStyleResolver.ConfigKey]);

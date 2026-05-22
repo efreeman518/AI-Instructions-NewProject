@@ -59,8 +59,16 @@ var gateway = builder.AddProject<Projects.{Gateway}_Gateway>("{gateway}")
     .WithReference(scheduler)
     .WaitFor(api);
 
+builder.AddViteApp("{host}react", "../../../UI/{Project}.React")
+    .WithReference(gateway)
+    .WithEnvironment("VITE_API_BASE_URL", gateway.GetEndpoint("http"))
+    .WaitFor(gateway)
+    .WithExternalHttpEndpoints();
+
 await builder.Build().RunAsync();
 ```
+
+Only include `AddViteApp(...)` when `includeReactUI: true`. If Gateway is disabled, reference the API project and pass the API endpoint to `VITE_API_BASE_URL` instead. Aspire may assign a dynamic Vite port; read the resource URL from the current dashboard/console output for browser tests.
 
 ---
 
@@ -229,6 +237,8 @@ Use the `Aspire.AppHost.Sdk` MSBuild SDK. It handles `Projects.*` type proxy gen
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.SqlServer" />
     <PackageReference Include="Aspire.Hosting.Redis" />
+    <!-- Include only when registering React/Vite UI with AddViteApp. -->
+    <PackageReference Include="Aspire.Hosting.JavaScript" />
   </ItemGroup>
 </Project>
 ```

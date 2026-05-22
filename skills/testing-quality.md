@@ -58,12 +58,20 @@ If a slice spans multiple entities/stores, run at least one integration path tha
 
 Playwright requires a real hosted stack. It cannot run on `WebApplicationFactory`. Run against Aspire AppHost locally, a docker-compose stack, or a preview deployment.
 
+### Base URL Rules
+
+- Configure one base URL per UI surface/project. Do not share a hard-coded URL across Blazor, Uno, and React.
+- Make the base URL environment-driven (`{APP}_BLAZOR_BASE_URL`, `{APP}_UNO_BASE_URL`, `{APP}_REACT_BASE_URL`, or equivalent).
+- When running through Aspire, read the UI resource URL from the current dashboard/console output. Vite/React resources may use a dynamic port; do not assume `5173`, `5178`, or a prior run's URL.
+- Standalone Vite can use a conventional dev port, but hosted-stack Playwright must use the actual Aspire resource URL.
+
 ### Baseline Rules
 
 - Use Page Object Model.
 - Prefer stable selectors (`data-testid`).
 - Isolate test data with unique names/ids.
 - Assert structural UI strings, not data-dependent counts.
+- Cover the real workflow surface: shell/navigation, create/read/update/delete, and nested child collections when the UI exposes them.
 
 ### Data-Dependent Assertion Anti-Pattern
 
@@ -97,6 +105,16 @@ Set Playwright timeout to `120000` for suites containing Uno WASM cold-start.
 
 `test.use({ viewport })` does not apply to `beforeAll`-owned contexts. Pass viewport to `browser.newContext({ viewport })`.
 
+### React/Vite: Normal Page Fixture
+
+React/Vite SPAs should use the normal Playwright page fixture unless the app has an unusually slow boot path. Add a dedicated Playwright project with an env-driven `baseURL`, then keep tests small and deterministic:
+
+- One shell/navigation test, including theme persistence when the app has a theme toggle.
+- One serial CRUD flow per high-value aggregate, using a unique test prefix and deleting created data.
+- Child collection assertions in the same CRUD flow when create/edit screens support comments, checklist items, tags, attachments, or similar children.
+
+If using Node Playwright and a shell wrapper mangles `npx`, invoke the local CLI directly with `node node_modules/@playwright/test/cli.js`.
+
 ### Uno WASM: DOM/Click Strategy
 
 Uno WASM often needs coordinate-click interaction.
@@ -109,6 +127,15 @@ Uno WASM often needs coordinate-click interaction.
 ### Uno WASM: Slow Router After Many Navigations
 
 Increase late-lifecycle assertions to `60000` when page loads occur after several navigations in same shared page.
+
+### Uno Mobile: Test Split
+
+- Use Playwright mobile viewports against Uno WASM for fast responsive checks on Windows.
+- Use Android emulator UI smoke tests for native startup, shell navigation, platform config, and local-backend networking. Start with mocks (`/p:UseMocks=true`), then add a tiny live Aspire-backed suite for Gateway/API wiring.
+- When the repo uses MSTest, scaffold mobile native smoke tests as MSTest + Appium (`Test.Mobile`) instead of introducing NUnit. Keep them opt-in through runsettings/environment variables so normal `dotnet test` does not require an emulator.
+- For Android Appium runs, restore the Uno project with all platform targets before the Android build: `dotnet restore src/UI/{Project}.Uno/{Project}.Uno.csproj -p:BuildAllUnoTargets=true`, then build with `TargetFrameworkOverride=$(LatestStableTfm)-android --no-restore`.
+- In Android test setup, verify `appium`, `uiautomator2`, `adb`, `emulator`, `ANDROID_HOME`, and `JAVA_HOME` with `appium driver doctor uiautomator2` before blaming app code.
+- Treat iOS simulator/device UI tests as macOS-only. On Windows, record iOS compile status and mark simulator/device execution as blocked unless a Mac host or macOS CI runner is available.
 
 ### MudBlazor Timing Rules
 
@@ -130,6 +157,7 @@ Set `outputDir` under `Test/Test.PlaywrightUI`, not under app project directorie
 - [ ] Load scenarios track p50/p95/p99 and error rate against an explicit baseline.
 - [ ] Benchmark suites use representative datasets; results compared to a baseline, not measured in isolation.
 - [ ] Hosted Playwright stack is reachable and base URL is correct.
+- [ ] Aspire-hosted UI tests use the current resource URL, not a stale dashboard URL or default Vite port.
 - [ ] Selector strategy is stable for the target UI tech.
 - [ ] UI assertions are structural, not seed/count-dependent.
 - [ ] Timeout profile matches UI runtime behavior (Uno WASM cold-start: 120s).

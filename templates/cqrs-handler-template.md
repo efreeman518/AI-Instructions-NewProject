@@ -1,6 +1,6 @@
 # CQRS Handler Template
 
-Use when `.scaffold/resource-implementation.yaml` sets `applicationStyle: cqrs`.
+Use when `.scaffold/resource-implementation.yaml` sets `applicationStyle: cqrs` or `switch`.
 
 ```csharp
 public sealed record Create{Entity}Command(DefaultRequest<{Entity}Dto> Request)

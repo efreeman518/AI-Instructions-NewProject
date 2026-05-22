@@ -22,10 +22,10 @@ This replaces the old 3-model pattern (List + Detail + Create). Benefits:
 ## List Model
 
 ```csharp
-using {Project}.UI.Business.Models;
-using {Project}.UI.Business.Services.{Feature};
+using {Project}.Uno.Core.Business.Models;
+using {Project}.Uno.Core.Business.Services.{Feature};
 
-namespace {Project}.UI.Presentation;
+namespace {Project}.Uno.Presentation;
 
 public partial record {Entity}ListModel(
     INavigator Navigator,
@@ -54,10 +54,10 @@ public partial record {Entity}ListModel(
 
 ```csharp
 using CommunityToolkit.Mvvm.Messaging;
-using {Project}.UI.Business.Models;
-using {Project}.UI.Business.Services;
+using {Project}.Uno.Core.Business.Models;
+using {Project}.Uno.Core.Business.Services;
 
-namespace {Project}.UI.Presentation;
+namespace {Project}.Uno.Presentation;
 
 public partial record {Entity}PageModel(
     {Entity}Model? Entity,

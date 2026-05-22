@@ -5,7 +5,7 @@ The shortest path from "empty repo" to "passing API with one entity" using this 
 ## What MVS produces
 
 - A single .NET API host with one entity (CRUD + search), one DbContext pair (Trxn + Query), repositories, mapper, validator, service, endpoints, and unit + endpoint tests.
-- `scaffoldMode: api-only`. No Gateway, no Uno/Blazor UI, no Function App, no Scheduler, no AI services, no messaging.
+- `scaffoldMode: api-only`. No Gateway, no Uno/Blazor/React UI, no Function App, no Scheduler, no AI services, no messaging.
 - Every external dependency declared `lazy-optional` so the app boots locally without cloud setup.
 - Auth runs in scaffold mode (config-driven principal). Live identity provider is deferred.
 
@@ -100,7 +100,7 @@ Load the Phase 4 file set from START-AI.md § Phase Router.
 Generate the api-only contract scaffold per ai/contract-scaffolding.md:
 solution structure (.slnx + Directory.Packages.props), API host project, Application/Domain/Infrastructure projects,
 test projects (Test.Support, Test.Unit, Test.Endpoints), interfaces, DTOs, entity shells, no-op DI stubs.
-Skip projects for Gateway, Aspire AppHost, Function App, Uno/Blazor UI, Scheduler.
+Skip projects for Gateway, Aspire AppHost, Function App, Uno/Blazor/React UI, Scheduler.
 Gate: `dotnet build` succeeds on the full solution including test projects.
 Set currentPhase: 5, currentSubPhase: 5a, and contractsScaffolded: true in HANDOFF.md and close.
 ```
@@ -158,7 +158,7 @@ When you're ready to add scope:
 
 - **New entity:** [vertical-slice-checklist.md](vertical-slice-checklist.md) fast-path.
 - **Add a runtime concern** (caching, gateway, multi-tenant, observability, security): edit `.scaffold/resource-implementation.yaml` to enable the flag, run a 5b session loading only the new skill file.
-- **Add an optional host** (Function App, Scheduler, Uno UI, Blazor UI): enable the flag in `.scaffold/resource-implementation.yaml`, run a dedicated 5c session per host.
+- **Add an optional host** (Function App, Scheduler, Uno UI, Blazor UI, React UI): enable the flag in `.scaffold/resource-implementation.yaml`, run a dedicated 5c session per host.
 - **Live auth or AI services:** enable in `.scaffold/resource-implementation.yaml`, run a 5e session.
 - **Quality gates** (architecture tests, load, benchmarks): bump `testingProfile` and run a 5d session.
 

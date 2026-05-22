@@ -152,6 +152,7 @@ includeFunctionApp: false
 includeScheduler: false
 includeUnoUI: false
 includeBlazorUI: false
+includeReactUI: false
 includeNotifications: false
 includeIaC: true
 includeGitHubActions: false

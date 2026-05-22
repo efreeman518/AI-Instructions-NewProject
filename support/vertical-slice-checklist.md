@@ -27,6 +27,7 @@ Use this when adding a new entity to an **already-scaffolded** solution. Skip fu
 6. Test templates per profile (see § Test Slice below): `test-templates-domain.md`, `test-templates-repository.md`, `test-templates-service.md`, `test-templates-endpoint.md`, and for balanced+ profiles `test-templates-integration.md` + `test-templates-e2e.md`
 7. If Uno UI enabled: `uno-mvux-model-template.md`, `uno-xaml-page-template.md`, `uno-ui-client-layer.md`
 8. If Blazor UI enabled: `skills/ui-blazor.md` — add a Refit method group, entity list page, and entity new/edit page
+9. If React UI enabled: `skills/ui-react.md` — add API hooks, entity list page, detail/edit page, and form components
 
 ### Slice Execution Order
 
@@ -167,6 +168,28 @@ Also update `App.xaml.host.cs`:
 - register navigation routes.
 
 Templates: [uno-ui-client-layer.md](../templates/uno-ui-client-layer.md), [uno-mvux-model-template.md](../templates/uno-mvux-model-template.md), [uno-xaml-page-template.md](../templates/uno-xaml-page-template.md).
+
+---
+
+## React UI Slice (Only if `includeReactUI: true`)
+
+Required UI artifacts:
+
+- `src/api/types.ts` updated for the entity contract if no generated client exists
+- `src/api/{project}Api.ts` method group for search/get/create/update/delete
+- `src/features/{entity}/{Entity}ListPage.tsx`
+- `src/features/{entity}/{Entity}DetailPage.tsx`
+- `src/features/{entity}/{Entity}Form.tsx`
+- `src/features/{entity}/{entity}Queries.ts`
+- route entry in `src/app/routes.tsx`
+
+Also update Playwright coverage when the UI surface is user-facing:
+
+- add the entity route to shell/navigation smoke if needed,
+- extend CRUD coverage for create/read/update/delete,
+- include child collection assertions when the aggregate has children.
+
+Skill: [ui-react.md](../skills/ui-react.md).
 
 ---
 

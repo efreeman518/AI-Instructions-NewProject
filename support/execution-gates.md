@@ -20,7 +20,7 @@ Run once per machine/repo before beginning any scaffolding phase.
 
 - [ ] **API-only baseline**: Foundation + App Core + API verification
 - [ ] **API + services**: API baseline + Gateway/Aspire/Scheduler as enabled
-- [ ] **Full app**: API + services + Function App + Uno UI + IaC as enabled
+- [ ] **Full app**: API + services + Function App + Uno/Blazor/React UI + IaC as enabled
 
 ### Development Tools
 
@@ -34,7 +34,12 @@ Run once per machine/repo before beginning any scaffolding phase.
 - [ ] Functions Core Tools installed (`func --version`) *(if using Functions)*
 - [ ] Uno templates installed (`dotnet new install Uno.Templates`) *(if using Uno UI)*
 - [ ] Uno.Check installed (`dotnet tool install -g uno.check`) *(if using Uno UI)*
+- [ ] Uno browserwasm workload installed (`dotnet workload install wasm-tools`) *(if using Uno browserwasm)*
+- [ ] Uno Android workload installed (`dotnet workload install android`) and Android SDK/emulator tools available *(if using Uno Android)*
+- [ ] Appium CLI + UiAutomator2 driver installed and `appium driver doctor uiautomator2` passes required checks *(if running Uno Android device/emulator UI tests)*
+- [ ] Uno iOS workload installed (`dotnet workload install ios`) and macOS runner/Mac host identified for simulator/device tests *(if using Uno iOS beyond compile planning)*
 - [ ] Kiota CLI installed (`dotnet tool install -g Microsoft.OpenApi.Kiota`) *(if using Uno UI)*
+- [ ] Node.js LTS/npm available (`node --version`, `npm --version`) *(if using React UI)*
 
 ### Tracked-Source Validation
 
@@ -337,21 +342,34 @@ Uno UI:
 - [ ] `uno-check` validates workloads
 - [ ] Gateway/OpenAPI endpoint reachable for client generation
 - [ ] Kiota client generation completes (if used)
-- [ ] UI runs on selected Uno target (`<tfm>-browserwasm`, `<tfm>-desktop`, etc., where `<tfm>` is the project's pinned .NET TFM)
+- [ ] UI builds one selected Uno target at a time through `TargetFrameworkOverride`
+- [ ] Browserwasm wrapper host builds if the Uno app is registered in Aspire
 
 ```powershell
 uno-check
-dotnet build --project src/UI/{Project}.Uno/{Project}.Uno.csproj -f <tfm>-browserwasm
+dotnet restore src/UI/{Project}.Uno/{Project}.Uno.csproj -p:BuildAllUnoTargets=true
+dotnet build src/UI/{Project}.Uno/{Project}.Uno.csproj -p:TargetFrameworkOverride=$(LatestStableTfm)-browserwasm --no-restore -m:1
+dotnet build src/UI/{Project}.Uno/{Project}.Uno.csproj -p:TargetFrameworkOverride=$(LatestStableTfm)-android --no-restore -m:1
+dotnet build src/UI/{Project}.Uno/{Project}.Uno.csproj -p:TargetFrameworkOverride=$(LatestStableTfm)-ios --no-restore -m:1
+dotnet build src/Host/{Project}.Uno.WasmHost/{Project}.Uno.WasmHost.csproj
 ```
 
-If targeting desktop instead of WASM, build the selected desktop target instead of `<tfm>-browserwasm`.
+Run only the targets selected in `.scaffold/resource-implementation.yaml`. Keep platform builds serial (`-m:1`) to avoid shared `obj/` asset races. The `BuildAllUnoTargets=true` restore is required when the project defaults to browserwasm; it prevents mobile builds from packaging a browser-only NuGet asset graph.
 
 If targeting Android (`<tfm>-android`):
+- [ ] Android Studio or SDK command-line tools installed with Platform-Tools, Emulator, one recent platform, and one AVD
 - [ ] Android SDK path resolved (see `skills/ui-uno-platforms.md` § Android SDK Discovery)
-- [ ] `<EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>` set if manual ADB sideloading is used
+- [ ] Android restore/build uses `dotnet restore ... -p:BuildAllUnoTargets=true` followed by `dotnet build ... -p:TargetFrameworkOverride=$(LatestStableTfm)-android --no-restore`
+- [ ] `project.assets.json` contains `Uno.WinUI.Runtime.Skia.Android` for Skia Android targets before runtime debugging starts
+- [ ] `<EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>`, `<AndroidEnableAssemblyCompression>false</AndroidEnableAssemblyCompression>`, and `.so` uncompressed file extension settings are set if manual ADB/Appium sideloading is used
 - [ ] Emulator host networking uses `10.0.2.2` for local backend calls (see `skills/ui-uno-platforms.md` § Emulator Host Networking)
+- [ ] MSTest/Appium mobile smoke passes when native Android UI testing is in scope: `dotnet test src/Test/Test.Mobile/Test.Mobile.csproj --filter TestCategory=MobileUI`
 
 > **Starter-library escape hatch:** If the repo currently contains only a single-TFM starter library or shell-contract scaffold instead of a real Uno multi-target app, Phase 5c for Uno must be recorded as **blocked**. `NETSDK1139` on `<tfm>-browserwasm` is expected in that scenario and is evidence that Uno scaffolding is still missing — not an environment glitch. Do not debug/workaround it; record the status as `blocked — Uno multi-target not yet created` and move on.
+
+If targeting iOS (`<tfm>-ios`):
+- [ ] Windows compile gate status recorded
+- [ ] Simulator/device UI test gate recorded as `blocked - macOS required` unless a Mac host or macOS CI runner is available
 
 Also verify:
 - Gateway/OpenAPI endpoint is reachable for client generation
@@ -382,10 +400,25 @@ dotnet build src/UI/{Project}.Blazor
 dotnet run --project src/UI/{Project}.Blazor
 ```
 
+React UI (if `includeReactUI: true`):
+
+- [ ] React project builds (`npm run build`) and lints (`npm run lint`) from `src/UI/{Project}.React`
+- [ ] Vite proxy or runtime config points UI API calls at the Gateway, not the API host directly when Gateway is enabled
+- [ ] **Standalone clean start:** `npm run dev -- --host 127.0.0.1` serves the root URL, layout renders, and one API-backed page loads against the configured Gateway/API base
+- [ ] **Aspire-registered clean start:** AppHost includes `Aspire.Hosting.JavaScript`, registers the Vite app, passes `VITE_API_BASE_URL` from the Gateway endpoint (or API endpoint when Gateway is disabled), and the React resource root URL from the Aspire dashboard renders without exception
+- [ ] Playwright React project uses an env-driven base URL (for example `{APP}_REACT_BASE_URL`) because Aspire may assign a dynamic Vite port
+
+```powershell
+npm ci
+npm run lint
+npm run build
+dotnet build src/Host/Aspire/AppHost
+```
+
 Uno UI startup (post-build, in addition to the platform-target checks above):
 
-- [ ] **Standalone clean start:** the selected Uno target (`<tfm>-browserwasm` / `<tfm>-desktop` / `<tfm>-android`) launches and renders the shell with no WASM load errors / no desktop-host exceptions / no Android startup crashes
-- [ ] **Aspire-registered clean start (when an Uno host is added to AppHost):** the Uno resource reaches Running and serves its entry point without exception
+- [ ] **Standalone clean start:** the selected Uno target (`<tfm>-browserwasm` / `<tfm>-android` / `<tfm>-ios`) launches or builds to the available local gate and renders the shell with no WASM load errors / no Android startup crashes / no compile failures
+- [ ] **Aspire-registered clean start (when an Uno host is added to AppHost):** AppHost registers the ASP.NET Core WASM wrapper host, not the Uno SDK project; the resource reaches Running and serves its entry point without exception
 - [ ] At least one entity list page loads against the Gateway/API (empty or seeded data — both valid), proving the Kiota/Refit client resolves the configured backend URL
 
 A scaffold may declare 5c complete with `[Ignore]` UI tests for unresolved external auth/AI deps, but **not** with a UI host that throws on startup. See [../ai/SKILL.md](../ai/SKILL.md) § Scaffold Definition of Done.

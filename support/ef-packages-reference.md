@@ -78,6 +78,25 @@ These types are consumed throughout scaffolded code. Know where they come from s
 | `StaticLogging` | EF.Common | Pre-host logger factory for startup/shutdown logging |
 | `PredicateBuilder` | EF.Common | Dynamic LINQ predicate builder |
 
+### CQRS (EF.CQRS)
+
+Add when `applicationStyle` is `cqrs` or `switch`. In local mode, generate this as `src/Packages/<packagePrefix>.CQRS` and consume it through `<ProjectReference>`.
+
+| Type | Package | Used For |
+|---|---|---|
+| `IRequest<TResponse>` | EF.CQRS | Marker for commands and queries with a typed response |
+| `ICommand<TResponse>` | EF.CQRS | Write request marker |
+| `IQuery<TResponse>` | EF.CQRS | Read request marker |
+| `IRequestHandler<TRequest,TResponse>` | EF.CQRS | Single request handler contract |
+| `IRequestValidator<TRequest>` | EF.CQRS | Optional request validator contract |
+| `RequestValidationResult` | EF.CQRS | Validator result with one or more errors |
+| `IValidationResponseFactory<TResponse>` | EF.CQRS | Converts validation errors to the app response shape |
+| `StaticFailureValidationResponseFactory<TResponse>` | EF.CQRS | Reflection-based factory for common static `Failure(...)` result shapes |
+| `ValidationRequestHandlerDecorator<TRequest,TResponse>` | EF.CQRS | Validation decorator around handlers |
+| `AddDecoratedRequestHandler<TRequest,TResponse,THandler>()` | EF.CQRS | DI helper that registers the concrete handler and decorated interface |
+
+**Dispatch rule:** EF.CQRS has no MediatR dependency, dispatcher, request bus, or generic `Send` method. Minimal API endpoints inject the exact `IRequestHandler<TRequest,TResponse>` they call.
+
 ### Background Services (EF.BackgroundServices)
 
 | Type | Package | Used For |
@@ -359,6 +378,7 @@ These types appear in the service and endpoint templates but are **not provided 
 |---|---|---|
 | `DefaultRequest<T>` | Application.Models | Request wrapper for Create/Update service methods |
 | `DefaultResponse<T>` | Application.Models | Response wrapper for Get/Create/Update service methods |
+| `ApplicationStyle` / `ApplicationStyleResolver` | Application.Contracts | Runtime `Service` / `Cqrs` selector for `applicationStyle: switch`; reads `Application:Style` plus `<APP>_APPLICATION_STYLE` |
 | `AppConstants` | Application.Contracts | Role names (ROLE_GLOBAL_ADMIN), cache names (DEFAULT_CACHE) |
 | `ITenantBoundaryValidator` | Application.Contracts | Tenant boundary enforcement interface |
 | `TenantBoundaryValidator` | Application.Services | Default implementation — GlobalAdmin bypass + tenant matching |
@@ -372,7 +392,7 @@ These types appear in the service and endpoint templates but are **not provided 
 ## Phase Usage
 
 - **5a:** EF.Common, EF.Domain, EF.Domain.Contracts, EF.Data, EF.Data.Contracts, EF.Common.Contracts
-- **5b:** EF.AspNetCore, EF.Host, EF.FilterBuilder, EF.Cache, optional auth/key vault packages
+- **5b:** EF.AspNetCore, EF.Host, EF.FilterBuilder, EF.Cache, EF.CQRS when `applicationStyle` is `cqrs` or `switch`, optional auth/key vault packages
 - **5c:** EF.BackgroundServices and messaging packages when enabled
 - **5d:** EF.Test.Unit and EF.Test.Integration
 - **5e:** EF.Auth and optional EF.MSGraph; EF.AzureOpenAI or EF.OpenAI (when AI in scope)

@@ -196,4 +196,4 @@ For kebab-case route segments, use `{entity-route}` in route definitions.
 
 ## CQRS Endpoint Variant
 
-When `applicationStyle: cqrs`, keep route and DTO contracts aligned with the service endpoint, but inject `IRequestHandler<TRequest,TResponse>` for the specific command/query. Do not inject `I{Entity}Service` from CQRS endpoints and do not add a central dispatch step; this keeps route -> request -> handler flow visible at the endpoint.
+When `applicationStyle` is `cqrs` or `switch`, keep route and DTO contracts aligned with the service endpoint, but inject `IRequestHandler<TRequest,TResponse>` for the specific command/query. Do not inject `I{Entity}Service` from CQRS endpoints and do not add a central dispatch step; this keeps route -> request -> handler flow visible at the endpoint.

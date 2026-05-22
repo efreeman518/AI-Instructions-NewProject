@@ -54,7 +54,7 @@ Testing skills (two files only):
 
 ## UI (choose one)
 
-Scaffold either Uno Platform (multi-target WASM + mobile + desktop) or Blazor (Server or WebAssembly). Both call the Gateway; both can ship side-by-side under `src/UI/` when needed. See each skill for selection guidance.
+Scaffold Uno Platform (multi-target WASM + mobile + desktop), Blazor (Server or WebAssembly), or React/Vite SPA. All call the Gateway; siblings can ship side-by-side under `src/UI/` when explicitly enabled. See each skill for selection guidance.
 
 ### Uno Platform
 
@@ -73,6 +73,14 @@ Scaffold either Uno Platform (multi-target WASM + mobile + desktop) or Blazor (S
 | Artifact | Instruction File |
 |---|---|
 | Complete pattern (Program.cs, FloatService, Refit interface, MainLayout, pages) | `skills/ui-blazor.md` |
+
+### React/Vite
+
+> **Design Standard:** Vite + React + TypeScript SPA under `src/UI/{Project}.React`, React Router, TanStack Query, a typed API client, and Gateway-backed `/api` calls. See `skills/ui-react.md` for the full pattern.
+
+| Artifact | Instruction File |
+|---|---|
+| Complete pattern (Vite config, API client, routes, pages, Playwright rules) | `skills/ui-react.md` |
 
 ## AI Integration
 
@@ -104,7 +112,7 @@ Generated when `includeFlowEngine: true` in `.scaffold/resource-implementation.y
 | **4 — Contracts** | Solution structure + contracts (see `ai/contract-scaffolding.md`) — also emits `Test.Support/WebApplicationFactoryBase`, `Test.Endpoints/CustomApiFactory`, `Test.E2E/SqlApiFactory`, `Test.Integration/AspireTestHost`, `Test.Integration/DbContextFactory` shells |
 | **5a — Foundation (TDD)** | `entity-template`, `ef-configuration-template`, `repository-template`, `domain-rules-template`, `appsettings-template`, **`updater-template` (required when entity has child collections)**, **`test-templates-domain`**, **`test-templates-repository`**, **`test-templates-integration`** (balanced+) |
 | **5b — App Core + Runtime (TDD for app/API, tests-after for runtime)** | `data-mapping-template`, `service-template`, `endpoint-template`, `structure-validator-template`, `exception-handler-template`, `message-handler-template` (if events), `health-check-template`, **`test-templates-service`**, **`test-templates-endpoint`**, **`test-templates-e2e`** (balanced+), `test-templates-integration` (pipeline tests, comprehensive) |
-| **5c — Optional Hosts** | `uno-ui-client-layer`, `uno-mvux-model-template`, `uno-xaml-page-template` (Uno); host-specific templates per enabled host; **`flowengine-trigger-template`** (when `includeFlowEngine: true` and Functions or Scheduler enabled) |
+| **5c — Optional Hosts** | `uno-ui-client-layer`, `uno-mvux-model-template`, `uno-xaml-page-template` (Uno); `skills/ui-react.md` (React); host-specific templates per enabled host; **`flowengine-trigger-template`** (when `includeFlowEngine: true` and Functions or Scheduler enabled) |
 | **5d — Quality + Delivery** | **`test-templates-quality`** (architecture + Playwright + Load + Benchmarks; Integration / E2E tiers are scaffolded earlier — 5d runs them as regression), `dockerfile-template`, **`flowengine-test-template`** (when `includeFlowEngine: true`) |
 | **5e — Integration (Auth + AI)** | `ai-search-template`, `agent-template` (when AI in scope) |
 

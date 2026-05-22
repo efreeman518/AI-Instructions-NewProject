@@ -283,4 +283,4 @@ After generating the Bootstrapper, confirm:
 
 ## Application Style Registration
 
-Resolve application style from `TASKFLOW_APPLICATION_STYLE`, then `Application:Style`, defaulting to `Service`. Register shared application services once. In CQRS mode, add command/query handlers with `AddDecoratedRequestHandler<TRequest,TResponse,THandler>()`; endpoint registration chooses the CQRS endpoint set. Keep service registrations when other hosts or AI tools still consume `I{Entity}Service`.
+Resolve application style from `<APP>_APPLICATION_STYLE`, then `Application:Style`, defaulting to `Service`. Register shared application services once. In CQRS or switch mode, add command/query handlers with `AddDecoratedRequestHandler<TRequest,TResponse,THandler>()`; endpoint registration chooses the service or CQRS endpoint set. Keep service registrations when other hosts or AI tools still consume `I{Entity}Service`.

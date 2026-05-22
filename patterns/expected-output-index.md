@@ -4,7 +4,7 @@ Load on-demand as a reference during Phase 5a–5e to verify scaffolded file lay
 
 Expected file layout when scaffolding is complete. All paths relative to project root `src/`.
 
-> **Scope:** Backend layers below are always emitted. Optional Phase 5c hosts (Blazor, Uno) extend this index — those sections only apply when the corresponding `enabledFeatures` flag is set in `HANDOFF.md` (`includeBlazorUI`, `includeUnoUI`). For host-internal layout details, see [../skills/ui-blazor.md](../skills/ui-blazor.md) and [../skills/ui-uno.md](../skills/ui-uno.md).
+> **Scope:** Backend layers below are always emitted. Optional Phase 5c hosts (Blazor, React, Uno) extend this index — those sections only apply when the corresponding `enabledFeatures` flag is set in `HANDOFF.md` (`includeBlazorUI`, `includeReactUI`, `includeUnoUI`). For host-internal layout details, see [../skills/ui-blazor.md](../skills/ui-blazor.md), [../skills/ui-react.md](../skills/ui-react.md), and [../skills/ui-uno.md](../skills/ui-uno.md).
 
 ## Domain Layer
 | Artifact | Path |
@@ -43,12 +43,17 @@ Expected file layout when scaffolding is complete. All paths relative to project
 | Tenant logging extensions | `Application/Application.Services/Rules/TenantBoundaryLoggingExtensions.cs` *(multi-tenant only)* |
 | Tenant rules | `Application/Application.Services/Rules/TenantRules.cs` *(multi-tenant only)* |
 | Message handler | `Application/Application.MessageHandlers/TodoItemCreatedEventHandler.cs` |
+| Application style switch | `Application/Application.Contracts/ApplicationStyle.cs` *(when applicationStyle: switch)* |
+| CQRS requests | `Application/Application.Cqrs/Requests/{App}Requests.cs` *(when applicationStyle: cqrs or switch)* |
+| CQRS handlers | `Application/Application.Cqrs/Handlers/{Entity}Handlers.cs` *(when applicationStyle: cqrs or switch)* |
+| CQRS registration | `Application/Application.Cqrs/Registration/CqrsApplicationRegistration.cs` *(when applicationStyle: cqrs or switch)* |
 
 ## API Host
 | Artifact | Path |
 |---|---|
 | Program.cs | `Host/{Host}.Api/Program.cs` |
 | Endpoints | `Host/{Host}.Api/Endpoints/TodoItemEndpoints.cs` |
+| CQRS endpoints | `Host/{Host}.Api/Endpoints/Cqrs/TodoItemCqrsEndpoints.cs` *(when applicationStyle: cqrs or switch)* |
 | RegisterApiServices | `Host/{Host}.Api/RegisterApiServices.cs` |
 | Bootstrapper | `Host/{Host}.Bootstrapper/RegisterServices.cs` |
 
@@ -64,8 +69,10 @@ Expected file layout when scaffolding is complete. All paths relative to project
 | Unit (mapper, per entity) | `Test/Test.Unit/Mappers/{Entity}MapperTests.cs` |
 | Unit (mapper parity, consolidated) | `Test/Test.Unit/Mappers/MapperProjectionParityTests.cs` |
 | Unit (services) | `Test/Test.Unit/Services/{Entity}ServiceTests.cs` |
+| Unit (CQRS) | `Test/Test.Unit/Cqrs/{Entity}CqrsValidationTests.cs` *(when applicationStyle: cqrs or switch)* |
 | Unit (repositories) | `Test/Test.Unit/Repositories/{Entity}RepositoryTrxnTests.cs`, `{Entity}RepositoryQueryTests.cs` |
 | Endpoint contract tests | `Test/Test.Endpoints/Endpoints/{Entity}EndpointsTests.cs` |
+| CQRS endpoint switch tests | `Test/Test.Endpoints/CqrsEndpointModeTests.cs` *(when applicationStyle: switch)* |
 | Endpoint factory | `Test/Test.Endpoints/CustomApiFactory.cs` (derives from `Test.Support/WebApplicationFactoryBase`) |
 | E2E factory | `Test/Test.E2E/SqlApiFactory.cs` (Testcontainers SQL, static lifecycle) |
 | E2E workflow tests | `Test/Test.E2E/{Entity}WorkflowTests.cs` |
@@ -75,8 +82,9 @@ Expected file layout when scaffolding is complete. All paths relative to project
 | Integration — audit pipeline (Azurite) | `Test/Test.Integration/AuditLogRepositoryAzuriteTests.cs` |
 | Integration — API audit pipeline | `Test/Test.Integration/ApiAuditPipelineTests.cs` |
 | Integration — projection pipeline | `Test/Test.Integration/DomainEventPipelineTests.cs` |
-| Architecture | `Test/Test.Architecture/*DependencyTests.cs` |
+| Architecture | `Test/Test.Architecture/*DependencyTests.cs`, `CqrsArchitectureTests.cs` *(when applicationStyle: cqrs or switch)* |
 | Playwright UI | `Test/Test.PlaywrightUI/Pages/{Entity}CrudTests.cs` (browser; runs against hosted stack) |
+| Mobile UI smoke | `Test/Test.Mobile/*` (MSTest + Appium; opt-in Android/iOS native launch checks) *(when Uno mobile native testing is enabled)* |
 | Load | `Test/Test.Load/{Entity}LoadTests.cs` |
 | Benchmark | `Test/Test.Benchmarks/{Entity}Benchmarks.cs` |
 
@@ -114,21 +122,43 @@ Source: [../skills/ui-blazor.md](../skills/ui-blazor.md). Project root: `Host/{P
 
 ## Uno UI (Phase 5c, optional, dedicated session — `includeUnoUI: true`)
 
-Source: [../skills/ui-uno.md](../skills/ui-uno.md), [../skills/ui-uno-shell.md](../skills/ui-uno-shell.md), [../skills/ui-uno-mvux.md](../skills/ui-uno-mvux.md), [../skills/ui-uno-platforms.md](../skills/ui-uno-platforms.md). Project root: `Host/{Project}.UI/`.
+Source: [../skills/ui-uno.md](../skills/ui-uno.md), [../skills/ui-uno-shell.md](../skills/ui-uno-shell.md), [../skills/ui-uno-mvux.md](../skills/ui-uno-mvux.md), [../skills/ui-uno-platforms.md](../skills/ui-uno-platforms.md). Project roots: `src/UI/{Project}.Uno/`, `src/UI/{Project}.Uno.Core/`, and `src/Host/{Project}.Uno.WasmHost/`.
 
 | Artifact | Path |
 |---|---|
-| App entry | `Host/{Project}.UI/App.xaml`, `App.xaml.cs`, `App.xaml.host.cs` |
-| App config | `Host/{Project}.UI/appsettings.json` (+ environment variants) |
-| Shell | `Host/{Project}.UI/Shell.xaml`, `Shell.xaml.cs`, `ShellModel.cs` |
-| Business model (per entity) | `Host/{Project}.UI/Business/Models/{Entity}.cs` |
-| Business service (per feature) | `Host/{Project}.UI/Business/Services/{Feature}/I{Entity}Service.cs`, `{Entity}Service.cs` |
-| Kiota client (generated) | `Host/{Project}.UI/Client/` |
-| MVUX model — list (per entity) | `Host/{Project}.UI/Presentation/{Entity}ListModel.cs` |
-| MVUX model — detail (per entity) | `Host/{Project}.UI/Presentation/{Entity}DetailModel.cs` |
-| MVUX model — create (per entity) | `Host/{Project}.UI/Presentation/Create{Entity}Model.cs` |
-| Page — list (per entity) | `Host/{Project}.UI/Views/{Entity}ListPage.xaml` + `.xaml.cs` |
-| Page — detail (per entity) | `Host/{Project}.UI/Views/{Entity}DetailPage.xaml` + `.xaml.cs` |
-| Page — create (per entity) | `Host/{Project}.UI/Views/Create{Entity}Page.xaml` + `.xaml.cs` |
-| Styles / strings / converters | `Host/{Project}.UI/Styles/`, `Strings/`, `Converters/` |
-| WASM platform glue | `Host/{Project}.UI/Platforms/WebAssembly/WasmScripts/AppManifest.js` |
+| Uno project | `src/UI/{Project}.Uno/{Project}.Uno.csproj` |
+| Testable core project | `src/UI/{Project}.Uno.Core/{Project}.Uno.Core.csproj` |
+| WASM wrapper host | `src/Host/{Project}.Uno.WasmHost/{Project}.Uno.WasmHost.csproj` |
+| App entry | `src/UI/{Project}.Uno/App.xaml`, `App.xaml.cs`, `App.xaml.host.cs`, `Program.cs` |
+| App config | `src/UI/{Project}.Uno/appsettings.json` (+ environment variants) |
+| Shell | `src/UI/{Project}.Uno/Views/Shell.xaml`, `Shell.xaml.cs`, `Presentation/ShellModel.cs` |
+| Business model (per entity) | `src/UI/{Project}.Uno.Core/Business/Models/{Entity}.cs` |
+| Business service (per feature) | `src/UI/{Project}.Uno.Core/Business/Services/{Feature}/I{Entity}Service.cs`, `{Entity}Service.cs` |
+| Kiota client (generated) | `src/UI/{Project}.Uno.Core/Client/` |
+| MVUX model list (per entity) | `src/UI/{Project}.Uno/Presentation/{Entity}ListModel.cs` |
+| MVUX model new/edit (per entity) | `src/UI/{Project}.Uno/Presentation/{Entity}Model.cs` |
+| Page list (per entity) | `src/UI/{Project}.Uno/Views/{Entity}ListPage.xaml` + `.xaml.cs` |
+| Page new/edit (per entity) | `src/UI/{Project}.Uno/Views/{Entity}Page.xaml` + `.xaml.cs` |
+| Styles / strings / converters | `src/UI/{Project}.Uno/Styles/`, `Strings/`, `Converters/` |
+| Android platform glue | `src/UI/{Project}.Uno/Platforms/Android/AndroidManifest.xml`, `Main.Android.cs`, `MainActivity.Android.cs`, `Resources/` |
+| iOS platform glue | `src/UI/{Project}.Uno/Platforms/iOS/Info.plist`, `Entitlements.plist`, `Main.iOS.cs`, `PrivacyInfo.xcprivacy` |
+| WASM platform glue | `src/UI/{Project}.Uno/Platforms/WebAssembly/WasmScripts/AppManifest.js` |
+
+## React UI (Phase 5c, optional — `includeReactUI: true`)
+
+Source: [../skills/ui-react.md](../skills/ui-react.md). Project root: `UI/{Project}.React/`.
+
+| Artifact | Path |
+|---|---|
+| Package manifest | `UI/{Project}.React/package.json` |
+| Vite config | `UI/{Project}.React/vite.config.ts` |
+| App entry | `UI/{Project}.React/src/main.tsx`, `UI/{Project}.React/src/app/App.tsx` |
+| Routes | `UI/{Project}.React/src/app/routes.tsx` |
+| API client | `UI/{Project}.React/src/api/{project}Api.ts` |
+| API types | `UI/{Project}.React/src/api/types.ts` |
+| Page (dashboard) | `UI/{Project}.React/src/features/dashboard/DashboardPage.tsx` |
+| Page (entity list, per entity) | `UI/{Project}.React/src/features/{entity}/{Entity}ListPage.tsx` |
+| Page (entity detail/edit, per entity) | `UI/{Project}.React/src/features/{entity}/{Entity}DetailPage.tsx` |
+| Form (per entity) | `UI/{Project}.React/src/features/{entity}/{Entity}Form.tsx` |
+| Query hooks (per entity) | `UI/{Project}.React/src/features/{entity}/{entity}Queries.ts` |
+| Shared layout/theme | `UI/{Project}.React/src/shared/layout/`, `UI/{Project}.React/src/shared/theme/` |

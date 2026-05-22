@@ -25,12 +25,15 @@ packagePrefix: ""             # required; e.g. "EF", "Contoso", "AcmePay"
 customNugetFeeds: []          # required when packageStrategy: feed or hybrid
 localPackageLayers: []        # required when packageStrategy: local or hybrid; layers generated under src/Packages/<Prefix>.*
 
+applicationStyle: service     # service | cqrs | switch
+
 includeApi: true
 includeGateway: false
 includeFunctionApp: false
 includeScheduler: false
 includeUnoUI: false
 includeBlazorUI: false
+includeReactUI: false
 includeNotifications: false
 includeFlowEngine: false
 flowEngineDbStrategy: same-db-separate-schema  # same-db-separate-schema | separate-db
@@ -54,6 +57,7 @@ packageStrategy: local          # feed | local | hybrid
 packagePrefix: ""               # required; e.g. "EF", "Contoso", "AcmePay"
 customNugetFeeds: []            # required when packageStrategy: feed or hybrid
 localPackageLayers: []          # required when packageStrategy: local or hybrid
+applicationStyle: service       # service | cqrs | switch
 ```
 
 ### Package Strategy Reference
@@ -64,7 +68,17 @@ localPackageLayers: []          # required when packageStrategy: local or hybrid
 | `local` | `[]` | full layer list | All base contracts generated as packable projects in `src/Packages/<Prefix>.*`. |
 | `hybrid` | one or more URLs | layers the feed lacks | Feed supplies some layers; missing layers generated locally under the **same** prefix so they can later be pushed to the feed without renaming. |
 
-Canonical layer names (must match `support/ef-packages-reference.md`): `Domain`, `Domain.Contracts`, `Data`, `Data.Contracts`, `Common`, `Common.Contracts`. Add others (e.g., `Messaging.Contracts`, `Secrets`) when the reference file lists them.
+Canonical layer names (must match `support/ef-packages-reference.md`): `Domain`, `Domain.Contracts`, `Data`, `Data.Contracts`, `Common`, `Common.Contracts`, `CQRS`. Add others (e.g., `Messaging.Contracts`, `Secrets`) when the reference file lists them.
+
+### Application Style
+
+| `applicationStyle` | Effect |
+|---|---|
+| `service` | Generate application services and service-backed Minimal API endpoints only. |
+| `cqrs` | Generate CQRS request/handler pairs and CQRS-backed Minimal API endpoints only. |
+| `switch` | Generate both service and CQRS endpoint sets. Runtime config `Application:Style` selects `Service` or `Cqrs`; `<APP>_APPLICATION_STYLE` may override host/test runs. |
+
+When `applicationStyle` is `cqrs` or `switch`, include `CQRS` in the feed/local package layer set. In `packageStrategy: local`, generate `src/Packages/<packagePrefix>.CQRS` and consume it via `<ProjectReference>`; do not add a private feed.
 
 ## Decision Dependency Inputs
 
@@ -240,6 +254,8 @@ Options: Azure Service Bus, Event Grid, Event Hubs. See [skills/messaging.md](..
 | `includeScheduler` | `false` | |
 | `includeUnoUI` | `false` | |
 | `includeBlazorUI` | `false` | |
+| `includeReactUI` | `false` | |
+| `applicationStyle` | `service` | `service`, `cqrs`, `switch` |
 | `includeNotifications` | `false` | |
 | `includeFlowEngine` | `false` | Enables `EF.FlowEngine` (durable JSON workflow orchestration). Generates a dedicated FE DbContext + registration partial + workflow seeding + admin endpoints + test project. See [../skills/flowengine.md](../skills/flowengine.md). |
 | `flowEngineDbStrategy` | `same-db-separate-schema` | `same-db-separate-schema` (Variant A — preserves atomic outbox; default), `separate-db` (Variant B/C — outbox best-effort). See [../support/ef-packages-reference.md](../support/ef-packages-reference.md) § FlowEngine Data-Layout Variants. |
@@ -249,7 +265,7 @@ Options: Azure Service Bus, Event Grid, Event Hubs. See [skills/messaging.md](..
 | Platform | Hosting |
 |---|---|
 | Mobile (iOS/Android) | App store distribution |
-| Web (WASM) | Azure Static Web Apps / Container Apps |
+| Web (WASM / SPA) | Azure Static Web Apps / Container Apps |
 | Desktop (Windows) | MSIX / direct distribution |
 
 ### Security
@@ -461,7 +477,7 @@ Work through these in order during Phase 2. **Question 1 is asked first and must
    - **No (`local`)** — supply only a package prefix (e.g., `Contoso`). All base-contract layers are added to `localPackageLayers` and generated in Phase 4 under `src/Packages/<Prefix>.*` as packable projects (consumed via `<ProjectReference>`). `customNugetFeeds` stays empty. The developer may publish these to a feed later without restructuring.
 
    `packagePrefix` is required in every mode. `EF` is the canonical example prefix used throughout these instructions, not a default.
-2. **Scaffold mode** — full, lite, or api-only? What optional hosts are needed?
+2. **Scaffold mode** — full, lite, or api-only? What optional hosts are needed? For web UI, choose Blazor, Uno WASM, React/Vite SPA, or explicit siblings; do not add a second UI stack by default.
 3. **Data store mapping** — for each entity: SQL (default), Cosmos, Table, or Blob? Binary content → blob, relational → sql, key-value → table, document aggregates → cosmosdb.
 4. **Property details** — add types, maxLength, precision/scale to every property. Resolve ambiguous Phase 1 kinds.
 5. **Relationship config** — join entities for many-to-many, cascade behavior, FK naming.
@@ -493,4 +509,4 @@ Before moving to Phase 3 (Implementation Plan), verify all of the following:
 
 ## applicationStyle
 
-Optional. Values: `service` or `cqrs`. Default: `service`. Choose before Phase 4 so scaffolding emits either service implementations/endpoints or CQRS request records, handlers, decorated registrations, custom validators, and direct handler endpoints.
+Optional. Values: `service`, `cqrs`, or `switch`. Default: `service`. Choose before Phase 4 so scaffolding emits service implementations/endpoints, CQRS request records/handlers/endpoints, or both endpoint sets behind the `Application:Style` runtime selector.

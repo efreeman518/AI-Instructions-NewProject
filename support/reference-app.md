@@ -4,7 +4,7 @@ A companion reference app that demonstrates every pattern and convention this in
 
 **Repository:** <https://github.com/efreeman518/AI-Instructions-ReferenceApp>
 
-TaskFlow is a fully scaffolded task-management application built by following this instruction set end-to-end. It covers dual DbContext pooling, YARP gateway with claims transformation, Aspire orchestration, FusionCache with Redis backplane, TickerQ scheduling, Azure Functions, multi-tenancy, scaffold-mode auth, and Uno WASM UI.
+TaskFlow is a fully scaffolded task-management application built by following this instruction set end-to-end. It covers dual DbContext pooling, YARP gateway with claims transformation, Aspire orchestration, FusionCache with Redis backplane, TickerQ scheduling, Azure Functions, multi-tenancy, scaffold-mode auth, Uno WASM UI, Blazor UI, and React/Vite UI.
 
 ## When to consult it
 
@@ -28,6 +28,6 @@ For a phase-by-phase pointer map into the reference app, use [taskflow-proof-map
 
 ## CQRS Reference App
 
-The TaskFlow reference app demonstrates side-by-side service and CQRS endpoint registration. Default configuration is `Application:Style=Service`; set `TASKFLOW_APPLICATION_STYLE=Cqrs` or `Application:Style=Cqrs` to map CQRS endpoints and register handlers. CQRS handlers use the existing repository contracts directly. CQRS endpoints avoid central request dispatchers, request buses, and generic `Send()` entrypoints so each route shows the exact request and handler it invokes.
+The TaskFlow reference app demonstrates `applicationStyle: switch`: side-by-side service and CQRS endpoint registration with one mapped at runtime. Default configuration is `Application:Style=Service`; set `TASKFLOW_APPLICATION_STYLE=Cqrs` or `Application:Style=Cqrs` to map CQRS endpoints and register handlers. CQRS handlers use the existing repository contracts directly. CQRS endpoints avoid central request dispatchers, request buses, and generic `Send()` entrypoints so each route shows the exact request and handler it invokes.
 
 TaskFlow also demonstrates the route-versioning boundary: public domain API routes are versioned under `/api/v1/*`, while operational and host-management routes stay unversioned (`/health/*`, `/alive`, `/healthz`, `/api/flowengine/*`, and Functions host health `/api/health`). Azure Functions business HTTP triggers mirror the public versioned contract under the Functions default `/api` prefix.

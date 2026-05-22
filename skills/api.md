@@ -292,6 +292,30 @@ Required endpoint rules:
 8. Use POST for complex search filters.
 9. Ensure `global using EF.AspNetCore;` is present in `GlobalUsings.cs` for `ProblemDetailsHelper` to resolve.
 
+## Service/CQRS Route Switch
+
+When `applicationStyle: switch`, generate both endpoint sets:
+
+- `Endpoints/{Entity}Endpoints.cs` injects `I{Entity}Service`.
+- `Endpoints/Cqrs/{Entity}CqrsEndpoints.cs` injects the specific `IRequestHandler<TRequest,TResponse>`.
+- `Application.Contracts/ApplicationStyle.cs` owns `ApplicationStyleResolver` with config key `Application:Style`, env var `<APP>_APPLICATION_STYLE`, default `Service`, and allowed values `Service` / `Cqrs`.
+
+At route mapping time, map one set of CRUD endpoints:
+
+```csharp
+var style = ApplicationStyleResolver.Resolve(app.Configuration[ApplicationStyleResolver.ConfigKey]);
+if (style == ApplicationStyle.Cqrs)
+{
+    api.Map{Entity}CqrsEndpoints(problemDetailsIncludeStackTrace);
+}
+else
+{
+    api.Map{Entity}Endpoints(problemDetailsIncludeStackTrace);
+}
+```
+
+Keep route templates and response shapes identical between service and CQRS endpoint sets. Shared read-only view endpoints with no CQRS alternate, such as activity feed or audit search, may remain mapped once outside the switch.
+
 ## Custom Action Endpoints
 
 The six-route CRUD shape above is the default. When `.scaffold/domain-specification.yaml` declares a `customActions` entry on an entity (e.g. `Reschedule`, `Approve`, `Cancel`), or when a non-CRUD operation legitimately spans multiple entities (cross-entity aggregation, bulk import, workflow trigger), surface it as an additional route on the same entity's endpoint group rather than inventing a parallel controller.

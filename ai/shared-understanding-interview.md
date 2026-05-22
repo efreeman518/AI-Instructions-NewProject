@@ -100,4 +100,4 @@ Only then write `.scaffold/domain-specification.yaml`, `.scaffold/UBIQUITOUS-LAN
 
 ## Application Style Decision
 
-Capture this up front in Phase 1: `applicationStyle: service | cqrs` (default `service`). Explain whether HTTP endpoints should inject `I{Entity}Service` or specific CQRS handlers. If `cqrs`, preserve DTO/routes unless the domain discovery proves a route change is required.
+Capture this up front in Phase 1: `applicationStyle: service | cqrs | switch` (default `service`). Explain whether HTTP endpoints should inject `I{Entity}Service`, specific CQRS handlers, or both behind a runtime switch. If `cqrs` or `switch`, preserve DTO/routes unless the domain discovery proves a route change is required.

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Scaffold a single Uno codebase (WASM + mobile + desktop) that calls the **Gateway** (YARP), not backend APIs directly.
+Scaffold a single Uno codebase (browserwasm + Android + iOS) that calls the **Gateway** (YARP), not backend APIs directly.
 
 - UI auth: `EntraExternal` (or configured UI auth provider)
 - API auth: token relay through Gateway
@@ -23,7 +23,7 @@ This skill is split for context-budget-friendly loading. Use the table to decide
 
 | File | Load when |
 |---|---|
-| **[ui-uno-shell.md](ui-uno-shell.md)** | Setting up the Uno project: `.csproj` with `Uno.Sdk`, packages, `App.xaml`, Shell control, host wiring (`App.xaml.host.cs`), mock-vs-live HTTP switch. |
+| **[ui-uno-shell.md](ui-uno-shell.md)** | Setting up the Uno project: `.csproj` with `Uno.Sdk`, packages, `App.xaml`, Shell control, host wiring (`App.xaml.host.cs`), Aspire WASM wrapper host, mock-vs-live HTTP switch. |
 | **[ui-uno-mvux.md](ui-uno-mvux.md)** | Writing presentation code: MVUX models, feed-refresh patterns, cross-model messaging, navigation menus, XAML pitfalls, business services, client-API contract (`DefaultRequest`/`DefaultResponse`/pagination), auth patterns. |
 | **[ui-uno-platforms.md](ui-uno-platforms.md)** | Platform-specific work: WASM debugging, port exclusion, Android SDK + emulator, Resizetizer issues, CI requirements (`wasm-tools` workload). |
 
@@ -43,20 +43,27 @@ Prefer `starter` until core vertical slices stabilize.
 ## Required Structure
 
 ```text
-{Project}.UI/
+src/UI/{Project}.Uno/
   App.xaml
   App.xaml.cs
   App.xaml.host.cs
   appsettings.json
-  Business/
-    Models/
-    Services/
-  Client/                 # Kiota-generated client
   Presentation/           # MVUX models
   Views/
   Styles/
   Strings/
   Converters/
+  Platforms/
+    Android/
+    iOS/
+    WebAssembly/
+src/UI/{Project}.Uno.Core/
+  Business/
+    Models/
+    Services/
+  Client/                 # Kiota-generated client
+src/Host/{Project}.Uno.WasmHost/
+  Program.cs              # Aspire/browserwasm wrapper host
 ```
 
 Detailed structure rules live in [ui-uno-shell.md](ui-uno-shell.md) § Project File Rules.
@@ -67,6 +74,7 @@ Detailed structure rules live in [ui-uno-shell.md](ui-uno-shell.md) § Project F
 - [ ] `GatewayBaseUrl` present in `appsettings*.json`
 - [ ] Auth + HTTP + navigation configured in `App.xaml.host.cs` (see [ui-uno-shell.md](ui-uno-shell.md))
 - [ ] `Business/Models`, `Business/Services`, `Presentation`, `Views` scaffolded
+- [ ] Business services and generated clients live in `src/UI/{Project}.Uno.Core`; XAML/MVUX/platform heads live in `src/UI/{Project}.Uno`
 - [ ] `Features:UseMocks` implemented (mock + live path)
 - [ ] Core pages scaffolded: Home, {Entity}List, {Entity}Page (unified add/edit + children), Settings (+ Login when auth enabled)
 - [ ] Each entity uses single page pattern: `{Entity}Page` with form fields + children sections
@@ -77,6 +85,8 @@ Detailed structure rules live in [ui-uno-shell.md](ui-uno-shell.md) § Project F
 - [ ] `Shell.xaml.cs` implements `IContentControlProvider`
 - [ ] `ShellModel` navigates to first route in constructor
 - [ ] `Platforms/WebAssembly/WasmScripts/AppManifest.js` present (see [ui-uno-platforms.md](ui-uno-platforms.md))
+- [ ] Android/iOS platform folders are present when mobile targets are enabled
+- [ ] Aspire registers `src/Host/{Project}.Uno.WasmHost`, not the Uno SDK project directly
 - [ ] `launchSettings.json` applicationUrl set to `https://localhost:7069;http://localhost:5189`
 - [ ] Gateway `CorsSettings.AllowedOrigins` includes `https://localhost:7069` and `http://localhost:5189`
 - [ ] UI uses Gateway endpoints only

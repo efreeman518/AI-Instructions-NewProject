@@ -48,15 +48,24 @@ Uno Platform uses an **MSBuild SDK package** (`Uno.Sdk`), not a .NET workload. N
   <PropertyGroup>
     <!-- Clear singular TargetFramework inherited from Directory.Build.props -->
     <TargetFramework />
-    <TargetFrameworks>$(LatestStableTfm)-browserwasm</TargetFrameworks>
+    <UnoTargetFrameworks>$(LatestStableTfm)-browserwasm;$(LatestStableTfm)-android;$(LatestStableTfm)-ios</UnoTargetFrameworks>
+    <TargetFrameworks Condition="'$(TargetFrameworkOverride)'!=''">$(TargetFrameworkOverride)</TargetFrameworks>
+    <TargetFrameworks Condition="'$(TargetFrameworkOverride)'=='' and '$(BuildAllUnoTargets)'=='true'">$(UnoTargetFrameworks)</TargetFrameworks>
+    <TargetFrameworks Condition="'$(TargetFrameworkOverride)'=='' and '$(BuildAllUnoTargets)'!='true'">$(LatestStableTfm)-browserwasm</TargetFrameworks>
     <OutputType>Exe</OutputType>
     <UnoSingleProject>true</UnoSingleProject>
+    <IsAotCompatible>true</IsAotCompatible>
+    <NoWarn>$(NoWarn);IL2026;IL3050;XA4214</NoWarn>
     <ApplicationTitle>{AppName}</ApplicationTitle>
     <ApplicationId>com.{company}.{app}</ApplicationId>
+    <UseMocks Condition="'$(UseMocks)'==''">false</UseMocks>
+    <DefineConstants Condition="'$(UseMocks)'=='true'">$(DefineConstants);USE_MOCKS</DefineConstants>
 
     <UnoFeatures>
       Material;
       Hosting;
+      Skia;
+      SkiaRenderer;
       Toolkit;
       Logging;
       MVUX;
@@ -73,6 +82,13 @@ Uno Platform uses an **MSBuild SDK package** (`Uno.Sdk`), not a .NET workload. N
   <ItemGroup>
     <Using Include="System.Collections.Immutable" />
   </ItemGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' != '' AND $(TargetFramework.Contains('-android'))">
+    <!-- Appium/ADB sideloads only the APK, so Debug builds cannot rely on fast-deployed assemblies. -->
+    <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
+    <AndroidEnableAssemblyCompression>false</AndroidEnableAssemblyCompression>
+    <AndroidStoreUncompressedFileExtensions>.so;$(AndroidStoreUncompressedFileExtensions)</AndroidStoreUncompressedFileExtensions>
+  </PropertyGroup>
 </Project>
 ```
 
@@ -80,39 +96,48 @@ Uno Platform uses an **MSBuild SDK package** (`Uno.Sdk`), not a .NET workload. N
 
 1. **SDK version**: Use the latest stable `Uno.Sdk` line that supports the project's target .NET TFM. Older 6.0.x SDKs bundle `Uno.Wasm.Bootstrap 8.0.x` which does NOT support .NET 9+; check Uno release notes when bumping the TFM.
 2. **TargetFramework clearing**: When `Directory.Build.props` sets a singular `<TargetFramework>` for non-Uno projects, the Uno csproj MUST add `<TargetFramework />` before `<TargetFrameworks>` to clear the inherited value. Otherwise MSBuild merges both, causing `NETSDK1005`.
-3. **Entry point**: Uno SDK may not auto-generate `Program.Main` on the latest TFMs. Always include a manual `Program.cs`:
+3. **Targeted builds**: Build one platform at a time with `-p:TargetFrameworkOverride=$(LatestStableTfm)-browserwasm`, `-android`, or `-ios`. Do not use `-f`; the conditional `TargetFrameworks` property owns the effective target. Default builds target browserwasm only. Before Android/iOS package builds, run `dotnet restore src/UI/{Project}.Uno/{Project}.Uno.csproj -p:BuildAllUnoTargets=true`, then build the selected target with `--no-restore`; this keeps mobile Skia runtime packages in the NuGet asset graph.
+4. **Entry point**: Uno SDK may not auto-generate `Program.Main` on the latest TFMs. For browserwasm, use the Chefs-style host builder entry point:
 
 ```csharp
+#if __WASM__
+using Uno.UI.Hosting;
+
 namespace {Project}.Uno;
 
 public class Program
 {
-    private static App? _app;
-    static int Main(string[] args)
+    static async Task Main(string[] args)
     {
-        Microsoft.UI.Xaml.Application.Start(_ => _app = new App());
-        return 0;
+        var host = UnoPlatformHostBuilder.Create()
+            .App(() => new App())
+            .UseWebAssembly()
+            .Build();
+
+        await host.RunAsync();
     }
 }
+#endif
 ```
 
-4. **Global using for ImmutableList**: MVUX `IListFeed<T>` requires `IImmutableList<T>`. Add `<Using Include="System.Collections.Immutable" />` to the Uno csproj.
-5. **Aspire AppHost reference**: The AppHost may fail to build if it has a direct `ProjectReference` to the Uno project (SDK resolution conflict). If this occurs, remove the reference and register the Uno project as an external executable.
+5. **Global using for ImmutableList**: MVUX `IListFeed<T>` requires `IImmutableList<T>`. Add `<Using Include="System.Collections.Immutable" />` to the Uno csproj.
+6. **Aspire AppHost reference**: Do not add a direct Aspire `AddProject` reference to the Uno SDK project. Host browserwasm through a small ASP.NET Core wrapper project under `src/Host/{Project}.Uno.WasmHost/`, then register that wrapper in AppHost.
 
 ### Testable Core Library
 
 Extract `Business/` (Models, Services) and `Client/` into a separate `{Project}.Uno.Core` class library targeting plain single-TFM (the same TFM the rest of the solution targets). This allows unit testing without the Uno SDK.
 
 ```text
-{Project}.Uno.Core/          <- single-TFM class lib (testable)
+src/UI/{Project}.Uno.Core/          <- single-TFM class lib (testable)
   Business/Models/
   Business/Services/
   Client/
-{Project}.Uno/               <- Uno.Sdk (WASM)
+src/UI/{Project}.Uno/               <- Uno.Sdk (browserwasm, android, ios)
   App.xaml, App.xaml.cs, App.xaml.host.cs
   Presentation/              <- MVUX models
   Views/                     <- XAML pages
   references {Project}.Uno.Core
+src/Host/{Project}.Uno.WasmHost/    <- ASP.NET Core wrapper for Aspire browserwasm hosting
 ```
 
 After extracting, **delete** the original files from the Uno project — do not leave duplicates.
@@ -129,7 +154,10 @@ The `App.xaml` base class is `Application`, NOT `utu:App` (which doesn't exist):
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
-                <MaterialToolkitTheme xmlns="using:Uno.Toolkit.UI.Material" />
+                <MaterialToolkitTheme xmlns="using:Uno.Toolkit.UI.Material"
+                                      ColorOverrideSource="ms-appx:///Styles/ColorPaletteOverride.xaml" />
+                <ResourceDictionary Source="ms-appx:///Converters/Converters.xaml" />
+                <ResourceDictionary Source="ms-appx:///Styles/AppStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>
@@ -141,6 +169,9 @@ The `App.xaml` base class is `Application`, NOT `utu:App` (which doesn't exist):
 - Base element: `<Application>` — never `<utu:App>` or `<toolkit:App>`
 - `MaterialToolkitTheme` namespace: `using:Uno.Toolkit.UI.Material` — NOT `using:Uno.Material`
 - Do NOT add `<ToolkitResources xmlns="using:Uno.Toolkit.UI" />` as a separate merged dictionary (included via `MaterialToolkitTheme`)
+
+- Put palette changes in `Styles/ColorPaletteOverride.xaml`; do not hard-code page-level hex colors.
+- Put global converters in `Converters/Converters.xaml` and reusable control styles in `Styles/AppStyles.xaml`; pages consume resources instead of redefining them.
 
 ### App.xaml.cs Pattern
 
@@ -256,7 +287,13 @@ builder
         .UseAuthentication(auth => auth.AddCustom(..., name: "CustomAuth"))
         .UseHttp((context, services) =>
         {
-            var gatewayUrl = context.Configuration["GatewayBaseUrl"] ?? "https://localhost:7200";
+            var gatewayUrl =
+#if __ANDROID__
+                context.Configuration["AndroidGatewayBaseUrl"] ??
+#elif __IOS__
+                context.Configuration["IosGatewayBaseUrl"] ??
+#endif
+                context.Configuration["GatewayBaseUrl"] ?? "https://localhost:7200";
 
             // If the client was generated by Kiota (takes IRequestAdapter), use AddKiotaClient:
             //   services.AddKiotaClient<{Project}ApiClient>(context, options: new EndpointOptions { Url = gatewayUrl });
@@ -285,7 +322,7 @@ builder
 ```
 
 Non-negotiables:
-- Always call Gateway URL from config (`GatewayBaseUrl`).
+- Always call Gateway URL from config. Use `AndroidGatewayBaseUrl` for emulator/device Android, `IosGatewayBaseUrl` for iOS, and `GatewayBaseUrl` as the browserwasm/default fallback.
 - Register auth + HTTP + navigation in one place.
 - Keep service registration in host config, not in views/models.
 
@@ -296,8 +333,33 @@ Support both at scaffold time (`Features:UseMocks`).
 ```json
 {
   "GatewayBaseUrl": "https://localhost:7200",
+  "AndroidGatewayBaseUrl": "http://10.0.2.2:{GatewayHttpPort}",
+  "IosGatewayBaseUrl": "https://localhost:7200",
   "Features": { "UseMocks": false }
 }
 ```
 
 If mocks enabled, use a custom `HttpMessageHandler`; otherwise call live Gateway.
+
+For Android emulator live calls, prefer the Gateway HTTP endpoint through `10.0.2.2` unless the emulator trusts the development HTTPS certificate.
+
+## Aspire WASM Wrapper Host
+
+Use a wrapper host for Aspire. The Uno SDK project remains under `src/UI/{Project}.Uno/`; a plain ASP.NET Core project under `src/Host/{Project}.Uno.WasmHost/` builds and serves the browserwasm output.
+
+Wrapper rules:
+
+- The wrapper `.csproj` invokes the Uno build with `dotnet build "$(UnoWasmProject)" -p:TargetFrameworkOverride=$(UnoWasmTargetFramework) -p:Configuration=$(Configuration) -m:1`.
+- Skip the wrapper build target during solution builds unless explicitly requested; otherwise full-solution builds can recursively rebuild the UI at surprising times.
+- `Program.cs` loads the Uno static-web-assets manifest with `StaticWebAssetsLoader.UseStaticWebAssets`.
+- Map `.dat`, `.dll`, `.wasm`, and `.pdb` as binary/static files and verify `/_framework` plus `/_content` return 200 with non-empty bodies.
+- In Aspire, register the wrapper, not the Uno SDK project:
+
+```csharp
+builder.AddProject<Projects.{Project}_Uno_WasmHost>("{project}-uno")
+    .WithReference(gateway)
+    .WaitFor(gateway)
+    .WithExternalHttpEndpoints();
+```
+
+When the wrapper serves stale or mixed files after rebuilds, refresh by navigating to the root URL in a new browser tab. Uno browserwasm package hashes change per rebuild, so a normal reload can keep requesting old package paths.

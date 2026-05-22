@@ -146,7 +146,7 @@ Pattern files in `patterns/` document how generated components wire together acr
 
 ## Reference Application
 
-A companion reference app — **TaskFlow** — demonstrates every pattern and convention these instructions produce: dual DbContext pooling, YARP gateway, Aspire orchestration, FusionCache + Redis backplane, TickerQ scheduling, Azure Functions, multi-tenancy, scaffold-mode auth, and Uno WASM UI.
+A companion reference app — **TaskFlow** — demonstrates every pattern and convention these instructions produce: dual DbContext pooling, YARP gateway, Aspire orchestration, FusionCache + Redis backplane, TickerQ scheduling, Azure Functions, multi-tenancy, scaffold-mode auth, Uno WASM UI, Blazor UI, and React/Vite UI.
 
 TaskFlow is a reference/proof target, not a normal install target for `.instructions/`. Keep scaffold runtime instructions in this repository and consult TaskFlow through [support/reference-app.md](support/reference-app.md) and [support/taskflow-proof-map.md](support/taskflow-proof-map.md).
 
@@ -178,7 +178,11 @@ Read the rest of this guide when you need setup details, MCP recommendations, or
 - If using Uno UI:
   - `dotnet new install Uno.Templates`
   - `dotnet tool install -g uno.check` then `uno-check`
+  - `dotnet workload install wasm-tools android`
+  - `dotnet workload install ios` only when an iOS compile gate or macOS/iOS CI job is in scope
   - `dotnet tool install -g Microsoft.OpenApi.Kiota`
+  - For Android local testing: Android Studio or command-line SDK tools with Platform-Tools, Android Emulator, one recent platform, and one AVD.
+- If using React UI: current Node.js LTS plus npm.
 
 Version policy: prefer latest stable packages and SDKs.
 
@@ -316,7 +320,7 @@ Rule of thumb when adding new content: it goes in `skills/` if it's "how to do X
 | Production-ready with optional hosts | `scaffoldMode: full` |
 | Smallest viable scaffold (single API, defaults to all optional hosts off) | `scaffoldMode: api-only` |
 
-`scaffoldMode` drives load-set sizing per Phase 5 sub-phase; the optional-host toggles (`includeGateway`, `includeUnoUI`, `includeScheduler`, etc.) are independent flags in `.scaffold/resource-implementation.yaml` and can be enabled in any mode. `api-only` simply biases the defaults toward "off".
+`scaffoldMode` drives load-set sizing per Phase 5 sub-phase; the optional-host toggles (`includeGateway`, `includeUnoUI`, `includeReactUI`, `includeScheduler`, etc.) are independent flags in `.scaffold/resource-implementation.yaml` and can be enabled in any mode. `api-only` simply biases the defaults toward "off".
 
 Defaults: [ai/resource-implementation-schema.md](ai/resource-implementation-schema.md) **Canonical Defaults**. Load-set sizing: [ai/SKILL.md](ai/SKILL.md) § Load-Set Sizing.
 

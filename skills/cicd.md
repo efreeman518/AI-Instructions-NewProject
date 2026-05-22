@@ -129,7 +129,7 @@ jobs:
 
 ### Hosted-Stack Orchestration (`Test.PlaywrightUI`)
 
-Playwright tests cannot use `WebApplicationFactory` — they drive a real browser and need real Kestrel + UI host. The CI job must launch the stack, wait for health, run the tests, then tear down:
+Playwright tests cannot use `WebApplicationFactory` — they drive a real browser and need real Kestrel + UI host. The CI job must launch the stack, wait for health, run the tests, then tear down. For React/Vite, pass the actual UI resource URL from the hosted stack into the test project (for example `{APP}_REACT_BASE_URL`); do not assume the local Vite default port.
 
 ```yaml
 playwright:
@@ -163,6 +163,8 @@ playwright:
 ```
 
 For PR-time runs, gate `Test.PlaywrightUI` to nightly to keep PR loops fast.
+
+If `Test.PlaywrightUI` is a Node Playwright suite for React/Vite, replace the browser install/run steps with `npm ci`, `npx playwright install --with-deps`, and `node node_modules/@playwright/test/cli.js test --project react`, while keeping the same hosted-stack startup/teardown contract.
 
 ---
 

@@ -17,6 +17,7 @@ enabledFeatures:
   includeFunctionApp: false
   includeUnoUI: false
   includeBlazorUI: false
+  includeReactUI: false
   includeNotifications: false
   includeIaC: true
   includeGitHubActions: false
@@ -31,6 +32,7 @@ hostGates:                 # Phase 5c per-host status: not-started | scaffolded 
   functionApp: not-started
   unoUI: not-started       # always a dedicated session
   blazorUI: not-started
+  reactUI: not-started
   notifications: not-started
 resumeCommand: ""          # exact prompt to paste at the next session start
 toolingNotes: ""           # CLIs/MCPs discovered in Phase 3; note any missing or unavailable
@@ -39,7 +41,7 @@ instructionGapsPath: ".scaffold/INSTRUCTION-GAPS.md"
 
 ## Next Step
 
-- 
+- <none>
 
 ## Next Load Set
 
@@ -47,13 +49,13 @@ Load only these files next session (do not load anything else until this list is
 
 - `START-AI.md`
 - `HANDOFF.md`
-- 
+- <none>
 
 ## Environment Setup
 
 Run before `dotnet restore` in any new session:
 
-- 
+- <none>
 
 ## Current Objective
 
@@ -64,7 +66,7 @@ Run before `dotnet restore` in any new session:
 
 Out of scope for this session — do not attempt unless explicitly re-scoped:
 
-- 
+- <none>
 
 ## Blockers
 
@@ -96,23 +98,23 @@ Verify before closing the session. Per [../START-AI.md](../START-AI.md) § Phase
 
 Notes on artifact updates this session (term added, decision superseded, schema reshaped):
 
-- 
+- <none>
 
 ## Residual Environment Note
 
 Known local or CI quirks not resolved this session:
 
-- 
+- <none>
 
 ## Validation Findings Resolved
 
 Issues encountered and fixed this session (so the next session does not re-investigate):
 
-- 
+- <none>
 
 ## Completed
 
-- 
+- <none>
 
 ## Validation
 
@@ -140,6 +142,7 @@ For each enabled optional host, record its individual gate result. Use `validate
 | Function App | | | | |
 | Uno UI | | | | |
 | Blazor UI | | | | |
+| React UI | | | | |
 | Notifications | | | | |
 
 ## Scaffold Acceptance
@@ -152,7 +155,7 @@ Filled out at the end of the final enabled Phase 5 sub-phase, before closing the
 | Tests (all categories) | `dotnet test` | | Include passing count, ignored count, inconclusive count |
 | Aspire AppHost startup | `dotnet run --project src/Host/Aspire/AppHost` | | Confirm every resource reached Running and `/healthz` returns 200 |
 | Blazor host (when enabled) | `dotnet run --project src/UI/{Project}.Blazor` | | Standalone + Aspire-registered (both) |
-| Uno host (when enabled) | `dotnet build src/UI/{Project}.UI -f <target>` + launch | | Per chosen platform target |
+| Uno host (when enabled) | `dotnet restore src/UI/{Project}.Uno/{Project}.Uno.csproj -p:BuildAllUnoTargets=true` then `dotnet build src/UI/{Project}.Uno/{Project}.Uno.csproj -p:TargetFrameworkOverride=<target> --no-restore -m:1` + launch/wrapper-host check | | Per chosen platform target; iOS simulator/device requires macOS |
 | API smoke (one entity) | curl/HTTPie/Scalar against the gateway or API | | Record discovery method, not the ephemeral URL |
 
 ### Deferred External Dependencies

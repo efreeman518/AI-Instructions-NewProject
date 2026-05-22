@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Files** | `Business/Models/{Entity}.cs`, `Business/Models/IEntityBase.cs`, `Presentation/Messages/EntityMessage.cs`, `Business/Services/{Feature}/I{Entity}Service.cs`, `Business/Services/{Feature}/{Entity}Service.cs` |
+| **Files** | `src/UI/{Project}.Uno.Core/Business/Models/{Entity}.cs`, `Business/Models/IEntityBase.cs`, `Presentation/Messages/EntityMessage.cs`, `Business/Services/{Feature}/I{Entity}Service.cs`, `Business/Services/{Feature}/{Entity}Service.cs` |
 | **Depends on** | [data-mapping-template](data-mapping-template.md) (API DTO structure) |
 | **Referenced by** | [uno-mvux-model-template](uno-mvux-model-template.md), [ui-uno.md](../skills/ui-uno.md) |
 
@@ -11,10 +11,10 @@
 ### Client-Side Record Model
 
 ```csharp
-using {Project}.UI.Client.Models;
-using {Entity}Data = {Project}.UI.Client.Models.{Entity}Data;
+using {Project}.Uno.Core.Client.Models;
+using {Entity}Data = {Project}.Uno.Core.Client.Models.{Entity}Data;
 
-namespace {Project}.UI.Business.Models;
+namespace {Project}.Uno.Core.Business.Models;
 
 /// <summary>
 /// Client-side immutable record for {Entity}.
@@ -70,7 +70,7 @@ public partial record {Entity} : IEntityBase
 ### Service Interface
 
 ```csharp
-namespace {Project}.UI.Business.Services.{Feature};
+namespace {Project}.Uno.Core.Business.Services.{Feature};
 
 /// <summary>
 /// Client-side service for {Entity} operations via the Gateway API.
@@ -103,11 +103,11 @@ public interface I{Entity}Service
 ### Service Implementation
 
 ```csharp
-using {Project}.UI.Business.Models;
-using {Project}.UI.Client;
-using {Project}.UI.Presentation.Messages;
+using {Project}.Uno.Core.Business.Models;
+using {Project}.Uno.Core.Client;
+using {Project}.Uno.Core.Presentation.Messages;
 
-namespace {Project}.UI.Business.Services.{Feature};
+namespace {Project}.Uno.Core.Business.Services.{Feature};
 
 /// <summary>
 /// Calls the Gateway API via Kiota-generated client.
@@ -177,7 +177,7 @@ public class {Entity}Service(
 ### IEntityBase
 
 ```csharp
-namespace {Project}.UI.Business.Models;
+namespace {Project}.Uno.Core.Business.Models;
 
 /// <summary>
 /// Marker interface for entities with a Guid Id.
@@ -192,7 +192,7 @@ public interface IEntityBase
 ### EntityMessage and EntityChange
 
 ```csharp
-namespace {Project}.UI.Presentation.Messages;
+namespace {Project}.Uno.Core.Presentation.Messages;
 
 public enum EntityChange { Created, Updated, Deleted }
 
