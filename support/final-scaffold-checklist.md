@@ -91,7 +91,7 @@ Use `curl`, HTTPie, REST Client, or Scalar. Record status codes and endpoint dis
   - **Markdown:** `README.md`, `AGENTS.md`, `CLAUDE.md`, `HANDOFF.md`
   - **.NET config:** `global.json`, `nuget.config`, `dotnet-tools.json`, `Directory.Packages.props`, `Directory.Build.props`, `*.slnx`
   - **Ignore files:** `.gitignore`, `.dockerignore`, `.editorconfig`, `.gitattributes`
-  - **Dirs:** `src/`, `infra/` (when IaC enabled), `docs/` (optional), `.azure/` (optional), `.github/`, `.instructions/`, `.scaffold/`, `.vscode/` (optional), `.claude/` (optional)
+  - **Dirs:** `src/`, `infra/` (when IaC enabled), `docs/` (optional — when `docs/tech-design.md` is generated, diagrams follow [tech-design-diagrams.md](tech-design-diagrams.md)), `.azure/` (optional), `.github/`, `.instructions/`, `.scaffold/`, `.vscode/` (optional), `.claude/` (optional)
   - All Phase 1/2/3 generated artifacts (`domain-specification.yaml`, `resource-implementation.yaml`, `UBIQUITOUS-LANGUAGE.md`, `DESIGN-DECISIONS.md`, `implementation-plan.md`, `INSTRUCTION-GAPS.md`) live under `.scaffold/`, not at root.
   - Anything else at root (`FOLLOWUP-PLAN.md`, `*.log`, `*.tmp`, ad-hoc notes) is leakage — investigate before declaring the scaffold complete. `FOLLOWUP-PLAN.md` is not a recognized scaffold artifact; if present, ask the developer where it came from.
 
