@@ -105,6 +105,12 @@ Generated when `includeFlowEngine: true` in `.scaffold/resource-implementation.y
 | Health checks | `health-check-template.md` | `skills/observability.md` |
 | Dockerfile | `dockerfile-template.md` | `skills/solution-structure.md` + `skills/aspire.md` |
 
+## Documentation
+
+| Artifact | Template | Required Reference |
+|---|---|---|
+| Technical design doc (`docs/tech-design.md` + `docs/tech-design.html` viewer) | `tech-design-template.md` | `support/tech-design-diagrams.md` (source-plus-SVG pattern + viewer controls) |
+
 ## Phase-to-Template Mapping
 
 | Phase | Templates to Load |
@@ -113,7 +119,7 @@ Generated when `includeFlowEngine: true` in `.scaffold/resource-implementation.y
 | **5a — Foundation (TDD)** | `entity-template`, `ef-configuration-template`, `repository-template`, `domain-rules-template`, `appsettings-template`, **`updater-template` (required when entity has child collections)**, **`test-templates-domain`**, **`test-templates-repository`**, **`test-templates-integration`** (balanced+) |
 | **5b — App Core + Runtime (TDD for app/API, tests-after for runtime)** | `data-mapping-template`, `service-template`, `endpoint-template`, `structure-validator-template`, `exception-handler-template`, `message-handler-template` (if events), `health-check-template`, **`test-templates-service`**, **`test-templates-endpoint`**, **`test-templates-e2e`** (balanced+), `test-templates-integration` (pipeline tests, comprehensive) |
 | **5c — Optional Hosts** | `uno-ui-client-layer`, `uno-mvux-model-template`, `uno-xaml-page-template` (Uno); `skills/ui-react.md` (React); host-specific templates per enabled host; **`flowengine-trigger-template`** (when `includeFlowEngine: true` and Functions or Scheduler enabled) |
-| **5d — Quality + Delivery** | **`test-templates-quality`** (architecture + Playwright + Load + Benchmarks; Integration / E2E tiers are scaffolded earlier — 5d runs them as regression), `dockerfile-template`, **`flowengine-test-template`** (when `includeFlowEngine: true`) |
+| **5d — Quality + Delivery** | **`test-templates-quality`** (architecture + Playwright + Load + Benchmarks; Integration / E2E tiers are scaffolded earlier — 5d runs them as regression), `dockerfile-template`, **`flowengine-test-template`** (when `includeFlowEngine: true`), **`tech-design-template`** (generates `docs/tech-design.md` + `docs/tech-design.html`; see [../support/tech-design-diagrams.md](../support/tech-design-diagrams.md) for the render gate) |
 | **5e — Integration (Auth + AI)** | `ai-search-template`, `agent-template` (when AI in scope) |
 
 > **Note:** Use the Phase Router in `START-AI.md` and the Phase 5 file table in `ai/SKILL.md` for authoritative per-phase file lists. This index is a human/AI quick-reference for "I need to scaffold X → load template Y".
