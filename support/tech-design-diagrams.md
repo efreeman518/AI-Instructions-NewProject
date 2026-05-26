@@ -1,4 +1,4 @@
-# Tech Design Diagrams — Format, Source-Plus-SVG, and Viewer Controls
+# Tech Design Diagrams - Format, Source-Plus-SVG, and Viewer Controls
 
 Canonical rules for the **GitHub-facing technical design doc** the scaffold generates at `docs/tech-design.md` and its sibling viewer `docs/tech-design.html`. Reference shape: <https://github.com/efreeman518/AI-Instructions-ReferenceApp/blob/main/docs/tech-design.md>.
 
@@ -6,20 +6,20 @@ The scaffold owns the **format and viewer controls**, not the diagram list. Whic
 
 ## Why Source-Plus-SVG
 
-GitHub's live Mermaid runtime rejects diagram variants the local Mermaid CLI accepts — C4, `block-beta`, complex `erDiagram`, styled `graph` with `classDef`, and newer syntax. Committing both the `.mmd` source and a rendered `.svg` makes the doc render deterministically on GitHub *and* keeps the source editable.
+GitHub's live Mermaid runtime rejects diagram variants the local Mermaid CLI accepts - C4, `block-beta`, complex `erDiagram`, styled `graph` with `classDef`, and newer syntax. Committing both the `.mmd` source and a rendered `.svg` makes the doc render deterministically on GitHub *and* keeps the source editable.
 
 ## Scope
 
 | Applies | Does not apply |
 |---|---|
-| `docs/tech-design.md`, `docs/tech-design.html`, and any peer **GitHub-rendered** architecture/topology docs under `docs/` | Scaffold-internal artifacts under `.scaffold/` (e.g. `DESIGN-DECISIONS.md`, `implementation-plan.md`). Inline `mermaid` fences are fine there — those are working artifacts, not GitHub-rendered docs. |
+| `docs/tech-design.md`, `docs/tech-design.html`, and any peer **GitHub-rendered** architecture/topology docs under `docs/` | Scaffold-internal artifacts under `.scaffold/` (e.g. `DESIGN-DECISIONS.md`, `implementation-plan.md`). Inline `mermaid` fences are fine there - those are working artifacts, not GitHub-rendered docs. |
 
 If a diagram source is a basic `flowchart` / `sequenceDiagram` / `stateDiagram` with **no** `classDef` styling and **no** `block-beta` / C4 / `classDiagram-v2`, an inline fence in `docs/` is acceptable. When in doubt, render to SVG.
 
 ## Source-Plus-Rendered Pattern
 
-1. **Editable source** — `docs/assets/tech-design-diagrams/*.mmd`, one diagram per file.
-2. **Rendered asset** — matching `docs/assets/tech-design-diagrams/*.svg` checked in.
+1. **Editable source** - `docs/assets/tech-design-diagrams/*.mmd`, one diagram per file.
+2. **Rendered asset** - matching `docs/assets/tech-design-diagrams/*.svg` checked in.
 3. **`docs/tech-design.md`** references the SVG, not a Mermaid fence:
 
    ```md
@@ -36,20 +36,20 @@ If a diagram source is a basic `flowchart` / `sequenceDiagram` / `stateDiagram` 
    ```
 
 5. **Do not** include a live Mermaid runtime in generated HTML:
-   - no `mermaid@…` CDN `<script>`
+   - no `mermaid@...` CDN `<script>`
    - no `class="mermaid"` blocks
-   - no `mermaid.initialize(…)` call
+   - no `mermaid.initialize(...)` call
 
 ## Filename Convention
 
-`docs/assets/tech-design-diagrams/{NN}-{kebab-name}.{mmd,svg}` where `{NN}` is a zero-padded two-digit ordinal in document order. The number is for sort stability across `Get-ChildItem` and PR diffs — not a fixed registry. Pick `{kebab-name}` to match the section subject (`05-service-topology`, `12-multi-tenancy-enforcement`). Reserve gaps when dropping a section so cross-doc deep links remain valid.
+`docs/assets/tech-design-diagrams/{NN}-{kebab-name}.{mmd,svg}` where `{NN}` is a zero-padded two-digit ordinal in document order. The number is for sort stability across `Get-ChildItem` and PR diffs - not a fixed registry. Pick `{kebab-name}` to match the section subject (`05-service-topology`, `12-multi-tenancy-enforcement`). Reserve gaps when dropping a section so cross-doc deep links remain valid.
 
 ## Document Format
 
 `docs/tech-design.md` opens with a short header and a Table of Contents whose anchors match the GitHub auto-slug for each section heading.
 
 ```md
-# {ProjectName} — Technical Design Document
+# {ProjectName} - Technical Design Document
 
 > **Audience**: Developers onboarding to the project
 > **Last updated**: {YYYY-MM}
@@ -77,7 +77,7 @@ Heading rules:
 
 - Section headings use the numbered form (`## 2. C4 Architecture Diagrams`). GitHub's slugger turns it into `#2-c4-architecture-diagrams`, which is what the TOC entries point at.
 - Sub-section numbering (`### 2.1`, `### 2.2`) follows the same rule for inline cross-section links like `[Section 11: Audit Strategy](#11-audit-strategy)`.
-- Section count and titles are **project-driven**. Pull section needs from the entity list, resource list, and design decisions — not from a fixed scaffold template.
+- Section count and titles are **project-driven**. Pull section needs from the entity list, resource list, and design decisions - not from a fixed scaffold template.
 
 ## Viewer Controls (`docs/tech-design.html`)
 
@@ -85,11 +85,11 @@ Heading rules:
 
 ### 1. Sticky TOC with scroll-spy
 
-A left-side sidebar listing every `<h2 id="…">`. The current section highlights as the user scrolls. The TOC collapses to a top-of-page menu on screens < 900 px.
+A left-side sidebar listing every `<h2 id="...">`. The current section highlights as the user scrolls. The TOC collapses to a top-of-page menu on screens < 900 px.
 
 ### 2. Smooth-scroll + back-to-top button
 
-Anchor-link clicks use `scroll-behavior: smooth`. A floating "↑" button appears once the user has scrolled past one viewport and scrolls back to the top.
+Anchor-link clicks use `scroll-behavior: smooth`. A floating "up" button appears once the user has scrolled past one viewport and scrolls back to the top.
 
 ### 3. Click-to-zoom diagrams
 
@@ -101,7 +101,7 @@ Each `<figure class="diagram">` is keyboard-focusable and opens a modal viewer o
 - `+` / `-` keys to step zoom
 - `0` key to reset zoom and pan to fit
 
-Implement zoom/pan with a vanilla `svg-pan-zoom`-style approach — pure JS with `pointer` events, CSS `transform: matrix(...)`, and a small viewer class. Do **not** add a runtime dependency.
+Implement zoom/pan with a vanilla `svg-pan-zoom`-style approach - pure JS with `pointer` events, CSS `transform: matrix(...)`, and a small viewer class. Do **not** add a runtime dependency.
 
 ### 4. Dark theme by default, OS-preference aware
 
@@ -111,7 +111,7 @@ Match the GitHub dark palette used by the reference doc (`--bg: #0d1117`, `--sur
 
 A `?` keypress opens a small overlay listing the shortcuts above. Close with Esc.
 
-The full viewer (CSS + JS + HTML shell) lives in [../templates/tech-design-template.md](../templates/tech-design-template.md) under § HTML Viewer Shell.
+The full viewer (CSS + JS + HTML shell) lives in [../templates/tech-design-template.md](../templates/tech-design-template.md) under section HTML Viewer Shell.
 
 ## Render Gate (scaffold time)
 
@@ -153,11 +153,11 @@ rtk powershell -NoProfile -Command '& {
 }'
 ```
 
-Also verify every TOC anchor resolves: every `[N. …](#n-…)` link in the body must match a `## N. …` heading. The auto-slug rule is lowercase, spaces → hyphens, leading numbers preserved (`## 2. C4 Architecture Diagrams` → `#2-c4-architecture-diagrams`).
+Also verify every TOC anchor resolves: every `[N. ...](#n-...)` link in the body must match a `## N. ...` heading. The auto-slug rule is lowercase, spaces -> hyphens, leading numbers preserved (`## 2. C4 Architecture Diagrams` -> `#2-c4-architecture-diagrams`).
 
 ## Expected Result
 
-- `docs/tech-design.md` renders cleanly on GitHub — no Mermaid parser failures, no "Unable to render rich display" banners.
+- `docs/tech-design.md` renders cleanly on GitHub - no Mermaid parser failures, no "Unable to render rich display" banners.
 - `.mmd` source remains editable; rerunning the render gate regenerates the `.svg` deterministically.
-- `docs/tech-design.html` opens directly from the filesystem with a sticky TOC, scroll-spy highlight, click-to-zoom modal with pan, and a `?` shortcuts panel — no external CDN.
+- `docs/tech-design.html` opens directly from the filesystem with a sticky TOC, scroll-spy highlight, click-to-zoom modal with pan, and a `?` shortcuts panel - no external CDN.
 - Markdown and HTML share the same SVG assets, so a diagram edit only requires one `.mmd` change + one render-gate run.

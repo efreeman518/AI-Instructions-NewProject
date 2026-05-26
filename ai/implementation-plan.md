@@ -9,7 +9,7 @@ Checkpoint commands and pass criteria are canonical in [../support/execution-gat
 ## Template
 
 ```markdown
-# Implementation Plan — {{ProjectName}}
+# Implementation Plan - {{ProjectName}}
 
 ## Inputs Summary
 
@@ -22,7 +22,7 @@ Checkpoint commands and pass criteria are canonical in [../support/execution-gat
 
 ## Implementation Steps
 
-### Phase 4 — Contract Scaffolding
+### Phase 4 - Contract Scaffolding
 - [ ] Solution structure (.slnx, Directory.Packages.props, global.json, nuget.config)
 - [ ] All project files with correct references
 - [ ] Interfaces: I{Entity}Service, I{Entity}RepositoryTrxn, I{Entity}RepositoryQuery (per entity)
@@ -32,26 +32,26 @@ Checkpoint commands and pass criteria are canonical in [../support/execution-gat
 - [ ] No-op DI stubs in RegisterServices.cs
 - [ ] **Checkpoint:** `dotnet build` succeeds on full solution including test projects
 
-### Phase 5a — Foundation (TDD)
-- [ ] Write domain entity tests (red) → implement entity logic (green)
-- [ ] Write domain rule tests (red) → implement rules (green)
-- [ ] Write repository tests (red) → implement EF configs + repositories (green)
+### Phase 5a - Foundation (TDD)
+- [ ] Write domain entity tests (red) -> implement entity logic (green)
+- [ ] Write domain rule tests (red) -> implement rules (green)
+- [ ] Write repository tests (red) -> implement EF configs + repositories (green)
 - [ ] Activate {Entity}Builder.Build() with real entity Create()
 - [ ] Replace no-op repository stubs with real implementations
 - [ ] Scaffold EF migration
 - [ ] **Checkpoint:** `dotnet build` + `dotnet test --filter "TestCategory=Unit"` passes
 
-### Phase 5b — App Core + Runtime/Edge (TDD for app/API, tests-after for runtime)
-- [ ] Write service unit tests (red) → implement services + mappers + validators (green)
-- [ ] Write endpoint integration tests (red) → implement endpoints (green)
+### Phase 5b - App Core + Runtime/Edge (TDD for app/API, tests-after for runtime)
+- [ ] Write service unit tests (red) -> implement services + mappers + validators (green)
+- [ ] Write endpoint integration tests (red) -> implement endpoints (green)
 - [ ] Replace no-op service stubs with real implementations
 - [ ] Message handlers (if events defined)
 - [ ] Bootstrapper DI wiring finalized
 - [ ] Runtime/edge concerns (tests-after): gateway (if enabled), Aspire orchestration (if enabled), configuration + appsettings, multi-tenant middleware (if enabled), caching (if enabled), observability, security
-- [ ] Write infrastructure tests (health checks, config loading, caching) — place mock-based tests in `Test.Unit` (`TestCategory=Unit`) and WAF-based tests in `Test.Endpoints` (`TestCategory=Endpoint`); real-DB integration tests are deferred to Phase 5d
+- [ ] Write infrastructure tests (health checks, config loading, caching) - place mock-based tests in `Test.Unit` (`TestCategory=Unit`) and WAF-based tests in `Test.Endpoints` (`TestCategory=Endpoint`); real-DB integration tests are deferred to Phase 5d
 - [ ] **Checkpoint:** `dotnet build` + `dotnet test --filter "TestCategory=Unit|TestCategory=Endpoint"` passes; app starts via Aspire (when enabled)
 
-### Phase 5c — Optional Hosts (Tests-After)
+### Phase 5c - Optional Hosts (Tests-After)
 - [ ] Background services / scheduler (if enabled)
 - [ ] Function app (if enabled)
 - [ ] Uno UI (if enabled; dedicated session preferred)
@@ -61,13 +61,13 @@ Checkpoint commands and pass criteria are canonical in [../support/execution-gat
 - [ ] Write per-host smoke tests
 - [ ] **Checkpoint:** `dotnet build`, each enabled host responds, `dotnet test` passes; per-host gate status recorded in `HANDOFF.md`
 
-### Phase 5d — Quality + Delivery
-- [ ] Service-level Integration tests against real external services (Testcontainers SQL, real cache) — `Test.Integration`, `TestCategory=Integration` (balanced + comprehensive profiles)
-- [ ] Multi-endpoint E2E workflow tests against Testcontainers SQL — `Test.E2E`, `TestCategory=E2E` (comprehensive profile)
+### Phase 5d - Quality + Delivery
+- [ ] Service-level Integration tests against real external services (Testcontainers SQL, real cache) - `Test.Integration`, `TestCategory=Integration` (balanced + comprehensive profiles)
+- [ ] Multi-endpoint E2E workflow tests against Testcontainers SQL - `Test.E2E`, `TestCategory=E2E` (comprehensive profile)
 - [ ] Architecture tests (NetArchTest layering rules)
 - [ ] Load tests (if comprehensive profile)
 - [ ] Benchmarks (if comprehensive profile)
-- [ ] Browser UI Playwright tests against hosted stack (if comprehensive profile + UI enabled) — `Test.PlaywrightUI`, C# MSTest + `Microsoft.Playwright.MSTest`
+- [ ] Browser UI Playwright tests against hosted stack (if comprehensive profile + UI enabled) - `Test.PlaywrightUI`, C# MSTest + `Microsoft.Playwright.MSTest`
 - [ ] IaC templates (Bicep)
 - [ ] CI/CD pipeline
 - [ ] Dockerfile
@@ -75,7 +75,7 @@ Checkpoint commands and pass criteria are canonical in [../support/execution-gat
 - [ ] Full regression: `dotnet test` (all categories)
 - [ ] **Checkpoint:** full test suite passes; `az bicep build` succeeds (if IaC enabled)
 
-### Phase 5e — Integration (Auth + AI)
+### Phase 5e - Integration (Auth + AI)
 
 **Authentication finalization:**
 - [ ] Prompt for identity provider scenario (see options below)
@@ -85,14 +85,14 @@ Checkpoint commands and pass criteria are canonical in [../support/execution-gat
 - [ ] **Checkpoint:** authenticated endpoints respond correctly under `AuthMode` toggle
 
 **Identity Provider Options:**
-- **Enterprise / internal users:** Microsoft Entra ID — SSO, conditional access, group-based roles
+- **Enterprise / internal users:** Microsoft Entra ID - SSO, conditional access, group-based roles
 - **External / consumer users:** Microsoft Entra External ID, Google, Facebook, Apple, OAuth2/OIDC
 - **Hybrid:** Entra ID for internal + Entra External ID or social providers for external users
 
 **AI integration (when `includeAiServices: true`):**
 - [ ] `Infrastructure.AI` project with search/agent service interfaces
 - [ ] Azure AI Search index definitions + client wiring (if search configured)
-- [ ] Embedding pipeline: on-write handler (domain event → vectorize → index) or batch job
+- [ ] Embedding pipeline: on-write handler (domain event -> vectorize -> index) or batch job
 - [ ] Agent service scaffolding (Microsoft Agent Framework `ChatClientAgent` / `FoundryAgent`)
 - [ ] Agent function tools wrapping existing `I{Entity}Service` domain operations
 - [ ] Agent middleware (logging, auth context propagation, content safety)
@@ -134,7 +134,7 @@ flowchart TD
 
 Populated during Phase 3 by analyzing `.scaffold/resource-implementation.yaml` technology choices. The AI researches available CLIs, MCP servers, and online resources, then records findings here.
 
-**Preference order: CLI → MCP → online resources.** CLIs are most token-efficient with structured output. MCP servers add value for interactive exploration (docs, repos) when no CLI exists. When neither is available, record documentation URLs and GitHub repos the AI can fetch during later phases.
+**Preference order: CLI -> MCP -> online resources.** CLIs are most token-efficient with structured output. MCP servers add value for interactive exploration (docs, repos) when no CLI exists. When neither is available, record documentation URLs and GitHub repos the AI can fetch during later phases.
 
 ### Required CLIs
 
@@ -183,7 +183,7 @@ Validation (both modes):
 dotnet restore
 ```
 
-After Phase 4 creates projects, re-run `dotnet restore` to confirm all `<packagePrefix>.*` references — package or project — resolve cleanly.
+After Phase 4 creates projects, re-run `dotnet restore` to confirm all `<packagePrefix>.*` references - package or project - resolve cleanly.
 
 ### Recommended MCP Servers
 
@@ -204,11 +204,11 @@ For libraries/services with no CLI or MCP server, record documentation and repo 
 
 ### Discovery Notes
 
-_During Phase 3, search for CLIs, MCP servers, and online resources matching project-specific libraries/services (npm `mcp + <library>`, MCP registry, GitHub, official docs). Record findings using three-tier preference: CLI → MCP → online resources._
+_During Phase 3, search for CLIs, MCP servers, and online resources matching project-specific libraries/services (npm `mcp + <library>`, MCP registry, GitHub, official docs). Record findings using three-tier preference: CLI -> MCP -> online resources._
 
-- _e.g., FusionCache — no CLI or MCP; GitHub wiki added to Online Resources_
-- _e.g., TickerQ — no CLI or MCP; NuGet readme added to Online Resources_
-- _e.g., YARP — no dedicated MCP; Microsoft Docs MCP covers it via `microsoft_docs_search`_
+- _e.g., FusionCache - no CLI or MCP; GitHub wiki added to Online Resources_
+- _e.g., TickerQ - no CLI or MCP; NuGet readme added to Online Resources_
+- _e.g., YARP - no dedicated MCP; Microsoft Docs MCP covers it via `microsoft_docs_search`_
 
 ## Risk / Blockers
 
@@ -227,11 +227,11 @@ _During Phase 3, search for CLIs, MCP servers, and online resources matching pro
 
 ---
 
-## Phase 3 → 4 Pre-Flight
+## Phase 3 -> 4 Pre-Flight
 
 Before starting Phase 4 (contract scaffolding), verify all of the following:
 
-- [ ] `nuget.config` validated (`dotnet restore` exits 0) — applies in `feed` and `hybrid`; in `local`, `nuget.config` only needs `nuget.org`
+- [ ] `nuget.config` validated (`dotnet restore` exits 0) - applies in `feed` and `hybrid`; in `local`, `nuget.config` only needs `nuget.org`
 - [ ] All open questions resolved or explicitly deferred with TODO
 - [ ] `scaffoldMode`, `testingProfile`, and all host flags confirmed
 - [ ] `packageStrategy`, `packagePrefix`, `customNugetFeeds`, and `localPackageLayers` confirmed in `.scaffold/resource-implementation.yaml`

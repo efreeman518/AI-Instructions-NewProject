@@ -27,7 +27,7 @@ MVS is a profile, not a separate path. After MVS finishes you can promote to a r
 Same as the [README Prerequisites](../README.md#prerequisites), with these MVS-specific simplifications:
 
 - **Skip:** Uno templates, `uno-check`, Kiota, Functions Core Tools.
-- **Required:** `.NET SDK`, `git`, Python (for installer), Docker (only if you keep Aspire enabled — MVS keeps it off by default). Package feed access is conditional on `packageStrategy` (chosen in Phase 2): `feed`/`hybrid` needs read access to the configured private feed (e.g., GitHub Packages for the canonical `EF.*` example); `local` needs only `nuget.org`.
+- **Required:** `.NET SDK`, `git`, Python (for installer), Docker (only if you keep Aspire enabled - MVS keeps it off by default). Package feed access is conditional on `packageStrategy` (chosen in Phase 2): `feed`/`hybrid` needs read access to the configured private feed (e.g., GitHub Packages for the canonical `EF.*` example); `local` needs only `nuget.org`.
 
 ## Install
 
@@ -40,14 +40,14 @@ The `--verify` flag confirms all entrypoints landed correctly. See [install-to-p
 
 ## The MVS prompts
 
-Six AI sessions: one per phase for Phases 1–4, plus separate sessions for Phase 5a and Phase 5b (Phase 5 always runs one sub-phase per session). MVS skips 5c, 5d, and 5e — see § Why this works.
+Six AI sessions: one per phase for Phases 1-4, plus separate sessions for Phase 5a and Phase 5b (Phase 5 always runs one sub-phase per session). MVS skips 5c, 5d, and 5e - see section Why this works.
 
 Paste each prompt verbatim, fill in the `{...}` placeholders, let the session run to its gate, then close the session. The next session starts fresh from `START-AI.md` + `HANDOFF.md`.
 
-### Phase 1 — Domain Discovery (one entity)
+### Phase 1 - Domain Discovery (one entity)
 
 ```text
-Load .instructions/START-AI.md. This is a new project — no HANDOFF.md yet.
+Load .instructions/START-AI.md. This is a new project - no HANDOFF.md yet.
 Mode: minimum-viable-scaffold (API-only, one entity, no optional hosts).
 Generate domain artifacts for {ProjectName}.
 Business: {one-sentence business description}.
@@ -60,7 +60,7 @@ Write HANDOFF.md and close.
 
 **Done when:** `.scaffold/domain-specification.yaml` defines exactly one entity. `.scaffold/DESIGN-DECISIONS.md` records that this is an MVS profile.
 
-### Phase 2 — Resource Definition (api-only)
+### Phase 2 - Resource Definition (api-only)
 
 ```text
 Load .instructions/START-AI.md and HANDOFF.md.
@@ -77,7 +77,7 @@ Update HANDOFF.md and close.
 
 **Done when:** `.scaffold/resource-implementation.yaml` has `scaffoldMode: api-only` and every optional flag is `false`. No external dep is in `deployment-only` or `emulator` mode.
 
-### Phase 3 — Implementation Plan
+### Phase 3 - Implementation Plan
 
 ```text
 Load .instructions/START-AI.md and HANDOFF.md.
@@ -92,11 +92,11 @@ Update HANDOFF.md and close.
 
 **Done when:** `dotnet restore` exits 0. The plan's Tooling section has no unresolved items.
 
-### Phase 4 — Contract Scaffolding
+### Phase 4 - Contract Scaffolding
 
 ```text
 Load .instructions/START-AI.md and HANDOFF.md.
-Load the Phase 4 file set from START-AI.md § Phase Router.
+Load the Phase 4 file set from START-AI.md section Phase Router.
 Generate the api-only contract scaffold per ai/contract-scaffolding.md:
 solution structure (.slnx + Directory.Packages.props), API host project, Application/Domain/Infrastructure projects,
 test projects (Test.Support, Test.Unit, Test.Endpoints), interfaces, DTOs, entity shells, no-op DI stubs.
@@ -107,11 +107,11 @@ Set currentPhase: 5, currentSubPhase: 5a, and contractsScaffolded: true in HANDO
 
 **Done when:** `dotnet build` is green and the solution contains exactly: API host, Application/Domain/Infrastructure projects, and the three test projects. No optional hosts.
 
-### Phase 5 — Implementation (5a + 5b only for MVS)
+### Phase 5 - Implementation (5a + 5b only for MVS)
 
 MVS skips 5c (no optional hosts), 5d (no architecture/load/benchmark gates beyond `minimal` profile), and 5e (auth stays in scaffold mode; no AI services).
 
-#### 5a — Foundation (TDD)
+#### 5a - Foundation (TDD)
 
 ```text
 Load .instructions/START-AI.md and HANDOFF.md.
@@ -119,19 +119,19 @@ Read the Phase 5 file table in ai/SKILL.md (5a row only) and load those files.
 Follow ai/tdd-protocol.md: write domain/rule/repository tests first (red), implement to green.
 Activate {Entity}Builder.Build() after entity logic is implemented.
 Replace no-op repository stubs with real implementations in RegisterServices.cs.
-Gate: see support/execution-gates.md § 5a.
+Gate: see support/execution-gates.md section 5a.
 Update HANDOFF.md (currentSubPhase: 5b) and close.
 ```
 
-#### 5b — App Core + API (TDD)
+#### 5b - App Core + API (TDD)
 
 ```text
 Load .instructions/START-AI.md and HANDOFF.md.
-Load the 5b row from the Phase 5 file table — but only the api-only required entries.
+Load the 5b row from the Phase 5 file table - but only the api-only required entries.
 Skip runtime concerns: gateway, multi-tenant, caching, aspire, observability, security extensions.
-Follow ai/tdd-protocol.md: service tests → implement service, endpoint tests → implement endpoints.
+Follow ai/tdd-protocol.md: service tests -> implement service, endpoint tests -> implement endpoints.
 Replace no-op DI stubs with real implementations.
-Gate: see support/execution-gates.md § 5b (skip the Aspire portion — Aspire is disabled in MVS).
+Gate: see support/execution-gates.md section 5b (skip the Aspire portion - Aspire is disabled in MVS).
 Update HANDOFF.md and close.
 ```
 
@@ -146,8 +146,8 @@ dotnet build
 dotnet test --filter "TestCategory=Unit|TestCategory=Endpoint"
 dotnet run --project src\Host\{Host}.Api -- --urls "http://localhost:5100"
 # in another shell, or via your HTTP client:
-# GET http://localhost:5100/health → 200 OK
-# POST http://localhost:5100/v1/{entity-route} → 201 + Location header
+# GET http://localhost:5100/health -> 200 OK
+# POST http://localhost:5100/v1/{entity-route} -> 201 + Location header
 ```
 
 If all three pass, MVS is complete.
@@ -164,6 +164,6 @@ When you're ready to add scope:
 
 ## Why this works
 
-MVS is the same instruction set, scoped down. Every gate, every artifact, every conflict-precedence rule still applies — the only difference is that `.scaffold/resource-implementation.yaml` flags most optional surfaces off, so the per-sub-phase load sets shrink, and 5c/5d/5e can be deferred until the API is real.
+MVS is the same instruction set, scoped down. Every gate, every artifact, every conflict-precedence rule still applies - the only difference is that `.scaffold/resource-implementation.yaml` flags most optional surfaces off, so the per-sub-phase load sets shrink, and 5c/5d/5e can be deferred until the API is real.
 
 If you find yourself wanting Gateway or UI or messaging mid-MVS, stop the MVS path and switch to the full [phase router](../START-AI.md). Mixing them produces incomplete artifacts.

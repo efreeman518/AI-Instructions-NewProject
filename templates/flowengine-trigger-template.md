@@ -2,9 +2,9 @@
 
 Generated when `includeFlowEngine: true`. Pick one or more triggers based on `.scaffold/resource-implementation.yaml` flags. See [../skills/flowengine.md](../skills/flowengine.md) for the surrounding FE setup.
 
-## App-Level Façade — `IWorkflowTrigger`
+## App-Level Facade - `IWorkflowTrigger`
 
-`IFlowEngine` is the engine's full API (start, signal, resume, terminate). Wrap it in a thin app-level façade so trigger sites stay testable and small. Generate this in `{Project}.Application.Services`.
+`IFlowEngine` is the engine's full API (start, signal, resume, terminate). Wrap it in a thin app-level facade so trigger sites stay testable and small. Generate this in `{Project}.Application.Services`.
 
 ```csharp
 namespace {Project}.Application.Services;
@@ -32,7 +32,7 @@ services.AddScoped<IWorkflowTrigger, WorkflowTrigger>();
 
 ---
 
-## Trigger 1 — Service Bus Subscriber (`includeFunctionApp: true`)
+## Trigger 1 - Service Bus Subscriber (`includeFunctionApp: true`)
 
 Use when an out-of-process integration event should start a workflow. Lives in `{Project}.Functions`.
 
@@ -76,7 +76,7 @@ Notes:
 
 ---
 
-## Trigger 2 — Inline (in-process command)
+## Trigger 2 - Inline (in-process command)
 
 Use when an API endpoint or service should kick off a workflow synchronously as part of its own work. No new infrastructure.
 
@@ -113,7 +113,7 @@ Avoid this when:
 
 ---
 
-## Trigger 3 — TickerQ Recurring Job (`includeScheduler: true`)
+## Trigger 3 - TickerQ Recurring Job (`includeScheduler: true`)
 
 Use when a workflow runs on a cron. Lives in `{Project}.Scheduler`.
 
@@ -135,7 +135,7 @@ public sealed class NightlyReconciliationJob(IWorkflowTrigger workflows)
 
 Notes:
 - Cron uses TickerQ's standard 5-field expression (UTC).
-- One scheduler replica unless TickerQ Redis coordination is enabled — see [../skills/background-services.md](../skills/background-services.md).
+- One scheduler replica unless TickerQ Redis coordination is enabled - see [../skills/background-services.md](../skills/background-services.md).
 - Do **not** put the workflow's business logic in the job. The job is a thin trigger; the work belongs in the workflow's nodes.
 
 ---

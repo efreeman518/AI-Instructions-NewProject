@@ -1,4 +1,4 @@
-# Infrastructure as Code — Azure Bicep
+# Infrastructure as Code - Azure Bicep
 
 Use this skill to generate `infra/` Bicep templates that mirror the runtime topology.
 
@@ -10,7 +10,7 @@ Use this skill to generate `infra/` Bicep templates that mirror the runtime topo
 
 ---
 
-## Aspire ↔ Azure Mapping
+## Aspire <-> Azure Mapping
 
 | Aspire resource | Azure resource | Bicep type |
 |---|---|---|
@@ -165,7 +165,7 @@ resource db 'Microsoft.Sql/servers/databases@2023-08-01-preview' = {
 ## Required Consistency Rules
 
 1. One AppHost project => one deployable host module.
-2. Connection names match exactly (`WithReference` ↔ `ConnectionStrings__*`).
+2. Connection names match exactly (`WithReference` <-> `ConnectionStrings__*`).
 3. Gateway is the only external ingress by default.
 4. Scheduler stays single replica (`minReplicas = maxReplicas = 1`) when using TickerQ.
 5. ServiceDefaults telemetry maps to App Insights + Log Analytics.

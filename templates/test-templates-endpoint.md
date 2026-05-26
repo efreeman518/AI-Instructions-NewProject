@@ -1,4 +1,4 @@
-# Test Templates — Endpoint (Phase 5b)
+# Test Templates - Endpoint (Phase 5b)
 
 | | |
 |---|---|
@@ -19,7 +19,7 @@ public async Task Given_ValidPayload_When_PostEntity_Then_Returns201() { }
 
 ## Shared JSON Options (Required)
 
-Every `ReadFromJsonAsync<T>` / `PostAsJsonAsync<T>` call must pass `JsonTestOptions.Default` from `Test.Support`. Without it, responses carrying string enums (`"status": "InProgress"`) fail to deserialize against the default `JsonSerializerOptions` and tests pass-then-fail based on whether the API host happened to emit a numeric or named enum. The shared options align the test deserializer with the host's `ConfigureHttpJsonOptions` (see [../skills/api.md](../skills/api.md) § JSON Contract Across Hosts and Tests).
+Every `ReadFromJsonAsync<T>` / `PostAsJsonAsync<T>` call must pass `JsonTestOptions.Default` from `Test.Support`. Without it, responses carrying string enums (`"status": "InProgress"`) fail to deserialize against the default `JsonSerializerOptions` and tests pass-then-fail based on whether the API host happened to emit a numeric or named enum. The shared options align the test deserializer with the host's `ConfigureHttpJsonOptions` (see [../skills/api.md](../skills/api.md) section JSON Contract Across Hosts and Tests).
 
 ```csharp
 // Required at the top of every endpoint test file
@@ -62,7 +62,7 @@ namespace Test.Support;
 /// Removes the standard pooled-DbContext + interceptor + scoped-factory plumbing that the
 /// production host registers, then re-registers test-mode contexts using TestDbContextFactory.
 ///
-/// Constrained to DbContextBase&lt;string, Guid?&gt; — the EF.Packages canonical audit/tenant
+/// Constrained to DbContextBase&lt;string, Guid?&gt; - the EF.Packages canonical audit/tenant
 /// shape. Apps that deviate from these types must override ConfigureWebHost directly rather
 /// than using this base.
 /// </summary>
@@ -150,16 +150,16 @@ public static class WebApplicationFactoryHelpers
 | `AuditInterceptor<string, Guid?>` | Depends on `IInternalMessageBus` (EF.BackgroundServices), not registered in test host |
 | `ConnectionNoLockInterceptor` | SQL-only interceptor, incompatible with InMemory provider |
 | `IDbContextPool<T>` (internal) | Pooled factory creates singleton pools that conflict with scoped test options |
-| `DbContextScopedFactory<T, string, Guid?>` | Wraps `IDbContextFactory<T>` — must be removed and re-registered |
-| `IDbContextFactory<T>` | Original pooled factory — must be replaced with `TestDbContextFactory<T>` |
+| `DbContextScopedFactory<T, string, Guid?>` | Wraps `IDbContextFactory<T>` - must be removed and re-registered |
+| `IDbContextFactory<T>` | Original pooled factory - must be replaced with `TestDbContextFactory<T>` |
 | `DbContextOptions<T>` + `DbContextOptions` | Pool-registered options conflict with new test options |
 
 The base does this once. Derived classes provide only the test-mode store.
 
 **Critical details preserved by the base:**
-1. **Typed options per context.** Use `new DbContextOptionsBuilder<{App}DbContextTrxn>().UseInMemoryDatabase(name).Options` — do NOT use generic `DbContextOptions` when multiple contexts exist. `DbContextBase` constructors take `DbContextOptions` (non-generic base), but EF validates the generic type at runtime.
+1. **Typed options per context.** Use `new DbContextOptionsBuilder<{App}DbContextTrxn>().UseInMemoryDatabase(name).Options` - do NOT use generic `DbContextOptions` when multiple contexts exist. `DbContextBase` constructors take `DbContextOptions` (non-generic base), but EF validates the generic type at runtime.
 2. **Required member bypass.** `DbContextBase<TAuditIdType, TTenantIdType>` declares `required` members (e.g., `AuditId`). The base's `WebApplicationFactoryHelpers.CreateContext<T>` uses `ConstructorInfo.Invoke()` via reflection to bypass compile-time `required` enforcement when creating contexts from a test factory.
-3. **Re-provided `IDbContextFactory<T>`.** `DbContextScopedFactory` resolves `IDbContextFactory<T>` — the base registers `TestDbContextFactory<T>` that creates contexts via reflection.
+3. **Re-provided `IDbContextFactory<T>`.** `DbContextScopedFactory` resolves `IDbContextFactory<T>` - the base registers `TestDbContextFactory<T>` that creates contexts via reflection.
 
 ## Test.Endpoints derived factory (in-memory)
 
@@ -182,7 +182,7 @@ That's the entire file. The pooled-context swap, interceptor removal, factory pl
 
 ## Test.E2E derived factory (Testcontainers SQL)
 
-`Test/Test.E2E/SqlApiFactory.cs` is identical except the options use `UseSqlServer(connectionString, sql => sql.UseCompatibilityLevel(170))` and the class manages a static Testcontainers SQL lifecycle (`StartContainerAsync` / `StopContainerAsync`). Full template: [test-templates-e2e.md](test-templates-e2e.md) § SqlApiFactory.
+`Test/Test.E2E/SqlApiFactory.cs` is identical except the options use `UseSqlServer(connectionString, sql => sql.UseCompatibilityLevel(170))` and the class manages a static Testcontainers SQL lifecycle (`StartContainerAsync` / `StopContainerAsync`). Full template: [test-templates-e2e.md](test-templates-e2e.md) section SqlApiFactory.
 
 ## Multi-resource Integration tier
 

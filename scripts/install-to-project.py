@@ -188,13 +188,13 @@ class Planner:
         print(f"preserved: {self.preserved} (target newer, --update)")
         print(f"skipped:   {self.skipped}")
         if self.dry_run:
-            print("(dry-run — no files written)")
+            print("(dry-run - no files written)")
 
 
 def preserve_handoff(target_instructions: Path, dry_run: bool) -> Path | None:
     handoff = target_instructions.parent / "HANDOFF.md"
     if handoff.exists():
-        print(f"[note] HANDOFF.md exists at {handoff} — left untouched")
+        print(f"[note] HANDOFF.md exists at {handoff} - left untouched")
         return handoff
     return None
 

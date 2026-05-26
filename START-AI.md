@@ -12,19 +12,19 @@ Bootstrap for `.instructions/` payloads. Load this file first when scaffold work
 
 ## Session Model
 
-Each phase — and each Phase 5 sub-phase — runs in its own AI session. When complete, write/update `HANDOFF.md` in the target project root and close the session. The next session starts fresh from `START-AI.md` + `HANDOFF.md` only.
+Each phase - and each Phase 5 sub-phase - runs in its own AI session. When complete, write/update `HANDOFF.md` in the target project root and close the session. The next session starts fresh from `START-AI.md` + `HANDOFF.md` only.
 
 ## Initial Load Rule
 
-Start each session with `START-AI.md` (this file) and `HANDOFF.md` in the target project root (if present — it is the resume contract). Then load only files needed for the current phase. Generate code only in the target project.
+Start each session with `START-AI.md` (this file) and `HANDOFF.md` in the target project root (if present - it is the resume contract). Then load only files needed for the current phase. Generate code only in the target project.
 
 ## File Loading Rule
 
-Just-in-time. One phase per session; for Phase 5, one sub-phase per session. Load only the files listed for the current phase or sub-phase (see `ai/SKILL.md` § Phase 5 file table). Add on-demand files only when the current sub-phase clearly needs them. Close the session when the gate passes; the next session resumes from `START-AI.md` + `HANDOFF.md`.
+Just-in-time. One phase per session; for Phase 5, one sub-phase per session. Load only the files listed for the current phase or sub-phase (see `ai/SKILL.md` section Phase 5 file table). Add on-demand files only when the current sub-phase clearly needs them. Close the session when the gate passes; the next session resumes from `START-AI.md` + `HANDOFF.md`.
 
-This rule is the same regardless of the model's context window. Lost-in-the-middle is real even at 200K — loading every skill hurts output quality. See [`support/OPERATIONS.md`](support/OPERATIONS.md) § Context Budgets.
+This rule is the same regardless of the model's context window. Lost-in-the-middle is real even at 200K - loading every skill hurts output quality. See [`support/OPERATIONS.md`](support/OPERATIONS.md) section Context Budgets.
 
-Load-set sizing is derived from `scaffoldMode` (`api-only` → required-only; `lite`/`full` → required + on-demand). See [`ai/SKILL.md`](ai/SKILL.md) § Load-Set Sizing.
+Load-set sizing is derived from `scaffoldMode` (`api-only` -> required-only; `lite`/`full` -> required + on-demand). See [`ai/SKILL.md`](ai/SKILL.md) section Load-Set Sizing.
 
 ## Phase-1 Artifact Lifecycle Rule
 
@@ -32,20 +32,20 @@ Load-set sizing is derived from `scaffoldMode` (`api-only` → required-only; `l
 
 **Rule of thumb:** *Fix the artifact first, then the code. When drift exists, the artifact loses to code reality.*
 
-- **New term, role, event, action, or design decision introduced this session** → update the relevant Phase-1 artifact **before** generating the code that uses it.
-- **Drift discovered** (code identifier or implemented decision diverges from artifact) → update the artifact to match accepted reality, then continue.
-- **Domain misunderstanding surfaces mid-Phase-5** → stop, clarify with the developer, update Phase-1 artifacts, then re-scaffold the affected slice. See [`support/OPERATIONS.md`](support/OPERATIONS.md) § Mid-Session Rollback Protocol.
+- **New term, role, event, action, or design decision introduced this session** -> update the relevant Phase-1 artifact **before** generating the code that uses it.
+- **Drift discovered** (code identifier or implemented decision diverges from artifact) -> update the artifact to match accepted reality, then continue.
+- **Domain misunderstanding surfaces mid-Phase-5** -> stop, clarify with the developer, update Phase-1 artifacts, then re-scaffold the affected slice. See [`support/OPERATIONS.md`](support/OPERATIONS.md) section Mid-Session Rollback Protocol.
 
-Canonical detail (what to update where, supersede vs rewrite, do-not-delete): [`README.md`](README.md) § Phase-1 Artifact Lifecycle. Verify currency at session close in `HANDOFF.md` (see [`support/HANDOFF.md`](support/HANDOFF.md) § Phase-1 Artifact Currency).
+Canonical detail (what to update where, supersede vs rewrite, do-not-delete): [`README.md`](README.md) section Phase-1 Artifact Lifecycle. Verify currency at session close in `HANDOFF.md` (see [`support/HANDOFF.md`](support/HANDOFF.md) section Phase-1 Artifact Currency).
 
 ## Session Start Router
 
 ```
 Is HANDOFF.md present?
-  YES → Resume from currentPhase/currentSubPhase. Skip Phase Router.
-  NO  → New project          → Phase Router
-        New entity            → load support/vertical-slice-checklist.md fast-path only
-        Brownfield adoption   → load ai/adopt-codebase.md (replaces Phase 1)
+  YES -> Resume from currentPhase/currentSubPhase. Skip Phase Router.
+  NO  -> New project          -> Phase Router
+        New entity            -> load support/vertical-slice-checklist.md fast-path only
+        Brownfield adoption   -> load ai/adopt-codebase.md (replaces Phase 1)
 ```
 
 **Brownfield adoption (C#/.NET/Azure profile only).** When `src/` already contains a buildable C#/.NET solution and no `.scaffold/` artifacts exist (or they're stale), use the adoption flow instead of the Phase 1 interview. The adoption flow derives Phase-1 artifacts from code inspection, then hands off into the regular workflow at Phase 2. Detail: [`ai/adopt-codebase.md`](ai/adopt-codebase.md).
@@ -56,11 +56,11 @@ Prefer CLIs over MCP over online resources. Use Microsoft Docs or Context7 when 
 
 ## Conflict Resolution Order
 
-See `ai/SKILL.md` § Non-Negotiables (canonical).
+See `ai/SKILL.md` section Non-Negotiables (canonical).
 
 ## Profiles
 
-Phase 1 is the **universal core** — domain discovery, ubiquitous language, design decisions in pure business language with no stack assumptions. Phases 2-5 run under a **stack profile** that maps the Phase 1 output to concrete resources, plans, contracts, and implementation skills.
+Phase 1 is the **universal core** - domain discovery, ubiquitous language, design decisions in pure business language with no stack assumptions. Phases 2-5 run under a **stack profile** that maps the Phase 1 output to concrete resources, plans, contracts, and implementation skills.
 
 The only profile shipped today is **C#/.NET/Azure**, indexed at [`profiles/csharp-dotnet-azure.md`](profiles/csharp-dotnet-azure.md) (in this repo) or `.instructions/profiles/csharp-dotnet-azure.md` (in installed apps). Every Phase 2-5 file referenced below is part of that profile.
 
@@ -68,21 +68,21 @@ The only profile shipped today is **C#/.NET/Azure**, indexed at [`profiles/cshar
 
 Each phase = one session. Load only the files listed for the current phase.
 
-- **Phase 1 (Domain Discovery — universal):** `ai/shared-understanding-interview.md`, `ai/domain-specification-schema.md`, `templates/ubiquitous-language-template.md`, `templates/design-decisions-template.md`. Walk every interview branch until the developer confirms, defaults, or defers each. Output: `.scaffold/domain-specification.yaml`, `.scaffold/UBIQUITOUS-LANGUAGE.md`, `.scaffold/DESIGN-DECISIONS.md` in target project (create the `.scaffold/` directory at project root if absent). Gate: developer reviews each artifact against its schema. → `HANDOFF.md` (project root) → close.
-- **Phase 2 (Resource Definition — C#/.NET/Azure profile):** `ai/resource-implementation-schema.md` + `.scaffold/DESIGN-DECISIONS.md`. Ask clarification questions for unresolved resource decisions, API surface, external integrations, scaling, caching, messaging, optional workloads. Output: `.scaffold/resource-implementation.yaml` with `externalDependencyModes` declared for every external dep. Gate: developer review. → `HANDOFF.md` → close.
-- **Phase 3 (Implementation Plan — C#/.NET/Azure profile):** `ai/implementation-plan.md` + Phase 1/2 schemas + project YAMLs (under `.scaffold/`). Pre-flight branches on `packageStrategy` (resolved in Phase 2):
-  - `feed` or `hybrid` — configure the private NuGet feed with the verified Python launcher from `support/python-setup.md`: `python {instructionsRoot}/scripts/configure-ef-packages-feed.py --root . --feed-url <url> --username <github-user> --prefix <packagePrefix>` (`{instructionsRoot}` is `.instructions` in an installed app and `.` in this repo); confirm `NUGET_AUTH_TOKEN` or an approved credential provider is available.
-  - `local` — no feed wiring required. Phase 4 generates `src/Packages/<packagePrefix>.*` projects from `localPackageLayers` and the solution references them via `<ProjectReference>`.
-  - `hybrid` only — Phase 4 also generates `src/Packages/<packagePrefix>.*` projects for every layer in `localPackageLayers`; layers covered by the feed remain `<PackageReference>` against `customNugetFeeds`.
+- **Phase 1 (Domain Discovery - universal):** `ai/shared-understanding-interview.md`, `ai/domain-specification-schema.md`, `templates/ubiquitous-language-template.md`, `templates/design-decisions-template.md`. Walk every interview branch until the developer confirms, defaults, or defers each. Output: `.scaffold/domain-specification.yaml`, `.scaffold/UBIQUITOUS-LANGUAGE.md`, `.scaffold/DESIGN-DECISIONS.md` in target project (create the `.scaffold/` directory at project root if absent). Gate: developer reviews each artifact against its schema. -> `HANDOFF.md` (project root) -> close.
+- **Phase 2 (Resource Definition - C#/.NET/Azure profile):** `ai/resource-implementation-schema.md` + `.scaffold/DESIGN-DECISIONS.md`. Ask clarification questions for unresolved resource decisions, API surface, external integrations, scaling, caching, messaging, optional workloads. Output: `.scaffold/resource-implementation.yaml` with `externalDependencyModes` declared for every external dep. Gate: developer review. -> `HANDOFF.md` -> close.
+- **Phase 3 (Implementation Plan - C#/.NET/Azure profile):** `ai/implementation-plan.md` + Phase 1/2 schemas + project YAMLs (under `.scaffold/`). Pre-flight branches on `packageStrategy` (resolved in Phase 2):
+  - `feed` or `hybrid` - configure the private NuGet feed with the verified Python launcher from `support/python-setup.md`: `python {instructionsRoot}/scripts/configure-ef-packages-feed.py --root . --feed-url <url> --username <github-user> --prefix <packagePrefix>` (`{instructionsRoot}` is `.instructions` in an installed app and `.` in this repo); confirm `NUGET_AUTH_TOKEN` or an approved credential provider is available.
+  - `local` - no feed wiring required. Phase 4 generates `src/Packages/<packagePrefix>.*` projects from `localPackageLayers` and the solution references them via `<ProjectReference>`.
+  - `hybrid` only - Phase 4 also generates `src/Packages/<packagePrefix>.*` projects for every layer in `localPackageLayers`; layers covered by the feed remain `<PackageReference>` against `customNugetFeeds`.
 
-  In every mode: verify `dotnet ef` is available. Prefer repo-local tooling (`dotnet new tool-manifest` then `dotnet tool install dotnet-ef` if missing); an existing user-global `dotnet-ef` is acceptable. Identify required CLIs/MCP servers per phase; populate the **Tooling & Environment Readiness** section of the plan. Output: `.scaffold/implementation-plan.md`. Gate: `dotnet restore` exits 0 + developer review of `.scaffold/implementation-plan.md`. → `HANDOFF.md` → close.
-- **Phase 4 (Contract Scaffolding — C#/.NET/Azure profile):** `ai/contract-scaffolding.md`, `skills/solution-structure.md`, `skills/package-dependencies.md`, `ai/placeholder-tokens.md`, `support/ef-packages-reference.md`. Generates: solution structure, interfaces, DTOs, entity shells, test infrastructure, no-op DI stubs. Gate: `dotnet build` succeeds on full solution including test projects. Set `currentPhase: 5`, `currentSubPhase: 5a`, and `contractsScaffolded: true` in `HANDOFF.md`. → close.
-- **Phase 5 (Implementation — C#/.NET/Azure profile):** one session per sub-phase (5a–5e: Foundation, App Core + Runtime, Optional Hosts, Quality + Delivery, Integration). Base: `ai/SKILL.md` + `ai/placeholder-tokens.md` + `ai/tdd-protocol.md` + `support/ef-packages-reference.md`. Per-sub-phase file lists are in `ai/SKILL.md` (Phase 5 file table). Gate per sub-phase: `dotnet build` + `dotnet test` (filter as appropriate). After the final enabled sub-phase, walk through `support/final-scaffold-checklist.md` manually.
+  In every mode: verify `dotnet ef` is available. Prefer repo-local tooling (`dotnet new tool-manifest` then `dotnet tool install dotnet-ef` if missing); an existing user-global `dotnet-ef` is acceptable. Identify required CLIs/MCP servers per phase; populate the **Tooling & Environment Readiness** section of the plan. Output: `.scaffold/implementation-plan.md`. Gate: `dotnet restore` exits 0 + developer review of `.scaffold/implementation-plan.md`. -> `HANDOFF.md` -> close.
+- **Phase 4 (Contract Scaffolding - C#/.NET/Azure profile):** `ai/contract-scaffolding.md`, `skills/solution-structure.md`, `skills/package-dependencies.md`, `ai/placeholder-tokens.md`, `support/ef-packages-reference.md`. Generates: solution structure, interfaces, DTOs, entity shells, test infrastructure, no-op DI stubs. Gate: `dotnet build` succeeds on full solution including test projects. Set `currentPhase: 5`, `currentSubPhase: 5a`, and `contractsScaffolded: true` in `HANDOFF.md`. -> close.
+- **Phase 5 (Implementation - C#/.NET/Azure profile):** one session per sub-phase (5a-5e: Foundation, App Core + Runtime, Optional Hosts, Quality + Delivery, Integration). Base: `ai/SKILL.md` + `ai/placeholder-tokens.md` + `ai/tdd-protocol.md` + `support/ef-packages-reference.md`. Per-sub-phase file lists are in `ai/SKILL.md` (Phase 5 file table). Gate per sub-phase: `dotnet build` + `dotnet test` (filter as appropriate). After the final enabled sub-phase, walk through `support/final-scaffold-checklist.md` manually.
 
 ## Reference Application
 
-A companion reference app **TaskFlow** demonstrates every pattern these instructions produce. Canonical detail (repo URL, AI access rules, do-not-copy-wholesale rule, when to consult): see [`support/reference-app.md`](support/reference-app.md) and [`support/taskflow-proof-map.md`](support/taskflow-proof-map.md) for the phase → area index.
+A companion reference app **TaskFlow** demonstrates every pattern these instructions produce. Canonical detail (repo URL, AI access rules, do-not-copy-wholesale rule, when to consult): see [`support/reference-app.md`](support/reference-app.md) and [`support/taskflow-proof-map.md`](support/taskflow-proof-map.md) for the phase -> area index.
 
 ## Event Boundary Rule
 
-See [skills/messaging.md](skills/messaging.md) § Event Boundary Rule (canonical) and [ai/contract-scaffolding.md](ai/contract-scaffolding.md) § Integration Events for Phase 4 contract placement.
+See [skills/messaging.md](skills/messaging.md) section Event Boundary Rule (canonical) and [ai/contract-scaffolding.md](ai/contract-scaffolding.md) section Integration Events for Phase 4 contract placement.

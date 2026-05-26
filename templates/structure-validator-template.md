@@ -8,7 +8,7 @@
 
 ## Purpose
 
-Validates DTO structure (required fields, string lengths, enum ranges, child collection constraints) **before** domain factory/update calls. Static class — no DI registration needed.
+Validates DTO structure (required fields, string lengths, enum ranges, child collection constraints) **before** domain factory/update calls. Static class - no DI registration needed.
 
 Returns `Result<{Entity}Dto>` so services can short-circuit on invalid input without touching the domain layer.
 
@@ -18,7 +18,7 @@ Returns `Result<{Entity}Dto>` so services can short-circuit on invalid input wit
 
 ### Generic Base Validators (Application.Services/Rules/StructureValidators.cs)
 
-Shared validation for all entities — validates presence, TenantId, and Id constraints via generic type constraints. Per-entity validators delegate to these first.
+Shared validation for all entities - validates presence, TenantId, and Id constraints via generic type constraints. Per-entity validators delegate to these first.
 
 ```csharp
 using Application.Models.Shared;
@@ -118,13 +118,13 @@ internal static class {Entity}StructureValidator
 
 ## Rules
 
-- **Static class** — no DI registration. Call directly: `{Entity}StructureValidator.ValidateCreate(dto)`.
-- **Delegate common checks** — Per-entity validators call `StructureValidators.ValidateCreate/ValidateUpdate` first for null, TenantId, and Id checks. Only add entity-specific rules after.
+- **Static class** - no DI registration. Call directly: `{Entity}StructureValidator.ValidateCreate(dto)`.
+- **Delegate common checks** - Per-entity validators call `StructureValidators.ValidateCreate/ValidateUpdate` first for null, TenantId, and Id checks. Only add entity-specific rules after.
 - Keep validations purely structural (field presence, length, range). Domain invariants belong in [domain-rules-template](domain-rules-template.md).
-- **Use `DomainConstants`** for string length limits — single source of truth shared with EF configuration and domain `Valid()`. Do not use magic numbers or contextual tokens like `{NameMaxLength}`.
-- Provide separate `ValidateCreate` and `ValidateUpdate` methods — update requires `Id` (via generic `ValidateUpdate<T>`), create may have different required fields.
+- **Use `DomainConstants`** for string length limits - single source of truth shared with EF configuration and domain `Valid()`. Do not use magic numbers or contextual tokens like `{NameMaxLength}`.
+- Provide separate `ValidateCreate` and `ValidateUpdate` methods - update requires `Id` (via generic `ValidateUpdate<T>`), create may have different required fields.
 - Return all errors at once (don't short-circuit on first failure) so the caller gets a complete validation report.
-- Add or remove validated properties to match the entity's DTO — `dto.Description` is shown as an example; adjust to your entity's actual fields.
+- Add or remove validated properties to match the entity's DTO - `dto.Description` is shown as an example; adjust to your entity's actual fields.
 
 ## Verification Checklist
 
@@ -132,7 +132,7 @@ internal static class {Entity}StructureValidator
 - [ ] Per-entity validator delegates common checks to `StructureValidators` first
 - [ ] `ValidateCreate` checks all required fields for new entity creation
 - [ ] `ValidateUpdate` requires `Id` and validates mutable fields
-- [ ] String length limits use `DomainConstants` — single source of truth with EF config and domain `Valid()`
+- [ ] String length limits use `DomainConstants` - single source of truth with EF config and domain `Valid()`
 - [ ] Returns `Result<{Entity}Dto>` consistent with service layer pattern
 - [ ] Service template calls `ValidateCreate`/`ValidateUpdate` before domain operations
-- [ ] No domain logic in validator — structural checks only
+- [ ] No domain logic in validator - structural checks only

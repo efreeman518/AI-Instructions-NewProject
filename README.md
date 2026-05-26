@@ -2,7 +2,7 @@
 
 Pragmatic instruction set for AI-assisted scaffolding of C#/.NET applications and services.
 
-**Profile structure.** Phase 1 (domain discovery, ubiquitous language, design decisions) is a **universal core** — stack-agnostic and reusable. Phases 2-5 (resource definition, planning, contracts, implementation) run under the **C#/.NET/Azure profile** indexed at [profiles/csharp-dotnet-azure.md](profiles/csharp-dotnet-azure.md). That is the only profile shipped today; the boundary is documented so a second profile (e.g. TypeScript/Node, Python/FastAPI) could plug in later without restructuring the repo.
+**Profile structure.** Phase 1 (domain discovery, ubiquitous language, design decisions) is a **universal core** - stack-agnostic and reusable. Phases 2-5 (resource definition, planning, contracts, implementation) run under the **C#/.NET/Azure profile** indexed at [profiles/csharp-dotnet-azure.md](profiles/csharp-dotnet-azure.md). That is the only profile shipped today; the boundary is documented so a second profile (e.g. TypeScript/Node, Python/FastAPI) could plug in later without restructuring the repo.
 
 ## AI Agents & Harnesses - Quick Start
 
@@ -10,14 +10,14 @@ Clone this repo then run the install script to copy the instruction files into a
 
 ### Supported harnesses
 
-Each harness has a project-memory file (auto-loaded on session start) and, where supported, a scoped command/agent picker. The three project-memory files (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`) play the same role for their respective tools — the installer writes all three so any agent that opens the repo finds its native entrypoint.
+Each harness has a project-memory file (auto-loaded on session start) and, where supported, a scoped command/agent picker. The three project-memory files (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`) play the same role for their respective tools - the installer writes all three so any agent that opens the repo finds its native entrypoint.
 
 | Harness | Project-memory file | Scoped command/agent picker | Full scaffold | Vertical slice | Brownfield adoption |
 |---|---|---|---|---|---|
-| Codex CLI (and other CLI agents that read `AGENTS.md`) | `AGENTS.md` | — (no stable convention yet) | Prompt: `Load .instructions/START-AI.md and run the scaffold router` | Prompt: `Load .instructions/support/vertical-slice-checklist.md` | Prompt: `Load .instructions/ai/adopt-codebase.md and run the adoption flow` |
+| Codex CLI (and other CLI agents that read `AGENTS.md`) | `AGENTS.md` | - (no stable convention yet) | Prompt: `Load .instructions/START-AI.md and run the scaffold router` | Prompt: `Load .instructions/support/vertical-slice-checklist.md` | Prompt: `Load .instructions/ai/adopt-codebase.md and run the adoption flow` |
 | GitHub Copilot in VS Code | `.github/copilot-instructions.md` | `.github/agents/` | Select `dotnet-scaffold` agent | Select `vertical-slice` agent | Select `scaffold-adopt` agent |
 | Claude Code / Claude VS Code | `CLAUDE.md` | `.claude/commands/` | `/scaffold <domain>` | `/vertical-slice <Entity>` | `/scaffold-adopt` |
-| Generic AI assistant | — (point it at `.instructions/START-AI.md` manually) | — | Prompt: `Load .instructions/START-AI.md and run the scaffold router` | Prompt: `Load .instructions/support/vertical-slice-checklist.md` | Prompt: `Load .instructions/ai/adopt-codebase.md and run the adoption flow` |
+| Generic AI assistant | - (point it at `.instructions/START-AI.md` manually) | - | Prompt: `Load .instructions/START-AI.md and run the scaffold router` | Prompt: `Load .instructions/support/vertical-slice-checklist.md` | Prompt: `Load .instructions/ai/adopt-codebase.md and run the adoption flow` |
 
 All harnesses follow the same flow: scaffold sessions boot from `.instructions/START-AI.md`, resume from `HANDOFF.md` if present, run one phase, write `HANDOFF.md`, stop. Vertical-slice sessions load `.instructions/support/vertical-slice-checklist.md` and generate one full entity stack against the gate. **Brownfield adoption** replaces the Phase 1 interview with a code-inspection pass that derives `.scaffold/domain-specification.yaml`, `.scaffold/UBIQUITOUS-LANGUAGE.md`, and `.scaffold/DESIGN-DECISIONS.md` from the existing solution; the project then continues into Phase 2 identically to a greenfield scaffold. Detail: [ai/adopt-codebase.md](ai/adopt-codebase.md).
 
@@ -29,7 +29,7 @@ Use `install-to-project.py` from a local clone of this repo. It copies only the 
 
 Do not install this payload into the TaskFlow reference app (`AI-Instructions-ReferenceApp`) during normal maintenance. TaskFlow is the proof/reference implementation that these instructions point to; it should not carry its own `.instructions/` copy unless you are deliberately smoke-testing installer behavior.
 
-`--target` is the **app repo root** (not the `.instructions/` folder). The script creates `<target>/.instructions/` if it does not exist, and writes harness entrypoints (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.claude/commands/`, `.github/agents/`) at the target root so CLI agents, Claude, and Copilot discover the scoped scaffold instructions. Existing root-level `AGENTS.md`/`CLAUDE.md`/`copilot-instructions.md` files are preserved — the installer appends the scaffold block inside sentinel markers (`<!-- ai-scaffold: start --> ... <!-- ai-scaffold: end -->`) so re-running the installer is idempotent.
+`--target` is the **app repo root** (not the `.instructions/` folder). The script creates `<target>/.instructions/` if it does not exist, and writes harness entrypoints (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.claude/commands/`, `.github/agents/`) at the target root so CLI agents, Claude, and Copilot discover the scoped scaffold instructions. Existing root-level `AGENTS.md`/`CLAUDE.md`/`copilot-instructions.md` files are preserved - the installer appends the scaffold block inside sentinel markers (`<!-- ai-scaffold: start --> ... <!-- ai-scaffold: end -->`) so re-running the installer is idempotent.
 
 ```bash
 # from a clone of this repo
@@ -74,21 +74,21 @@ Flags:
 After install:
 
 - [ ] Decide the shared base-type strategy (`packageStrategy` in `.scaffold/resource-implementation.yaml`):
-  - `feed` — consume `<packagePrefix>.*` from a private NuGet feed. Configure with `python .instructions/scripts/configure-ef-packages-feed.py --root . --feed-url https://nuget.pkg.github.com/{owner}/index.json --username {github-user} --prefix {packagePrefix}`.
-  - `local` — no private feed. Phase 4 generates `src/Packages/<packagePrefix>.*` packable projects you can publish later.
-  - `hybrid` — feed plus a `localPackageLayers` list for any gaps. Run the helper above for feed access; locally-generated projects use the same prefix.
+  - `feed` - consume `<packagePrefix>.*` from a private NuGet feed. Configure with `python .instructions/scripts/configure-ef-packages-feed.py --root . --feed-url https://nuget.pkg.github.com/{owner}/index.json --username {github-user} --prefix {packagePrefix}`.
+  - `local` - no private feed. Phase 4 generates `src/Packages/<packagePrefix>.*` packable projects you can publish later.
+  - `hybrid` - feed plus a `localPackageLayers` list for any gaps. Run the helper above for feed access; locally-generated projects use the same prefix.
 - [ ] Confirm `dotnet restore` exits 0.
 - [ ] Phase gates rely on `dotnet build` and `dotnet test`; the scaffold checklist at `support/final-scaffold-checklist.md` covers end-to-end acceptance.
 
 ### Manual copy (alternative)
 
-If you prefer to copy by hand: harness discovery files (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.github/agents/`, `.claude/commands/`) live at the **app repo root**, not inside `.instructions/`. Everything else goes under `.instructions/`. Do not copy scaffold routing into a developer's global assistant instruction files — the per-app placement is what keeps scope correct. The install script above does this automatically and handles the merge into existing root-level files.
+If you prefer to copy by hand: harness discovery files (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.github/agents/`, `.claude/commands/`) live at the **app repo root**, not inside `.instructions/`. Everything else goes under `.instructions/`. Do not copy scaffold routing into a developer's global assistant instruction files - the per-app placement is what keeps scope correct. The install script above does this automatically and handles the merge into existing root-level files.
 
 ---
 
 ## Purpose
 
-This instruction set turns an AI coding assistant into a guided scaffolding engine for production-grade C#/.NET solutions. Instead of generating throwaway boilerplate, it drives a structured five-phase process — from domain discovery through implementation — producing consistent, buildable, testable code that follows clean architecture and the conventions of a mature engineering team.
+This instruction set turns an AI coding assistant into a guided scaffolding engine for production-grade C#/.NET solutions. Instead of generating throwaway boilerplate, it drives a structured five-phase process - from domain discovery through implementation - producing consistent, buildable, testable code that follows clean architecture and the conventions of a mature engineering team.
 
 The goal is not to replace engineering judgment but to compress the multi day/week "green-field to first vertical slice" timeline down to hours, with guardrails that prevent common shortcuts (missing tests, leaky abstractions, inconsistent naming).
 
@@ -101,21 +101,21 @@ Phase 1 also creates durable collaboration artifacts before code planning starts
 
 > **Rule of thumb:** *Fix the artifact first, then the code. When drift exists, the artifact loses to code reality.*
 
-`.scaffold/domain-specification.yaml`, `.scaffold/UBIQUITOUS-LANGUAGE.md`, and `.scaffold/DESIGN-DECISIONS.md` are **living source of truth**, not snapshots. Every phase consumes them, so they must stay current as the project evolves — otherwise later AI sessions reason from a stale model and naming/decision drift creeps in.
+`.scaffold/domain-specification.yaml`, `.scaffold/UBIQUITOUS-LANGUAGE.md`, and `.scaffold/DESIGN-DECISIONS.md` are **living source of truth**, not snapshots. Every phase consumes them, so they must stay current as the project evolves - otherwise later AI sessions reason from a stale model and naming/decision drift creeps in.
 
-This rule is enforced at every session boundary: [START-AI.md](START-AI.md) § Phase-1 Artifact Lifecycle Rule, [ai/SKILL.md](ai/SKILL.md) § Non-Negotiables and § Scaffold Definition of Done, and the per-session check in [support/HANDOFF.md](support/HANDOFF.md) § Phase-1 Artifact Currency.
+This rule is enforced at every session boundary: [START-AI.md](START-AI.md) section Phase-1 Artifact Lifecycle Rule, [ai/SKILL.md](ai/SKILL.md) section Non-Negotiables and section Scaffold Definition of Done, and the per-session check in [support/HANDOFF.md](support/HANDOFF.md) section Phase-1 Artifact Currency.
 
 **When to update each:**
 
-- **New entity, term, role, event, or domain action** → append the term to `.scaffold/UBIQUITOUS-LANGUAGE.md` and update the relevant section of `.scaffold/domain-specification.yaml` (entity, customAction, event, etc.) before generating code. The `/vertical-slice` checklist enforces this as a pre-flight step.
-- **New design choice or revision of an earlier one** → append to `.scaffold/DESIGN-DECISIONS.md`. Do not silently rewrite earlier entries; mark the prior decision as superseded and link forward, so the dependency graph remains traceable.
-- **Schema or relationship change** → update `.scaffold/domain-specification.yaml` first, then propagate to EF configuration, repositories, DTOs, mappers, and tests in that order.
+- **New entity, term, role, event, or domain action** -> append the term to `.scaffold/UBIQUITOUS-LANGUAGE.md` and update the relevant section of `.scaffold/domain-specification.yaml` (entity, customAction, event, etc.) before generating code. The `/vertical-slice` checklist enforces this as a pre-flight step.
+- **New design choice or revision of an earlier one** -> append to `.scaffold/DESIGN-DECISIONS.md`. Do not silently rewrite earlier entries; mark the prior decision as superseded and link forward, so the dependency graph remains traceable.
+- **Schema or relationship change** -> update `.scaffold/domain-specification.yaml` first, then propagate to EF configuration, repositories, DTOs, mappers, and tests in that order.
 
-**Drift signal.** If `.scaffold/UBIQUITOUS-LANGUAGE.md` and code identifiers diverge, the doc is wrong, not the code (per [support/final-scaffold-checklist.md](support/final-scaffold-checklist.md) language-failure rule). Update the doc to match accepted reality before changing code names. The same applies to `.scaffold/DESIGN-DECISIONS.md` — if the implemented architecture has moved past a recorded decision, supersede the entry rather than leaving the doc to contradict the code.
+**Drift signal.** If `.scaffold/UBIQUITOUS-LANGUAGE.md` and code identifiers diverge, the doc is wrong, not the code (per [support/final-scaffold-checklist.md](support/final-scaffold-checklist.md) language-failure rule). Update the doc to match accepted reality before changing code names. The same applies to `.scaffold/DESIGN-DECISIONS.md` - if the implemented architecture has moved past a recorded decision, supersede the entry rather than leaving the doc to contradict the code.
 
 **Mid-scaffold corrections.** When a domain misunderstanding surfaces mid-Phase-5 (entity purpose wrong, term mismatched, decision violated), [support/OPERATIONS.md](support/OPERATIONS.md) is the canonical recovery path: clarify with the user, update the Phase-1 artifacts, then re-scaffold the affected slice.
 
-**Do not delete.** These artifacts are the onboarding surface for every future AI session, code reviewer, and new team member. Keep them in the repo root for the life of the project — even when they grow long, the cost of reading them is far lower than the cost of an AI session reasoning from absent context.
+**Do not delete.** These artifacts are the onboarding surface for every future AI session, code reviewer, and new team member. Keep them in the repo root for the life of the project - even when they grow long, the cost of reading them is far lower than the cost of an AI session reasoning from absent context.
 
 ## Phases
 
@@ -123,36 +123,36 @@ Each phase runs in its own AI session and produces artifacts the next phase cons
 
 | Phase | Purpose | Output |
 |---|---|---|
-| **1 — Domain Discovery** *(universal)* | Structured interview to reach shared understanding, define ubiquitous language, resolve decision dependencies, and capture entities, relationships, events, workflows, and business rules in pure business language — no implementation details. | `.scaffold/domain-specification.yaml`, `.scaffold/UBIQUITOUS-LANGUAGE.md`, `.scaffold/DESIGN-DECISIONS.md` |
-| **2 — Resource Definition** *(C#/.NET/Azure profile)* | Map each resource requirement to concrete technology choices — data stores, messaging, AI capabilities, hosting models. | `.scaffold/resource-implementation.yaml` |
-| **3 — Implementation Planning** *(C#/.NET/Azure profile)* | Resolve open questions, verify tooling (NuGet feeds, CLIs), discover project-specific CLIs and MCP servers, and produce a sequenced build plan. | `.scaffold/implementation-plan.md` |
-| **4 — Contract Scaffolding** *(C#/.NET/Azure profile)* | Generate solution structure, interfaces, DTOs, entity shells, test infrastructure, and no-op DI stubs. Gate: `dotnet build` succeeds on the full solution. | Compilable skeleton |
-| **5 — Implementation (TDD)** *(C#/.NET/Azure profile)* | Build vertical slices entity-by-entity across sub-phases 5a–5e (Foundation, App Core + Runtime, Optional Hosts, Quality + Delivery, Integration). Phase 5a uses test-driven development (write tests first → red → implement → green); 5b is mixed (TDD for app/API, tests-after for runtime); 5c–5e are tests-after. | Production code + passing tests |
+| **1 - Domain Discovery** *(universal)* | Structured interview to reach shared understanding, define ubiquitous language, resolve decision dependencies, and capture entities, relationships, events, workflows, and business rules in pure business language - no implementation details. | `.scaffold/domain-specification.yaml`, `.scaffold/UBIQUITOUS-LANGUAGE.md`, `.scaffold/DESIGN-DECISIONS.md` |
+| **2 - Resource Definition** *(C#/.NET/Azure profile)* | Map each resource requirement to concrete technology choices - data stores, messaging, AI capabilities, hosting models. | `.scaffold/resource-implementation.yaml` |
+| **3 - Implementation Planning** *(C#/.NET/Azure profile)* | Resolve open questions, verify tooling (NuGet feeds, CLIs), discover project-specific CLIs and MCP servers, and produce a sequenced build plan. | `.scaffold/implementation-plan.md` |
+| **4 - Contract Scaffolding** *(C#/.NET/Azure profile)* | Generate solution structure, interfaces, DTOs, entity shells, test infrastructure, and no-op DI stubs. Gate: `dotnet build` succeeds on the full solution. | Compilable skeleton |
+| **5 - Implementation (TDD)** *(C#/.NET/Azure profile)* | Build vertical slices entity-by-entity across sub-phases 5a-5e (Foundation, App Core + Runtime, Optional Hosts, Quality + Delivery, Integration). Phase 5a uses test-driven development (write tests first -> red -> implement -> green); 5b is mixed (TDD for app/API, tests-after for runtime); 5c-5e are tests-after. | Production code + passing tests |
 
-Phase 1 is stack-agnostic; Phase 2+ is the C#/.NET/Azure profile. See [profiles/csharp-dotnet-azure.md](profiles/csharp-dotnet-azure.md) for the file index, and [START-AI.md](START-AI.md) § Profiles and § Phase Router for routing detail.
+Phase 1 is stack-agnostic; Phase 2+ is the C#/.NET/Azure profile. See [profiles/csharp-dotnet-azure.md](profiles/csharp-dotnet-azure.md) for the file index, and [START-AI.md](START-AI.md) section Profiles and section Phase Router for routing detail.
 
 ## Approach
 
 The instruction set is designed around three core ideas:
 
 **1. Phased workflow with TDD.**
-Five phases prevent hallucinated architecture by ensuring verified context before code is written. Phase 4 produces a compilable skeleton so that Phase 5a/5b can follow a strict red/green TDD cycle — tests are written against contracts before any implementation exists. See [ai/tdd-protocol.md](ai/tdd-protocol.md).
+Five phases prevent hallucinated architecture by ensuring verified context before code is written. Phase 4 produces a compilable skeleton so that Phase 5a/5b can follow a strict red/green TDD cycle - tests are written against contracts before any implementation exists. See [ai/tdd-protocol.md](ai/tdd-protocol.md).
 
 **2. Skills and templates as composable units.**
 Implementation knowledge is split into focused skill files (how things work) and template files plus a `templates/index.md` index (what to generate). The Phase Router in `START-AI.md` and the Phase 5 file table in `ai/SKILL.md` tell the agent which files to load for the current phase or sub-phase.
 
 **3. Composition patterns, not documentation alone.**
-Pattern files in `patterns/` document how generated components wire together across projects — database context pooling, API startup sequences, request context resolution, cache configuration, and Aspire resource wiring. The pattern index lives in `ai/SKILL.md` § Non-Negotiables (one bullet per pattern, with the phase to load it). This grounds the generated output in proven, real-world patterns rather than abstract descriptions.
+Pattern files in `patterns/` document how generated components wire together across projects - database context pooling, API startup sequences, request context resolution, cache configuration, and Aspire resource wiring. The pattern index lives in `ai/SKILL.md` section Non-Negotiables (one bullet per pattern, with the phase to load it). This grounds the generated output in proven, real-world patterns rather than abstract descriptions.
 
 ## Reference Application
 
-A companion reference app — **TaskFlow** — demonstrates every pattern and convention these instructions produce: dual DbContext pooling, YARP gateway, Aspire orchestration, FusionCache + Redis backplane, TickerQ scheduling, Azure Functions, multi-tenancy, scaffold-mode auth, Uno WASM UI, Blazor UI, and React/Vite UI.
+A companion reference app - **TaskFlow** - demonstrates every pattern and convention these instructions produce: dual DbContext pooling, YARP gateway, Aspire orchestration, FusionCache + Redis backplane, TickerQ scheduling, Azure Functions, multi-tenancy, scaffold-mode auth, Uno WASM UI, Blazor UI, and React/Vite UI.
 
 TaskFlow is a reference/proof target, not a normal install target for `.instructions/`. Keep scaffold runtime instructions in this repository and consult TaskFlow through [support/reference-app.md](support/reference-app.md) and [support/taskflow-proof-map.md](support/taskflow-proof-map.md).
 
 **Repository:** <https://github.com/efreeman518/AI-Instructions-ReferenceApp>
 
-For consultation rules, AI access (local clone vs GitHub MCP), and the phase → area pointer map, see [support/reference-app.md](support/reference-app.md) and [support/taskflow-proof-map.md](support/taskflow-proof-map.md).
+For consultation rules, AI access (local clone vs GitHub MCP), and the phase -> area pointer map, see [support/reference-app.md](support/reference-app.md) and [support/taskflow-proof-map.md](support/taskflow-proof-map.md).
 
 ## Quick Start
 
@@ -162,19 +162,19 @@ If you want the shortest path from zero context to first scaffold:
 2. Run `python scripts/install-to-project.py --target /path/to/your-app-repo --verify` from this repo.
 3. Start through the harness table above: `AGENTS.md`, Copilot agent, Claude command, or a prompt that loads `.instructions/START-AI.md`.
 
-**First time?** Use the [Minimum Viable Scaffold (MVS)](support/minimum-viable-scaffold.md) — paste-ready prompts (one per phase, with Phase 5 split into 5a + 5b sessions) that produce an API-only app with one entity, no Gateway/UI/AI/messaging. You can promote to a richer profile once the loop feels familiar.
+**First time?** Use the [Minimum Viable Scaffold (MVS)](support/minimum-viable-scaffold.md) - paste-ready prompts (one per phase, with Phase 5 split into 5a + 5b sessions) that produce an API-only app with one entity, no Gateway/UI/AI/messaging. You can promote to a richer profile once the loop feels familiar.
 
 Read the rest of this guide when you need setup details, MCP recommendations, or troubleshooting rules.
 
 ## Prerequisites
 
 - `git`
-- A current machine- or user-global Python 3 to run `install-to-project.py`, `configure-ef-packages-feed.py`, and `validate-instructions.py`; see [support/python-setup.md](support/python-setup.md). **On Windows, no single launcher is universal:** `py -3` works on machines with the Python launcher installed, and the bare `python` command works when a real Python is on PATH (it may resolve to the Microsoft-Store stub if not). Run `where python` and `where py` to see what's available, then pick the one that prints a real path. `.venv\Scripts\python.exe` is acceptable for source-repo authoring, but it is not the preferred cross-repo setup. The scripts have no Python-version-specific syntax — any current 3.x works.
+- A current machine- or user-global Python 3 to run `install-to-project.py`, `configure-ef-packages-feed.py`, and `validate-instructions.py`; see [support/python-setup.md](support/python-setup.md). **On Windows, no single launcher is universal:** `py -3` works on machines with the Python launcher installed, and the bare `python` command works when a real Python is on PATH (it may resolve to the Microsoft-Store stub if not). Run `where python` and `where py` to see what's available, then pick the one that prints a real path. `.venv\Scripts\python.exe` is acceptable for source-repo authoring, but it is not the preferred cross-repo setup. The scripts have no Python-version-specific syntax - any current 3.x works.
 - Latest stable `.NET SDK`
-- Docker engine running (Docker Desktop not required) — Aspire relies on it for hosting local container services
+- Docker engine running (Docker Desktop not required) - Aspire relies on it for hosting local container services
 - VS Code + AI assistant
 - Local SQL Server/Azure SQL access for dev scenarios
-- For `packageStrategy: feed` or `hybrid` only — read access to the configured private NuGet feed (e.g., GitHub Packages for the canonical `EF.*` example); expose via `NUGET_AUTH_TOKEN` or an approved credential provider before Phase 3/4 restore. `packageStrategy: local` skips this entirely.
+- For `packageStrategy: feed` or `hybrid` only - read access to the configured private NuGet feed (e.g., GitHub Packages for the canonical `EF.*` example); expose via `NUGET_AUTH_TOKEN` or an approved credential provider before Phase 3/4 restore. `packageStrategy: local` skips this entirely.
 - If using Uno UI:
   - `dotnet new install Uno.Templates`
   - `dotnet tool install -g uno.check` then `uno-check`
@@ -190,13 +190,13 @@ Version policy: prefer latest stable packages and SDKs.
 
 Phase 2 resolves how shared base-type contracts (entity bases, repository bases, request context, results, paged response, specifications, messaging interfaces) are sourced. Three modes live in `.scaffold/resource-implementation.yaml` under `packageStrategy`:
 
-- **`feed`** — pre-built NuGet packages consumed from `customNugetFeeds` (e.g., the canonical `EF.*` example on GitHub Packages). Requires feed read access.
-- **`local`** — no private feed. Phase 4 generates one packable project per layer in `localPackageLayers` under `src/Packages/<packagePrefix>.<Layer>`. The solution consumes them via `<ProjectReference>`. Publish later with `dotnet pack` and migrate to `feed` when ready.
-- **`hybrid`** — feed plus locally-generated gaps. Layers the feed lacks live in `localPackageLayers` under the same prefix so they can be pushed into the feed later without renaming.
+- **`feed`** - pre-built NuGet packages consumed from `customNugetFeeds` (e.g., the canonical `EF.*` example on GitHub Packages). Requires feed read access.
+- **`local`** - no private feed. Phase 4 generates one packable project per layer in `localPackageLayers` under `src/Packages/<packagePrefix>.<Layer>`. The solution consumes them via `<ProjectReference>`. Publish later with `dotnet pack` and migrate to `feed` when ready.
+- **`hybrid`** - feed plus locally-generated gaps. Layers the feed lacks live in `localPackageLayers` under the same prefix so they can be pushed into the feed later without renaming.
 
 `packagePrefix` is required in every mode; `EF` is the canonical example used throughout these instructions.
 
-#### `feed` or `hybrid` — Private Feed Setup
+#### `feed` or `hybrid` - Private Feed Setup
 
 Local restore requires package read access through `NUGET_AUTH_TOKEN` or an approved credential provider.
 
@@ -215,9 +215,9 @@ dotnet restore
 
 Never commit a PAT. CI should inject the same token through secret variables.
 
-#### `local` — No Feed Setup Needed
+#### `local` - No Feed Setup Needed
 
-`nuget.config` only needs `nuget.org` (the file may be absent and NuGet's default applies). Phase 4 generates the packable projects from `localPackageLayers`. Verify with `dotnet restore` after Phase 4 — no auth token required.
+`nuget.config` only needs `nuget.org` (the file may be absent and NuGet's default applies). Phase 4 generates the packable projects from `localPackageLayers`. Verify with `dotnet restore` after Phase 4 - no auth token required.
 
 ## Repository Setup
 
@@ -290,7 +290,7 @@ Optional additions: Git, Docker (`docker` CLI preferred), Memory, web-search MCP
 
 Phase 3 analyzes `.scaffold/resource-implementation.yaml` technology choices and actively researches available CLIs and MCP servers for the project's specific libraries and services. Results are recorded in the implementation plan's **Tooling & Environment Readiness** section and verified at the start of each subsequent phase.
 
-**CLI → MCP → online resources:** Prefer CLI tools first (lowest token cost), then MCP servers for interactive exploration, then documentation URLs and GitHub repos the AI can fetch during implementation.
+**CLI -> MCP -> online resources:** Prefer CLI tools first (lowest token cost), then MCP servers for interactive exploration, then documentation URLs and GitHub repos the AI can fetch during implementation.
 
 ## Where Things Live
 
@@ -298,14 +298,14 @@ A short map of the repo so you know which directory owns what kind of content. U
 
 | Folder | Owns | Loaded when |
 |---|---|---|
-| Root project-memory files: `AGENTS.md` (Codex / CLI agents), `CLAUDE.md` (Claude), `.github/copilot-instructions.md` (Copilot) — three vendor-specific entrypoints, same role | Harness discovery and explicit scaffold trigger detection | Auto-loaded by the harness; must stay thin |
+| Root project-memory files: `AGENTS.md` (Codex / CLI agents), `CLAUDE.md` (Claude), `.github/copilot-instructions.md` (Copilot) - three vendor-specific entrypoints, same role | Harness discovery and explicit scaffold trigger detection | Auto-loaded by the harness; must stay thin |
 | Root scoped pickers: `.claude/commands/` (Claude slash commands), `.github/agents/` (Copilot agent picker) | Harness-specific scaffold launchers | Selected only for scaffold, vertical-slice, or brownfield-adoption work |
 | `START-AI.md` in this repo / `.instructions/START-AI.md` in installed apps | Canonical bootstrap: session router, phase router, load rules, reference-app pointer | Loaded only after explicit scaffold request |
 | `ai/` | Phase orchestration: schemas, interview, contract scaffolding, TDD protocol, placeholder tokens, Phase 5 file table (`SKILL.md`) | Per-phase routing |
 | `profiles/` | Per-stack profile indexes. Lists which Phase 2-5 files belong to each profile. Today: `csharp-dotnet-azure.md` (the only profile shipped) | Reference; consulted to confirm the active stack mapping |
 | `skills/` | Reusable how-to per concern (domain, data, API, gateway, caching, identity, testing, UI, etc.) | Per-sub-phase, by `SKILL.md` file table |
 | `templates/` | Code-shape templates for generated artifacts (entity, EF config, repository, service, endpoint, tests) | Per-sub-phase, paired with the matching skill |
-| `patterns/` | Cross-project wiring (data layer, API host, infrastructure, expected output) | On-demand; index in `ai/SKILL.md` § Non-Negotiables |
+| `patterns/` | Cross-project wiring (data layer, API host, infrastructure, expected output) | On-demand; index in `ai/SKILL.md` section Non-Negotiables |
 | `support/` | Operator-facing detail: execution gates, operations protocols, troubleshooting, HANDOFF template, MVS, golden path, prompt catalog, reference-app proof map | On failure, on session boundary, or on need |
 | `schemas/` | JSON Schemas for `.scaffold/domain-specification.yaml` and `.scaffold/resource-implementation.yaml` | Phase 1/2 validation |
 | `scripts/` | Author + operator tooling: install-to-project, configure-ef-packages-feed, validate-instructions | One-off |
@@ -322,19 +322,19 @@ Rule of thumb when adding new content: it goes in `skills/` if it's "how to do X
 
 `scaffoldMode` drives load-set sizing per Phase 5 sub-phase; the optional-host toggles (`includeGateway`, `includeUnoUI`, `includeReactUI`, `includeScheduler`, etc.) are independent flags in `.scaffold/resource-implementation.yaml` and can be enabled in any mode. `api-only` simply biases the defaults toward "off".
 
-Defaults: [ai/resource-implementation-schema.md](ai/resource-implementation-schema.md) **Canonical Defaults**. Load-set sizing: [ai/SKILL.md](ai/SKILL.md) § Load-Set Sizing.
+Defaults: [ai/resource-implementation-schema.md](ai/resource-implementation-schema.md) **Canonical Defaults**. Load-set sizing: [ai/SKILL.md](ai/SKILL.md) section Load-Set Sizing.
 
 ## Happy Path
 
 1. Prerequisites and repo setup (see [Quick Start](#quick-start) and [Prerequisites](#prerequisites))
-2. Phase 1: Domain YAML + language + decisions → [ai/shared-understanding-interview.md](ai/shared-understanding-interview.md)
-3. Phase 2: Resource YAML → [ai/resource-implementation-schema.md](ai/resource-implementation-schema.md)
-4. Phase 3: Implementation plan → [ai/implementation-plan.md](ai/implementation-plan.md)
-5. Phase 4: Contract scaffolding → [ai/contract-scaffolding.md](ai/contract-scaffolding.md)
-6. Phase 5: Implementation (TDD) → [ai/SKILL.md](ai/SKILL.md) + [ai/tdd-protocol.md](ai/tdd-protocol.md)
-7. Validate gates → [support/execution-gates.md](support/execution-gates.md)
-8. Final scaffold check → [support/final-scaffold-checklist.md](support/final-scaffold-checklist.md)
-9. Troubleshoot → [support/troubleshooting.md](support/troubleshooting.md)
+2. Phase 1: Domain YAML + language + decisions -> [ai/shared-understanding-interview.md](ai/shared-understanding-interview.md)
+3. Phase 2: Resource YAML -> [ai/resource-implementation-schema.md](ai/resource-implementation-schema.md)
+4. Phase 3: Implementation plan -> [ai/implementation-plan.md](ai/implementation-plan.md)
+5. Phase 4: Contract scaffolding -> [ai/contract-scaffolding.md](ai/contract-scaffolding.md)
+6. Phase 5: Implementation (TDD) -> [ai/SKILL.md](ai/SKILL.md) + [ai/tdd-protocol.md](ai/tdd-protocol.md)
+7. Validate gates -> [support/execution-gates.md](support/execution-gates.md)
+8. Final scaffold check -> [support/final-scaffold-checklist.md](support/final-scaffold-checklist.md)
+9. Troubleshoot -> [support/troubleshooting.md](support/troubleshooting.md)
 
 ## Prompt Catalog
 

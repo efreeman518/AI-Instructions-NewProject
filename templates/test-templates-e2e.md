@@ -1,19 +1,19 @@
-# Test Templates — E2E Workflow (Phase 5b, tests-after)
+# Test Templates - E2E Workflow (Phase 5b, tests-after)
 
 | | |
 |---|---|
 | **Generates** | `Test/Test.E2E/SqlApiFactory.cs`, `Test/Test.E2E/{Entity}WorkflowTests.cs` |
 | **Requires** | [test-templates-endpoint](test-templates-endpoint.md) (for the shared `WebApplicationFactoryBase`), real SQL via Testcontainers |
 | **Phase** | Generated in Phase 4 (factory shell) and filled in during Phase 5b once services + endpoints are green |
-| **Protocol** | Tests-after. Unit + Endpoint tests in `Test.Endpoints` already pin per-endpoint behavior; E2E validates multi-endpoint **workflows** against real SQL — paging plans, FK constraints, projection translation, owned-type round-trip, and child-aggregate lifecycles. |
+| **Protocol** | Tests-after. Unit + Endpoint tests in `Test.Endpoints` already pin per-endpoint behavior; E2E validates multi-endpoint **workflows** against real SQL - paging plans, FK constraints, projection translation, owned-type round-trip, and child-aggregate lifecycles. |
 
 ## Why E2E exists separately
 
 | Tier | Backing store | What only this tier catches |
 |---|---|---|
 | `Test.Endpoints` (InMemory) | EF InMemory provider | Per-endpoint contract: status code, response shape, validation. **Misses:** projection plans, shadow properties, FK constraints, owned-type column flattening, raw SQL paging behavior. |
-| `Test.E2E` (Testcontainers SQL) | Real SQL Server | Multi-endpoint workflows (create → search → update → delete), paginated search across distinct pages, projection round-trip, child-aggregate FK behavior. |
-| `Test.Integration` (Aspire mesh) | Full distributed app | Cross-process: API → Service Bus → Function → projection store → audit row. See [test-templates-integration.md](test-templates-integration.md). |
+| `Test.E2E` (Testcontainers SQL) | Real SQL Server | Multi-endpoint workflows (create -> search -> update -> delete), paginated search across distinct pages, projection round-trip, child-aggregate FK behavior. |
+| `Test.Integration` (Aspire mesh) | Full distributed app | Cross-process: API -> Service Bus -> Function -> projection store -> audit row. See [test-templates-integration.md](test-templates-integration.md). |
 
 Rule of thumb: if the workflow spans **two or more endpoints** and the assertion depends on **real EF translation** (paging, projection, owned types, FK behavior), it belongs in `Test.E2E`. Single-endpoint contract checks belong in `Test.Endpoints`.
 
@@ -33,11 +33,11 @@ namespace Test.E2E;
 
 /// <summary>
 /// Real-SQL-Server WebApplicationFactory backed by Testcontainers.
-/// Exercises the full stack: HTTP → Endpoint → Service → EF → SQL.
+/// Exercises the full stack: HTTP -> Endpoint -> Service -> EF -> SQL.
 ///
 /// Used for multi-endpoint workflow E2E tests where contract-only endpoint coverage
-/// (Test.Endpoints' in-memory factory) is insufficient — e.g., tests that span
-/// create → search → update → delete and need real SQL behavior (concurrency, projection plans,
+/// (Test.Endpoints' in-memory factory) is insufficient - e.g., tests that span
+/// create -> search -> update -> delete and need real SQL behavior (concurrency, projection plans,
 /// FK constraints).
 /// </summary>
 public sealed class SqlApiFactory : WebApplicationFactoryBase<Program, {App}DbContextTrxn, {App}DbContextQuery>
@@ -78,8 +78,8 @@ public sealed class SqlApiFactory : WebApplicationFactoryBase<Program, {App}DbCo
 
 - `StartContainerAsync` is idempotent and **static** so multiple test classes can share the container without reference counting.
 - `_started` flag prevents redundant starts when the runner instantiates the factory more than once.
-- Pin the image tag (`mcr.microsoft.com/mssql/server:2025-latest`) — a `latest` rolling pull breaks CI on image rev.
-- Container lifecycle is owned by the **test class**, not the factory instance — see `[ClassInitialize]` below.
+- Pin the image tag (`mcr.microsoft.com/mssql/server:2025-latest`) - a `latest` rolling pull breaks CI on image rev.
+- Container lifecycle is owned by the **test class**, not the factory instance - see `[ClassInitialize]` below.
 
 ---
 
@@ -99,11 +99,11 @@ using {Project}.Domain.Shared.Enums;
 namespace Test.E2E;
 
 /// <summary>
-/// Multi-endpoint workflow tests over the full HTTP→Endpoint→Service→EF→SQL stack: {Entity}
+/// Multi-endpoint workflow tests over the full HTTP->Endpoint->Service->EF->SQL stack: {Entity}
 /// CRUD round-trips, server-side paged search across distinct pages, and child-aggregate
 /// ({ChildEntity}) lifecycles.
 /// SQL tier (WebApplicationFactory + Testcontainers SQL via SqlApiFactory): real SQL is required
-/// for paging plans, FK constraints applied by EF migrations, and projection behavior — InMemory
+/// for paging plans, FK constraints applied by EF migrations, and projection behavior - InMemory
 /// (Test.Endpoints tier) would silently mask these. The Aspire tier is unnecessary because only
 /// one backing service (SQL) participates.
 /// </summary>
@@ -139,7 +139,7 @@ public class {Entity}WorkflowTests
 
     private HttpClient CreateClient() => _factory.CreateClient();
 
-    // ── Full CRUD round-trip ──────────────────────────────────
+    // -- Full CRUD round-trip ----------------------------------
 
     [TestMethod]
     public async Task {Entity}_FullCrudCycle_AgainstRealSql()
@@ -178,7 +178,7 @@ public class {Entity}WorkflowTests
         Assert.AreEqual(HttpStatusCode.NotFound, verifyResp.StatusCode);
     }
 
-    // ── Search round-trip ─────────────────────────────────────
+    // -- Search round-trip -------------------------------------
 
     [TestMethod]
     public async Task {Entity}_Search_ReturnsResults_AgainstRealSql()
@@ -204,7 +204,7 @@ public class {Entity}WorkflowTests
         Assert.IsGreaterThanOrEqualTo(total, 1, $"Expected at least 1 result, got {total}");
     }
 
-    // ── Distinct-page pagination (critical: catches PageIndex 0/1 off-by-one bugs) ──
+    // -- Distinct-page pagination (critical: catches PageIndex 0/1 off-by-one bugs) --
 
     [TestMethod]
     public async Task {Entity}_Search_PaginatesDistinctPages_AgainstRealSql()
@@ -256,7 +256,7 @@ public class {Entity}WorkflowTests
             new[] { firstPage.Names[0], secondPage.Names[0] });
     }
 
-    // ── Child aggregate lifecycle (generate only when entity has children) ──────────
+    // -- Child aggregate lifecycle (generate only when entity has children) ----------
 
     [TestMethod]
     public async Task {ChildEntity}_CrudCycle_AgainstRealSql()
@@ -290,7 +290,7 @@ public class {Entity}WorkflowTests
 |---|---|
 | `{Entity}_FullCrudCycle_AgainstRealSql` | Every entity exposed via API endpoints. |
 | `{Entity}_Search_ReturnsResults_AgainstRealSql` | Every entity with a search endpoint. |
-| `{Entity}_Search_PaginatesDistinctPages_AgainstRealSql` | Every search endpoint — the cheapest catch for `PageIndex` off-by-one bugs and projection drift across pages. |
+| `{Entity}_Search_PaginatesDistinctPages_AgainstRealSql` | Every search endpoint - the cheapest catch for `PageIndex` off-by-one bugs and projection drift across pages. |
 | `{ChildEntity}_CrudCycle_AgainstRealSql` | Entity has child collections exposed via dedicated endpoints. |
 | `{Entity}_ConcurrentUpdates_OptimisticConcurrencyEnforced` | High-contention domains (inventory, reservations, balances). Optional. |
 
@@ -302,27 +302,27 @@ public class {Entity}WorkflowTests
 Migrations are applied in `[ClassInitialize]` against the live container. If the test class uses `SqlApiFactory` without applying migrations, the InMemory-style behavior won't surface and the FK / projection drift the tier is meant to catch goes uncaught.
 
 ### JSON serializer must accept named enums
-The API host emits string enums via `ConfigureHttpJsonOptions`. Without `JsonStringEnumConverter`, the deserializer throws on `"status": "InProgress"`. Either share `JsonTestOptions.Default` from `Test.Support` (preferred — see [test-templates-endpoint.md](test-templates-endpoint.md) § Shared JSON Options) or instantiate a local `_json` field as shown above.
+The API host emits string enums via `ConfigureHttpJsonOptions`. Without `JsonStringEnumConverter`, the deserializer throws on `"status": "InProgress"`. Either share `JsonTestOptions.Default` from `Test.Support` (preferred - see [test-templates-endpoint.md](test-templates-endpoint.md) section Shared JSON Options) or instantiate a local `_json` field as shown above.
 
 ### `DefaultRequest<T>` / `DefaultResponse<T>` wrappers
-Every endpoint contract uses `DefaultRequest<T>` for body and `DefaultResponse<T>` for response. Tests must follow the same shape — `new DefaultRequest<{Entity}Dto> { Item = dto }` on POST/PUT, `ReadFromJsonAsync<DefaultResponse<{Entity}Dto>>` on GET/POST/PUT. Direct DTO POSTs will fail validation.
+Every endpoint contract uses `DefaultRequest<T>` for body and `DefaultResponse<T>` for response. Tests must follow the same shape - `new DefaultRequest<{Entity}Dto> { Item = dto }` on POST/PUT, `ReadFromJsonAsync<DefaultResponse<{Entity}Dto>>` on GET/POST/PUT. Direct DTO POSTs will fail validation.
 
 ### Static container ownership
-The container is started and disposed via the **first and last** test class. With multiple workflow test classes, both call `SqlApiFactory.StartContainerAsync()`; the second call is a cheap idempotent return because `_started` is set. This is intentional — DO NOT add reference counting or "is anyone still using it" logic; the static `_started` flag is sufficient.
+The container is started and disposed via the **first and last** test class. With multiple workflow test classes, both call `SqlApiFactory.StartContainerAsync()`; the second call is a cheap idempotent return because `_started` is set. This is intentional - DO NOT add reference counting or "is anyone still using it" logic; the static `_started` flag is sufficient.
 
 ---
 
 ## Verification
 
 - [ ] `Test.E2E` references `Microsoft.AspNetCore.Mvc.Testing` + `Testcontainers.MsSql`.
-- [ ] `SqlApiFactory` derives from `WebApplicationFactoryBase<Program, {App}DbContextTrxn, {App}DbContextQuery>` — does **not** reimplement the swap-out logic.
+- [ ] `SqlApiFactory` derives from `WebApplicationFactoryBase<Program, {App}DbContextTrxn, {App}DbContextQuery>` - does **not** reimplement the swap-out logic.
 - [ ] `SqlApiFactory.StartContainerAsync` is idempotent (`_started` guard).
 - [ ] Every workflow class applies migrations in `[ClassInitialize]`.
 - [ ] Every test in `Test.E2E` carries `[TestCategory("E2E")]`.
 - [ ] JSON deserialization uses a configured `JsonSerializerOptions` (named-enum tolerant + case-insensitive).
 - [ ] Distinct-page pagination test exists for every searchable entity.
 - [ ] Class-level `<summary>` declares the SQL tier and why a lighter / heavier tier is wrong for this scope.
-- [ ] No `Test.E2E` test asserts on seeded counts that depend on shared state — each test seeds its own marker.
+- [ ] No `Test.E2E` test asserts on seeded counts that depend on shared state - each test seeds its own marker.
 
 ---
 

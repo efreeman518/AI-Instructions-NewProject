@@ -65,7 +65,7 @@ Use [structure-validator-template](../templates/structure-validator-template.md)
 ### String Safety
 
 - HTML-encode user-generated content before storage if it will be rendered in UI: `System.Net.WebUtility.HtmlEncode(input)`.
-- Enforce `MaxLength` at both DTO (StructureValidator) and EF (`HasMaxLength()`) levels — defense in depth.
+- Enforce `MaxLength` at both DTO (StructureValidator) and EF (`HasMaxLength()`) levels - defense in depth.
 - Reject null bytes and control characters in text inputs.
 
 ---
@@ -83,15 +83,15 @@ public class SecurityHeadersMiddleware(RequestDelegate next)
         context.Response.Headers["X-Frame-Options"] = "DENY";
         context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
 
-        // HSTS — set via config toggle, not in middleware (UseHsts in pipeline)
-        // Content-Security-Policy — set in Gateway for UI responses only
+        // HSTS - set via config toggle, not in middleware (UseHsts in pipeline)
+        // Content-Security-Policy - set in Gateway for UI responses only
 
         await next(context);
     }
 }
 ```
 
-Register early in pipeline — before routing.
+Register early in pipeline - before routing.
 
 For UI hosts (Gateway serving Uno WASM), add `Content-Security-Policy` with appropriate directives. Use config-driven toggle to adjust between dev/prod.
 
@@ -167,7 +167,7 @@ void ConfigureDataProtection()
 
 ### Rules
 
-- Omit both config keys in development — Data Protection falls back to local file-based key storage.
+- Omit both config keys in development - Data Protection falls back to local file-based key storage.
 - Use managed identity (`DefaultAzureCredential`) for both Blob and Key Vault access.
 - The Blob container and Key Vault key must exist before first deployment.
 - Key Vault key should have a rotation policy configured.
@@ -216,14 +216,14 @@ Secrets must be stored in Azure Key Vault (see [configuration-secrets.md](config
 
 ### Rotation Workflow
 
-1. **Create new version** — add new secret version in Key Vault
-2. **Update config** — deploy app with config pointing to latest version (Key Vault references auto-resolve latest)
-3. **Verify** — confirm app functions with new secret
-4. **Remove old version** — disable/remove previous version after grace period
+1. **Create new version** - add new secret version in Key Vault
+2. **Update config** - deploy app with config pointing to latest version (Key Vault references auto-resolve latest)
+3. **Verify** - confirm app functions with new secret
+4. **Remove old version** - disable/remove previous version after grace period
 
 ### Configuration Validation
 
-> **CRITICAL:** Use `ValidateOnStart()` for options that bind to secrets — fail fast if secrets are missing or expired rather than failing on first request:
+> **CRITICAL:** Use `ValidateOnStart()` for options that bind to secrets - fail fast if secrets are missing or expired rather than failing on first request:
 > ```csharp
 > services.AddOptions<DatabaseSettings>()
 >     .BindConfiguration("DatabaseSettings")
@@ -239,7 +239,7 @@ Secrets must be stored in Azure Key Vault (see [configuration-secrets.md](config
 - [ ] Rate limiter disabled in `CustomApiFactory` for tests
 - [ ] `StructureValidator` enforces `MaxLength` matching EF configuration
 - [ ] Security headers middleware added (X-Content-Type-Options, X-Frame-Options)
-- [ ] CORS configured in Gateway only — API rejects direct browser requests
+- [ ] CORS configured in Gateway only - API rejects direct browser requests
 - [ ] `dotnet nuget audit` included in CI pipeline
 - [ ] Dependabot configured for NuGet ecosystem
 - [ ] Data Protection configured with Azure Blob key storage and Key Vault key encryption

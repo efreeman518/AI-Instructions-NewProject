@@ -5,7 +5,7 @@
 
 ## Worked Example
 
-This is `TaskItemEndpoints.cs` from TaskFlow (`../AI-Instructions-ReferenceApp/src/Host/TaskFlow.Api/Endpoints/TaskItemEndpoints.cs`) — full route group with one handler shown. Demonstrates `MapGroup`, `Produces`, `Result.Match`, and `ProblemDetailsHelper` usage.
+This is `TaskItemEndpoints.cs` from TaskFlow (`../AI-Instructions-ReferenceApp/src/Host/TaskFlow.Api/Endpoints/TaskItemEndpoints.cs`) - full route group with one handler shown. Demonstrates `MapGroup`, `Produces`, `Result.Match`, and `ProblemDetailsHelper` usage.
 
 ```csharp
 public static class TaskItemEndpoints
@@ -52,10 +52,10 @@ public static class TaskItemEndpoints
 ```
 
 Things to notice:
-- Static class with extension method (`MapTaskItemEndpoints`) — no controllers, no instance state.
+- Static class with extension method (`MapTaskItemEndpoints`) - no controllers, no instance state.
 - `MapGroup` carries the route prefix and `WithTags` for OpenAPI grouping. Authorization (`.RequireAuthorization(...)`) typically applies at the group level in the host's `Program.cs`.
 - Handlers are `private static` methods. Service is injected via `[FromServices]`. `CancellationToken` is the last parameter on every handler.
-- `result.Match<IResult>(success, failure, none)` maps `Result<T>` directly to `IResult` — three branches for the three terminal states.
+- `result.Match<IResult>(success, failure, none)` maps `Result<T>` directly to `IResult` - three branches for the three terminal states.
 - `ProblemDetailsHelper.BuildProblemDetailsResponseMultiple(...)` is the canonical way to surface multi-error failures; single-error failures use the singular variant.
 - Stack trace inclusion is controlled by configuration (`_problemDetailsIncludeStackTrace`), not by environment checks.
 
@@ -71,18 +71,18 @@ Reference patterns: [../patterns/api-host-wiring.md](../patterns/api-host-wiring
 
 ```
 Host/{Host}.Api/
-├── Program.cs
-├── RegisterApiServices.cs
-├── WebApplicationBuilderExtensions.cs
-├── Endpoints/{Entity}Endpoints.cs
-├── Auth/
-├── HealthChecks/
-└── Middleware/
+|-- Program.cs
+|-- RegisterApiServices.cs
+|-- WebApplicationBuilderExtensions.cs
+|-- Endpoints/{Entity}Endpoints.cs
+|-- Auth/
+|-- HealthChecks/
+`-- Middleware/
 ```
 
 ## Startup Pattern
 
-In `Program.cs`, keep this order: service defaults/config → bootstrapper + API registration → build → pipeline → startup tasks → run.
+In `Program.cs`, keep this order: service defaults/config -> bootstrapper + API registration -> build -> pipeline -> startup tasks -> run.
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
@@ -117,11 +117,11 @@ await app.RunAsync();
 
 ### JSON Contract Across Hosts and Tests
 
-**Rule:** The JSON serializer shape is a contract between three places — keep all three aligned:
+**Rule:** The JSON serializer shape is a contract between three places - keep all three aligned:
 
-1. **API host** — `ConfigureHttpJsonOptions(...)` (above) governs request **and** response serialization.
-2. **Refit client** (Blazor / Uno) — `SystemTextJsonContentSerializer(jsonOptions)` in [`ui-blazor.md`](ui-blazor.md) (`Program.cs`) and the analogous Uno wire-up.
-3. **Endpoint tests** — every `ReadFromJsonAsync<T>` / `PostAsJsonAsync<T>` call must use a shared `JsonSerializerOptions` instance with the same converters.
+1. **API host** - `ConfigureHttpJsonOptions(...)` (above) governs request **and** response serialization.
+2. **Refit client** (Blazor / Uno) - `SystemTextJsonContentSerializer(jsonOptions)` in [`ui-blazor.md`](ui-blazor.md) (`Program.cs`) and the analogous Uno wire-up.
+3. **Endpoint tests** - every `ReadFromJsonAsync<T>` / `PostAsJsonAsync<T>` call must use a shared `JsonSerializerOptions` instance with the same converters.
 
 If any of the three drifts, requests fail with `JsonException` on the host (string enum rejected as 400) or tests fail to deserialize valid responses (default `ReadFromJsonAsync` decodes numeric enums but not string enums).
 
@@ -147,7 +147,7 @@ var created = await response.Content.ReadFromJsonAsync<DefaultResponse<TaskItemD
 await client.PostAsJsonAsync("/api/task-items", new DefaultRequest<TaskItemDto> { Item = dto }, JsonTestOptions.Default);
 ```
 
-Centralize on `JsonTestOptions.Default`; do **not** construct ad-hoc `JsonSerializerOptions` per test — drift between tests masks contract regressions.
+Centralize on `JsonTestOptions.Default`; do **not** construct ad-hoc `JsonSerializerOptions` per test - drift between tests masks contract regressions.
 
 ### Standalone CORS (Without Aspire)
 
@@ -165,7 +165,7 @@ builder.Services.AddCors(options =>
 app.UseCors(UiPolicy);
 ```
 
-Note: Aspire-hosted deployments typically handle CORS through the gateway — only add direct API CORS for standalone dev scenarios.
+Note: Aspire-hosted deployments typically handle CORS through the gateway - only add direct API CORS for standalone dev scenarios.
 
 ## Service Registration
 
@@ -207,9 +207,9 @@ internal sealed record ApiDocument(ApiVersion Version, string GroupName)
 ```
 
 `WebApplicationBuilderExtensions.cs` must preserve middleware order:
-SecurityHeaders → CorrelationId → ExceptionHandler → RateLimiter → CORS → Authentication → Authorization.
+SecurityHeaders -> CorrelationId -> ExceptionHandler -> RateLimiter -> CORS -> Authentication -> Authorization.
 
-Map versioned groups and apply policy at the group level (adjust route pattern to project needs — tenant-scoped, versioned, or simple `/api/` prefix):
+Map versioned groups and apply policy at the group level (adjust route pattern to project needs - tenant-scoped, versioned, or simple `/api/` prefix):
 
 ```csharp
 // Simple pattern for unversioned/internal routes when a versioned public contract is not needed.
@@ -257,7 +257,7 @@ Required endpoint rules:
 
 1. Static class + static handlers.
 2. Use `TypedResults` for success responses.
-3. **Use `Result.Match()` — never `IsSuccess`/`else` guards.** Every handler must branch through `Result.Match<IResult>()`. Three branches for `Result<T>` (success, errors, none); two branches for non-generic `Result` (success, errors). The `none` branch is the only correct way to produce a `404` — omitting it silently returns `200 OK` for not-found cases.
+3. **Use `Result.Match()` - never `IsSuccess`/`else` guards.** Every handler must branch through `Result.Match<IResult>()`. Three branches for `Result<T>` (success, errors, none); two branches for non-generic `Result` (success, errors). The `none` branch is the only correct way to produce a `404` - omitting it silently returns `200 OK` for not-found cases.
    ```csharp
    // Typed result (3 branches)
    return result.Match<IResult>(
@@ -267,7 +267,7 @@ Required endpoint rules:
                      traceId: httpContext.TraceIdentifier, includeStackTrace: _problemDetailsIncludeStackTrace)),
        ()     => TypedResults.NotFound());
 
-   // Non-generic Result (2 branches — fire-and-forget commands)
+   // Non-generic Result (2 branches - fire-and-forget commands)
    return result.Match<IResult>(
        ()     => TypedResults.Ok(),
        errors => TypedResults.Problem(ProblemDetailsHelper.BuildProblemDetailsResponseMultiple(
@@ -281,12 +281,12 @@ Required endpoint rules:
        [FromServices] IMyService service, Guid id, CancellationToken ct)
    ```
 
-   **Why this is non-negotiable.** Without `[FromServices]`, minimal-API parameter binding falls back to `IServiceProviderIsService.IsService(type)` at *route discovery time* (before any request fires). If the type is registered → parameter is bound from DI; if **not** registered → parameter is inferred as `[FromBody]` and the host throws `System.InvalidOperationException: Body was inferred but the method does not allow inferred body parameters` at `app.MapGroup(...)`. The failure takes down **every** endpoint, not just the unregistered one.
+   **Why this is non-negotiable.** Without `[FromServices]`, minimal-API parameter binding falls back to `IServiceProviderIsService.IsService(type)` at *route discovery time* (before any request fires). If the type is registered -> parameter is bound from DI; if **not** registered -> parameter is inferred as `[FromBody]` and the host throws `System.InvalidOperationException: Body was inferred but the method does not allow inferred body parameters` at `app.MapGroup(...)`. The failure takes down **every** endpoint, not just the unregistered one.
 
-   This is especially fragile when a feature is gated per host (Cosmos-only services, Service Bus senders — see [bootstrapper.md](bootstrapper.md) § Conditional (Per-Host) Dependency Pattern). The endpoint still references the service interface; the host that opted out of registering it then refuses to start with a misleading body-inference error.
+   This is especially fragile when a feature is gated per host (Cosmos-only services, Service Bus senders - see [bootstrapper.md](bootstrapper.md) section Conditional (Per-Host) Dependency Pattern). The endpoint still references the service interface; the host that opted out of registering it then refuses to start with a misleading body-inference error.
 
    **No exceptions:** add `[FromServices]` on the service parameter even for trivially-registered types. Treat any handler missing `[FromServices]` on a service parameter as a Phase 5b regression and fix it before the gate.
-5. Return `ProblemDetails` for errors (no raw strings). Always use `ProblemDetailsHelper.BuildProblemDetailsResponseMultiple` (or the singular variant for single-error cases) — never `TypedResults.BadRequest(string)`.
+5. Return `ProblemDetails` for errors (no raw strings). Always use `ProblemDetailsHelper.BuildProblemDetailsResponseMultiple` (or the singular variant for single-error cases) - never `TypedResults.BadRequest(string)`.
 6. Validate route/body ID consistency on update.
 7. Add OpenAPI metadata (`Produces*`, summary/tags).
 8. Use POST for complex search filters.
@@ -324,7 +324,7 @@ The six-route CRUD shape above is the default. When `.scaffold/domain-specificat
 **Route convention.** Stateful actions on a single aggregate go under the entity route as `POST /{entities}/{id:guid}/{action-name}` (kebab-case action segment). Cross-entity queries that don't bind to a single id go under `POST /{entities}/search/{aggregate-name}` so search-style POST semantics carry through.
 
 ```csharp
-// Inside Map{Entity}Endpoints — co-locate custom actions with CRUD routes
+// Inside Map{Entity}Endpoints - co-locate custom actions with CRUD routes
 group.MapPost("/{id:guid}/reschedule", Reschedule)
     .Produces<DefaultResponse<{Entity}Dto>>(StatusCodes.Status200OK)
     .ProducesValidationProblem()
@@ -335,19 +335,19 @@ group.MapPost("/{id:guid}/reschedule", Reschedule)
 **Request / response.** Each custom action gets its own DTO in `Application.Models`:
 
 - Request: `{ActionName}Request` containing exactly the parameters declared on the `customActions` entry (e.g. `RescheduleRequest { DateTimeOffset NewDueDate }`). Wrap in `DefaultRequest<T>` only when the action mutates and returns the full entity.
-- Response: same `Result<T>` → `Result.Match()` → `TypedResults` + `ProblemDetails` flow as CRUD; do not invent action-specific error envelopes.
+- Response: same `Result<T>` -> `Result.Match()` -> `TypedResults` + `ProblemDetails` flow as CRUD; do not invent action-specific error envelopes.
 
-**Service contract.** Add a method to `I{Entity}Service` named after the action (`Task<Result<{Entity}Dto>> RescheduleAsync(Guid id, RescheduleRequest req, CancellationToken ct)`). The service orchestrates: load aggregate → invoke domain method → persist → emit `afterAction({ActionName})` event per the existing event model in `domain-specification-schema.md`.
+**Service contract.** Add a method to `I{Entity}Service` named after the action (`Task<Result<{Entity}Dto>> RescheduleAsync(Guid id, RescheduleRequest req, CancellationToken ct)`). The service orchestrates: load aggregate -> invoke domain method -> persist -> emit `afterAction({ActionName})` event per the existing event model in `domain-specification-schema.md`.
 
-**Domain method.** The action lives on the entity itself as a `DomainResult` method (e.g. `public DomainResult Reschedule(DateTimeOffset newDueDate)`), keeping invariants and state transitions inside the aggregate. The service does not contain the rule logic — only the orchestration around it.
+**Domain method.** The action lives on the entity itself as a `DomainResult` method (e.g. `public DomainResult Reschedule(DateTimeOffset newDueDate)`), keeping invariants and state transitions inside the aggregate. The service does not contain the rule logic - only the orchestration around it.
 
 **Cross-entity queries.** When the operation reads across multiple entities and does not naturally belong to one of them (e.g. `POST /reports/search/sla-breaches` aggregating SLA, Order, and Customer), put it in a dedicated `{Domain}QueryEndpoints.cs` mapper. Apply the same Result-mapping rules; do not bypass `ProblemDetails` for these.
 
-**What stays out.** Do not add custom action routes purely to expose internal admin operations — those belong in a separate admin-scoped endpoint group with its own auth policy. Do not route domain events through HTTP; events are an internal contract surfaced via `IIntegrationEventPublisher`, not an API resource.
+**What stays out.** Do not add custom action routes purely to expose internal admin operations - those belong in a separate admin-scoped endpoint group with its own auth policy. Do not route domain events through HTTP; events are an internal contract surfaced via `IIntegrationEventPublisher`, not an API resource.
 
 ## Error Handling Strategy
 
-Two complementary layers — **Result pattern for expected outcomes, `DefaultExceptionHandler` for unexpected exceptions**:
+Two complementary layers - **Result pattern for expected outcomes, `DefaultExceptionHandler` for unexpected exceptions**:
 
 1. **Result flow (primary path):** Services return `Result<T>` / `DomainResult<T>`. Endpoints use `Result.Match()` to map success/failure/not-found to `TypedResults` + `ProblemDetails`. No exceptions thrown for validation, business rules, or not-found cases.
 2. **`DefaultExceptionHandler` (safety net):** A global `IExceptionHandler` registered via `AddExceptionHandler<DefaultExceptionHandler>()`. Catches only truly unexpected exceptions (null refs, timeouts, infra failures) and maps them to `ProblemDetails` with appropriate HTTP status codes. This is a last-resort handler, not a control-flow mechanism. See [exception-handler-template](../templates/exception-handler-template.md) for implementation.
@@ -357,13 +357,13 @@ Reference: See [exception-handler-template](../templates/exception-handler-templ
 ### Error Pipeline Overview
 
 ```
-[Domain]   DomainResult<T>.Success / .Failure     — business validation, rules, state transitions
-               ↓
-[Service]  Result<T>.Success / .Failure / .None    — orchestration, tenant boundary, structure validation
-               ↓
-[Endpoint] result.Match(ok → TypedResults, errors → ProblemDetails, notFound → NotFound)
-               ↓
-[Global]   DefaultExceptionHandler (IExceptionHandler)  — unexpected exceptions only → ProblemDetails
+[Domain]   DomainResult<T>.Success / .Failure     - business validation, rules, state transitions
+               down
+[Service]  Result<T>.Success / .Failure / .None    - orchestration, tenant boundary, structure validation
+               down
+[Endpoint] result.Match(ok -> TypedResults, errors -> ProblemDetails, notFound -> NotFound)
+               down
+[Global]   DefaultExceptionHandler (IExceptionHandler)  - unexpected exceptions only -> ProblemDetails
 ```
 
 ### Error Type Mapping
@@ -379,17 +379,17 @@ Reference: See [exception-handler-template](../templates/exception-handler-templ
 | Service | `StructureValidator` failure | 400 Bad Request |
 | Global | `DbUpdateConcurrencyException` | 409 Conflict |
 | Global | `UnauthorizedAccessException` | 403 Forbidden |
-| Global | `OperationCanceledException` | 499 Client Closed (non-standard; log only — response may not be written) |
+| Global | `OperationCanceledException` | 499 Client Closed (non-standard; log only - response may not be written) |
 | Global | Unhandled exception | 500 Internal Server Error |
 
 ### Anti-Patterns
 
-- **Throwing exceptions for business logic** — Use `DomainResult.Failure()` / `Result.Failure()` instead.
-- **Swallowing errors silently** — Every failure must propagate through the Result chain or be logged explicitly.
-- **Returning raw error strings** — Always wrap in `ProblemDetails` at the API boundary.
-- **Catching generic `Exception` in services** — Let `DefaultExceptionHandler` handle the rest.
-- **Exposing stack traces in production** — Only include outside production.
-- **Relying on `DefaultExceptionHandler` to silence `OperationCanceledException`** — The VS debugger breaks at the throw site (inside EF Core) before the handler runs. Catch `OperationCanceledException` in the service method and return an empty/default result:
+- **Throwing exceptions for business logic** - Use `DomainResult.Failure()` / `Result.Failure()` instead.
+- **Swallowing errors silently** - Every failure must propagate through the Result chain or be logged explicitly.
+- **Returning raw error strings** - Always wrap in `ProblemDetails` at the API boundary.
+- **Catching generic `Exception` in services** - Let `DefaultExceptionHandler` handle the rest.
+- **Exposing stack traces in production** - Only include outside production.
+- **Relying on `DefaultExceptionHandler` to silence `OperationCanceledException`** - The VS debugger breaks at the throw site (inside EF Core) before the handler runs. Catch `OperationCanceledException` in the service method and return an empty/default result:
   ```csharp
   catch (OperationCanceledException)
   {
@@ -397,7 +397,7 @@ Reference: See [exception-handler-template](../templates/exception-handler-templ
       return new PagedResponse<TDto>();
   }
   ```
-- **Non-nullable `[FromBody]` on search endpoints** — An empty body (e.g. sent on rapid navigation or client cancellation) causes `BadHttpRequestException` before the service is reached. Make the parameter nullable and null-coalesce at the call site:
+- **Non-nullable `[FromBody]` on search endpoints** - An empty body (e.g. sent on rapid navigation or client cancellation) causes `BadHttpRequestException` before the service is reached. Make the parameter nullable and null-coalesce at the call site:
   ```csharp
   app.MapPost("/search", async ([FromBody] SearchRequest<TFilter>? request, ...) => {
       request ??= new SearchRequest<TFilter>();
@@ -450,7 +450,7 @@ if (app.Configuration.GetValue<bool>("OpenApiSettings:Enable"))
 
 Each supported API version gets its own JSON document, for example `/openapi/v1.json` and `/openapi/v2.json`. The `ShouldInclude` filter keeps v1-only, v2-only, and shared endpoints in the correct document according to their API Explorer group.
 
-Endpoint OpenAPI metadata — add to every endpoint:
+Endpoint OpenAPI metadata - add to every endpoint:
 
 ```csharp
 group.MapGet("/{id:guid}", GetById)
@@ -474,7 +474,7 @@ group.MapGet("/{id:guid}", GetById)
 - [ ] Endpoints are static classes under `Endpoints/` with `Map{Entity}Endpoints(...)`
 - [ ] Route groups apply `.RequireAuthorization(...)` at the correct scope
 - [ ] All handlers have `HttpContext httpContext` as first parameter and `CancellationToken` as last
-- [ ] Every handler uses `Result.Match<IResult>()` — no `IsSuccess`/`else` guards anywhere
+- [ ] Every handler uses `Result.Match<IResult>()` - no `IsSuccess`/`else` guards anywhere
 - [ ] Typed `Result<T>` handlers have all three branches (success, errors, none); non-generic `Result` handlers have two (success, errors)
 - [ ] `global using EF.AspNetCore;` present in `GlobalUsings.cs`
 - [ ] Validation and business errors return `ProblemDetails`/`ValidationProblem`

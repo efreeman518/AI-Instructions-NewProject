@@ -18,8 +18,8 @@ Checks:
     runtime directory present in this repo (catches "added skills/foo, forgot
     to wire it into the installer" mistakes).
   - Installer smoke checks cover every first-class harness entrypoint.
-  - Section-anchor existence: when prose says ``[label](file.md) § Section Name``
-    or ``file.md → Section Name`` (with the path in backticks), verify the named
+  - Section-anchor existence: when prose says ``[label](file.md) section Section Name``
+    or ``file.md -> Section Name`` (with the path in backticks), verify the named
     section exists as a heading in the target file. Catches refs left dangling
     after file splits.
 
@@ -32,8 +32,8 @@ import re
 import sys
 from pathlib import Path
 
-# Force UTF-8 stdout/stderr so non-ASCII characters in messages (e.g. → arrow,
-# § section sign) don't crash on Windows consoles that default to cp1252.
+# Force UTF-8 stdout/stderr so ASCII-converted diagnostics stay stable on
+# Windows consoles that default to cp1252.
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 if hasattr(sys.stderr, "reconfigure"):
@@ -70,18 +70,18 @@ FENCED_CODE_PATTERN = re.compile(r"(^|\n)[ \t]{0,3}(`{3,}|~{3,})[^\n]*\n.*?\n[ \
 # Markdown headings (ATX style) for the section-anchor check.
 HEADING_PATTERN = re.compile(r"^#{1,6}\s+(.+?)\s*$", re.MULTILINE)
 
-# Prose pattern: `[label](file.md) § Section`, `[label](file.md) → *Section*`,
+# Prose pattern: `[label](file.md) section Section`, `[label](file.md) -> *Section*`,
 # or the same with a backtick-wrapped path instead of a link. Captures:
-#   group "linkpath": path inside (...) — None for backtick form
-#   group "tickpath": path inside `...` — None for link form
+#   group "linkpath": path inside (...) - None for backtick form
+#   group "tickpath": path inside `...` - None for link form
 #   group "section":  raw section text (may include leading/trailing `*`)
 SECTION_REF_PATTERN = re.compile(
     r"(?:\[[^\]]+\]\((?P<linkpath>[^)]+?\.md)(?:#[^)]*)?\)|`(?P<tickpath>[^`]+?\.md)`)"
-    r"\s*(?:§|→)\s*"
-    r"(?P<section>(?:\*[^*\n]{1,80}\*|[^\n.|,)(`*—–]{1,80}))"
+    r"\s*(?:section|->)\s*"
+    r"(?P<section>(?:\*[^*\n]{1,80}\*|[^\n.|,)(`*]{1,80}))"
 )
 
-# Connectors that end a section name when used like `... see X.md § Foo and bar baz`.
+# Connectors that end a section name when used like `... see X.md section Foo and bar baz`.
 SECTION_TAIL_CONNECTOR = re.compile(
     r"\s+(and|or|see|for|in|of|on|via|when|to|with|before|after|then)\b.*$",
     re.IGNORECASE,
@@ -202,7 +202,7 @@ def iter_markdown_files() -> list[Path]:
 def check_links(path: Path, findings: Findings) -> None:
     text = strip_fenced_code_blocks(path.read_text(encoding="utf-8"))
     # Adjacent-duplicate detection: same [label](target) appearing twice in the
-    # same line (the drift pattern we want to catch — copy/paste with no edit).
+    # same line (the drift pattern we want to catch - copy/paste with no edit).
     for line_no, line in enumerate(text.splitlines(), start=1):
         line_seen: dict[tuple[str, str], int] = {}
         for match in LINK_PATTERN.finditer(line):
@@ -260,9 +260,9 @@ def heading_matches_section(headings: list[str], target: str) -> bool:
             return True
         # Prefix match for headings like "Menu Navigation: Always Land On Top Page"
         # vs reference "Menu Navigation".
-        if h_n.startswith(target_n + " ") or h_n.startswith(target_n + ":") or h_n.startswith(target_n + " —") or h_n.startswith(target_n + " –"):
+        if h_n.startswith(target_n + " ") or h_n.startswith(target_n + ":") or h_n.startswith(target_n + " -"):
             return True
-        # Substring fallback for short identifiers like "5a" -> "5a — Foundation (TDD)".
+        # Substring fallback for short identifiers like "5a" -> "5a - Foundation (TDD)".
         if len(target_n) <= 6 and target_n in h_n:
             return True
     return False
@@ -274,6 +274,7 @@ def check_section_anchors(path: Path, findings: Findings, headings_cache: dict[P
         for match in SECTION_REF_PATTERN.finditer(line):
             target_link = match.group("linkpath") or match.group("tickpath")
             section = match.group("section").strip().strip("*").strip()
+            section = re.sub(r"\s+-\s+.*$", "", section)
             section = SECTION_TAIL_CONNECTOR.sub("", section)
             section = section.rstrip(".,;:")
             if not section or len(section) < 2:
@@ -284,14 +285,14 @@ def check_section_anchors(path: Path, findings: Findings, headings_cache: dict[P
             except (OSError, ValueError):
                 continue
             if not candidate.exists() or not candidate.is_file() or candidate.suffix != ".md":
-                # Broken file path — handled by check_links.
+                # Broken file path - handled by check_links.
                 continue
             headings = collect_headings(candidate, headings_cache)
             if not heading_matches_section(headings, section):
                 rel = display_path(candidate)
                 findings.err(
                     path,
-                    f"line {line_no}: section anchor not found — {rel} has no heading matching '{section}'",
+                    f"line {line_no}: section anchor not found - {rel} has no heading matching '{section}'",
                 )
 
 
@@ -324,7 +325,7 @@ def check_payload_shape(findings: Findings) -> None:
     """Compare what install-to-project.py copies vs what's actually present at the repo root."""
     installer = INSTRUCTIONS_ROOT / "scripts" / "install-to-project.py"
     if not installer.exists():
-        findings.err(installer, "install-to-project.py is missing — payload shape unverifiable")
+        findings.err(installer, "install-to-project.py is missing - payload shape unverifiable")
         return
     text = installer.read_text(encoding="utf-8")
     # Extract the INSTRUCTIONS_DIRS list literal.

@@ -1,11 +1,11 @@
-# Uno Platform UI — Platform-Specific Rules
+# Uno Platform UI - Platform-Specific Rules
 
 Platform-specific build, deploy, and debugging rules for Uno (WASM, Android), plus CI requirements. Loaded during Phase 5c when an Uno UI project is in scope and a specific target needs attention.
 
 Companion files:
-- [ui-uno.md](ui-uno.md) — index + decision table
-- [ui-uno-shell.md](ui-uno-shell.md) — project setup, app hosting, shell control
-- [ui-uno-mvux.md](ui-uno-mvux.md) — MVUX models, routing, XAML, business services, auth
+- [ui-uno.md](ui-uno.md) - index + decision table
+- [ui-uno-shell.md](ui-uno-shell.md) - project setup, app hosting, shell control
+- [ui-uno-mvux.md](ui-uno-mvux.md) - MVUX models, routing, XAML, business services, auth
 
 ---
 
@@ -56,9 +56,9 @@ Do not apply broad hosting or routing rewrites before completing this sequence.
 
 These apply to `WasmAppHost` (the dev host launched by `dotnet run` in Uno WASM projects).
 
-### AppManifest.js — Required Bootstrap File
+### AppManifest.js - Required Bootstrap File
 
-`Uno.UI.js` does `define(["./AppManifest.js"])` via RequireJS at startup. If the file does not exist the splash screen never clears — no JS error is visible.
+`Uno.UI.js` does `define(["./AppManifest.js"])` via RequireJS at startup. If the file does not exist the splash screen never clears - no JS error is visible.
 
 Every Uno WASM project MUST contain:
 
@@ -75,7 +75,7 @@ var UnoAppManifest = {
 };
 ```
 
-Add this file during initial scaffold. Do not leave it absent and rely on the build to generate it — it is not generated automatically.
+Add this file during initial scaffold. Do not leave it absent and rely on the build to generate it - it is not generated automatically.
 
 ### Working Directory Sensitivity
 
@@ -88,11 +88,11 @@ Set-Location 'src\UI\{Project}.Uno'
 dotnet run
 ```
 
-Never use `dotnet run --project <path>` from an unrelated working directory — the static asset paths in the output will be wrong and all `package_<hash>/*` requests will 404.
+Never use `dotnet run --project <path>` from an unrelated working directory - the static asset paths in the output will be wrong and all `package_<hash>/*` requests will 404.
 
 ### Port Exclusion on Windows (Hyper-V / WSL)
 
-Windows reserves port ranges for Hyper-V and WSL (shown as PID 4 owning ports in `Listen` state). These ports cannot be bound by user-space processes — attempts fail silently or with error 10013.
+Windows reserves port ranges for Hyper-V and WSL (shown as PID 4 owning ports in `Listen` state). These ports cannot be bound by user-space processes - attempts fail silently or with error 10013.
 
 Diagnose before changing launchSettings:
 
@@ -124,13 +124,13 @@ netstat -ano | grep :7069
 taskkill //F //PID <pid>
 ```
 
-A `TIME_WAIT` entry on the client side is harmless — it's a closed socket awaiting TCP drain and will clear on its own. Only `LISTENING` entries block a new bind.
+A `TIME_WAIT` entry on the client side is harmless - it's a closed socket awaiting TCP drain and will clear on its own. Only `LISTENING` entries block a new bind.
 
-Do **not** change the launch port to work around a stuck process — find and kill it instead. Rotating ports invalidates CORS config, Playwright baseURL, and bookmark URLs.
+Do **not** change the launch port to work around a stuck process - find and kill it instead. Rotating ports invalidates CORS config, Playwright baseURL, and bookmark URLs.
 
 ### Post-Rebuild Browser Refresh
 
-After any rebuild, `WasmAppHost` serves a new `package_<hash>/` directory. The old hash is instantly stale. Always open a **new browser tab** to the HTTPS origin — never reload an existing tab. Existing tabs will 404 all their `package_*` asset requests until a full address-bar navigation occurs.
+After any rebuild, `WasmAppHost` serves a new `package_<hash>/` directory. The old hash is instantly stale. Always open a **new browser tab** to the HTTPS origin - never reload an existing tab. Existing tabs will 404 all their `package_*` asset requests until a full address-bar navigation occurs.
 
 ---
 
@@ -140,9 +140,9 @@ These rules apply to `Test.PlaywrightUI` tests that drive a running Uno WASM hos
 
 ### Boot Once Per Describe Block
 
-WASM cold-start takes 20–45 seconds. Never use the default `{ page }` Playwright fixture for Uno tests — it boots a new page per test and compounds wall-clock time.
+WASM cold-start takes 20-45 seconds. Never use the default `{ page }` Playwright fixture for Uno tests - it boots a new page per test and compounds wall-clock time.
 
-Use `test.describe.configure({ mode: "serial" })` with a shared `BrowserContext`/`Page` created in `beforeAll`. Call `waitForApp(sharedPage)` once in `beforeAll`, then reuse `sharedPage` across all tests in the block. Re-call `waitForApp` after in-test navigation — it re-checks without a full re-boot.
+Use `test.describe.configure({ mode: "serial" })` with a shared `BrowserContext`/`Page` created in `beforeAll`. Call `waitForApp(sharedPage)` once in `beforeAll`, then reuse `sharedPage` across all tests in the block. Re-call `waitForApp` after in-test navigation - it re-checks without a full re-boot.
 
 ```typescript
 test.describe("EntityCrud", () => {
@@ -235,10 +235,10 @@ dotnet test src/Test/Test.Mobile/Test.Mobile.csproj --filter TestCategory=Mobile
 For generator-driven stacks (Uno, Kiota, Resizetizer, and similar toolchains):
 
 - **Preserve generated conventions by default.** Do not rewrite generated bootstrap, host plumbing, or build targets unless a specific symptom proves the generated assumption is wrong.
-- **Patch minimally.** Fix only the smallest confirmed incompatibility. One targeted MSBuild property override or one config fixup — not a full rewrite of the generated file.
+- **Patch minimally.** Fix only the smallest confirmed incompatibility. One targeted MSBuild property override or one config fixup - not a full rewrite of the generated file.
 - **Document the justification.** Every patch to generated code must carry an inline comment citing the exact symptom (e.g., `<!-- Workaround: Resizetizer 1.12.1 manifest-path bug -->`).
 
-If you cannot identify the specific failing assumption, do not modify generated code — escalate to the engineer.
+If you cannot identify the specific failing assumption, do not modify generated code - escalate to the engineer.
 
 ## Environment Detection Rule
 
@@ -248,7 +248,7 @@ Example: check for `window.__TAURI__` or `navigator.userAgentData` rather than p
 
 ---
 
-## .NET for Android — Build & Deploy Rules
+## .NET for Android - Build & Deploy Rules
 
 These rules apply when targeting any `<tfm>-android` Uno, MAUI, or bare .NET for Android target (where `<tfm>` is the project's pinned .NET TFM).
 
@@ -281,7 +281,7 @@ When building for manual ADB sideloading (`dotnet build` + `adb install`), alway
 <AndroidStoreUncompressedFileExtensions>.so;$(AndroidStoreUncompressedFileExtensions)</AndroidStoreUncompressedFileExtensions>
 ```
 
-The default Debug mode uses **Fast Deployment**, which expects the .NET tooling to push managed assemblies to the device separately after install. A bare APK installed without that push crashes immediately with _"No assemblies found … Assuming this is part of Fast Deployment"_. Lock this property into the project file permanently for any project that supports manual sideloading — do not rely on a command-line override.
+The default Debug mode uses **Fast Deployment**, which expects the .NET tooling to push managed assemblies to the device separately after install. A bare APK installed without that push crashes immediately with _"No assemblies found ... Assuming this is part of Fast Deployment"_. Lock this property into the project file permanently for any project that supports manual sideloading - do not rely on a command-line override.
 
 When installing a built APK directly, prefer a full install:
 
@@ -321,7 +321,7 @@ When launching via `adb shell am start -n`, first discover the registered activi
 adb shell dumpsys package <package-id> | grep -A 3 "MAIN"
 ```
 
-Use the class name from the output — the generated name cannot be predicted from C# source alone.
+Use the class name from the output - the generated name cannot be predicted from C# source alone.
 
 ---
 
@@ -353,13 +353,13 @@ Uno.Resizetizer requires asset filenames to be **lowercase**, containing only al
 </Target>
 ```
 
-**Important:** Do NOT place standalone splash screen asset files (`splashscreen.png`, `splashscreen.svg`) in Assets without a corresponding `<UnoSplashScreen>` item — the resizetizer will produce duplicate static web asset conflicts.
+**Important:** Do NOT place standalone splash screen asset files (`splashscreen.png`, `splashscreen.svg`) in Assets without a corresponding `<UnoSplashScreen>` item - the resizetizer will produce duplicate static web asset conflicts.
 
 ### ExtendedSplashScreen vs UnoSplashScreen
 
 - `UnoSplashScreen` = native splash (Android/iOS) generated by Resizetizer. Broken on WASM in 1.12.1.
 - `ExtendedSplashScreen` = Uno Toolkit XAML control in `ShellControl.xaml` for the in-app loading screen. This is the recommended WASM splash approach.
-- The "Didn't find UnoSplashScreen" warning from Resizetizer is **harmless** — it just means no native splash is configured.
+- The "Didn't find UnoSplashScreen" warning from Resizetizer is **harmless** - it just means no native splash is configured.
 
 ## CI Requirements
 

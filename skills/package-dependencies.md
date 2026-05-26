@@ -18,7 +18,7 @@ Use this file as a compact contract map for shared base-type packages/projects. 
 
 These two repos define the canonical contract surface for all modes. In `local` or `hybrid` mode, the locally-generated `src/Packages/<packagePrefix>.*` projects must match the contracts in [`../support/ef-packages-reference.md`](../support/ef-packages-reference.md) (derived from these repos).
 
-> **AI lookup rule:** This file provides a compact contract map. When you need full API signatures, constructor parameters, or method overloads for any base type (e.g., `TableRepositoryBase`, `IBlobRepository`, `ICosmosDbRepository`, `IKeyVaultManager`), use the GitHub MCP server to read the source from [EF.Packages](https://github.com/efreeman518/EF.Packages) or [EF.Packages.Enterprise](https://github.com/efreeman518/EF.Packages.Enterprise) — they remain the canonical contract definition regardless of consumption mode.
+> **AI lookup rule:** This file provides a compact contract map. When you need full API signatures, constructor parameters, or method overloads for any base type (e.g., `TableRepositoryBase`, `IBlobRepository`, `ICosmosDbRepository`, `IKeyVaultManager`), use the GitHub MCP server to read the source from [EF.Packages](https://github.com/efreeman518/EF.Packages) or [EF.Packages.Enterprise](https://github.com/efreeman518/EF.Packages.Enterprise) - they remain the canonical contract definition regardless of consumption mode.
 
 ## Latest, Not Pinned (Global Rule)
 
@@ -27,15 +27,15 @@ These two repos define the canonical contract surface for all modes. In `local` 
 In instruction docs:
 
 - Use the `<latest-stable>` placeholder in xml/json snippets (e.g., `Sdk="Aspire.AppHost.Sdk/<latest-stable>"`, `<TargetFramework>$(LatestStableTfm)</TargetFramework>`).
-- Do **not** write a hard-coded `Version="9.2.0"` or `net9.0` into a template — it goes stale silently and contradicts this rule on every PR diff.
+- Do **not** write a hard-coded `Version="9.2.0"` or `net9.0` into a template - it goes stale silently and contradicts this rule on every PR diff.
 
-**Documented exceptions only.** A pinned version is permitted **only** when accompanied by a one-line reason inline (NU1605/NU1011 conflict, breaking-change quarantine, vendor compatibility note). Any pin without justification is a bug — replace with `<latest-stable>`.
+**Documented exceptions only.** A pinned version is permitted **only** when accompanied by a one-line reason inline (NU1605/NU1011 conflict, breaking-change quarantine, vendor compatibility note). Any pin without justification is a bug - replace with `<latest-stable>`.
 
 SDK upgrade discipline:
 
-- Treat major-version SDK bumps (e.g., Aspire 9 → 13, .NET N → N+1) as **deliberate, scheduled tasks**, not routine work.
+- Treat major-version SDK bumps (e.g., Aspire 9 -> 13, .NET N -> N+1) as **deliberate, scheduled tasks**, not routine work.
 - Consult the vendor's official upgrade guide via MS Learn before bumping (e.g., `learn.microsoft.com/dotnet/aspire/get-started/upgrade-to-aspire-13`).
-- A file-naming or convention change introduced by a future SDK version (e.g., AppHost.cs in Aspire 13) MAY be adopted on the prior SDK if it is purely cosmetic and back-compatible — call out the rationale in the relevant skill file.
+- A file-naming or convention change introduced by a future SDK version (e.g., AppHost.cs in Aspire 13) MAY be adopted on the prior SDK if it is purely cosmetic and back-compatible - call out the rationale in the relevant skill file.
 
 ## Minimize Third-Party Dependencies (Mandatory)
 
@@ -43,7 +43,7 @@ SDK upgrade discipline:
 
 ### Pre-approved third-party packages
 
-These are already part of the reference app and may be added without developer discussion when the pattern requires them. Use the canonical wiring from the reference app — do not re-evaluate the choice each time:
+These are already part of the reference app and may be added without developer discussion when the pattern requires them. Use the canonical wiring from the reference app - do not re-evaluate the choice each time:
 
 | Package family | Purpose | Skill |
 |---|---|---|
@@ -63,9 +63,9 @@ These are already part of the reference app and may be added without developer d
 
 Add only the specific sub-package needed (e.g., `Azure.Storage.Blobs`, not the entire SDK). Versions stay in `Directory.Packages.props` per the Latest, Not Pinned rule.
 
-### Any other package — discuss first
+### Any other package - discuss first
 
-Anything **not in the pre-approved table above** is not approved by default. The NuGet ecosystem is large; this section deliberately does not enumerate disallowed packages because the list would be endless and brittle. The rule is the opposite — **the pre-approved table is the allowlist**.
+Anything **not in the pre-approved table above** is not approved by default. The NuGet ecosystem is large; this section deliberately does not enumerate disallowed packages because the list would be endless and brittle. The rule is the opposite - **the pre-approved table is the allowlist**.
 
 Before adding any other package, pause and discuss with the developer. The bar is "**high value** that the reference-app stack cannot deliver." Justification must answer:
 
@@ -80,30 +80,30 @@ If a candidate clears that bar, propose it explicitly to the developer with a on
 
 When a pattern recurs three or more times and no pre-approved package covers it cleanly, the answer is almost always **a small in-house extension**, not a NuGet dependency:
 
-1. Add the helper to the appropriate layer — `EF.Common` (cross-cutting), `EF.Domain` (domain-pure), or a project-local `*Extensions.cs` for app-specific behavior. If the pattern is reusable across scaffolded apps, promote it to a packable project under `src/Packages/<packagePrefix>.<Layer>` so future apps inherit it via the standard package strategy.
-2. Keep it minimal — one responsibility per extension method; no fluent builders that mimic a third-party DSL.
+1. Add the helper to the appropriate layer - `EF.Common` (cross-cutting), `EF.Domain` (domain-pure), or a project-local `*Extensions.cs` for app-specific behavior. If the pattern is reusable across scaffolded apps, promote it to a packable project under `src/Packages/<packagePrefix>.<Layer>` so future apps inherit it via the standard package strategy.
+2. Keep it minimal - one responsibility per extension method; no fluent builders that mimic a third-party DSL.
 3. Cover it with a unit test that pins the contract.
 4. Record the decision in `HANDOFF.md` so future sessions do not re-litigate the package-vs-extension trade-off.
 
-The goal is a small, owned dependency surface — every package added is one the team commits to tracking for CVEs, license changes, and major-version breakage.
+The goal is a small, owned dependency surface - every package added is one the team commits to tracking for CVEs, license changes, and major-version breakage.
 
 ## Feed + Version Rules (Mandatory)
 
 ### When `packageStrategy: feed` or `hybrid` (feed-supplied layers only)
 
 1. `nuget.config` must include `nuget.org` and all `customNugetFeeds` from [resource-implementation-schema.md](../ai/resource-implementation-schema.md).
-2. **Both private feeds** must be declared when Enterprise packages (`<packagePrefix>.FlowEngine`, `<packagePrefix>.FilterBuilder`) are used — for the canonical `EF.*` example they ship from the same GitHub Packages org:
+2. **Both private feeds** must be declared when Enterprise packages (`<packagePrefix>.FlowEngine`, `<packagePrefix>.FilterBuilder`) are used - for the canonical `EF.*` example they ship from the same GitHub Packages org:
    - `https://nuget.pkg.github.com/efreeman518/index.json` (covers `EF.*` pattern for both Core and Enterprise)
 3. Use central package versions in `Directory.Packages.props` for every feed-supplied `<packagePrefix>.<Layer>`.
 4. After adding packages, restore and update to latest stable versions.
 5. Re-verify with `dotnet restore` and `dotnet build`.
-6. **Private feed auth:** GitHub Packages and other authenticated feeds require a PAT or token. Local dev stores credentials in `nuget.config` (user-level, not committed). CI/CD must pass credentials via environment variable or `dotnet nuget` auth step — see [cicd.md](cicd.md) for workflow setup. A 401 on restore means the feed credential is missing or expired.
+6. **Private feed auth:** GitHub Packages and other authenticated feeds require a PAT or token. Local dev stores credentials in `nuget.config` (user-level, not committed). CI/CD must pass credentials via environment variable or `dotnet nuget` auth step - see [cicd.md](cicd.md) for workflow setup. A 401 on restore means the feed credential is missing or expired.
 
 ### When `packageStrategy: local` or `hybrid` (locally-generated layers only)
 
 1. No `nuget.config` private-feed entry is required for layers in `localPackageLayers`. `nuget.org` is still mandatory.
 2. Each generated project under `src/Packages/<packagePrefix>.<Layer>/` sets `IsPackable=true`, `<PackageId>=<packagePrefix>.<Layer>`, `<Version>=0.1.0` (overridable).
-3. Application/domain/host projects consume locally-generated layers via `<ProjectReference Include="..\..\Packages\<packagePrefix>.<Layer>\<packagePrefix>.<Layer>.csproj" />` — no `<PackageVersion>` entry in `Directory.Packages.props`.
+3. Application/domain/host projects consume locally-generated layers via `<ProjectReference Include="..\..\Packages\<packagePrefix>.<Layer>\<packagePrefix>.<Layer>.csproj" />` - no `<PackageVersion>` entry in `Directory.Packages.props`.
 4. Transitive NuGet dependencies of the generated projects (e.g., `Microsoft.EntityFrameworkCore`) still go through `Directory.Packages.props` central versions.
 5. To publish later: `dotnet pack src/Packages/<packagePrefix>.<Layer>` produces a `.nupkg` that can be pushed to any feed. After the layer is published and consumed via `<PackageReference>`, move the layer from `localPackageLayers` into the feed-supplied set and delete the local project.
 
@@ -208,17 +208,17 @@ Other key types:
 
 - `Result` / `Result<T>` (same shape as domain result, but `Errors: IReadOnlyList<string>`)
 - `IRequestContext<TAuditIdType, TTenantIdType>`
-- `RequestContext<...>` implementation — constructor order is `(correlationId, auditId, tenantId, roles)`
-- `PagedResponse<T>` — properties: `PageSize` (int), `PageIndex` (int), `Total` (int), `Data` (IReadOnlyList&lt;T&gt;)
-- `SearchRequest<TFilter>` — record with: `PageSize` (int), `PageIndex` (int), `Sorts` (IEnumerable&lt;Sort&gt;?), `Filter` (TFilter?)
-- `Sort` — constructor: `Sort(string propertyName, SortOrder sortOrder)` — properties: `PropertyName`, `SortOrder`
-- `SortOrder` — enum: `Ascending = 0`, `Descending = 1`
+- `RequestContext<...>` implementation - constructor order is `(correlationId, auditId, tenantId, roles)`
+- `PagedResponse<T>` - properties: `PageSize` (int), `PageIndex` (int), `Total` (int), `Data` (IReadOnlyList&lt;T&gt;)
+- `SearchRequest<TFilter>` - record with: `PageSize` (int), `PageIndex` (int), `Sorts` (IEnumerable&lt;Sort&gt;?), `Filter` (TFilter?)
+- `Sort` - constructor: `Sort(string propertyName, SortOrder sortOrder)` - properties: `PropertyName`, `SortOrder`
+- `SortOrder` - enum: `Ascending = 0`, `Descending = 1`
 - `IMessage`
 - `AuditEntry<TAuditIdType, TTenantIdType>` + `AuditStatus`
 
 ### `EF.Common`
 
-- `ResultExtensions.ToResult(...)` for domain→application conversion
+- `ResultExtensions.ToResult(...)` for domain->application conversion
 - expression/predicate helpers for EF-safe composition
 - `CollectionUtility` (non-domain sync helpers)
 - `NotFoundException`
@@ -364,8 +364,8 @@ Pattern reference: [external-api.md](external-api.md)
 - [ ] `dotnet restore` re-runs cleanly after projects are generated
 - [ ] `EntityBase.Id` behavior preserved (`Guid.CreateVersion7()`)
 - [ ] Domain/application error types are not mixed:
-  - `DomainResult.Errors` → `IReadOnlyList<DomainError>`
-  - `Result.Errors` → `IReadOnlyList<string>`
+  - `DomainResult.Errors` -> `IReadOnlyList<DomainError>`
+  - `Result.Errors` -> `IReadOnlyList<string>`
 - [ ] Internal message bus namespaces are correct
 - [ ] If `applicationStyle` is `cqrs` or `switch`: `<packagePrefix>.CQRS` is sourced by feed or local project, and no MediatR/dispatcher package was added
 - [ ] Azure client factories and package-required DI wiring are registered

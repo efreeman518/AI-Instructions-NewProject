@@ -1,6 +1,6 @@
 # Azure Data Storage (Blob, Table, Cosmos DB)
 
-Base types for each store come from dedicated `EF.*` packages — see [package-dependencies.md](package-dependencies.md) and the [EF.Packages repo](https://github.com/efreeman518/EF.Packages) for full API details.
+Base types for each store come from dedicated `EF.*` packages - see [package-dependencies.md](package-dependencies.md) and the [EF.Packages repo](https://github.com/efreeman518/EF.Packages) for full API details.
 
 ## Prerequisites
 
@@ -88,9 +88,9 @@ private static void Add{Store}Services(IServiceCollection services, IConfigurati
 
 Blob and Table share an `AzureStorage` resource with emulator support. Cosmos DB uses its own resource.
 
-> **Version constraint:** When using `IAzureClientFactory<T>` alongside `EF.Host`, `Microsoft.Extensions.Azure` must be ≥1.12.0 (pulled transitively by `EF.Host` → `AzureAppConfiguration`). Lower versions cause assembly version conflicts.
+> **Version constraint:** When using `IAzureClientFactory<T>` alongside `EF.Host`, `Microsoft.Extensions.Azure` must be >=1.12.0 (pulled transitively by `EF.Host` -> `AzureAppConfiguration`). Lower versions cause assembly version conflicts.
 
-> **Cosmos DB dependency:** `Microsoft.Azure.Cosmos` requires `Newtonsoft.Json ≥10.0.2`. Add an explicit `Newtonsoft.Json` entry to `Directory.Packages.props` when adding Cosmos.
+> **Cosmos DB dependency:** `Microsoft.Azure.Cosmos` requires `Newtonsoft.Json >=10.0.2`. Add an explicit `Newtonsoft.Json` entry to `Directory.Packages.props` when adding Cosmos.
 
 ```csharp
 // Blob + Table (shared Azure Storage resource)
@@ -224,7 +224,7 @@ public class {Project}BlobRepositorySettings : BlobRepositorySettingsBase { }
 
 `BlobRepositorySettingsBase` requires `BlobServiceClientName`.
 
-**Override the base stubs.** `BlobRepositoryBase.Upload/Download/DeleteAsync` are `virtual` and throw `NotImplementedException` in the feed package. The project wrapper above only inherits them — calling `_blobRepo.UploadAsync(...)` at runtime crashes unless the wrapper overrides each method actually used. Implement against the injected `IAzureClientFactory<BlobServiceClient>`:
+**Override the base stubs.** `BlobRepositoryBase.Upload/Download/DeleteAsync` are `virtual` and throw `NotImplementedException` in the feed package. The project wrapper above only inherits them - calling `_blobRepo.UploadAsync(...)` at runtime crashes unless the wrapper overrides each method actually used. Implement against the injected `IAzureClientFactory<BlobServiceClient>`:
 
 ```csharp
 public override async Task<Uri> UploadAsync(
@@ -253,7 +253,7 @@ public override async Task<Stream> DownloadAsync(
 }
 ```
 
-**`BlobContainerClient.GetBlobsAsync` signature gotcha.** The current Azure SDK requires **positional** arguments: `GetBlobsAsync(BlobTraits.None, BlobStates.None, prefix, cancellationToken)`. The named-argument form `GetBlobsAsync(prefix: "...", cancellationToken: ct)` that older Microsoft samples show **does not compile** — the method exposes no parameters by those names. Use positional, or assign through the well-named overload of `BlobContainerClient`.
+**`BlobContainerClient.GetBlobsAsync` signature gotcha.** The current Azure SDK requires **positional** arguments: `GetBlobsAsync(BlobTraits.None, BlobStates.None, prefix, cancellationToken)`. The named-argument form `GetBlobsAsync(prefix: "...", cancellationToken: ct)` that older Microsoft samples show **does not compile** - the method exposes no parameters by those names. Use positional, or assign through the well-named overload of `BlobContainerClient`.
 
 If overrides are deferred (no caller exists yet), keep the wrapper inheriting the throwing stubs and rely on the *scaffold-skipped surface* exception in [../support/final-scaffold-checklist.md](../support/final-scaffold-checklist.md). The moment a service or endpoint calls `UploadAsync`, the override is mandatory.
 

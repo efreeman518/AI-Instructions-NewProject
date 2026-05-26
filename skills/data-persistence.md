@@ -41,12 +41,12 @@ public class TaskItemRepositoryTrxn(TaskFlowDbContextTrxn db)
 ```
 
 Things to notice:
-- Inherits from `RepositoryBase<TContext, TAuditId, TTenantId>` from EF.Packages — the entity-specific class only adds *what's different* (entity-specific includes, `UpdateFromDto` delegation).
+- Inherits from `RepositoryBase<TContext, TAuditId, TTenantId>` from EF.Packages - the entity-specific class only adds *what's different* (entity-specific includes, `UpdateFromDto` delegation).
 - `GetEntityAsync` does the heavy lifting; this class composes includes conditionally and delegates.
 - `ConfigureAwait(ConfigureAwaitOptions.None)` on every async call (library code).
-- The Query repository is a separate class with NoTracking semantics — see `TaskItemRepositoryQuery.cs` in the same folder.
+- The Query repository is a separate class with NoTracking semantics - see `TaskItemRepositoryQuery.cs` in the same folder.
 
-The principles below are commentary on this shape — they tell you why each piece exists and when to deviate.
+The principles below are commentary on this shape - they tell you why each piece exists and when to deviate.
 
 ## Overview
 
@@ -61,15 +61,15 @@ Load [../support/data-persistence-advanced.md](../support/data-persistence-advan
 
 ## Audit Strategy
 
-`AuditInterceptor<string, Guid?>` (from `EF.Data.Interceptors`) intercepts `SaveChangesAsync` on the transactional DbContext and publishes audit records via `IInternalMessageBus` (fire-and-forget). The interceptor does **not** block the save — it enqueues an `AuditMessage` to a background `System.Threading.Channels` consumer.
+`AuditInterceptor<string, Guid?>` (from `EF.Data.Interceptors`) intercepts `SaveChangesAsync` on the transactional DbContext and publishes audit records via `IInternalMessageBus` (fire-and-forget). The interceptor does **not** block the save - it enqueues an `AuditMessage` to a background `System.Threading.Channels` consumer.
 
-**Pipeline:** `EF SaveChanges` → `AuditInterceptor` captures changed entities → publishes to `IInternalMessageBus` (returns immediately) → background `AuditHandler` dequeues → `IAuditLogRepository.AppendAsync()` → Azure Table Storage (`{project}audit` table).
+**Pipeline:** `EF SaveChanges` -> `AuditInterceptor` captures changed entities -> publishes to `IInternalMessageBus` (returns immediately) -> background `AuditHandler` dequeues -> `IAuditLogRepository.AppendAsync()` -> Azure Table Storage (`{project}audit` table).
 
 **Key design points:**
 - `EntityBase` does **not** define audit properties (`CreatedAt`, `CreatedBy`, `UpdatedAt`, `UpdatedBy`). Do NOT inherit `AuditableBase<T>` unless audit fields must live on the entity itself.
 - Audit metadata is stored externally in Azure Table Storage, keyed by `PartitionKey` = tenant ID (or `"_system"`) and `RowKey` = reverse-ticks (newest-first).
 - Fields tracked: `EntityType`, `EntityKey`, `Action` (Insert/Update/Delete), `RecordedUtc`, `Metadata` (serialized property changes).
-- **Fallback:** When Table Storage is unavailable (local dev without emulator), register `NoOpAuditLogRepository` — silently discards audit entries.
+- **Fallback:** When Table Storage is unavailable (local dev without emulator), register `NoOpAuditLogRepository` - silently discards audit entries.
 
 **Source files:**
 | File | Purpose |
@@ -134,17 +134,17 @@ Key rules:
 
 See [updater-template.md](../templates/updater-template.md) for full implementation.
 
-> **Delegation pattern:** The updater is a **static extension method on `{Project}DbContextTrxn`** — this gives it access to `db.Delete()` for explicit EF change-tracker removal. Services call it through the repository: `DB.UpdateFromDto(entity, dto, relatedDeleteBehavior)` where `DB` is the DbContext property inherited from `RepositoryBase`.
+> **Delegation pattern:** The updater is a **static extension method on `{Project}DbContextTrxn`** - this gives it access to `db.Delete()` for explicit EF change-tracker removal. Services call it through the repository: `DB.UpdateFromDto(entity, dto, relatedDeleteBehavior)` where `DB` is the DbContext property inherited from `RepositoryBase`.
 
 Updater rules:
 
-- Use railway `.Bind()` flow: `entity.Update(...).Bind(updatedEntity => DomainResult.Combine(...).Map(updatedEntity))` — parent update errors short-circuit child syncs.
+- Use railway `.Bind()` flow: `entity.Update(...).Bind(updatedEntity => DomainResult.Combine(...).Map(updatedEntity))` - parent update errors short-circuit child syncs.
 - Centralize add/update/remove in one `SyncCollectionWithResult` call per child collection.
-- Use `RelatedDeleteBehavior` parameter to gate deletion — `None` = no-op in removeFunc, otherwise `db.Delete(toRemove)` + collection remove.
-- **Aggregate-parent `UpdateAsync` where the UI sends the full desired child list must pass `RelatedDeleteBehavior.RelationshipAndEntity`** — e.g. `repoTrxn.UpdateFromDto(entity, dto, RelatedDeleteBehavior.RelationshipAndEntity)`. The default `None` silently drops client-side removals and leaves orphaned rows. This is the canonical setting for the "edit page binds children to `_model.<Collection>` and saves in one call" UI pattern in [ui-blazor.md](ui-blazor.md) → *Editing Parent Aggregates with Child Collections*.
+- Use `RelatedDeleteBehavior` parameter to gate deletion - `None` = no-op in removeFunc, otherwise `db.Delete(toRemove)` + collection remove.
+- **Aggregate-parent `UpdateAsync` where the UI sends the full desired child list must pass `RelatedDeleteBehavior.RelationshipAndEntity`** - e.g. `repoTrxn.UpdateFromDto(entity, dto, RelatedDeleteBehavior.RelationshipAndEntity)`. The default `None` silently drops client-side removals and leaves orphaned rows. This is the canonical setting for the "edit page binds children to `_model.<Collection>` and saves in one call" UI pattern in [ui-blazor.md](ui-blazor.md) -> *Editing Parent Aggregates with Child Collections*.
 - **GET endpoints that feed an aggregate edit page must `.Include()` the child navigations.** Without the includes, the edit page either shows empty children or falls back to per-collection search calls.
 - **CRITICAL:** Call `db.Delete(toRemove)` in removeFunc, not just `collection.Remove()`. Without explicit EF delete, orphaned children remain in DB when relationship isn't cascade-delete.
-- Null-coalesce DTO collections: `dto.Items ?? []` — null = no changes, empty = remove all.
+- Null-coalesce DTO collections: `dto.Items ?? []` - null = no changes, empty = remove all.
 - Keep collection diff logic out of services.
 
 ### SearchRequest Defaults (Critical)

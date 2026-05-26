@@ -1,4 +1,4 @@
-# Test Templates — Domain (Phase 5a)
+# Test Templates - Domain (Phase 5a)
 
 | | |
 |---|---|
@@ -102,10 +102,10 @@ public class {Entity}Tests
         var child = {ChildEntity}.Create(Guid.NewGuid(), "Child").Value!;
         entity.Add{ChildEntity}(child);
 
-        // Act — add same child again
+        // Act - add same child again
         var result = entity.Add{ChildEntity}(child);
 
-        // Assert — idempotent
+        // Assert - idempotent
         Assert.IsTrue(result.IsSuccess);
         Assert.AreEqual(1, entity.{ChildEntity}s.Count);
     }

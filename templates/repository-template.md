@@ -1,7 +1,7 @@
 # Repository Template
 
 > **When to read:** Phase 5a, when generating the Trxn (mutations) + Query (reads) repository pair for an EF-backed entity, plus their interfaces.
-> **Skip if:** Entity has no mutations (read-only projection); persistence is non-EF (Cosmos/Table/Blob — use `azure-data-storage.md`); repository pair already exists.
+> **Skip if:** Entity has no mutations (read-only projection); persistence is non-EF (Cosmos/Table/Blob - use `azure-data-storage.md`); repository pair already exists.
 
 | | |
 |---|---|
@@ -26,7 +26,7 @@ namespace Infrastructure.Repositories;
 /// <summary>
 /// RepositoryBase generic args: <TDbContext, TAuditId, TTenantId>
 ///   TAuditId = string (matches IRequestContext.AuditId type)
-///   TTenantId = Guid? (matches ITenantEntity<Guid> — nullable for non-tenant scenarios)
+///   TTenantId = Guid? (matches ITenantEntity<Guid> - nullable for non-tenant scenarios)
 /// </summary>
 public class {Entity}RepositoryTrxn({Project}DbContextTrxn dbContext)
     : RepositoryBase<{Project}DbContextTrxn, string, Guid?>(dbContext), I{Entity}RepositoryTrxn
@@ -50,7 +50,7 @@ public class {Entity}RepositoryTrxn({Project}DbContextTrxn dbContext)
         ).ConfigureAwait(ConfigureAwaitOptions.None);
     }
 
-    // ===== UpdateFromDto — delegates to DbContext extension method =====
+    // ===== UpdateFromDto - delegates to DbContext extension method =====
     public DomainResult<{Entity}> UpdateFromDto({Entity} entity, {Entity}Dto dto,
         RelatedDeleteBehavior relatedDeleteBehavior = RelatedDeleteBehavior.None)
     {
@@ -190,7 +190,7 @@ public interface I{Entity}RepositoryQuery
 
 **Anti-pattern (manual paging):**
 ```csharp
-// ❌ WRONG — materializes full entities, no projection, manual paging
+// FAIL WRONG - materializes full entities, no projection, manual paging
 var query = DB.Categories.AsNoTracking().AsQueryable();
 if (filter.Name != null) query = query.Where(...);
 var total = await query.CountAsync(ct);
@@ -200,7 +200,7 @@ return new PagedResponse<Category> { Data = data, ... };
 
 **Correct pattern (base class projection):**
 ```csharp
-// ✅ CORRECT — SQL-level projection, base class handles paging/count
+// OK CORRECT - SQL-level projection, base class handles paging/count
 return await QueryPageProjectionAsync<Category, CategoryDto>(
     CategoryMapper.Projection,
     readNoLock: true,
@@ -219,12 +219,12 @@ Every query repo search method must follow this pattern. Use `{Entity}Mapper.Pro
 
 ## Critical: Delete Pattern (MUST call `Delete(entity)`)
 
-The `Delete` method is inherited from `RepositoryBase`. It marks the entity for deletion in the change tracker. **You MUST call it before `SaveChangesAsync`** — simply loading an entity and saving will NOT delete it.
+The `Delete` method is inherited from `RepositoryBase`. It marks the entity for deletion in the change tracker. **You MUST call it before `SaveChangesAsync`** - simply loading an entity and saving will NOT delete it.
 
 ```csharp
 // In service layer (not repository):
 var entity = await repoTrxn.Get{Entity}Async(id, false, ct);
-if (entity == null) return Result.Success(); // idempotent — not-found returns success
+if (entity == null) return Result.Success(); // idempotent - not-found returns success
 repoTrxn.Delete(entity);                     // marks for deletion
 await repoTrxn.SaveChangesAsync(OptimisticConcurrencyWinner.ClientWins, ct);
 return Result.Success();
@@ -232,15 +232,15 @@ return Result.Success();
 
 > **BUG PATTERN:** Omitting `repoTrxn.Delete(entity)` causes delete operations to silently no-op. This was found and fixed during reference app (TaskFlow) TestContainer testing.
 
-## Critical: SaveChangesAsync — NEVER Use 1-Param Overload
+## Critical: SaveChangesAsync - NEVER Use 1-Param Overload
 
 `DbContextBase.SaveChangesAsync(CancellationToken)` **ALWAYS throws `NotImplementedException`** by design. Always use the 2-param overload:
 
 ```csharp
-// ✅ CORRECT — always use this
+// OK CORRECT - always use this
 await repoTrxn.SaveChangesAsync(OptimisticConcurrencyWinner.ClientWins, ct);
 
-// ❌ WRONG — throws NotImplementedException at runtime
+// FAIL WRONG - throws NotImplementedException at runtime
 await repoTrxn.SaveChangesAsync(ct);
 ```
 
@@ -248,16 +248,16 @@ The 2-param overload retries on `DbUpdateConcurrencyException` using the specifi
 
 ## Notes
 
-- **Repositories inherit `RepositoryBase<TContext, TAuditId, TTenantId>`** — provides `GetEntityAsync`, `Create(ref)`, `UpdateFull(ref)`, `Delete(entity)`, `DeleteAsync(predicate)`, `SaveChangesAsync(OptimisticConcurrencyWinner, CancellationToken)`, `QueryPageProjectionAsync`, `QueryPageAsync`
-- **`DB` property** — `RepositoryBase` exposes `protected TDbContext DB => dbContext;` for calling extension methods (e.g. Updater) on the context
-- **Generic args:** `TAuditId = string` (matches `IRequestContext.AuditId`), `TTenantId = Guid?` (matches `ITenantEntity<Guid>` — nullable for non-tenant scenarios)
+- **Repositories inherit `RepositoryBase<TContext, TAuditId, TTenantId>`** - provides `GetEntityAsync`, `Create(ref)`, `UpdateFull(ref)`, `Delete(entity)`, `DeleteAsync(predicate)`, `SaveChangesAsync(OptimisticConcurrencyWinner, CancellationToken)`, `QueryPageProjectionAsync`, `QueryPageAsync`
+- **`DB` property** - `RepositoryBase` exposes `protected TDbContext DB => dbContext;` for calling extension methods (e.g. Updater) on the context
+- **Generic args:** `TAuditId = string` (matches `IRequestContext.AuditId`), `TTenantId = Guid?` (matches `ITenantEntity<Guid>` - nullable for non-tenant scenarios)
 - **`QueryPageProjectionAsync` signature:** `(Expression<Func<T, TProject>> projector, bool readNoLock, int? pageSize, int? pageIndex, Expression<Func<T, bool>>? filter, Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy, bool includeTotal, SplitQueryThresholdOptions?, CancellationToken, params includes[])`
 - **`SearchRequest<TFilter>`** is a record: `PageSize` (int), `PageIndex` (int), `Sorts` (IEnumerable\<Sort\>?), `Filter` (TFilter?). Does **not** have `Page`, `PageNumber`, `SortBy`, or `SortDirection`
 - **Trxn repository**: Uses `{Project}DbContextTrxn` (tracking, audit interceptor, read-write)
 - **Query repository**: Uses `{Project}DbContextQuery` (NoTracking, read-only replica)
-- **UpdateFromDto** delegates to `DB.UpdateFromDto(entity, dto, relatedDeleteBehavior)` — a DbContext extension method (see updater-template.md)
+- **UpdateFromDto** delegates to `DB.UpdateFromDto(entity, dto, relatedDeleteBehavior)` - a DbContext extension method (see updater-template.md)
 - Projectors (`{Entity}Mapper.Projection` by default, `{Entity}Mapper.ProjectorSearch` for intentional lean grid shapes) used in query repo for efficient SQL translation
-- No `SaveChangesAsync` override on query repo — read-only by design
+- No `SaveChangesAsync` override on query repo - read-only by design
 - Entity-specific repositories for complex queries; `GenericRepositoryTrxn/Query` for simple CRUD
 - Use `ConfigureAwait(ConfigureAwaitOptions.None)` in repository methods (library code)
 

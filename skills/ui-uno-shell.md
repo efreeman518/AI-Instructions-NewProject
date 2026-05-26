@@ -1,17 +1,17 @@
-# Uno Platform UI — Shell, Project Setup, App Hosting
+# Uno Platform UI - Shell, Project Setup, App Hosting
 
 App-shell scaffolding and project-file rules for an Uno application. Loaded during Phase 5c when an Uno UI project is in scope.
 
 Companion files:
-- [ui-uno.md](ui-uno.md) — index + decision table
-- [ui-uno-mvux.md](ui-uno-mvux.md) — MVUX models, routing, XAML, business services, auth
-- [ui-uno-platforms.md](ui-uno-platforms.md) — WASM debugging, Android, CI requirements
+- [ui-uno.md](ui-uno.md) - index + decision table
+- [ui-uno-mvux.md](ui-uno-mvux.md) - MVUX models, routing, XAML, business services, auth
+- [ui-uno-platforms.md](ui-uno-platforms.md) - WASM debugging, Android, CI requirements
 
 ---
 
 ## Packages (Minimum)
 
-> **Important:** With Uno.Sdk, you do NOT list individual Uno packages. The SDK resolves them automatically from `<UnoFeatures>`. The list below is for reference only — to understand what `UnoFeatures` maps to. Do NOT add these `PackageReference` entries to the csproj.
+> **Important:** With Uno.Sdk, you do NOT list individual Uno packages. The SDK resolves them automatically from `<UnoFeatures>`. The list below is for reference only - to understand what `UnoFeatures` maps to. Do NOT add these `PackageReference` entries to the csproj.
 
 ```xml
 <PackageReference Include="Uno.WinUI" />
@@ -140,7 +140,7 @@ src/UI/{Project}.Uno/               <- Uno.Sdk (browserwasm, android, ios)
 src/Host/{Project}.Uno.WasmHost/    <- ASP.NET Core wrapper for Aspire browserwasm hosting
 ```
 
-After extracting, **delete** the original files from the Uno project — do not leave duplicates.
+After extracting, **delete** the original files from the Uno project - do not leave duplicates.
 
 ## App.xaml Rules
 
@@ -166,8 +166,8 @@ The `App.xaml` base class is `Application`, NOT `utu:App` (which doesn't exist):
 
 ### App.xaml Non-Negotiables
 
-- Base element: `<Application>` — never `<utu:App>` or `<toolkit:App>`
-- `MaterialToolkitTheme` namespace: `using:Uno.Toolkit.UI.Material` — NOT `using:Uno.Material`
+- Base element: `<Application>` - never `<utu:App>` or `<toolkit:App>`
+- `MaterialToolkitTheme` namespace: `using:Uno.Toolkit.UI.Material` - NOT `using:Uno.Material`
 - Do NOT add `<ToolkitResources xmlns="using:Uno.Toolkit.UI" />` as a separate merged dictionary (included via `MaterialToolkitTheme`)
 
 - Put palette changes in `Styles/ColorPaletteOverride.xaml`; do not hard-code page-level hex colors.
@@ -202,7 +202,7 @@ public partial class App : Application
 
 ### Shell Control
 
-Create a `Shell.xaml` UserControl with `ExtendedSplashScreen` as the loading container. The `Content` property MUST hold a `<Frame />` — this is what Uno Extensions Navigation writes page content into. The `LoadingContentTemplate` shows the spinner while the host boots. Both are required.
+Create a `Shell.xaml` UserControl with `ExtendedSplashScreen` as the loading container. The `Content` property MUST hold a `<Frame />` - this is what Uno Extensions Navigation writes page content into. The `LoadingContentTemplate` shows the spinner while the host boots. Both are required.
 
 ```xml
 <UserControl x:Class="{Namespace}.Views.Shell"
@@ -232,7 +232,7 @@ Create a `Shell.xaml` UserControl with `ExtendedSplashScreen` as the loading con
 </UserControl>
 ```
 
-`Shell.xaml.cs` MUST implement `IContentControlProvider` — this is how `NavigateAsync<Shell>()` locates the `Frame` for page navigation. Without it, the app starts but never renders any page content.
+`Shell.xaml.cs` MUST implement `IContentControlProvider` - this is how `NavigateAsync<Shell>()` locates the `Frame` for page navigation. Without it, the app starts but never renders any page content.
 
 ```csharp
 using Microsoft.UI.Xaml.Controls;
@@ -274,9 +274,9 @@ public partial record ShellModel
 
 ### Shell Non-Negotiables
 
-- `ExtendedSplashScreen.Content` contains `<Frame />` — **never omit this**. The app will appear to load (spinner disappears) but show a blank screen because there is no navigation target.
-- Shell code-behind implements `IContentControlProvider` — required by `NavigateAsync<Shell>()` to bind the `Frame`.
-- `ShellModel` calls `NavigateRouteAsync` in the constructor (fire-and-forget via `_ = Start()`) — this triggers the first navigation immediately after the host finishes loading.
+- `ExtendedSplashScreen.Content` contains `<Frame />` - **never omit this**. The app will appear to load (spinner disappears) but show a blank screen because there is no navigation target.
+- Shell code-behind implements `IContentControlProvider` - required by `NavigateAsync<Shell>()` to bind the `Frame`.
+- `ShellModel` calls `NavigateRouteAsync` in the constructor (fire-and-forget via `_ = Start()`) - this triggers the first navigation immediately after the host finishes loading.
 
 Configure everything through `IApplicationBuilder`:
 
@@ -311,7 +311,7 @@ builder
         .UseSerialization(configure: ConfigureSerialization)
         .ConfigureServices((context, services) =>
         {
-            // Use StrongReferenceMessenger — MVUX partial-record recipients registered
+            // Use StrongReferenceMessenger - MVUX partial-record recipients registered
             // via Messenger.Register<TRecipient, TMessage> are not held alive elsewhere
             // and get GC'd under WeakReferenceMessenger. Cross-model refresh then stops
             // firing with no error.

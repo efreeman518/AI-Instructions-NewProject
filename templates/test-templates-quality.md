@@ -1,9 +1,9 @@
-# Test Templates — Quality Gates (Phase 5d)
+# Test Templates - Quality Gates (Phase 5d)
 
 | | |
 |---|---|
 | **Generates** | `Test/Test.Architecture/**`, `Test/Test.PlaywrightUI/**`, `Test/Test.Mobile/**` (when Uno native mobile testing is enabled), `Test/Test.Load/**`, `Test/Test.Benchmarks/**` |
-| **Requires** | Core implementation phases complete (5a–5c) |
+| **Requires** | Core implementation phases complete (5a-5c) |
 | **Phase** | 5d (Quality + Delivery) |
 | **Protocol** | These tests are written AFTER implementation. Unit/endpoint/integration tests already exist from 5a/5b/5c. Phase 5d adds quality gates and runs a full regression. |
 
@@ -64,11 +64,11 @@ public class ApplicationDependencyTests : BaseTest
 
 ## E2E Tests (Playwright)
 
-> **Uno WASM vs MudBlazor:** The template below uses standard HTML selectors (MudBlazor / server-rendered Blazor). For Uno WASM targets, use the boot-once shared-page pattern and coordinate-click helpers in [../skills/testing-quality.md](../skills/testing-quality.md) § Hosted Browser UI.
+> **Uno WASM vs MudBlazor:** The template below uses standard HTML selectors (MudBlazor / server-rendered Blazor). For Uno WASM targets, use the boot-once shared-page pattern and coordinate-click helpers in [../skills/testing-quality.md](../skills/testing-quality.md) section Hosted Browser UI.
 >
 > **Data-assertion rule:** Never assert specific row counts, page counts, or seeded titles (e.g. `"Showing 1 to 10 of 14"`, `"Build dashboard UI"`). These break against shared dev databases with accumulating test data. Assert structural UI strings only: headers, labels, empty-state text.
 >
-> **MudBlazor timing:** Always `waitFor` inputs before fill and use 15 s timeout for delete dialogs as defined in [../skills/testing-quality.md](../skills/testing-quality.md) § Hosted Browser UI.
+> **MudBlazor timing:** Always `waitFor` inputs before fill and use 15 s timeout for delete dialogs as defined in [../skills/testing-quality.md](../skills/testing-quality.md) section Hosted Browser UI.
 >
 > **Base URL:** Use an environment variable per UI surface. Aspire can assign dynamic ports to UI hosts, especially React/Vite apps. Do not hard-code a previous dashboard URL.
 
@@ -99,27 +99,27 @@ public class {Entity}CrudTests : PageTest
         var pageObject = new {Entity}PageObject(Page);
         await pageObject.NavigateAsync(BaseUrl);
 
-        // Act — Create
+        // Act - Create
         await Page.ClickAsync("#btn-add");
         await pageObject.FillNameAsync(baseName);
         await pageObject.ClickSaveAsync();
 
-        // Assert — row appears in list
+        // Assert - row appears in list
         Assert.IsTrue(await pageObject.ItemExistsInGridAsync(baseName));
 
-        // Act — Edit
+        // Act - Edit
         await Page.Locator($"tr:has-text('{baseName}')").ClickAsync();
         await pageObject.FillNameAsync(baseName + appendName);
         await pageObject.ClickSaveAsync();
 
-        // Assert — updated name in list
+        // Assert - updated name in list
         Assert.IsTrue(await pageObject.ItemExistsInGridAsync(baseName + appendName));
         Assert.IsTrue(await pageObject.ItemNotInGridAsync(baseName));
 
-        // Act — Delete
+        // Act - Delete
         await pageObject.ClickDeleteAsync(baseName + appendName);
 
-        // Assert — removed from list
+        // Assert - removed from list
         Assert.IsTrue(await pageObject.ItemNotInGridAsync(baseName + appendName));
     }
 }
@@ -234,10 +234,10 @@ public class {Entity}Benchmarks
 
 ## Integration & E2E Tests (moved to dedicated templates)
 
-The Integration (`Test.Integration`) and E2E (`Test.E2E`) tiers are scaffolded during Phase 5a/5b — not Phase 5d. The patterns live in their own templates:
+The Integration (`Test.Integration`) and E2E (`Test.E2E`) tiers are scaffolded during Phase 5a/5b - not Phase 5d. The patterns live in their own templates:
 
-- [test-templates-integration.md](test-templates-integration.md) — `AspireTestHost`, `DbContextFactory`, `{Entity}RepositoryIntegrationTests`, `AuditLogRepositoryAzuriteTests`, `ApiAuditPipelineTests`, `DomainEventPipelineTests`.
-- [test-templates-e2e.md](test-templates-e2e.md) — `SqlApiFactory`, `{Entity}WorkflowTests` (full CRUD + paged search + child-aggregate workflows against Testcontainers SQL).
+- [test-templates-integration.md](test-templates-integration.md) - `AspireTestHost`, `DbContextFactory`, `{Entity}RepositoryIntegrationTests`, `AuditLogRepositoryAzuriteTests`, `ApiAuditPipelineTests`, `DomainEventPipelineTests`.
+- [test-templates-e2e.md](test-templates-e2e.md) - `SqlApiFactory`, `{Entity}WorkflowTests` (full CRUD + paged search + child-aggregate workflows against Testcontainers SQL).
 
 Phase 5d treats these tiers as **regression scope**, not generation scope: run them as part of the final quality gate (`dotnet test --filter "TestCategory=Integration|TestCategory=E2E"`) but do not re-generate fixtures here. If a sub-phase skipped its tier earlier (e.g., `api-only` scaffold), load the matching template on-demand and back-fill.
 

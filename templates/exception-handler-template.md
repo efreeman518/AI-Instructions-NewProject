@@ -8,7 +8,7 @@
 
 ## Purpose
 
-Global `IExceptionHandler` that maps unexpected/infrastructure exceptions to `ProblemDetails` responses. This is the **safety net** — not a control-flow mechanism. All expected business outcomes flow through `Result<T>`/`DomainResult<T>`.
+Global `IExceptionHandler` that maps unexpected/infrastructure exceptions to `ProblemDetails` responses. This is the **safety net** - not a control-flow mechanism. All expected business outcomes flow through `Result<T>`/`DomainResult<T>`.
 
 ## Template
 
@@ -46,7 +46,7 @@ internal sealed class DefaultExceptionHandler(
                 => (StatusCodes.Status500InternalServerError, "Internal server error")
         };
 
-        logger.LogError(exception, "Unhandled exception: {ExceptionType} — {Message}",
+        logger.LogError(exception, "Unhandled exception: {ExceptionType} - {Message}",
             exception.GetType().Name, exception.Message);
 
         var problemDetails = new ProblemDetails
@@ -62,7 +62,7 @@ internal sealed class DefaultExceptionHandler(
         httpContext.Response.StatusCode = statusCode;
         await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
 
-        return true;  // Exception handled — stop pipeline propagation
+        return true;  // Exception handled - stop pipeline propagation
     }
 }
 ```
@@ -94,11 +94,11 @@ app.UseExceptionHandler();
 
 ## Rules
 
-- **Safety net only** — business validation errors must use `Result<T>` / `DomainResult<T>`, never exceptions.
+- **Safety net only** - business validation errors must use `Result<T>` / `DomainResult<T>`, never exceptions.
 - Stack traces: include full `exception.ToString()` in Development/Staging; show only `exception.Message` in Production.
 - Always log at `Error` level with structured placeholders.
 - Return `true` to indicate the exception is handled and prevent further pipeline propagation.
-- Add new exception mappings as needed (e.g., `HttpRequestException` → 502 for downstream failures).
+- Add new exception mappings as needed (e.g., `HttpRequestException` -> 502 for downstream failures).
 - **Always check `httpContext.Response.HasStarted` before writing the response body.** Writing to an already-started response throws a second exception and masks the original.
 - **`OperationCanceledException` from EF Core is best caught in the service method**, not here. The VS debugger breaks at the throw site before this handler runs, so the handler alone cannot suppress break-on-exception dialogs. Catch it in the service and return an empty/default result; let this handler remain a true last-resort fallback.
 
@@ -110,5 +110,5 @@ app.UseExceptionHandler();
 - [ ] Stack traces gated by environment (not exposed in Production)
 - [ ] All mapped exceptions return correct HTTP status codes
 - [ ] Logging uses structured placeholders, not string interpolation
-- [ ] No business logic errors handled here — those use `Result<T>` pattern
+- [ ] No business logic errors handled here - those use `Result<T>` pattern
 

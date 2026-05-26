@@ -28,7 +28,7 @@ public abstract class {App}DbContextBase(DbContextOptions options)
 }
 ```
 
-> **Do NOT** use the expression-body `=> Set<T>()` pattern — it creates a new `DbSet` instance on every access and defeats EF's internal caching.
+> **Do NOT** use the expression-body `=> Set<T>()` pattern - it creates a new `DbSet` instance on every access and defeats EF's internal caching.
 
 ### Registration
 
@@ -164,7 +164,7 @@ public abstract class {App}DbContextBase(DbContextOptions options)
         {
             foreach (var property in entityType.GetProperties())
             {
-                // All decimals → decimal(10,4) unless explicitly overridden
+                // All decimals -> decimal(10,4) unless explicitly overridden
                 if (property.ClrType == typeof(decimal) || property.ClrType == typeof(decimal?))
                 {
                     if (property.GetPrecision() is null)
@@ -173,7 +173,7 @@ public abstract class {App}DbContextBase(DbContextOptions options)
                         property.SetScale(4);
                 }
 
-                // All DateTime → datetime2
+                // All DateTime -> datetime2
                 if (property.ClrType == typeof(DateTime) || property.ClrType == typeof(DateTime?))
                 {
                     property.SetColumnType("datetime2");
@@ -258,7 +258,7 @@ public class SeedDataTask(
 ```
 
 **Rules:**
-- Guard with `AnyAsync` — idempotent, safe on repeat runs.
+- Guard with `AnyAsync` - idempotent, safe on repeat runs.
 - Gate dev-only tasks with `IHostEnvironment.IsDevelopment()`.
 - Use deterministic IDs for dev tenant (`SeedConstants.DevTenantId`) so tests can reference them.
 
@@ -266,7 +266,7 @@ public class SeedDataTask(
 
 ## Scaffold Migration Strategy
 
-During scaffolding phases, the database schema is evolving rapidly. Use a single clean `InitialCreate` migration — do not accumulate incremental migrations.
+During scaffolding phases, the database schema is evolving rapidly. Use a single clean `InitialCreate` migration - do not accumulate incremental migrations.
 
 **Rule:** Before creating a migration, remove any existing migrations first:
 

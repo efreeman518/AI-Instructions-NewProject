@@ -2,9 +2,9 @@
 
 ## Purpose
 
-Structured logging, distributed tracing, custom metrics, and health checks for all hosts. Complements [aspire.md](aspire.md) (which wires OpenTelemetry/ServiceDefaults) — this skill covers application-level conventions.
+Structured logging, distributed tracing, custom metrics, and health checks for all hosts. Complements [aspire.md](aspire.md) (which wires OpenTelemetry/ServiceDefaults) - this skill covers application-level conventions.
 
-Not a monitoring dashboard skill — dashboard/alerting configuration is Azure-side (App Insights, Grafana, Azure Monitor).
+Not a monitoring dashboard skill - dashboard/alerting configuration is Azure-side (App Insights, Grafana, Azure Monitor).
 
 ---
 
@@ -18,18 +18,18 @@ Not a monitoring dashboard skill — dashboard/alerting configuration is Azure-s
 | `Information` | Request/response lifecycle, business events | `"Created {Entity} {EntityId} for tenant {TenantId}"` |
 | `Warning` | Retries, degraded paths, fallback behavior | `"Cache miss for {Entity}:{EntityId}, falling back to database"` |
 | `Error` | Unhandled + caught-and-handled failures | `"Failed to save {Entity} {EntityId}: {ErrorMessage}"` |
-| `Critical` | Startup failures, data corruption, unrecoverable state | `"Database migration failed — application cannot start"` |
+| `Critical` | Startup failures, data corruption, unrecoverable state | `"Database migration failed - application cannot start"` |
 
 ### Template Format
 
-Always use structured placeholders — **never** string interpolation:
+Always use structured placeholders - **never** string interpolation:
 
 ```csharp
 // CORRECT
 logger.LogInformation("Created {Entity} {EntityId} for tenant {TenantId}",
     nameof(TodoItem), entity.Id, entity.TenantId);
 
-// WRONG — loses structured properties
+// WRONG - loses structured properties
 logger.LogInformation($"Created TodoItem {entity.Id} for tenant {entity.TenantId}");
 ```
 
@@ -39,7 +39,7 @@ logger.LogInformation($"Created TodoItem {entity.Id} for tenant {entity.TenantId
 
 ### Logger Injection
 
-Inject `ILogger<T>` per class — not `ILoggerFactory`:
+Inject `ILogger<T>` per class - not `ILoggerFactory`:
 
 ```csharp
 internal class TodoItemService(ILogger<TodoItemService> logger, ...) : ITodoItemService
@@ -85,7 +85,7 @@ activity?.SetTag("job.name", "ProcessDueReminders");
 activity?.SetTag("tenant.id", tenantId.ToString());
 ```
 
-### Gateway → API
+### Gateway -> API
 
 YARP preserves correlation headers by default. Forward: `X-Correlation-Id`, `traceparent`, `tracestate`. No additional config needed unless custom headers are required.
 
@@ -97,7 +97,7 @@ Use `System.Diagnostics.Metrics` (not legacy `EventCounters`):
 
 ### Meter Naming
 
-`{Project}.{Layer}` — e.g., `TaskFlow.Api`, `TaskFlow.Domain`.
+`{Project}.{Layer}` - e.g., `TaskFlow.Api`, `TaskFlow.Domain`.
 
 ### Registration in Bootstrapper
 
@@ -126,7 +126,7 @@ s_cacheHit.Add(1, new KeyValuePair<string, object?>("key", cacheKey));
 ## Health Checks
 
 **Required:** SQL connectivity (all hosts), Redis connectivity (if caching enabled).
-**Optional:** Downstream API (Gateway → API), Blob storage, Service Bus, Cosmos DB.
+**Optional:** Downstream API (Gateway -> API), Blob storage, Service Bus, Cosmos DB.
 
 Implementation: Use `IHealthCheck` per dependency. Register with `services.AddHealthChecks().AddCheck<T>(name, tags: ["ready"])`. Map `/healthz` (liveness, all checks) and `/readyz` (readiness, tag-filtered). See [health-check-template.md](../templates/health-check-template.md) for the implementation pattern.
 
@@ -137,7 +137,7 @@ Aspire wiring: ServiceDefaults calls `AddDefaultHealthChecks()` for basic livene
 ## Verification Checklist
 
 - [ ] All log statements use structured placeholders, never string interpolation
-- [ ] No PII/PHI in log output — entity IDs and tenant IDs only
+- [ ] No PII/PHI in log output - entity IDs and tenant IDs only
 - [ ] `ILogger<T>` injected per class (not `ILoggerFactory`)
 - [ ] Correlation ID middleware registered in API pipeline
 - [ ] Background jobs create explicit `Activity` spans

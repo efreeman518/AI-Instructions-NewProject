@@ -1,4 +1,4 @@
-# Test Templates — Repository (Phase 5a)
+# Test Templates - Repository (Phase 5a)
 
 | | |
 |---|---|
@@ -35,30 +35,30 @@ public class {Entity}RepositoryTrxnTests
         var tenantId = Guid.NewGuid();
         var entity = {Entity}.Create(tenantId, "TestEntity").Value!;
 
-        // Act — Create
+        // Act - Create
         repo.Create(ref entity);
         await repo.SaveChangesAsync(OptimisticConcurrencyWinner.ClientWins);
 
-        // Act — Read
+        // Act - Read
         var retrieved = await repo.Get{Entity}Async(entity.Id);
 
-        // Assert — Read
+        // Assert - Read
         Assert.IsNotNull(retrieved);
         Assert.AreEqual("TestEntity", retrieved.Name);
 
-        // Act — Update via domain method
+        // Act - Update via domain method
         retrieved.Update(name: "Updated");
         await repo.SaveChangesAsync(OptimisticConcurrencyWinner.ClientWins);
 
-        // Assert — Updated
+        // Assert - Updated
         var updated = await repo.Get{Entity}Async(entity.Id);
         Assert.AreEqual("Updated", updated!.Name);
 
-        // Act — Delete
+        // Act - Delete
         repo.Delete(updated);
         await repo.SaveChangesAsync(OptimisticConcurrencyWinner.ClientWins);
 
-        // Assert — Deleted
+        // Assert - Deleted
         var deleted = await repo.Get{Entity}Async(entity.Id);
         Assert.IsNull(deleted);
     }
@@ -169,7 +169,7 @@ public class {Entity}RepositoryQueryTests
 
 ## InMemoryDbBuilder Usage Notes
 
-- `BuildInMemory<T>()` — uses EF in-memory provider; fast but does not enforce relational constraints
-- `BuildSQLite<T>()` — uses SQLite in-memory; enforces FK/unique constraints; use for relationship tests
-- `SeedDefaultEntityData()` — seeds standard test data (implement in Test.Support)
-- `UseEntityData(Action<DbContext>)` — custom seed per test
+- `BuildInMemory<T>()` - uses EF in-memory provider; fast but does not enforce relational constraints
+- `BuildSQLite<T>()` - uses SQLite in-memory; enforces FK/unique constraints; use for relationship tests
+- `SeedDefaultEntityData()` - seeds standard test data (implement in Test.Support)
+- `UseEntityData(Action<DbContext>)` - custom seed per test

@@ -1,17 +1,17 @@
 # gRPC
 
-Base types (error interceptors, registration helpers) come from the `EF.Grpc` package — see [package-dependencies.md](package-dependencies.md) and the [EF.Packages repo](https://github.com/efreeman518/EF.Packages) for full API details.
+Base types (error interceptors, registration helpers) come from the `EF.Grpc` package - see [package-dependencies.md](package-dependencies.md) and the [EF.Packages repo](https://github.com/efreeman518/EF.Packages) for full API details.
 
 ## Prerequisites
 
-- [package-dependencies.md](package-dependencies.md) — `EF.Grpc` package types
-- [solution-structure.md](solution-structure.md) — project layout
-- [bootstrapper.md](bootstrapper.md) — centralized DI registration
-- [api.md](api.md) — API endpoint patterns (gRPC complements REST APIs)
+- [package-dependencies.md](package-dependencies.md) - `EF.Grpc` package types
+- [solution-structure.md](solution-structure.md) - project layout
+- [bootstrapper.md](bootstrapper.md) - centralized DI registration
+- [api.md](api.md) - API endpoint patterns (gRPC complements REST APIs)
 
 ## Overview
 
-gRPC support uses `EF.Grpc` which provides **error interceptors** for both client and service sides. These interceptors standardize error handling across gRPC calls — catching exceptions, mapping to gRPC status codes, and surfacing structured error information.
+gRPC support uses `EF.Grpc` which provides **error interceptors** for both client and service sides. These interceptors standardize error handling across gRPC calls - catching exceptions, mapping to gRPC status codes, and surfacing structured error information.
 
 > **When to use gRPC vs REST:** Use gRPC for internal service-to-service communication where performance, streaming, and strong typing matter. Use REST (Minimal APIs) for external/public APIs, browser clients, and third-party integrations.
 
@@ -24,7 +24,7 @@ gRPC support uses `EF.Grpc` which provides **error interceptors** for both clien
 Intercepts gRPC client calls and translates `RpcException` into structured error responses:
 
 ```csharp
-// Provided by package — catches RpcException on client calls
+// Provided by package - catches RpcException on client calls
 // and logs structured error details
 public class ClientErrorInterceptor : Interceptor
 {
@@ -38,16 +38,16 @@ public class ClientErrorInterceptor : Interceptor
 Intercepts incoming gRPC service calls and translates unhandled exceptions into appropriate gRPC status codes:
 
 ```csharp
-// Provided by package — catches exceptions in service methods
+// Provided by package - catches exceptions in service methods
 // and maps to gRPC StatusCode with structured details
 public class ServiceErrorInterceptor : Interceptor
 {
     // Maps exceptions:
-    // - ValidationException → StatusCode.InvalidArgument
-    // - NotFoundException → StatusCode.NotFound
-    // - UnauthorizedAccessException → StatusCode.PermissionDenied
-    // - OperationCanceledException → StatusCode.Cancelled
-    // - Other → StatusCode.Internal
+    // - ValidationException -> StatusCode.InvalidArgument
+    // - NotFoundException -> StatusCode.NotFound
+    // - UnauthorizedAccessException -> StatusCode.PermissionDenied
+    // - OperationCanceledException -> StatusCode.Cancelled
+    // - Other -> StatusCode.Internal
 }
 ```
 

@@ -105,7 +105,7 @@ public static IHostApplicationBuilder AddServiceDefaults(
 
 **Rules:**
 - Call once per host, before any other service registration.
-- Do not duplicate OpenTelemetry or health check setup in individual hosts — ServiceDefaults owns it.
+- Do not duplicate OpenTelemetry or health check setup in individual hosts - ServiceDefaults owns it.
 - Add domain-specific readiness checks (SQL, Redis) in host registration, not in ServiceDefaults.
 
 ---

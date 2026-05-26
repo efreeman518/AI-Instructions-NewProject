@@ -1,29 +1,29 @@
-# Test Templates — Integration (Phase 5a/5b, on-demand)
+# Test Templates - Integration (Phase 5a/5b, on-demand)
 
 | | |
 |---|---|
 | **Generates** | `Test/Test.Integration/AspireTestHost.cs`, `Test/Test.Integration/DbContextFactory.cs`, `Test/Test.Integration/{Entity}RepositoryIntegrationTests.cs`, `Test/Test.Integration/AuditLogRepositoryAzuriteTests.cs`, `Test/Test.Integration/ApiAuditPipelineTests.cs`, `Test/Test.Integration/DomainEventPipelineTests.cs` |
 | **Requires** | [test-templates-endpoint](test-templates-endpoint.md) (for the shared `WebApplicationFactoryBase`), [repository-template](repository-template.md), [updater-template](updater-template.md), an Aspire AppHost project |
 | **Phase** | Generated in Phase 4 (host + factory shells) and filled in during Phase 5a (`*RepositoryIntegrationTests`) and Phase 5b (`*AuditPipelineTests`, `DomainEventPipelineTests`) |
-| **Protocol** | Tests-after for this tier — TDD lives in `Test.Unit` and `Test.Endpoints`. Integration verifies wiring against real infrastructure (SQL/Azurite/Service Bus emulator), so write the tests once the unit + endpoint tests pin behavior. |
+| **Protocol** | Tests-after for this tier - TDD lives in `Test.Unit` and `Test.Endpoints`. Integration verifies wiring against real infrastructure (SQL/Azurite/Service Bus emulator), so write the tests once the unit + endpoint tests pin behavior. |
 
 ## Why this tier exists
 
 `Test.Endpoints` runs against in-memory EF, which silently masks tenant query filters, owned-type flattening, paging plans, raw SQL projections, M:N bridge tables, polymorphic indexes, and audit interceptor wiring. `Test.E2E` runs the full HTTP path but only against a single SQL container.
 
-`Test.Integration` is the **multi-resource** tier — it exercises real SQL **plus** Azurite Table Storage **plus** Service Bus emulator **plus** Functions where applicable, with the production AppHost graph instead of bespoke wiring. Use it for:
+`Test.Integration` is the **multi-resource** tier - it exercises real SQL **plus** Azurite Table Storage **plus** Service Bus emulator **plus** Functions where applicable, with the production AppHost graph instead of bespoke wiring. Use it for:
 
 - EF migration apply against real SQL Server (catches FK ordering / shadow-property / schema drift bugs).
 - Tenant query filters, M:N junction navigation (`.ThenInclude`), polymorphic-index existence checks.
-- `AuditInterceptor → IInternalMessageBus → AuditHandler → IAuditLogRepository → Azurite` end-to-end.
-- API request → audit middleware → Azurite, with polling read-back.
-- Service Bus emulator → Function trigger → projection store handoff.
+- `AuditInterceptor -> IInternalMessageBus -> AuditHandler -> IAuditLogRepository -> Azurite` end-to-end.
+- API request -> audit middleware -> Azurite, with polling read-back.
+- Service Bus emulator -> Function trigger -> projection store handoff.
 
 ## Reuse rule
 
 Start the Aspire AppHost graph **once** per assembly. Tests that need only SQL or only Azurite **piggyback** on the shared fixture instead of spinning their own Testcontainers stack. The cost is roughly one Aspire startup (~60-90 s on warm Docker, 2-5 min cold) per test run, regardless of how many integration test classes participate. The benefit is no duplicate containers and a single source of truth for connection strings.
 
-> **Naming:** `AspireTestHost` (not `DatabaseFixture`). The fixture owns the full distributed application — DB + Functions + Table Storage + lifecycle — and the name has to reflect that. `DbContextFactory` is a separate static helper that creates EF contexts pointed at `AspireTestHost.ConnectionString`. Single-responsibility names let contributors grep by purpose. See [../skills/testing.md](../skills/testing.md) → *Aspire Test Host (recipe)*.
+> **Naming:** `AspireTestHost` (not `DatabaseFixture`). The fixture owns the full distributed application - DB + Functions + Table Storage + lifecycle - and the name has to reflect that. `DbContextFactory` is a separate static helper that creates EF contexts pointed at `AspireTestHost.ConnectionString`. Single-responsibility names let contributors grep by purpose. See [../skills/testing.md](../skills/testing.md) -> *Aspire Test Host (recipe)*.
 
 ---
 
@@ -42,8 +42,8 @@ namespace Test.Integration;
 /// <summary>
 /// Assembly-scoped fixture that starts the full Aspire AppHost graph (API, Functions, SQL,
 /// Table Storage) once via [AssemblyInitialize] and tears it down via [AssemblyCleanup].
-/// Aspire tier (Aspire.Hosting.Testing) — required so downstream classes can exercise the full
-/// service mesh (HTTP → API → Service Bus → Function → projection → audit row), which no lighter
+/// Aspire tier (Aspire.Hosting.Testing) - required so downstream classes can exercise the full
+/// service mesh (HTTP -> API -> Service Bus -> Function -> projection -> audit row), which no lighter
 /// tier reproduces. Per-call .WaitAsync(DefaultTimeout, ct) bounds every async Aspire step;
 /// WaitForResourceHealthyAsync avoids races where containers report Running before they accept
 /// connections.
@@ -71,7 +71,7 @@ public class AspireTestHost
     public static async Task AssemblyInit(TestContext _)
     {
         // AppHost.cs reads these via Environment.GetEnvironmentVariable, so they must be process env vars.
-        // Save originals first so cleanup can restore them — hermeticity matters when an outer
+        // Save originals first so cleanup can restore them - hermeticity matters when an outer
         // test runner sets these.
         _originalAspireTesting = Environment.GetEnvironmentVariable("{APP}_ASPIRE_TESTING");
         _originalIncludeFunctions = Environment.GetEnvironmentVariable("{APP}_INCLUDE_FUNCTIONS");
@@ -110,7 +110,7 @@ public class AspireTestHost
         AspireApp = await builder.BuildAsync(ct).WaitAsync(DefaultTimeout, ct);
         await AspireApp.StartAsync(ct).WaitAsync(DefaultTimeout, ct);
 
-        // Container reaching Running != SQL accepting connections — wait for the health check.
+        // Container reaching Running != SQL accepting connections - wait for the health check.
         await AspireApp.ResourceNotifications.WaitForResourceHealthyAsync("{app}db", ct)
             .WaitAsync(DefaultTimeout, ct);
 
@@ -134,7 +134,7 @@ public class AspireTestHost
             }
             catch (TimeoutException)
             {
-                // Bounded shutdown — DisposeAsync below still cleans up underlying processes/containers.
+                // Bounded shutdown - DisposeAsync below still cleans up underlying processes/containers.
             }
             await AspireApp.DisposeAsync();
         }
@@ -145,7 +145,7 @@ public class AspireTestHost
 
     /// <summary>Waits for a named Aspire resource to reach the Healthy state, bounded by
     /// DefaultTimeout. Tests should call this for any non-SQL resource ({app}api, {app}functions,
-    /// TableStorage1) before talking to it — Aspire reports Running before warm-up completes.</summary>
+    /// TableStorage1) before talking to it - Aspire reports Running before warm-up completes.</summary>
     internal static Task WaitForResourceHealthyAsync(string resourceName, CancellationToken cancellationToken = default)
     {
         if (AspireApp is null)
@@ -157,19 +157,19 @@ public class AspireTestHost
     }
 
     /// <summary>Checks if Azure Functions Core Tools (func.exe) is available on PATH.</summary>
-    internal static bool EnsureFuncToolAvailable() { /* OS-specific PATH probe — see reference app */ }
+    internal static bool EnsureFuncToolAvailable() { /* OS-specific PATH probe - see reference app */ }
 }
 ```
 
 ### Aspire fixture non-negotiables
 
-1. **One shared app per assembly** — start in `[AssemblyInitialize]`, reuse. Never per test class.
-2. **`Parameters:*` via `configureBuilder.hostSettings.Configuration`** — not env-var mutation.
-3. **Save and restore env vars** — `{APP}_ASPIRE_TESTING`, `{APP}_INCLUDE_FUNCTIONS`, etc.
+1. **One shared app per assembly** - start in `[AssemblyInitialize]`, reuse. Never per test class.
+2. **`Parameters:*` via `configureBuilder.hostSettings.Configuration`** - not env-var mutation.
+3. **Save and restore env vars** - `{APP}_ASPIRE_TESTING`, `{APP}_INCLUDE_FUNCTIONS`, etc.
 4. **Per-call `.WaitAsync(DefaultTimeout, ct)`** on every async Aspire call. Not a single umbrella CTS.
-5. **`WaitForResourceHealthyAsync(name, ct)` before talking to a resource.** Running ≠ ready.
-6. **`GetConnectionStringAsync` is `ValueTask<string?>`** — wrap as `.AsTask().WaitAsync(...)`.
-7. **`[AssemblyCleanup(TestContext)]`** (MSTest 3.x overload) — bound `StopAsync` with `.WaitAsync(CleanupTimeout)` and catch `TimeoutException` so a stuck teardown does not hang CI.
+5. **`WaitForResourceHealthyAsync(name, ct)` before talking to a resource.** Running != ready.
+6. **`GetConnectionStringAsync` is `ValueTask<string?>`** - wrap as `.AsTask().WaitAsync(...)`.
+7. **`[AssemblyCleanup(TestContext)]`** (MSTest 3.x overload) - bound `StopAsync` with `.WaitAsync(CleanupTimeout)` and catch `TimeoutException` so a stuck teardown does not hang CI.
 
 ---
 
@@ -209,7 +209,7 @@ internal static class DbContextFactory
 }
 ```
 
-> **`AuditId` bypass:** `DbContextBase<string, Guid?>` declares `required string AuditId`. When constructing contexts outside DI, set it directly via object-initializer syntax — the design-time factory uses the same pattern.
+> **`AuditId` bypass:** `DbContextBase<string, Guid?>` declares `required string AuditId`. When constructing contexts outside DI, set it directly via object-initializer syntax - the design-time factory uses the same pattern.
 
 ---
 
@@ -234,7 +234,7 @@ namespace Test.Integration;
 /// operations (CRUD, includes, many-to-many bridges, the tenant query filter, polymorphic-attachment
 /// indexing where applicable) work against the migrated schema.
 /// Aspire tier by reuse: the test only needs SQL, but it piggybacks on the shared AspireTestHost
-/// SQL container (via DbContextFactory) instead of standing up a separate Testcontainers SQL —
+/// SQL container (via DbContextFactory) instead of standing up a separate Testcontainers SQL -
 /// avoiding two SQL containers per test run.
 /// </summary>
 [TestClass]
@@ -378,7 +378,7 @@ public class {Entity}RepositoryIntegrationTests
 
 | Scenario | Generate when |
 |---|---|
-| `Migrations_ApplyCleanly_ToSqlContainer` | Always — once per schema, not per entity. |
+| `Migrations_ApplyCleanly_ToSqlContainer` | Always - once per schema, not per entity. |
 | `{Entity}_CrudOperations_WorkAgainstRealSql` | Every entity with mutations. |
 | `{Entity}_WithChildren_PersistsCorrectly` | Entity has owned/dependent child collections (1:N). |
 | `{Entity}Tag_ManyToMany_WorksCorrectly` | Entity participates in M:N via a junction. |
@@ -407,7 +407,7 @@ namespace Test.Integration;
 /// <summary>
 /// Validates AuditLogRepository.AppendAsync against real Azurite Table Storage: partition key,
 /// row key shape (..._{Id:N}), and round-trip of audit metadata.
-/// Aspire tier by reuse: only Azurite is exercised — no API, no Function — but the test piggybacks
+/// Aspire tier by reuse: only Azurite is exercised - no API, no Function - but the test piggybacks
 /// on the shared AspireTestHost TableStorage1 resource instead of starting its own Azurite
 /// container.
 /// </summary>
@@ -507,9 +507,9 @@ using {Project}.Infrastructure.Storage;
 namespace Test.Integration;
 
 /// <summary>
-/// End-to-end audit pipeline test for the API: POST /api/{entities} → API request handling →
-/// audit middleware → Azurite Table Storage row, with a polling read-back to confirm the persisted
-/// entity. Aspire tier (Aspire.Hosting.Testing) — required because two Aspire resources participate
+/// End-to-end audit pipeline test for the API: POST /api/{entities} -> API request handling ->
+/// audit middleware -> Azurite Table Storage row, with a polling read-back to confirm the persisted
+/// entity. Aspire tier (Aspire.Hosting.Testing) - required because two Aspire resources participate
 /// ({app}api for the request, TableStorage1 for verification), and both must be Healthy before the
 /// test can run. The polling helper tolerates eventual consistency between request completion and
 /// table visibility.
@@ -625,7 +625,7 @@ public class ApiAuditPipelineTests
 
 ### Why downstream-effect polling matters
 
-Aspire's emulators (Service Bus, Azurite) are best-effort under `DistributedApplicationTestingBuilder`. Asserting "audit row exists in Azurite for this request" exercises the same path production runs through, and it survives the small lag between HTTP 201 and the background `AuditHandler` flushing. The same pattern applies to message-driven workflows — assert against the persistent downstream effect, not against the message bus.
+Aspire's emulators (Service Bus, Azurite) are best-effort under `DistributedApplicationTestingBuilder`. Asserting "audit row exists in Azurite for this request" exercises the same path production runs through, and it survives the small lag between HTTP 201 and the background `AuditHandler` flushing. The same pattern applies to message-driven workflows - assert against the persistent downstream effect, not against the message bus.
 
 ---
 
@@ -651,9 +651,9 @@ namespace Test.Integration;
 /// Validates the domain-event projection pipeline: an entity persisted to SQL is read by the
 /// projection service through the query-side repositories and emitted as a view document with
 /// correct counts.
-/// Aspire tier by reuse: only SQL is exercised here (the Service Bus → Function → projection hop
+/// Aspire tier by reuse: only SQL is exercised here (the Service Bus -> Function -> projection hop
 /// is covered separately when a Function host is enabled); the test piggybacks on the shared
-/// AspireTestHost SQL container rather than starting its own. The view store is in-memory —
+/// AspireTestHost SQL container rather than starting its own. The view store is in-memory -
 /// real Cosmos behavior is out of scope.
 /// </summary>
 [TestClass]
@@ -725,13 +725,13 @@ Skip this template when the project does not have a projection service / read-mo
 
 ```
 Does the test need only SQL?
-  YES → DbContextFactory.CreateTrxnContext() — piggybacks on AspireTestHost SQL container.
+  YES -> DbContextFactory.CreateTrxnContext() - piggybacks on AspireTestHost SQL container.
 Does it need Azurite Table Storage?
-  YES → AspireTestHost.AspireApp.GetConnectionStringAsync("TableStorage1") → real Azurite.
+  YES -> AspireTestHost.AspireApp.GetConnectionStringAsync("TableStorage1") -> real Azurite.
 Does it need API + Azurite (full audit pipeline)?
-  YES → AspireTestHost.AspireApp.CreateHttpClient("{app}api") + Azurite read-back.
+  YES -> AspireTestHost.AspireApp.CreateHttpClient("{app}api") + Azurite read-back.
 Does it need API + Service Bus + Function + Cosmos?
-  YES → Full graph via AspireTestHost — use WaitForResourceHealthyAsync on every participating
+  YES -> Full graph via AspireTestHost - use WaitForResourceHealthyAsync on every participating
         resource, assert on the downstream persistent effect (not the bus).
 ```
 

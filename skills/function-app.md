@@ -37,18 +37,18 @@ Prefer `starter` when local infra (Azurite, Service Bus, Event Grid route) is no
 
 ```
 src/Host/{App}.Functions/
-├── Program.cs
-├── {App}.FunctionApp.csproj
-├── Settings.cs
-├── appsettings.json
-├── host.json
-├── local.settings.json
-├── FunctionHttpTrigger.cs
-├── FunctionTimerTrigger.cs
-├── Infrastructure/
-│   ├── GlobalExceptionHandler.cs
-│   └── GlobalLogger.cs
-└── Model/
+|-- Program.cs
+|-- {App}.FunctionApp.csproj
+|-- Settings.cs
+|-- appsettings.json
+|-- host.json
+|-- local.settings.json
+|-- FunctionHttpTrigger.cs
+|-- FunctionTimerTrigger.cs
+|-- Infrastructure/
+|   |-- GlobalExceptionHandler.cs
+|   `-- GlobalLogger.cs
+`-- Model/
 ```
 
 Trigger files stay flat at the project root and use `Function{TriggerType}` naming.
@@ -88,9 +88,9 @@ Key constraints:
 
 ## Per-Invocation Request Context (Multi-Tenant Functions)
 
-When the Functions host writes domain rows via the same `*Service.CreateAsync` / `UpdateAsync` paths the API uses, every service call resolves the **scoped** `IRequestContext<…>` to stamp `TenantId` and audit fields. The API path populates that context from JWT claims or the dev tenant header; the Functions worker has no `HttpContext`, so a naive scaffold falls back to a **singleton admin context with `TenantId = Guid.Empty`**, and every webhook-ingested row persists under the wrong tenant. The bug is invisible at the row level — SQL is happy — and only surfaces when a tenant-scoped query returns zero hits.
+When the Functions host writes domain rows via the same `*Service.CreateAsync` / `UpdateAsync` paths the API uses, every service call resolves the **scoped** `IRequestContext<...>` to stamp `TenantId` and audit fields. The API path populates that context from JWT claims or the dev tenant header; the Functions worker has no `HttpContext`, so a naive scaffold falls back to a **singleton admin context with `TenantId = Guid.Empty`**, and every webhook-ingested row persists under the wrong tenant. The bug is invisible at the row level - SQL is happy - and only surfaces when a tenant-scoped query returns zero hits.
 
-**Rule:** Functions triggers that ingest tenant-scoped data must build a **per-invocation** `IRequestContext` from the trigger envelope (header, queue message property, blob metadata, Event Grid extended properties) and register it for the duration of the invocation. Do not ship a singleton admin context as a "temporary" placeholder — it ends up persisting wrong-tenant rows in production.
+**Rule:** Functions triggers that ingest tenant-scoped data must build a **per-invocation** `IRequestContext` from the trigger envelope (header, queue message property, blob metadata, Event Grid extended properties) and register it for the duration of the invocation. Do not ship a singleton admin context as a "temporary" placeholder - it ends up persisting wrong-tenant rows in production.
 
 ```csharp
 public class WebhookProcessorFunction(
@@ -117,7 +117,7 @@ public class WebhookProcessorFunction(
 }
 ```
 
-`IRequestContextAccessor` is a scoped wrapper around an `AsyncLocal`/scoped field that `RegisterServices.RequestContext.cs` already creates the API factory against — reuse the same accessor, just write into it from the trigger instead of an HTTP middleware. The Bootstrapper registration becomes:
+`IRequestContextAccessor` is a scoped wrapper around an `AsyncLocal`/scoped field that `RegisterServices.RequestContext.cs` already creates the API factory against - reuse the same accessor, just write into it from the trigger instead of an HTTP middleware. The Bootstrapper registration becomes:
 
 ```csharp
 // Already-scoped factory in RegisterServices.RequestContext.cs
@@ -213,7 +213,7 @@ Register Functions as its own project/resource in AppHost and add only required 
 
 ### AzureWebJobsStorage Under Aspire
 
-The Functions runtime uses `AzureWebJobsStorage` internally for blob trigger leases, timer checkpoints, and internal locking. When Aspire manages Azurite, it runs on **dynamic ports** — the hardcoded `UseDevelopmentStorage=true` in `local.settings.json` (which resolves to `127.0.0.1:10000`) will not work.
+The Functions runtime uses `AzureWebJobsStorage` internally for blob trigger leases, timer checkpoints, and internal locking. When Aspire manages Azurite, it runs on **dynamic ports** - the hardcoded `UseDevelopmentStorage=true` in `local.settings.json` (which resolves to `127.0.0.1:10000`) will not work.
 
 Fix both problems in AppHost:
 
@@ -234,9 +234,9 @@ builder.AddProject<Projects.{Host}_Functions>("{host}functions")
 ```
 
 Key points:
-- **`AzureWebJobsSecretStorageType=Files`** — Prevents the runtime from trying to use Azurite for secret storage (which Aspire doesn't inject automatically).
-- **`AzureWebJobsStorage = storage.Resource`** — Injects the Aspire-managed Azurite connection string with correct dynamic ports.
-- **`.WaitFor(storage)`** — Ensures Azurite is accepting connections before Functions starts. Without this, blob/timer triggers fail with "connection refused" after 6 retries and the host shuts down.
+- **`AzureWebJobsSecretStorageType=Files`** - Prevents the runtime from trying to use Azurite for secret storage (which Aspire doesn't inject automatically).
+- **`AzureWebJobsStorage = storage.Resource`** - Injects the Aspire-managed Azurite connection string with correct dynamic ports.
+- **`.WaitFor(storage)`** - Ensures Azurite is accepting connections before Functions starts. Without this, blob/timer triggers fail with "connection refused" after 6 retries and the host shuts down.
 
 > `local.settings.json` can keep `UseDevelopmentStorage=true` for standalone `func host start` outside Aspire. Aspire environment variables override it at runtime.
 

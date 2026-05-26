@@ -37,7 +37,7 @@ When generating code from templates and skill files, substitute these placeholde
 
 ## Casing Conventions
 
-> **Naming conflicts:** Avoid entity names that collide with C# framework types. Canonical list and safe alternatives: [domain-specification-schema.md — Entities section](domain-specification-schema.md#entities).
+> **Naming conflicts:** Avoid entity names that collide with C# framework types. Canonical list and safe alternatives: [domain-specification-schema.md - Entities section](domain-specification-schema.md#entities).
 
 | Convention | Rule | Example |
 |------------|------|---------|
@@ -48,13 +48,13 @@ When generating code from templates and skill files, substitute these placeholde
 
 ## Derivation Rules
 
-1. **`{App}` = `{Project}`** — always identical. Use `{App}` when the context is the application namespace (e.g., `{App}DbContextTrxn`). Use `{Project}` when the context is the project/solution name.
-2. **`{Host}`** — if `OrganizationName` is provided: `{Org}.{Project}`. Otherwise: `{Project}`.
-3. **`{Gateway}`** — same as `{Host}`. Compose the gateway project name as `{Gateway}.Gateway`.
-4. **`{Feature}`** — defaults to `{Entities}` (plural entity name) unless explicitly provided. Groups UI services and models into feature folders (e.g., `Services/TodoItems/`).
-5. **Pluralization** — use standard English pluralization rules. `TodoItem` → `TodoItems`, `Category` → `Categories`, `Reminder` → `Reminders`.
-6. **Route segments** — for URL paths, use the lowercase/kebab-case form. Multi-word entities: `TodoItem` → `todo-item`, `TeamMember` → `team-member`.
-7. **Aspire project references** — In `AppHost/AppHost.cs`, `builder.AddProject<Projects.X>()` uses the C# identifier form of the `.csproj` path, where dots and hyphens become underscores. For example: project `TaskFlow.Api` → `Projects.TaskFlow_Api`. This is automatic — just be aware when reading or writing AppHost code.
+1. **`{App}` = `{Project}`** - always identical. Use `{App}` when the context is the application namespace (e.g., `{App}DbContextTrxn`). Use `{Project}` when the context is the project/solution name.
+2. **`{Host}`** - if `OrganizationName` is provided: `{Org}.{Project}`. Otherwise: `{Project}`.
+3. **`{Gateway}`** - same as `{Host}`. Compose the gateway project name as `{Gateway}.Gateway`.
+4. **`{Feature}`** - defaults to `{Entities}` (plural entity name) unless explicitly provided. Groups UI services and models into feature folders (e.g., `Services/TodoItems/`).
+5. **Pluralization** - use standard English pluralization rules. `TodoItem` -> `TodoItems`, `Category` -> `Categories`, `Reminder` -> `Reminders`.
+6. **Route segments** - for URL paths, use the lowercase/kebab-case form. Multi-word entities: `TodoItem` -> `todo-item`, `TeamMember` -> `team-member`.
+7. **Aspire project references** - In `AppHost/AppHost.cs`, `builder.AddProject<Projects.X>()` uses the C# identifier form of the `.csproj` path, where dots and hyphens become underscores. For example: project `TaskFlow.Api` -> `Projects.TaskFlow_Api`. This is automatic - just be aware when reading or writing AppHost code.
 
 ---
 

@@ -8,7 +8,7 @@ You are a C#/.NET application scaffolding agent. You execute the phased scaffold
 
 All instruction files (skills, templates, support docs, schemas, scripts) live under `.instructions/` in the project root. All file references below are relative to that folder.
 
-> **Maintenance-repo note:** This agent is designed to run in a target app where the instruction set has been installed at `.instructions/`. If `.instructions/` is missing in the current working directory, you are likely inside the AI-Instructions-Scaffold maintenance repo itself — stop and confirm with the developer rather than trying to scaffold here.
+> **Maintenance-repo note:** This agent is designed to run in a target app where the instruction set has been installed at `.instructions/`. If `.instructions/` is missing in the current working directory, you are likely inside the AI-Instructions-Scaffold maintenance repo itself - stop and confirm with the developer rather than trying to scaffold here.
 
 ## Bootstrap
 
@@ -18,7 +18,7 @@ All instruction files (skills, templates, support docs, schemas, scripts) live u
 
 ## Core Rules
 
-- Generate code in the project root only (`src/` — which contains `src/Test/...` for test projects — and root-level config). Never modify `.instructions/` — record gaps in `.scaffold/INSTRUCTION-GAPS.md` (create `.scaffold/` at project root if absent).
+- Generate code in the project root only (`src/` - which contains `src/Test/...` for test projects - and root-level config). Never modify `.instructions/` - record gaps in `.scaffold/INSTRUCTION-GAPS.md` (create `.scaffold/` at project root if absent).
 - One phase per session. Do not skip or combine phases.
 - After each gate passes, update `HANDOFF.md` and stop.
-- Conflict precedence: see `.instructions/ai/SKILL.md` § Non-Negotiables. TaskFlow reference-app rules: see `.instructions/support/reference-app.md`.
+- Conflict precedence: see `.instructions/ai/SKILL.md` section Non-Negotiables. TaskFlow reference-app rules: see `.instructions/support/reference-app.md`.

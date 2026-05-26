@@ -1,8 +1,8 @@
-# Phase 1 Worked Example — TaskFlow Interview
+# Phase 1 Worked Example - TaskFlow Interview
 
 A condensed transcript of the Phase 1 interview that produced the TaskFlow reference app. Use this when the schema docs ([../ai/shared-understanding-interview.md](../ai/shared-understanding-interview.md), [../ai/domain-specification-schema.md](../ai/domain-specification-schema.md)) tell you *what* fields exist but you want to see *how* the conversation actually flows.
 
-Read time: ~5 minutes. Goal: build a mental model of pacing, depth, and the developer-AI back-and-forth — not memorize TaskFlow.
+Read time: ~5 minutes. Goal: build a mental model of pacing, depth, and the developer-AI back-and-forth - not memorize TaskFlow.
 
 ---
 
@@ -23,17 +23,17 @@ Before starting questions, the AI states what it's about to do, picks a working 
 ```text
 AI
 Working name TaskFlow (override anytime). I'll walk the standard Phase 1 branches:
-Purpose → Actors → Language → Entities → Relationships → Lifecycle → Rules →
-Events/Workflows → Data → Security → Interfaces → Delivery. After each branch I'll
+Purpose -> Actors -> Language -> Entities -> Relationships -> Lifecycle -> Rules ->
+Events/Workflows -> Data -> Security -> Interfaces -> Delivery. After each branch I'll
 give a recap and ask you to confirm or correct it. Final outputs are
 .scaffold/domain-specification.yaml, .scaffold/UBIQUITOUS-LANGUAGE.md, and .scaffold/DESIGN-DECISIONS.md.
 ```
 
 ---
 
-## Branch — Actors and Roles
+## Branch - Actors and Roles
 
-Small batched questions. 3–7 per branch.
+Small batched questions. 3-7 per branch.
 
 ```text
 AI
@@ -44,7 +44,7 @@ AI
 
 DEV
 - TenantMember (normal user), TenantAdmin, GlobalAdmin (cross-tenant).
-- Yes — GlobalAdmin can read across tenants for support.
+- Yes - GlobalAdmin can read across tenants for support.
 - Enterprise. EntraID for the API.
 - TenantAdmin can cancel anyone's work-in-progress; TenantMember can only cancel their own. GlobalAdmin reopens completed/cancelled.
 ```
@@ -55,13 +55,13 @@ The AI now records terms it just learned. **Watch this:** every accepted term go
 AI [Branch recap]
 
 Confirmed language:
-- `TenantMember`, `TenantAdmin`, `GlobalAdmin` — accepted role terms.
-- `EntraID` — external identity provider for API auth.
+- `TenantMember`, `TenantAdmin`, `GlobalAdmin` - accepted role terms.
+- `EntraID` - external identity provider for API auth.
 
 Decisions:
-- D-001 Tenancy → row-level multi-tenant; depends on: none.
-- D-002 Auth → EntraID enterprise scenario; depends on: D-001.
-- D-003 Role capability matrix needed for Cancel/Reopen — defer detail to Rules branch.
+- D-001 Tenancy -> row-level multi-tenant; depends on: none.
+- D-002 Auth -> EntraID enterprise scenario; depends on: D-001.
+- D-003 Role capability matrix needed for Cancel/Reopen - defer detail to Rules branch.
 
 Open conflicts: none.
 
@@ -73,7 +73,7 @@ Looks right. Continue.
 
 ---
 
-## Branch — Entities and Aggregates
+## Branch - Entities and Aggregates
 
 The interview's longest branch. The AI asks for entities, aggregate boundaries, and tenant scope. Note how it pushes back on a term it spots a conflict on.
 
@@ -86,22 +86,22 @@ Task is the root. It has Comments, ChecklistItems, sub-Tasks, Tags, Attachments.
 
 AI
 Two flags before I continue:
-1. Naming conflict: `Task` collides with `System.Threading.Tasks.Task` in C#. Common alternatives: `TaskItem`, `WorkItem`, `Job`. Recommend `TaskItem` — keeps the domain term close to user vocabulary while avoiding the type clash. Confirm or pick another?
+1. Naming conflict: `Task` collides with `System.Threading.Tasks.Task` in C#. Common alternatives: `TaskItem`, `WorkItem`, `Job`. Recommend `TaskItem` - keeps the domain term close to user vocabulary while avoiding the type clash. Confirm or pick another?
 2. Attachment ownership: you mentioned attachments on tasks but discussion comments are common attachment owners too (screenshots, repro files). Should an Attachment belong to a TaskItem only, or polymorphically to either TaskItem or Comment?
 
 DEV
 - TaskItem.
-- Polymorphic — both TaskItem and Comment.
+- Polymorphic - both TaskItem and Comment.
 
 AI
 Recording:
-- Rejected synonym: `Task` → `TaskItem`. Reason: collision with .NET type.
+- Rejected synonym: `Task` -> `TaskItem`. Reason: collision with .NET type.
 - Polymorphic ownership confirmed for `Attachment`. I'll use `OwnerType` + `OwnerId` discriminator (no parent navigation collection); flag this in DESIGN-DECISIONS as it affects EF configuration.
 
 Three more questions:
-3. Sub-tasks — same TaskItem aggregate (self-reference) or separate? Max nesting depth?
-4. Tag-to-TaskItem — many-to-many. Plain join table, or do you need metadata on the association (who tagged it, when)?
-5. Category hierarchy — same self-reference question. Cap on depth?
+3. Sub-tasks - same TaskItem aggregate (self-reference) or separate? Max nesting depth?
+4. Tag-to-TaskItem - many-to-many. Plain join table, or do you need metadata on the association (who tagged it, when)?
+5. Category hierarchy - same self-reference question. Cap on depth?
 
 DEV
 - Self-reference, max 3 levels.
@@ -133,7 +133,7 @@ Confirmed.
 
 ---
 
-## Branch — Lifecycle (Mid-Interview Correction)
+## Branch - Lifecycle (Mid-Interview Correction)
 
 This branch shows what happens when an answer in a later branch invalidates an earlier one. Treat this as the model for *every* late-arriving change.
 
@@ -142,27 +142,27 @@ AI
 TaskItem states and transitions?
 
 DEV
-None → Open → InProgress → Completed. Also Blocked, Cancelled.
+None -> Open -> InProgress -> Completed. Also Blocked, Cancelled.
 
 AI
 Eight transition questions to nail down the state machine:
-1. Open → InProgress trigger (action name)?
-2. InProgress → Blocked and back — same action both ways?
+1. Open -> InProgress trigger (action name)?
+2. InProgress -> Blocked and back - same action both ways?
 3. Can a Completed item be reopened? By whom?
-4. Cancellation — from which states? Reversible?
+4. Cancellation - from which states? Reversible?
 5. Should "all checklist items complete" gate Completion?
-6. Sub-tasks — does parent require all children Completed before it can Complete?
+6. Sub-tasks - does parent require all children Completed before it can Complete?
 7. Are any transitions auto-triggered (scheduled, system) vs explicit user actions?
-8. Initial state on Create — None or directly Open?
+8. Initial state on Create - None or directly Open?
 
 DEV
-1. Action `Start`. 2. `Block` and `Unblock`. 3. Yes, GlobalAdmin only. 4. Cancel from Open, InProgress, Blocked; reversible by reopening (GlobalAdmin). 5. Yes — must require all checklist items complete. 6. Wait — yes, sub-tasks must all be complete too. 7. None auto-triggered. 8. Create from None to Open.
+1. Action `Start`. 2. `Block` and `Unblock`. 3. Yes, GlobalAdmin only. 4. Cancel from Open, InProgress, Blocked; reversible by reopening (GlobalAdmin). 5. Yes - must require all checklist items complete. 6. Wait - yes, sub-tasks must all be complete too. 7. None auto-triggered. 8. Create from None to Open.
 
 AI
 Question 6 introduces a new domain rule. Recording:
-- D-008 Domain rule `SubTaskCompletionRequired` — TaskItem can transition to Completed only when all sub-tasks are Completed. This adds to the existing `ChecklistCompletionRequired` rule. Both fire on the InProgress → Completed guard.
+- D-008 Domain rule `SubTaskCompletionRequired` - TaskItem can transition to Completed only when all sub-tasks are Completed. This adds to the existing `ChecklistCompletionRequired` rule. Both fire on the InProgress -> Completed guard.
 
-This also retroactively affects branch "Entities" — the sub-task self-reference is now load-bearing for completion semantics. Updating UBIQUITOUS-LANGUAGE.md note for `TaskItem` to call this out, and tagging D-004 as parent of D-008.
+This also retroactively affects branch "Entities" - the sub-task self-reference is now load-bearing for completion semantics. Updating UBIQUITOUS-LANGUAGE.md note for `TaskItem` to call this out, and tagging D-004 as parent of D-008.
 
 DEV
 Good catch.
@@ -223,13 +223,13 @@ domainRules:
 
 | Pattern | Where it shows up |
 |---|---|
-| Small batches (3–7 questions per branch) | Every branch above |
+| Small batches (3-7 questions per branch) | Every branch above |
 | Branch recap + confirmation before moving on | End of Actors and Entities branches |
 | AI flags naming conflicts immediately, doesn't silently rename | "Task vs TaskItem" exchange in Entities |
 | AI proposes alternatives with rationale, not just "what would you like" | Same exchange |
 | Decision IDs (`D-###`) with explicit `depends on` | Throughout |
 | Late-arriving facts trigger back-edits to prior branches | Lifecycle branch question 6 |
-| Rejected synonyms are first-class — recorded, not just dropped | `Task` → `TaskItem`, `Todo` → `ChecklistItem`, etc. |
+| Rejected synonyms are first-class - recorded, not just dropped | `Task` -> `TaskItem`, `Todo` -> `ChecklistItem`, etc. |
 | Domain rules surface during Lifecycle, not invented in Phase 5 | `ChecklistCompletionRequired`, `SubTaskCompletionRequired` |
 | Decisions that affect EF configuration are flagged for downstream phases | Polymorphic `Attachment`, explicit `TaskItemTag` join entity |
 
@@ -237,6 +237,6 @@ domainRules:
 
 ## What This Example Is Not
 
-This is not a script. The branches and question counts adapt to the project — a single-entity API will have a 3-line Entities branch and skip Workflows entirely. Use the [Minimum Viable Scaffold](minimum-viable-scaffold.md) prompts for that path.
+This is not a script. The branches and question counts adapt to the project - a single-entity API will have a 3-line Entities branch and skip Workflows entirely. Use the [Minimum Viable Scaffold](minimum-viable-scaffold.md) prompts for that path.
 
 If your interview is going on for hours, you're either over-asking (cut to canonical defaults and record the assumption) or the developer doesn't have answers yet (mark branches `deferred` and continue).

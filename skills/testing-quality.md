@@ -1,4 +1,4 @@
-# Testing — Quality Gates & Hosted UI
+# Testing - Quality Gates & Hosted UI
 
 Use this skill for Phase 5d quality suites and release hardening (architecture, hosted Playwright UI, load, benchmarks). For Phase 5a/5b unit/endpoint authoring and Aspire-hosted integration fixtures, load [testing.md](testing.md) instead.
 

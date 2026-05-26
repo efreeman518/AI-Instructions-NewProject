@@ -148,9 +148,9 @@ This is a complete reference of all configuration sections used across the solut
 ## Notes
 
 - Connection string names must match what the Bootstrapper expects: `{Project}DbContextTrxn` and `{Project}DbContextQuery`
-- With Aspire, connection strings are **injected automatically** via `.WithReference(projectDb, connectionName: ...)` — no manual config needed in development
+- With Aspire, connection strings are **injected automatically** via `.WithReference(projectDb, connectionName: ...)` - no manual config needed in development
 - Redis connection string name (`Redis1`) must match the `RedisConnectionStringName` in `CacheSettings`
-- `CacheSettings` is an array — each entry creates a named FusionCache instance
-- `FailSafeThrottleDurationSeconds` — note the unit is **seconds** (passed to `TimeSpan.FromSeconds()`)
+- `CacheSettings` is an array - each entry creates a named FusionCache instance
+- `FailSafeThrottleDurationSeconds` - note the unit is **seconds** (passed to `TimeSpan.FromSeconds()`)
 - `ServiceAuth` section in Gateway maps cluster IDs to OAuth2 client credential configs
 - For production/Azure: use Key Vault references or App Configuration for secrets

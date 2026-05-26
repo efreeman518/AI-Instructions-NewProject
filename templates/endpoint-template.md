@@ -1,6 +1,6 @@
 # Endpoint Template
 
-> **When to read:** Phase 5b, when generating the Minimal API endpoint group for an entity — CRUD + search routes mapped through the entity's service.
+> **When to read:** Phase 5b, when generating the Minimal API endpoint group for an entity - CRUD + search routes mapped through the entity's service.
 > **Skip if:** No API host in scope; entity is internal-only (no public surface); endpoint group already exists.
 
 | | |
@@ -140,10 +140,10 @@ public static class {Entity}Endpoints
 
 ## Custom Action Routes (Optional)
 
-Include only when `.scaffold/domain-specification.yaml` declares a `customActions` entry on `{Entity}` (e.g. `Reschedule`, `Approve`, `Cancel`). Map the action route inside the same `Map{Entity}Endpoints` extension so each entity's surface stays co-located. See [../skills/api.md](../skills/api.md) § Custom Action Endpoints for routing conventions and the request/response contract.
+Include only when `.scaffold/domain-specification.yaml` declares a `customActions` entry on `{Entity}` (e.g. `Reschedule`, `Approve`, `Cancel`). Map the action route inside the same `Map{Entity}Endpoints` extension so each entity's surface stays co-located. See [../skills/api.md](../skills/api.md) section Custom Action Endpoints for routing conventions and the request/response contract.
 
 ```csharp
-// Inside Map{Entity}Endpoints — add alongside the CRUD routes above:
+// Inside Map{Entity}Endpoints - add alongside the CRUD routes above:
 group.MapPost("/{id:guid}/{action-name}", {ActionName})
     .Produces<DefaultResponse<{Entity}Dto>>(StatusCodes.Status200OK)
     .ProducesValidationProblem()
@@ -167,7 +167,7 @@ private static async Task<IResult> {ActionName}(
 }
 ```
 
-The handler shape mirrors `GetById` / `Update` deliberately — same `Result.Match()` three-branch mapping, same `ProblemDetails` builder, same `CancellationToken` placement. The service method invokes the entity's domain method (e.g. `entity.{ActionName}(...)`) and emits `afterAction({ActionName})` per the event model.
+The handler shape mirrors `GetById` / `Update` deliberately - same `Result.Match()` three-branch mapping, same `ProblemDetails` builder, same `CancellationToken` placement. The service method invokes the entity's domain method (e.g. `entity.{ActionName}(...)`) and emits `afterAction({ActionName})` per the event model.
 
 ## Registration in Pipeline
 

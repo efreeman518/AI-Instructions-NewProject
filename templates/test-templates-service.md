@@ -1,4 +1,4 @@
-# Test Templates — Service (Phase 5b)
+# Test Templates - Service (Phase 5b)
 
 | | |
 |---|---|
@@ -169,7 +169,7 @@ public class {Entity}MapperTests
         Assert.AreEqual(entity.Name, dto.Name);
         Assert.AreEqual(entity.TenantId, dto.TenantId);
         // Assert each additional mapped property
-        // Note: Audit fields (CreatedDate, etc.) are NOT mapped — managed by AuditInterceptor
+        // Note: Audit fields (CreatedDate, etc.) are NOT mapped - managed by AuditInterceptor
     }
 
     [TestMethod]
@@ -253,14 +253,14 @@ namespace Test.Unit.Mappers;
 /// code paths cannot drift.
 ///
 /// For simple mappers the parity check is trivially true (ToDto IS the compiled projection),
-/// but the tests still verify the expression compiles and surfaces all expected fields — i.e.
+/// but the tests still verify the expression compiles and surfaces all expected fields - i.e.
 /// the projection is a real full shape, not a forgotten subset.
 ///
 /// For aggregate roots with inlined child projections the test additionally guards against
 /// drift between the parent's inline projection (EF cannot translate child .ToDto() calls)
 /// and each child mapper's own ToDto path.
 ///
-/// Owned-type flattening (DateRange / Money / RecurrencePattern → scalar columns) is also
+/// Owned-type flattening (DateRange / Money / RecurrencePattern -> scalar columns) is also
 /// exercised: it must remain EF-translatable AND evaluate correctly in-memory.
 /// </summary>
 [TestClass]
@@ -301,7 +301,7 @@ public class MapperProjectionParityTests
 
 ### Why both layouts coexist
 
-- Per-entity `{Entity}MapperTests` is the home for `ToDto`/`ToEntity`/owned-type-specific tests — they assert mapper behavior, not just parity.
-- Consolidated `MapperProjectionParityTests` is the **one-stop guard** that "EF expression and compiled in-memory delegate emit the same shape" — easy to scan when mapper changes are reviewed, and harder to drift than scattered per-entity duplicates of the same assertion.
+- Per-entity `{Entity}MapperTests` is the home for `ToDto`/`ToEntity`/owned-type-specific tests - they assert mapper behavior, not just parity.
+- Consolidated `MapperProjectionParityTests` is the **one-stop guard** that "EF expression and compiled in-memory delegate emit the same shape" - easy to scan when mapper changes are reviewed, and harder to drift than scattered per-entity duplicates of the same assertion.
 
 Generate the parity class once at scaffold time; add a method per entity as each mapper is built in Phase 5b. Do not duplicate the `*_CompiledProjection_AgreesWith_ToDto` test in the per-entity file when the same assertion already lives in the consolidated class.

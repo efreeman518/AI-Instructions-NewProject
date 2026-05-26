@@ -5,7 +5,7 @@ files (Codex CLI, GitHub Copilot CLI, and other CLI agents using the same
 discovery convention).
 
 GitHub Copilot in VS Code uses `.github/copilot-instructions.md` and the
-scoped agents in `.github/agents/` instead — see [README.md](README.md) for
+scoped agents in `.github/agents/` instead - see [README.md](README.md) for
 the harness routing table.
 
 Do not activate the scaffold workflow automatically for ordinary repository
@@ -20,7 +20,7 @@ Run scaffold instructions only when the user explicitly asks to:
 - add a scaffolded vertical slice/entity;
 - adopt the scaffold onto an existing C#/.NET solution (load `.instructions/ai/adopt-codebase.md` instead of running Phase 1).
 
-Phase 1 is the universal core (stack-agnostic). Phases 2-5 run under the C#/.NET/Azure profile — see `profiles/csharp-dotnet-azure.md` (this repo) or `.instructions/profiles/csharp-dotnet-azure.md` (installed apps). Vertical-slice and brownfield-adoption flows are profile-bound.
+Phase 1 is the universal core (stack-agnostic). Phases 2-5 run under the C#/.NET/Azure profile - see `profiles/csharp-dotnet-azure.md` (this repo) or `.instructions/profiles/csharp-dotnet-azure.md` (installed apps). Vertical-slice and brownfield-adoption flows are profile-bound.
 
 ## Scaffold Boot
 

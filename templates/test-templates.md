@@ -1,4 +1,4 @@
-# Test Templates — Index
+# Test Templates - Index
 
 Test scaffolding lives in split files by phase and harness. Load only the matching template(s) for the current task.
 

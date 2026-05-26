@@ -20,15 +20,15 @@ Reference patterns: [../patterns/api-host-wiring.md](../patterns/api-host-wiring
 
 ```
 Host/{Gateway}.Gateway/
-├── Program.cs
-├── RegisterServices.cs
-├── WebApplicationBuilderExtensions.cs
-├── TokenService.cs
-├── Auth/
-├── HealthChecks/
-├── StartupTasks/
-├── appsettings.json
-└── Dockerfile
+|-- Program.cs
+|-- RegisterServices.cs
+|-- WebApplicationBuilderExtensions.cs
+|-- TokenService.cs
+|-- Auth/
+|-- HealthChecks/
+|-- StartupTasks/
+|-- appsettings.json
+`-- Dockerfile
 ```
 
 ---
@@ -68,7 +68,7 @@ using Azure.Identity;
 
 private static void AddReverseProxy(IServiceCollection services, IConfiguration config)
 {
-    // Register TokenCredential — DefaultAzureCredential handles local dev + managed identity in production
+    // Register TokenCredential - DefaultAzureCredential handles local dev + managed identity in production
     services.AddSingleton<TokenCredential>(_ => new DefaultAzureCredential());
     services.AddSingleton<TokenService>();
 
@@ -145,7 +145,7 @@ Each cluster declares its token scope in `appsettings.json`:
 }
 ```
 
-> **Why `TokenCredential`?** Abstracts the credential source — `DefaultAzureCredential` auto-chains Azure CLI (local dev), managed identity (deployed), environment variables (CI). No MSAL configuration code needed.
+> **Why `TokenCredential`?** Abstracts the credential source - `DefaultAzureCredential` auto-chains Azure CLI (local dev), managed identity (deployed), environment variables (CI). No MSAL configuration code needed.
 
 ---
 
@@ -198,7 +198,7 @@ The `PathRemovePrefix` transform removes a prefix **before forwarding to the bac
 | Backend routes registered at | Gateway route match | Correct transform |
 |---|---|---|
 | `/v1/tasks`, `/v1/categories` | `api/{**catch-all}` | `PathRemovePrefix: "/api"` |
-| `/api/tasks`, `/api/categories` | `api/{**catch-all}` | *(no transform — keep the prefix)* |
+| `/api/tasks`, `/api/categories` | `api/{**catch-all}` | *(no transform - keep the prefix)* |
 
 **Wrong (causes 404):** stripping `/api` when the downstream routes already include it:
 ```

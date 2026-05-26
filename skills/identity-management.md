@@ -1,6 +1,6 @@
 # Identity Management
 
-Use this skill when domain inputs enable `authProvider` and the solution needs authentication or identity-backed user management. **This skill is applied in the integration phase (Phase 5e)** — earlier phases use auth stubs so the project compiles and runs without identity configuration.
+Use this skill when domain inputs enable `authProvider` and the solution needs authentication or identity-backed user management. **This skill is applied in the integration phase (Phase 5e)** - earlier phases use auth stubs so the project compiles and runs without identity configuration.
 
 Reference patterns: [../patterns/api-host-wiring.md](../patterns/api-host-wiring.md) (Conditional Auth Configuration).
 
@@ -11,7 +11,7 @@ Reference patterns: [../patterns/api-host-wiring.md](../patterns/api-host-wiring
 - Phase 5e authentication finalization is complete when the app boots end-to-end with the scaffold principal and endpoint tests pass.
 - Live Entra setup is a `deployment-only` dependency: log it in `HANDOFF.md` and continue.
 - The config key (`AuthMode` or equivalent) must be present in `appsettings.Development.json` with value `Scaffold` by default.
-- Production/staging environments override `AuthMode` to the live provider name; the application code path is identical — only the token source changes.
+- Production/staging environments override `AuthMode` to the live provider name; the application code path is identical - only the token source changes.
 
 ## Identity Provider Scenarios
 
@@ -23,19 +23,19 @@ Prompt the user at the start of this phase to select the appropriate scenario:
 | External / consumer users | Microsoft Entra External ID, Google, Facebook, Apple, OAuth2/OIDC | Customer-facing apps, self-service portals |
 | Hybrid | Entra ID + Entra External ID / social providers | Public UI for external users + enterprise back-office for internal users |
 
-## Pre-Auth Stub Pattern (Phases 5a–5d)
+## Pre-Auth Stub Pattern (Phases 5a-5d)
 
 Until this phase is reached, authentication must be **stubbed** so the project compiles and runs:
 
 ```csharp
 // File: Host/{Host}.Api/Auth/AuthStub.cs
-// TODO: [CONFIGURE] Authentication — replace this stub with real identity provider configuration (see skills/identity-management.md)
+// TODO: [CONFIGURE] Authentication - replace this stub with real identity provider configuration (see skills/identity-management.md)
 
 public static class AuthStub
 {
     public static IServiceCollection AddAuthStub(this IServiceCollection services)
     {
-        // No-op auth — all endpoints accessible without authentication
+        // No-op auth - all endpoints accessible without authentication
         // Remove this stub and wire real auth in Phase 5e
         return services;
     }
@@ -73,7 +73,7 @@ public static class AuthConfiguration
             return services;
         }
 
-        // Production path — wire real JWT validation
+        // Production path - wire real JWT validation
         var section = config.GetSection($"{mode}Auth");
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
@@ -110,7 +110,7 @@ public class ScaffoldAuthHandler : AuthenticationHandler<AuthenticationSchemeOpt
 
 ### UI: Custom Auth Provider (dev) to MSAL (production)
 
-Scaffold with `.AddCustom()` in `App.xaml.host.cs` — no external identity provider required:
+Scaffold with `.AddCustom()` in `App.xaml.host.cs` - no external identity provider required:
 
 ```csharp
 .UseAuthentication(auth => auth
@@ -239,7 +239,7 @@ Implementation rule: return `Result`/`Result<T>` from all Graph operations; do n
 
 ## Graph Client + DI
 
-Use conditional registration — if the config section is absent, register a no-op stub so the app boots without Entra credentials:
+Use conditional registration - if the config section is absent, register a no-op stub so the app boots without Entra credentials:
 
 ```csharp
 services.Configure<EntraExtServiceSettings>(configuration.GetSection("EntraExt"));
@@ -254,7 +254,7 @@ if (entraSection.Exists() && !string.IsNullOrWhiteSpace(entraSection["ClientId"]
 }
 else
 {
-    // TODO: [CONFIGURE] Entra External ID — populate EntraExt config section for live user management
+    // TODO: [CONFIGURE] Entra External ID - populate EntraExt config section for live user management
     services.AddScoped<IEntraExtService, NoOpEntraExtService>();
 }
 
@@ -270,7 +270,7 @@ if (graphSection.Exists() && !string.IsNullOrWhiteSpace(graphSection["ClientId"]
 }
 else
 {
-    // TODO: [CONFIGURE] Microsoft Graph — populate Graph config section for live enterprise identity
+    // TODO: [CONFIGURE] Microsoft Graph - populate Graph config section for live enterprise identity
     services.AddScoped<IGraphService, NoOpGraphService>();
 }
 ```
@@ -293,10 +293,10 @@ NuGet:
 | Route category | Who calls it | Auth model |
 |---|---|---|
 | Admin routes | Human operators via portal/management UI | User roles (`Admin`, `Operator`) from Entra |
-| Internal execution routes | Services calling other services (e.g., scheduler → domain service, AI agent → API) | Service identity, managed identity, or internal audience claim |
+| Internal execution routes | Services calling other services (e.g., scheduler -> domain service, AI agent -> API) | Service identity, managed identity, or internal audience claim |
 
 Rules:
-- Internal routes (e.g., cosmic-service call-backs, scheduler triggers, agent tool invocations) must declare a **service-scoped policy** (`InternalExecution`, `ServiceToService`) — not reuse `Admin` or `Operator` roles.
+- Internal routes (e.g., cosmic-service call-backs, scheduler triggers, agent tool invocations) must declare a **service-scoped policy** (`InternalExecution`, `ServiceToService`) - not reuse `Admin` or `Operator` roles.
 - In scaffold mode, internal policies resolve like admin policies (scaffold principal carries all roles).
 - When live auth is wired, internal policies validate a dedicated scope claim (e.g., `scp: internal-execute`) or a managed identity client ID, not a human role claim.
 - Never apply `[Authorize(Roles = "Admin")]` to an endpoint that is expected to be called by another service without a human initiating it.
@@ -334,7 +334,7 @@ Rule: secrets come from Key Vault/User Secrets only.
 4. Use `Microsoft.Graph` v5+ with `GraphServiceClient`.
 5. In lite mode, skip identity infrastructure and use a local/mock request context.
 6. For regulated/sensitive classifications, enforce least-privilege roles and trace access decisions with auditable correlation IDs.
-7. Entra/Graph DI registration must be conditional on config presence. Missing config → no-op stub, not a startup exception.
+7. Entra/Graph DI registration must be conditional on config presence. Missing config -> no-op stub, not a startup exception.
 8. Internal execution routes must use service-scoped policies, not admin role policies. See the Internal vs Admin Routes section.
 
 ## Verification
@@ -342,7 +342,7 @@ Rule: secrets come from Key Vault/User Secrets only.
 - [ ] App boots and all endpoints are reachable with `AuthMode: Scaffold` and no live identity provider
 - [ ] Config-driven auth toggle present in `appsettings.Development.json` (`AuthMode: Scaffold`)
 - [ ] `ScaffoldAuthHandler` (or equivalent) registered only when `AuthMode` is `Scaffold`
-- [ ] Entra/Graph DI registration is conditional — absent config → no-op stub registered, no startup exception
+- [ ] Entra/Graph DI registration is conditional - absent config -> no-op stub registered, no startup exception
 - [ ] `Infrastructure.EntraExt` and/or `Infrastructure.Graph` builds cleanly when config is populated
 - [ ] `Microsoft.Graph` and `Azure.Identity` are in `Directory.Packages.props`
 - [ ] Settings POCOs match configuration sections

@@ -12,6 +12,6 @@ Do not activate the scaffold workflow automatically for ordinary repository work
 - `vertical-slice` adds a single entity to an existing scaffolded app.
 - `scaffold-adopt` derives Phase-1 artifacts from an existing C#/.NET solution (brownfield onramp; replaces the Phase 1 interview).
 
-Phase 1 is the universal core (stack-agnostic). Phases 2-5 run under the C#/.NET/Azure profile — see [../profiles/csharp-dotnet-azure.md](../profiles/csharp-dotnet-azure.md) (this repo) or `.instructions/profiles/csharp-dotnet-azure.md` (installed apps). `vertical-slice` and `scaffold-adopt` are profile-bound.
+Phase 1 is the universal core (stack-agnostic). Phases 2-5 run under the C#/.NET/Azure profile - see [../profiles/csharp-dotnet-azure.md](../profiles/csharp-dotnet-azure.md) (this repo) or `.instructions/profiles/csharp-dotnet-azure.md` (installed apps). `vertical-slice` and `scaffold-adopt` are profile-bound.
 
 Scaffold-specific rules, phase routing, reference-app guidance, and context-loading policy belong in `START-AI.md` / `ai/SKILL.md` in this repo, `.instructions/START-AI.md` / `.instructions/ai/SKILL.md` in installed apps, and the scoped agent files only.

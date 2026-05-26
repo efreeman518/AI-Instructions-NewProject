@@ -184,7 +184,7 @@ public static class RuleExtensions
     }
 
     /// <summary>
-    /// Evaluate a rule chain — stop at first failure.
+    /// Evaluate a rule chain - stop at first failure.
     /// </summary>
     public static DomainResult EvaluateChain<T>(this IEnumerable<IRule<T>> rules, T subject)
     {
@@ -205,7 +205,7 @@ public static class RuleExtensions
 Rules can be invoked from within entity methods or from the application service layer:
 
 ```csharp
-// In {Entity}.cs — using rules in domain methods
+// In {Entity}.cs - using rules in domain methods
 public DomainResult<{Entity}> Deactivate()
 {
     var rule = new {Entity}CannotDeactivateWithActiveChildrenRule();
@@ -218,7 +218,7 @@ public DomainResult<{Entity}> Deactivate()
 ```
 
 ```csharp
-// In {Entity}Service.cs — using rules from service layer
+// In {Entity}Service.cs - using rules from service layer
 public async Task<Result> DeactivateAsync(Guid id, CancellationToken ct = default)
 {
     var entity = await repoTrxn.Get{Entity}Async(id, includeChildren: true, ct);
@@ -246,8 +246,8 @@ public async Task<Result> DeactivateAsync(Guid id, CancellationToken ct = defaul
 
 ## Notes
 
-- Rules should be **pure functions** — no I/O, no database access, no service calls.
-- Keep rules co-located in `Domain.Model/Rules/` — they depend only on `Domain.Model` and `Domain.Shared`.
+- Rules should be **pure functions** - no I/O, no database access, no service calls.
+- Keep rules co-located in `Domain.Model/Rules/` - they depend only on `Domain.Model` and `Domain.Shared`.
 - Rules that require external data (e.g., uniqueness checks) belong in the **Application.Services** layer, not in domain rules.
 - Keep generated rule files in `src/Domain/{Project}.Domain.Model/Rules/` for consistency with solution structure.
 - For simple validations (e.g., required fields, string length), use the inline `Valid()` method in the entity. Reserve the specification pattern for compound or cross-entity business rules.

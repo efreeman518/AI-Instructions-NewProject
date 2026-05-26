@@ -1,10 +1,10 @@
 # Expected Output File Index
 
-Load on-demand as a reference during Phase 5a–5e to verify scaffolded file layout.
+Load on-demand as a reference during Phase 5a-5e to verify scaffolded file layout.
 
 Expected file layout when scaffolding is complete. All paths relative to project root `src/`.
 
-> **Scope:** Backend layers below are always emitted. Optional Phase 5c hosts (Blazor, React, Uno) extend this index — those sections only apply when the corresponding `enabledFeatures` flag is set in `HANDOFF.md` (`includeBlazorUI`, `includeReactUI`, `includeUnoUI`). For host-internal layout details, see [../skills/ui-blazor.md](../skills/ui-blazor.md), [../skills/ui-react.md](../skills/ui-react.md), and [../skills/ui-uno.md](../skills/ui-uno.md).
+> **Scope:** Backend layers below are always emitted. Optional Phase 5c hosts (Blazor, React, Uno) extend this index - those sections only apply when the corresponding `enabledFeatures` flag is set in `HANDOFF.md` (`includeBlazorUI`, `includeReactUI`, `includeUnoUI`). For host-internal layout details, see [../skills/ui-blazor.md](../skills/ui-blazor.md), [../skills/ui-react.md](../skills/ui-react.md), and [../skills/ui-uno.md](../skills/ui-uno.md).
 
 ## Domain Layer
 | Artifact | Path |
@@ -64,11 +64,11 @@ Default scaffold and TaskFlow reference app keep DTOs and mappers in `Applicatio
 ## Testing
 | Artifact | Path |
 |---|---|
-| Test support — shared WAF base | `Test/Test.Support/WebApplicationFactoryBase.cs` (with `TestDbContextFactory<T>` + `WebApplicationFactoryHelpers`) |
-| Test support — JSON options | `Test/Test.Support/JsonTestOptions.cs` |
-| Test support — shared constants | `Test/Test.Support/TestConstants.cs`, `LocalSqlSettings.cs` |
-| Test support — utilities | `Test/Test.Support/UnitTestBase.cs`, `InMemoryDbBuilder.cs`, `DbSupport.cs` |
-| Test support — builders | `Test/Test.Support/Builders/{Entity}Builder.cs`, `{Entity}DtoBuilder.cs` (one of each per entity) |
+| Test support - shared WAF base | `Test/Test.Support/WebApplicationFactoryBase.cs` (with `TestDbContextFactory<T>` + `WebApplicationFactoryHelpers`) |
+| Test support - JSON options | `Test/Test.Support/JsonTestOptions.cs` |
+| Test support - shared constants | `Test/Test.Support/TestConstants.cs`, `LocalSqlSettings.cs` |
+| Test support - utilities | `Test/Test.Support/UnitTestBase.cs`, `InMemoryDbBuilder.cs`, `DbSupport.cs` |
+| Test support - builders | `Test/Test.Support/Builders/{Entity}Builder.cs`, `{Entity}DtoBuilder.cs` (one of each per entity) |
 | Unit (domain) | `Test/Test.Unit/Domain/{Entity}Tests.cs`, `{Entity}RulesTests.cs` |
 | Unit (mapper, per entity) | `Test/Test.Unit/Mappers/{Entity}MapperTests.cs` |
 | Unit (mapper parity, consolidated) | `Test/Test.Unit/Mappers/MapperProjectionParityTests.cs` |
@@ -80,12 +80,12 @@ Default scaffold and TaskFlow reference app keep DTOs and mappers in `Applicatio
 | Endpoint factory | `Test/Test.Endpoints/CustomApiFactory.cs` (derives from `Test.Support/WebApplicationFactoryBase`) |
 | E2E factory | `Test/Test.E2E/SqlApiFactory.cs` (Testcontainers SQL, static lifecycle) |
 | E2E workflow tests | `Test/Test.E2E/{Entity}WorkflowTests.cs` |
-| Integration — Aspire fixture | `Test/Test.Integration/AspireTestHost.cs` (full distributed app + lifecycle) |
-| Integration — DB context factory | `Test/Test.Integration/DbContextFactory.cs` (piggyback on `AspireTestHost.ConnectionString`) |
-| Integration — repo integration | `Test/Test.Integration/{Entity}RepositoryIntegrationTests.cs` (migrations + CRUD + tenant filter + M:N) |
-| Integration — audit pipeline (Azurite) | `Test/Test.Integration/AuditLogRepositoryAzuriteTests.cs` |
-| Integration — API audit pipeline | `Test/Test.Integration/ApiAuditPipelineTests.cs` |
-| Integration — projection pipeline | `Test/Test.Integration/DomainEventPipelineTests.cs` |
+| Integration - Aspire fixture | `Test/Test.Integration/AspireTestHost.cs` (full distributed app + lifecycle) |
+| Integration - DB context factory | `Test/Test.Integration/DbContextFactory.cs` (piggyback on `AspireTestHost.ConnectionString`) |
+| Integration - repo integration | `Test/Test.Integration/{Entity}RepositoryIntegrationTests.cs` (migrations + CRUD + tenant filter + M:N) |
+| Integration - audit pipeline (Azurite) | `Test/Test.Integration/AuditLogRepositoryAzuriteTests.cs` |
+| Integration - API audit pipeline | `Test/Test.Integration/ApiAuditPipelineTests.cs` |
+| Integration - projection pipeline | `Test/Test.Integration/DomainEventPipelineTests.cs` |
 | Architecture | `Test/Test.Architecture/*DependencyTests.cs`, `CqrsArchitectureTests.cs` *(when applicationStyle: cqrs or switch)* |
 | Playwright UI | `Test/Test.PlaywrightUI/Pages/{Entity}CrudTests.cs` (browser; runs against hosted stack) |
 | Mobile UI smoke | `Test/Test.Mobile/*` (MSTest + Appium; opt-in Android/iOS native launch checks) *(when Uno mobile native testing is enabled)* |
@@ -104,7 +104,7 @@ Default scaffold and TaskFlow reference app keep DTOs and mappers in `Applicatio
 | Dockerfile (per host) | `Host/{Host}.Api/Dockerfile` |
 | Health checks | `Host/{Host}.Api/HealthChecks/SqlHealthCheck.cs` |
 
-## Blazor UI (Phase 5c, optional — `includeBlazorUI: true`)
+## Blazor UI (Phase 5c, optional - `includeBlazorUI: true`)
 
 Source: [../skills/ui-blazor.md](../skills/ui-blazor.md). Project root: `Host/{Project}.Blazor/`.
 
@@ -124,7 +124,7 @@ Source: [../skills/ui-blazor.md](../skills/ui-blazor.md). Project root: `Host/{P
 | Static assets | `Host/{Project}.Blazor/wwwroot/app.css` |
 | Runtime config (WASM only) | `Host/{Project}.Blazor/wwwroot/appsettings.json` |
 
-## Uno UI (Phase 5c, optional, dedicated session — `includeUnoUI: true`)
+## Uno UI (Phase 5c, optional, dedicated session - `includeUnoUI: true`)
 
 Source: [../skills/ui-uno.md](../skills/ui-uno.md), [../skills/ui-uno-shell.md](../skills/ui-uno-shell.md), [../skills/ui-uno-mvux.md](../skills/ui-uno-mvux.md), [../skills/ui-uno-platforms.md](../skills/ui-uno-platforms.md). Project roots: `src/UI/{Project}.Uno/`, `src/UI/{Project}.Uno.Core/`, and `src/Host/{Project}.Uno.WasmHost/`.
 
@@ -148,7 +148,7 @@ Source: [../skills/ui-uno.md](../skills/ui-uno.md), [../skills/ui-uno-shell.md](
 | iOS platform glue | `src/UI/{Project}.Uno/Platforms/iOS/Info.plist`, `Entitlements.plist`, `Main.iOS.cs`, `PrivacyInfo.xcprivacy` |
 | WASM platform glue | `src/UI/{Project}.Uno/Platforms/WebAssembly/WasmScripts/AppManifest.js` |
 
-## React UI (Phase 5c, optional — `includeReactUI: true`)
+## React UI (Phase 5c, optional - `includeReactUI: true`)
 
 Source: [../skills/ui-react.md](../skills/ui-react.md). Project root: `UI/{Project}.React/`.
 

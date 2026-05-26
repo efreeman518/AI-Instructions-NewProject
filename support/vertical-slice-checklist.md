@@ -1,4 +1,4 @@
-# Vertical Slice — Generated Files Checklist
+# Vertical Slice - Generated Files Checklist
 
 Use this checklist after generating a new entity slice to ensure no required files or wiring steps were missed.
 
@@ -6,16 +6,16 @@ Placeholder tokens: [../ai/placeholder-tokens.md](../ai/placeholder-tokens.md).
 
 ---
 
-## Add Entity to Existing Project — Fast Path
+## Add Entity to Existing Project - Fast Path
 
-Use this when adding a new entity to an **already-scaffolded** solution. Skip full phase loading — load only what the slice needs.
+Use this when adding a new entity to an **already-scaffolded** solution. Skip full phase loading - load only what the slice needs.
 
 ### Pre-Flight
 
 - [ ] Solution builds clean: `dotnet build`
 - [ ] Identify existing: `RegisterServices.cs`, `{App}DbContextTrxn`, `{App}DbContextQuery`, `WebApplicationBuilderExtensions.cs`
 - [ ] Confirm `scaffoldMode` and `testingProfile` from `.scaffold/resource-implementation.yaml`
-- [ ] If this slice introduces a new domain term, role, event, custom action, or design decision, append it to `.scaffold/UBIQUITOUS-LANGUAGE.md` / `.scaffold/DESIGN-DECISIONS.md` and update `.scaffold/domain-specification.yaml` **before** generating code (see [../README.md](../README.md) § Phase-1 Artifact Lifecycle)
+- [ ] If this slice introduces a new domain term, role, event, custom action, or design decision, append it to `.scaffold/UBIQUITOUS-LANGUAGE.md` / `.scaffold/DESIGN-DECISIONS.md` and update `.scaffold/domain-specification.yaml` **before** generating code (see [../README.md](../README.md) section Phase-1 Artifact Lifecycle)
 
 ### Load Set for Slice
 
@@ -24,11 +24,11 @@ Use this when adding a new entity to an **already-scaffolded** solution. Skip fu
 3. Backend templates: `entity-template.md`, `ef-configuration-template.md`, `repository-template.md`, `data-mapping-template.md`, `service-template.md`, `endpoint-template.md`, `structure-validator-template.md`
 4. If `applicationStyle` is `cqrs` or `switch`: `cqrs-handler-template.md`, `cqrs-endpoint-template.md`, `cqrs-validation-template.md`, `test-templates-cqrs.md`
 5. If domain rules needed: `domain-rules-template.md`
-6. **If child collections (1:N owned or M:N junction): `updater-template.md` is required** — the repository's `UpdateFromDto` delegates to a DbContext extension method that uses `CollectionUtility.SyncCollectionWithResult` to add/update/remove children in one call. Without this, aggregate edits silently drop client-side removals.
-7. Test templates per profile (see § Test Slice below): `test-templates-domain.md`, `test-templates-repository.md`, `test-templates-service.md`, `test-templates-endpoint.md`, and for balanced+ profiles `test-templates-integration.md` + `test-templates-e2e.md`
+6. **If child collections (1:N owned or M:N junction): `updater-template.md` is required** - the repository's `UpdateFromDto` delegates to a DbContext extension method that uses `CollectionUtility.SyncCollectionWithResult` to add/update/remove children in one call. Without this, aggregate edits silently drop client-side removals.
+7. Test templates per profile (see section Test Slice below): `test-templates-domain.md`, `test-templates-repository.md`, `test-templates-service.md`, `test-templates-endpoint.md`, and for balanced+ profiles `test-templates-integration.md` + `test-templates-e2e.md`
 8. If Uno UI enabled: `uno-mvux-model-template.md`, `uno-xaml-page-template.md`, `uno-ui-client-layer.md`
-9. If Blazor UI enabled: `skills/ui-blazor.md` — add a Refit method group, entity list page, and entity new/edit page
-10. If React UI enabled: `skills/ui-react.md` — add API hooks, entity list page, detail/edit page, and form components
+9. If Blazor UI enabled: `skills/ui-blazor.md` - add a Refit method group, entity list page, and entity new/edit page
+10. If React UI enabled: `skills/ui-react.md` - add API hooks, entity list page, detail/edit page, and form components
 
 ### Slice Execution Order
 
@@ -36,9 +36,9 @@ Use this when adding a new entity to an **already-scaffolded** solution. Skip fu
 2. Create EF configuration in `Infrastructure.Data`
 3. Add `DbSet<{Entity}>` to both DbContexts
 4. Create repository interface + implementations (Trxn + Query)
-5. **If child collections: create `{Entity}Updater.cs` under `Infrastructure.Repositories/Updaters/`** — DbContext extension method using `CollectionUtility.SyncCollectionWithResult`. Repository's `UpdateFromDto` delegates here.
+5. **If child collections: create `{Entity}Updater.cs` under `Infrastructure.Repositories/Updaters/`** - DbContext extension method using `CollectionUtility.SyncCollectionWithResult`. Repository's `UpdateFromDto` delegates here.
 6. Create DTO + SearchFilter in `Application.Models`
-7. Create mapper in `Application.Mappers` (canonical `Projection` + compiled `ToDto` + `ToEntity`; child collections inlined in `Projection` — EF can't translate child `.ToDto()` calls)
+7. Create mapper in `Application.Mappers` (canonical `Projection` + compiled `ToDto` + `ToEntity`; child collections inlined in `Projection` - EF can't translate child `.ToDto()` calls)
 8. Add a method to `MapperProjectionParityTests.cs` for the new mapper
 9. Create StructureValidator in `Application.Services/Rules`
 10. Create service + interface (use `repoTrxn.UpdateFromDto(entity, dto, RelatedDeleteBehavior.RelationshipAndEntity)` in `UpdateAsync` for aggregate roots so client-side child removals hard-delete)
@@ -64,7 +64,7 @@ Use this when adding a new entity to an **already-scaffolded** solution. Skip fu
 
 ### Validation
 
-Gate commands: [execution-gates.md](execution-gates.md) § Core Loop. Scope test filter to the new entity (`FullyQualifiedName~{Entity}`). For recurring test failures, see [troubleshooting.md](troubleshooting.md).
+Gate commands: [execution-gates.md](execution-gates.md) section Core Loop. Scope test filter to the new entity (`FullyQualifiedName~{Entity}`). For recurring test failures, see [troubleshooting.md](troubleshooting.md).
 
 ### Prompt Pattern
 
@@ -91,7 +91,7 @@ For entity `{Entity}`:
 | Layer | File Path | Template | Required |
 |---|---|---|---|
 | Domain | `src/Domain/{Project}.Domain.Model/Entities/{Entity}.cs` | [entity-template.md](../templates/entity-template.md) | yes |
-| Domain (optional) | `src/Domain/{Project}.Domain.Model/Enums/{Entity}Status.cs` | — | if flags/status enum used |
+| Domain (optional) | `src/Domain/{Project}.Domain.Model/Enums/{Entity}Status.cs` | - | if flags/status enum used |
 | Domain (optional) | `src/Domain/{Project}.Domain.Model/Rules/{Entity}Rules.cs` | [domain-rules-template.md](../templates/domain-rules-template.md) | if rules/state machine/policy matrix used |
 | Domain (optional) | `src/Domain/{Project}.Domain.Model/Rules/{Entity}*TransitionRule.cs` | [domain-rules-template.md](../templates/domain-rules-template.md) | if state transitions are constrained |
 | Data | `src/Infrastructure/{Project}.Infrastructure.Data/EntityConfigurations/{Entity}Configuration.cs` | [ef-configuration-template.md](../templates/ef-configuration-template.md) | yes |
@@ -105,7 +105,7 @@ For entity `{Entity}`:
 | App | `src/Application/{Project}.Application.Contracts/Repositories/I{Entity}RepositoryQuery.cs` | [repository-template.md](../templates/repository-template.md) | yes |
 | App | `src/Application/{Project}.Application.Contracts/Mappers/{Entity}Mapper.cs` | [data-mapping-template.md](../templates/data-mapping-template.md) | yes |
 | App | `src/Application/{Project}.Application.Services/Services/{Entity}Service.cs` | [service-template.md](../templates/service-template.md) | yes |
-| App (optional) | `src/Application/{Project}.Application.Services/Validators/{Entity}Validator.cs` | — | if custom validator used |
+| App (optional) | `src/Application/{Project}.Application.Services/Validators/{Entity}Validator.cs` | - | if custom validator used |
 | App (CQRS) | `src/Application/{Project}.Application.Cqrs/Features/{Entity}/{Entity}Requests.cs` | [cqrs-handler-template.md](../templates/cqrs-handler-template.md) | if cqrs or switch |
 | App (CQRS) | `src/Application/{Project}.Application.Cqrs/Features/{Entity}/{Entity}Handlers.cs` | [cqrs-handler-template.md](../templates/cqrs-handler-template.md) | if cqrs or switch |
 | App (CQRS) | `src/Application/{Project}.Application.Cqrs/Features/{Entity}/{Entity}CqrsRegistrations.cs` | [cqrs-handler-template.md](../templates/cqrs-handler-template.md) | if cqrs or switch |
@@ -241,7 +241,7 @@ Skill: [ui-react.md](../skills/ui-react.md).
 
 ### Mixed-Store / Reconciliation (if applicable)
 
-For slices spanning SQL + Cosmos/Table/Blob + messaging, see [OPERATIONS.md](OPERATIONS.md) § Mixed-Store Slice Gate. Required:
+For slices spanning SQL + Cosmos/Table/Blob + messaging, see [OPERATIONS.md](OPERATIONS.md) section Mixed-Store Slice Gate. Required:
 
 - [ ] Authoritative store vs projection store boundary is explicit (writes always go to authoritative first; projections sync via domain events).
 - [ ] Reconciliation job exists for drift detection and replay-safe correction.
@@ -268,4 +268,4 @@ For implementation patterns (SQL + Cosmos composite, reconciliation job shape), 
 
 ---
 
-DI registration shape and migration command live in the Fast Path section above; gate commands are canonical in [execution-gates.md](execution-gates.md) § Core Loop.
+DI registration shape and migration command live in the Fast Path section above; gate commands are canonical in [execution-gates.md](execution-gates.md) section Core Loop.

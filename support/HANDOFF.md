@@ -1,12 +1,12 @@
 # HANDOFF.md
 
-Create this file in the **target project root** at the end of every phase and each Phase 5 sub-phase session. The next AI session loads `START-AI.md` + this file only — nothing else — and resumes from `currentPhase` / `currentSubPhase`.
+Create this file in the **target project root** at the end of every phase and each Phase 5 sub-phase session. The next AI session loads `START-AI.md` + this file only - nothing else - and resumes from `currentPhase` / `currentSubPhase`.
 
 ```yaml
 instructionVersion: ""
 currentPhase: ""           # next phase to run: 1 | 2 | 3 | 4 | 5
 currentSubPhase: ""        # next Phase 5 sub-phase to run: 5a | 5b | 5c | 5d | 5e (blank before Phase 5)
-scaffoldMode: ""           # full | lite | api-only — drives load-set sizing (see ai/SKILL.md § Load-Set Sizing)
+scaffoldMode: ""           # full | lite | api-only - drives load-set sizing (see ai/SKILL.md section Load-Set Sizing)
 testingProfile: ""         # minimal | balanced | comprehensive
 contractsScaffolded: false # set true after Phase 4 completes
 enabledFeatures:
@@ -23,8 +23,8 @@ enabledFeatures:
   includeGitHubActions: false
   includeAzd: false
   includeAiServices: false
-testStatus:                # updated per sub-phase — keys match TestCategory values
-  unitTests: not-started   # TestCategory=Unit       — not-started | red | green
+testStatus:                # updated per sub-phase - keys match TestCategory values
+  unitTests: not-started   # TestCategory=Unit       - not-started | red | green
   endpointTests: not-started # TestCategory=Endpoint
   integrationTests: not-started # TestCategory=Integration (Phase 5d; Testcontainers SQL / real external services)
 hostGates:                 # Phase 5c per-host status: not-started | scaffolded | partially-validated | validated | blocked
@@ -64,7 +64,7 @@ Run before `dotnet restore` in any new session:
 
 ## Deferred
 
-Out of scope for this session — do not attempt unless explicitly re-scoped:
+Out of scope for this session - do not attempt unless explicitly re-scoped:
 
 - <none>
 
@@ -79,8 +79,8 @@ Out of scope for this session — do not attempt unless explicitly re-scoped:
 - At Phase 1 close, summarize unresolved/deferred design decisions and confirm they do not block Phase 2.
 - Keep `enabledFeatures` flags in sync with `.scaffold/resource-implementation.yaml` canonical hosting/IaC/AI toggles.
 - For Phase 4, set `currentPhase: 5`, `currentSubPhase: 5a`, and `contractsScaffolded: true` after the gate passes. Phase 5a/5b require this flag.
-- For Phase 5a/5b, update `testStatus` as tests transition: `not-started` → `red` (tests written, failing) → `green` (implementation complete, tests passing). This tracks TDD progress across sessions.
-- For Phase 5c (Optional Hosts), update `hostGates` per-host as each host moves through `scaffolded` → `partially-validated` → `validated` or `blocked`. Do not mark the sub-phase complete until all enabled hosts reach `validated` or have a recorded blocker.
+- For Phase 5a/5b, update `testStatus` as tests transition: `not-started` -> `red` (tests written, failing) -> `green` (implementation complete, tests passing). This tracks TDD progress across sessions.
+- For Phase 5c (Optional Hosts), update `hostGates` per-host as each host moves through `scaffolded` -> `partially-validated` -> `validated` or `blocked`. Do not mark the sub-phase complete until all enabled hosts reach `validated` or have a recorded blocker.
 - Note unresolved infra/auth/package-feed issues here rather than retrying them repeatedly.
 - Record instruction gaps in `.scaffold/INSTRUCTION-GAPS.md`, not inside `.instructions/`, during consumer app scaffolding.
 - Keep entries short so the next AI turn can resume without reloading unnecessary docs.
@@ -89,7 +89,7 @@ Out of scope for this session — do not attempt unless explicitly re-scoped:
 
 ## Phase-1 Artifact Currency
 
-Verify before closing the session. Per [../START-AI.md](../START-AI.md) § Phase-1 Artifact Lifecycle Rule, *fix the artifact first, then the code; when drift exists, the artifact loses to code reality.*
+Verify before closing the session. Per [../START-AI.md](../START-AI.md) section Phase-1 Artifact Lifecycle Rule, *fix the artifact first, then the code; when drift exists, the artifact loses to code reality.*
 
 - [ ] No new domain term, role, event, or action was introduced this session without an entry in `.scaffold/UBIQUITOUS-LANGUAGE.md`.
 - [ ] No new entity, relationship, lifecycle state, or schema change was introduced without updating `.scaffold/domain-specification.yaml`.
@@ -134,7 +134,7 @@ Use this section for Phase 5b runtime/Aspire evidence. Leave blank when `useAspi
 
 ### Per-Host Gate Status (Phase 5c)
 
-For each enabled optional host, record its individual gate result. Use `validated`, `scaffolded`, `partially-validated`, or `blocked` — never claim Phase 5c complete if any enabled host is only scaffolded. Gateway is a Phase 5b runtime concern, not a Phase 5c host — record its status under § Validation, not here.
+For each enabled optional host, record its individual gate result. Use `validated`, `scaffolded`, `partially-validated`, or `blocked` - never claim Phase 5c complete if any enabled host is only scaffolded. Gateway is a Phase 5b runtime concern, not a Phase 5c host - record its status under section Validation, not here.
 
 | Host | Build | Host-Specific Gate | Status | Notes |
 |------|-------|--------------------|--------|-------|

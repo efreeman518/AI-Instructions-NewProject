@@ -62,7 +62,7 @@ public record {Entity}SearchFilter : DefaultSearchFilter
 ### Base DTO Types (from Application.Models/Shared/)
 
 ```csharp
-// DefaultSearchFilter — base for all search filters (Application.Models/)
+// DefaultSearchFilter - base for all search filters (Application.Models/)
 public record DefaultSearchFilter
 {
     public string? SearchTerm { get; set; }
@@ -138,7 +138,7 @@ public static class {Entity}Mapper
 
     public static {Entity}Dto ToDto(this {Entity} entity) => Compiled(entity);
 
-    // ===== DTO → Entity (factory, returns DomainResult) =====
+    // ===== DTO -> Entity (factory, returns DomainResult) =====
     public static DomainResult<{Entity}> ToEntity(this {Entity}Dto dto, Guid tenantId)
     {
         return {Entity}.Create(tenantId, dto.Name);

@@ -17,11 +17,11 @@ Host/Aspire/
 
 ### AppHost Entry File: `AppHost.cs` (not `Program.cs`)
 
-The AppHost project's entry file is **`AppHost.cs`** — the Aspire 13 convention. Use this name even on Aspire 9.x SDKs; it is purely a file rename and is back-compatible:
+The AppHost project's entry file is **`AppHost.cs`** - the Aspire 13 convention. Use this name even on Aspire 9.x SDKs; it is purely a file rename and is back-compatible:
 
 - Top-level statements emit an implicit `class Program` regardless of file name, so reflective lookups like `Type.GetType("Program, AppHost", ...)` and `WebApplicationFactory<Program>` keep working.
 - No code references need updating. `.csproj` only needs editing if it has explicit `<Compile>` items (default item-includes do not).
-- "`Program.cs` in the AppHost project" reads as a generic ASP.NET Core entry point — `AppHost.cs` correctly signals an Aspire orchestrator. Humans grep by file name; align it with intent.
+- "`Program.cs` in the AppHost project" reads as a generic ASP.NET Core entry point - `AppHost.cs` correctly signals an Aspire orchestrator. Humans grep by file name; align it with intent.
 
 > **Single-file AppHost** (a single `apphost.cs` lowercase with `#:sdk` / `#:package` directives, no `.csproj`) is a separate Aspire 13 prototype-only feature. Not adopted; not supported in Visual Studio.
 
@@ -110,7 +110,7 @@ var serviceBus = builder.AddAzureServiceBus("servicebus").RunAsEmulator();
 var eventHubs = builder.AddAzureEventHubs("eventhubs").RunAsEmulator();
 ```
 
-> **Do NOT use `ContainerLifetime.Persistent` on Azure emulator containers** (Storage, Service Bus, Cosmos, Event Hubs). Persistent emulator containers survive Aspire restarts but get stranded on deleted Podman/Docker networks, causing `netavark "eth2 already exists"` errors and broken restarts. Only SQL Server and Redis use `Persistent` + named volumes — Azure emulators should use the default ephemeral lifetime.
+> **Do NOT use `ContainerLifetime.Persistent` on Azure emulator containers** (Storage, Service Bus, Cosmos, Event Hubs). Persistent emulator containers survive Aspire restarts but get stranded on deleted Podman/Docker networks, causing `netavark "eth2 already exists"` errors and broken restarts. Only SQL Server and Redis use `Persistent` + named volumes - Azure emulators should use the default ephemeral lifetime.
 
 ### Azure Service Bus Topics and Subscriptions
 
@@ -120,7 +120,7 @@ sb.AddTopic("domain-events", ["api", "other-subscriber"]);
 sb.AddQueue("commands"); // optional queue
 ```
 
-> **API note (Aspire 9.3.0+):** Use `AddTopic(name, subscriptions[])` — the chained `.AddServiceBusTopic().AddServiceBusSubscription()` API does not exist. Queues use `AddQueue(name)`.
+> **API note (Aspire 9.3.0+):** Use `AddTopic(name, subscriptions[])` - the chained `.AddServiceBusTopic().AddServiceBusSubscription()` API does not exist. Queues use `AddQueue(name)`.
 
 Services like `AddSqlServer`, `AddRedis`, `AddPostgres`, `AddRabbitMQ` already run local containers by default.
 
@@ -154,7 +154,7 @@ Aspire resolves `AddParameter` values in this priority order (highest wins):
 
 - **Never put `Parameters:sql-password` (or any credential parameter) in any AppHost `appsettings` file.** It overrides everything silently. Keep those files as `{}` or omit the `Parameters` key entirely.
 - **Define passwords as a single shared constant** (e.g., `LocalSqlSettings.SharedSaPassword`). Use that constant as the `AddParameter` default and in test fixture setup. Change in one place only.
-- **Persistent SQL volumes lock in the SA password at volume creation time.** If you change the password constant, you must delete the named volume (e.g., `taskflow-sql-data`) before the next run — the container will re-initialize with the new password.
+- **Persistent SQL volumes lock in the SA password at volume creation time.** If you change the password constant, you must delete the named volume (e.g., `taskflow-sql-data`) before the next run - the container will re-initialize with the new password.
 - **Killing the AppHost process does not stop Docker/Podman containers.** Clean up persistent containers explicitly:
   ```bash
   docker ps --filter label=com.microsoft.dotnet.aspire.container.name --format "{{.ID}}" | xargs docker rm -f
@@ -201,7 +201,7 @@ When the project uses `nuget.config` with `<packageSourceMapping>`, the followin
 
 When using `Aspire.Hosting.Azure.Sql`, `Microsoft.Data.SqlClient` pulls `Microsoft.IdentityModel.JsonWebTokens` at a version that conflicts with other Aspire dependencies. To resolve NU1605:
 
-1. Pin in `Directory.Packages.props` — **documented exception** to the latest-not-pinned rule (see [package-dependencies.md](package-dependencies.md) → *Latest, Not Pinned*). Resolve the lowest version that satisfies both consumers at scaffold time and keep the inline reason comment:
+1. Pin in `Directory.Packages.props` - **documented exception** to the latest-not-pinned rule (see [package-dependencies.md](package-dependencies.md) -> *Latest, Not Pinned*). Resolve the lowest version that satisfies both consumers at scaffold time and keep the inline reason comment:
    ```xml
    <!-- Pinned: NU1605 conflict between Microsoft.Data.SqlClient and other Aspire deps. Re-evaluate on SDK bump. -->
    <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="<resolved-at-scaffold>" />
@@ -245,9 +245,9 @@ Use the `Aspire.AppHost.Sdk` MSBuild SDK. It handles `Projects.*` type proxy gen
 </Project>
 ```
 
-Substitute `<latest-stable>` and the TFM at scaffold time. Do not hard-code versions in templates — see [package-dependencies.md](package-dependencies.md) → *Latest, Not Pinned*.
+Substitute `<latest-stable>` and the TFM at scaffold time. Do not hard-code versions in templates - see [package-dependencies.md](package-dependencies.md) -> *Latest, Not Pinned*.
 
-> **SDK upgrade discipline.** A major Aspire SDK bump (e.g., 9 → 13) is a **deliberate, scheduled task**, not routine work. Aspire 13 tightens a few APIs (e.g., `IDistributedApplicationTestingBuilder` inheritance), and existing code may need adjustments. Consult the official upgrade guide (`learn.microsoft.com/dotnet/aspire/get-started/upgrade-to-aspire-13`) and the version-specific compatibility pages before bumping. The `AppHost.cs` filename convention is back-compatible and may be adopted independently of the SDK bump.
+> **SDK upgrade discipline.** A major Aspire SDK bump (e.g., 9 -> 13) is a **deliberate, scheduled task**, not routine work. Aspire 13 tightens a few APIs (e.g., `IDistributedApplicationTestingBuilder` inheritance), and existing code may need adjustments. Consult the official upgrade guide (`learn.microsoft.com/dotnet/aspire/get-started/upgrade-to-aspire-13`) and the version-specific compatibility pages before bumping. The `AppHost.cs` filename convention is back-compatible and may be adopted independently of the SDK bump.
 
 If using dev tunnels, add `Aspire.Hosting.DevTunnels`.
 
@@ -257,7 +257,7 @@ If using dev tunnels, add `Aspire.Hosting.DevTunnels`.
 
 Before running `dotnet run --project src/Host/Aspire/AppHost`, confirm the substrate:
 
-1. **Docker/Podman running:** `docker info` or `podman info` succeeds. If not, start the container runtime — do not debug app code.
+1. **Docker/Podman running:** `docker info` or `podman info` succeeds. If not, start the container runtime - do not debug app code.
 2. **launchSettings.json exists:** AppHost requires `Properties/launchSettings.json` with OTLP/dashboard endpoints. Without it, `dotnet run` starts but the dashboard never opens and the terminal appears blank. Minimal template:
    ```json
    {
@@ -317,18 +317,18 @@ Aspire dashboard URLs, proxy ports, and host endpoints are **assigned at runtime
 On each launch:
 1. Read the dashboard URL from the `dotnet run` console output.
 2. Confirm resource health on the dashboard before testing endpoints.
-3. Use the dashboard's resource list to find current host URLs — do not assume prior ports.
+3. Use the dashboard's resource list to find current host URLs - do not assume prior ports.
 
 When writing `HANDOFF.md`, record the **method to discover URLs** (e.g., "check Aspire dashboard"), not the URLs themselves.
 
 ---
 
-## Detecting Aspire at Runtime — Presence, Not Environment
+## Detecting Aspire at Runtime - Presence, Not Environment
 
 Hosts often need to know "am I being orchestrated by Aspire?" to decide whether to register real Azure clients vs. local no-op stubs. **Gate on the presence of an Aspire-injected connection string, not on `IHostEnvironment.IsEnvironment("Testing")` or any other environment name.**
 
 ```csharp
-// CORRECT — presence-based
+// CORRECT - presence-based
 var runningUnderAspire = !string.IsNullOrEmpty(
     builder.Configuration.GetConnectionString("{App}DbContextTrxn"));
 
@@ -340,11 +340,11 @@ if (runningUnderAspire)
 }
 ```
 
-**Why not environment-name gates.** `WebApplicationFactory<Program>` sets `ASPNETCORE_ENVIRONMENT=Testing` via `UseEnvironment("Testing")`, and `DistributedApplicationTestingBuilder` propagates the same env name to **every child project** it brings up under test. A gate like `!builder.Environment.IsEnvironment("Testing")` therefore returns `false` in **both** WAF tier and Aspire-mesh tier — the API silently keeps its `NoOp` publishers, and integration events are dropped without an error. The bug is invisible (POST 201, row persisted) and only manifests when a downstream consumer fails to observe the event.
+**Why not environment-name gates.** `WebApplicationFactory<Program>` sets `ASPNETCORE_ENVIRONMENT=Testing` via `UseEnvironment("Testing")`, and `DistributedApplicationTestingBuilder` propagates the same env name to **every child project** it brings up under test. A gate like `!builder.Environment.IsEnvironment("Testing")` therefore returns `false` in **both** WAF tier and Aspire-mesh tier - the API silently keeps its `NoOp` publishers, and integration events are dropped without an error. The bug is invisible (POST 201, row persisted) and only manifests when a downstream consumer fails to observe the event.
 
 The connection-string presence check distinguishes the two tiers correctly: WAF tier injects in-memory DbContext options (no connection string), Aspire tier injects real Aspire-resolved connection strings.
 
-Apply the same principle to Functions hosts, Worker hosts, and Scheduler hosts — any host that has both an Aspire path and a non-Aspire test path. If a host has **no** non-Aspire test path (i.e., always-Aspire), document that explicitly in the host's `Program.cs` and skip the gate entirely.
+Apply the same principle to Functions hosts, Worker hosts, and Scheduler hosts - any host that has both an Aspire path and a non-Aspire test path. If a host has **no** non-Aspire test path (i.e., always-Aspire), document that explicitly in the host's `Program.cs` and skip the gate entirely.
 
 ---
 

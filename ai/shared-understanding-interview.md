@@ -4,7 +4,7 @@ Use this file during Phase 1 before writing `.scaffold/domain-specification.yaml
 
 Goal: interview the developer until the AI and developer share the same domain model, vocabulary, and decision context. Do not rush to YAML. The YAML is only valid after the interview branches below are confirmed, defaulted, or explicitly deferred.
 
-> **First time?** [`../support/phase-1-worked-example.md`](../support/phase-1-worked-example.md) shows a condensed transcript of the actual interview that produced the TaskFlow reference app — pacing, branch recaps, and how the AI handles a mid-interview correction.
+> **First time?** [`../support/phase-1-worked-example.md`](../support/phase-1-worked-example.md) shows a condensed transcript of the actual interview that produced the TaskFlow reference app - pacing, branch recaps, and how the AI handles a mid-interview correction.
 
 ## Output Artifacts
 
@@ -45,7 +45,7 @@ Walk these branches in order. Revisit earlier branches when a later answer chang
 | Interfaces | API, UI, background hosts, integrations, AI capabilities | actors, workflows, resources |
 | Delivery constraints | scaffold mode, test profile, regions, cost, team constraints | all prior branches |
 
-> **Heads-up — Phase 2 will open with packaging strategy.** The very first Phase 2 question asks whether the project has a private NuGet feed for shared base contracts (e.g., `EF.*`) or whether the scaffold should generate equivalent packable projects under `src/Packages/<Prefix>.*`. Flag any constraints here (corporate feed policy, prefix conventions) so Phase 2 doesn't re-discover them. Full details: [resource-implementation-schema.md § Discovery Conversation Pattern](resource-implementation-schema.md#discovery-conversation-pattern).
+> **Heads-up - Phase 2 will open with packaging strategy.** The very first Phase 2 question asks whether the project has a private NuGet feed for shared base contracts (e.g., `EF.*`) or whether the scaffold should generate equivalent packable projects under `src/Packages/<Prefix>.*`. Flag any constraints here (corporate feed policy, prefix conventions) so Phase 2 doesn't re-discover them. Full details: [resource-implementation-schema.md section Discovery Conversation Pattern](resource-implementation-schema.md#discovery-conversation-pattern).
 
 ## Branch Recap Format
 

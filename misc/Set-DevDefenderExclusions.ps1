@@ -1,14 +1,14 @@
 #Requires -RunAsAdministrator
 <#
 .SYNOPSIS
-    Set-DefenderExclusions.ps1 — Windows Defender exclusions for .NET developer workstations
+    Set-DefenderExclusions.ps1 - Windows Defender exclusions for .NET developer workstations
 
 .DESCRIPTION
     Adds path and process exclusions to Windows Defender to prevent excessive CPU usage
     during builds, package restores, and Docker operations. Also sets scan schedule and
     CPU cap to reduce background impact.
 
-    Safe to re-run — duplicate exclusions are ignored by Defender.
+    Safe to re-run - duplicate exclusions are ignored by Defender.
 
 .PARAMETER SourceRoot
     Root folder for all source code / git repos.
@@ -58,14 +58,14 @@ $ErrorActionPreference = "SilentlyContinue"
 
 function Write-Header($title) {
     Write-Host ""
-    Write-Host "══════════════════════════════════════════════════" -ForegroundColor Cyan
+    Write-Host "==================================================" -ForegroundColor Cyan
     Write-Host "  $title" -ForegroundColor Cyan
-    Write-Host "══════════════════════════════════════════════════" -ForegroundColor Cyan
+    Write-Host "==================================================" -ForegroundColor Cyan
 }
 
 function Add-PathExclusion($path, $label) {
     if (-not (Test-Path $path)) {
-        Write-Host "  [SKIP]   $label — path not found: $path" -ForegroundColor DarkGray
+        Write-Host "  [SKIP]   $label - path not found: $path" -ForegroundColor DarkGray
         return
     }
     if ($WhatIf) {
@@ -98,14 +98,14 @@ function Add-ExtensionExclusion($ext, $label) {
 $user = $env:USERNAME
 
 Write-Host ""
-Write-Host "  Defender Exclusions — .NET Developer Setup" -ForegroundColor White
+Write-Host "  Defender Exclusions - .NET Developer Setup" -ForegroundColor White
 Write-Host "  $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  |  $env:COMPUTERNAME" -ForegroundColor DarkGray
 if ($WhatIf) {
-    Write-Host "  MODE: WhatIf — no changes will be made" -ForegroundColor Yellow
+    Write-Host "  MODE: WhatIf - no changes will be made" -ForegroundColor Yellow
 }
 
 
-# ─── 1. SOURCE CODE ───────────────────────────────────────────────────────────
+# --- 1. SOURCE CODE -----------------------------------------------------------
 Write-Header "1/6  Source Code Paths"
 
 Add-PathExclusion $SourceRoot "Source root"
@@ -123,7 +123,7 @@ foreach ($folder in @("repos","projects","dev","git","work","code")) {
 }
 
 
-# ─── 2. BUILD TOOLS & CACHES ─────────────────────────────────────────────────
+# --- 2. BUILD TOOLS & CACHES -------------------------------------------------
 Write-Header "2/6  Build Tools & Package Caches"
 
 # .NET / NuGet
@@ -137,7 +137,7 @@ Add-PathExclusion "C:\Users\$user\AppData\Local\Microsoft\VisualStudio"        "
 Add-PathExclusion "C:\Users\$user\AppData\Local\Temp\VSFeedbackIntelliCodeLogs" "VS IntelliCode logs"
 Add-PathExclusion "C:\ProgramData\Microsoft\VisualStudio"                       "VS shared data"
 
-# MSBuild outputs — exclude common build output folder names within source root
+# MSBuild outputs - exclude common build output folder names within source root
 Add-PathExclusion "$SourceRoot\**\bin"                                         "Build outputs (bin)"
 Add-PathExclusion "$SourceRoot\**\obj"                                         "Build intermediates (obj)"
 
@@ -159,7 +159,7 @@ Add-PathExclusion "C:\Python314"                                                
 Add-PathExclusion "C:\Program Files\Git"                                        "Git installation"
 
 
-# ─── 3. DOCKER ────────────────────────────────────────────────────────────────
+# --- 3. DOCKER ----------------------------------------------------------------
 Write-Header "3/6  Docker"
 
 Add-PathExclusion "C:\Users\$user\AppData\Local\Docker"                        "Docker Desktop user data"
@@ -178,14 +178,14 @@ foreach ($pkg in $wslPackages) {
 Add-PathExclusion "C:\Users\$user\AppData\Local\Packages\CanonicalGroupLimited.Ubuntu*\LocalState" "WSL Ubuntu state"
 
 
-# ─── 4. ANDROID / MOBILE DEV ─────────────────────────────────────────────────
+# --- 4. ANDROID / MOBILE DEV -------------------------------------------------
 Write-Header "4/6  Android & Mobile Dev"
 
 Add-PathExclusion "C:\Users\$user\.android"                                    "Android SDK / AVD"
 Add-PathExclusion "C:\Users\$user\AppData\Local\Android"                       "Android Studio data"
 
 
-# ─── 5. OTHER DEV TOOLS ──────────────────────────────────────────────────────
+# --- 5. OTHER DEV TOOLS ------------------------------------------------------
 Write-Header "5/6  Other Dev Tools & AI"
 
 Add-PathExclusion "C:\Users\$user\.ollama"                                     "Ollama models"
@@ -196,7 +196,7 @@ Add-PathExclusion "C:\Users\$user\AppData\Local\GitCredentialManager"          "
 Add-PathExclusion "C:\Users\$user\AppData\Local\LinqPad"                       "LINQPad cache"
 
 
-# ─── PROCESS EXCLUSIONS ───────────────────────────────────────────────────────
+# --- PROCESS EXCLUSIONS -------------------------------------------------------
 Write-Header "5b/6  Process Exclusions"
 
 $processes = @(
@@ -230,7 +230,7 @@ foreach ($proc in $processes) {
 }
 
 
-# ─── 6. SCAN SCHEDULE & CPU CAP ──────────────────────────────────────────────
+# --- 6. SCAN SCHEDULE & CPU CAP ----------------------------------------------
 Write-Header "6/6  Scan Schedule & CPU Cap"
 
 if ($WhatIf) {
@@ -261,11 +261,11 @@ if ($WhatIf) {
 }
 
 
-# ─── SUMMARY ─────────────────────────────────────────────────────────────────
+# --- SUMMARY -----------------------------------------------------------------
 Write-Host ""
-Write-Host "══════════════════════════════════════════════════" -ForegroundColor Cyan
+Write-Host "==================================================" -ForegroundColor Cyan
 Write-Host "  Complete" -ForegroundColor Cyan
-Write-Host "══════════════════════════════════════════════════" -ForegroundColor Cyan
+Write-Host "==================================================" -ForegroundColor Cyan
 Write-Host ""
 
 if (-not $WhatIf) {

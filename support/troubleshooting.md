@@ -1,4 +1,4 @@
-# Troubleshooting — AI Agent Triage Rules
+# Troubleshooting - AI Agent Triage Rules
 
 This file is intentionally lightweight. Use it to decide **what the AI should do next** when a build/test/run problem appears.
 
@@ -10,7 +10,7 @@ This file is intentionally lightweight. Use it to decide **what the AI should do
 
 AI agents generate code. Engineers own environment and runtime setup.
 
-> All code generation and fixes apply to the **new project** only. If an error points to a `patterns/` file (see `ai/SKILL.md` § Non-Negotiables for the index), document the issue in `.scaffold/INSTRUCTION-GAPS.md` (in a consumer app) or `support/UPDATE-INSTRUCTIONS.md` (in this repo).
+> All code generation and fixes apply to the **new project** only. If an error points to a `patterns/` file (see `ai/SKILL.md` section Non-Negotiables for the index), document the issue in `.scaffold/INSTRUCTION-GAPS.md` (in a consumer app) or `support/UPDATE-INSTRUCTIONS.md` (in this repo).
 
 When an error appears:
 1. Classify it (code-generation vs infrastructure/tooling)
@@ -64,19 +64,19 @@ Reference the exact relevant section in [execution-gates.md](execution-gates.md)
 
 When a multi-host app (Aspire, Gateway, API, Scheduler) fails at runtime, **separate orchestration failures from application failures** before investigating code.
 
-**Step 1 — Confirm the substrate is running:**
+**Step 1 - Confirm the substrate is running:**
 - Docker containers started? (`docker ps`)
-- Aspire dashboard reachable? (check the URL from `dotnet run` output — do not reuse a prior session's URL)
+- Aspire dashboard reachable? (check the URL from `dotnet run` output - do not reuse a prior session's URL)
 - All registered resources show healthy in the dashboard?
 - Gateway/proxy routes respond (even with 401/404)?
 
-**Step 2 — Only then investigate application-level concerns:**
+**Step 2 - Only then investigate application-level concerns:**
 - API returns expected status codes?
 - Auth tokens/claims correct?
 - Seed/migration data present?
 - Config values (connection strings, feature flags) populated?
 
-If Step 1 fails, the problem is infrastructure — flag for the engineer per [execution-gates.md](execution-gates.md). Do not debug application code when the host substrate is not ready.
+If Step 1 fails, the problem is infrastructure - flag for the engineer per [execution-gates.md](execution-gates.md). Do not debug application code when the host substrate is not ready.
 
 ---
 
@@ -99,9 +99,9 @@ For Functions, use `local.settings.json` `ConnectionStrings` section (same value
 
 LocalDB (`MSSQLLocalDB` instance) ships with Visual Studio. Start it with `sqllocaldb start MSSQLLocalDB` if it is not running. EF migrations run automatically on first API startup.
 
-> **Security:** `appsettings.Development.json` with LocalDB strings is safe to commit. Never commit cloud/staging connection strings — use user secrets or environment variables instead.
+> **Security:** `appsettings.Development.json` with LocalDB strings is safe to commit. Never commit cloud/staging connection strings - use user secrets or environment variables instead.
 
-**Step 3 — After fixing an infrastructure startup issue, verify at the data plane:**
+**Step 3 - After fixing an infrastructure startup issue, verify at the data plane:**
 Process liveness and clean logs are necessary but not sufficient. When a fix targets a component that creates or seeds backing data (migrations, seed tasks, scheduler tables, queue metadata), perform one direct data-plane check before declaring the fix complete:
 - **Database:** query for expected tables, seed rows, or schema objects
 - **Queue/bus:** confirm the queue or topic exists and is reachable
@@ -116,7 +116,7 @@ This prevents false-positive fixes where the crash is resolved but the intended 
 When a third-party library (scheduler, queue, dashboard, job runner) uses EF-backed or SQL-backed operational tables and startup or seeding fails:
 
 1. **Identify the schema owner.** Does the library auto-create its tables at startup? Does it ship migrations or SQL scripts you must run? Does it expect a design-time factory in your project? Or does it assume tables already exist?
-2. **Do not conflate startup success with schema presence.** Many libraries start without error even when their backing tables are missing — failures appear later during seeding, first job execution, or dashboard queries, and are easily misread as connection or configuration issues.
+2. **Do not conflate startup success with schema presence.** Many libraries start without error even when their backing tables are missing - failures appear later during seeding, first job execution, or dashboard queries, and are easily misread as connection or configuration issues.
 3. **Verify the schema directly.** Query `INFORMATION_SCHEMA.TABLES` or the database tool of your choice to confirm the expected tables exist before investigating application-level failures.
 
 ---
@@ -155,7 +155,7 @@ var functions = builder.AddProject<Projects.TaskFlow_Functions>("functions")
 ```
 
 Without the explicit `connectionName`, the Functions project falls back to `appsettings.json` (which may reference LocalDB or a non-existent server).
-4. **Avoid CREATE-on-every-restart patterns.** When using `GenerateCreateScript()` + batch execution to bootstrap third-party schemas, gate it behind an existence check (see [data-persistence-advanced.md](data-persistence-advanced.md) → Third-Party Operational Store Schemas). Running CREATE statements against existing tables produces `fail:` EF log spam on every restart with persistent data volumes.
+4. **Avoid CREATE-on-every-restart patterns.** When using `GenerateCreateScript()` + batch execution to bootstrap third-party schemas, gate it behind an existence check (see [data-persistence-advanced.md](data-persistence-advanced.md) -> Third-Party Operational Store Schemas). Running CREATE statements against existing tables produces `fail:` EF log spam on every restart with persistent data volumes.
 5. **Record the schema ownership model** in `HANDOFF.md` and `.scaffold/resource-implementation.yaml` so future sessions do not re-diagnose the same issue.
 
 ---
@@ -164,18 +164,18 @@ Without the explicit `connectionName`, the Functions project falls back to `apps
 
 When consulting upstream GitHub issues, PRs, or release notes to diagnose a third-party library failure:
 
-1. **Extract the specific failure class** the upstream material addresses before applying its fix. Design-time migration problems, host-lifecycle startup problems, schema-default problems, and runtime missing-table problems are **separate fault domains** — treat them as distinct until proven otherwise.
+1. **Extract the specific failure class** the upstream material addresses before applying its fix. Design-time migration problems, host-lifecycle startup problems, schema-default problems, and runtime missing-table problems are **separate fault domains** - treat them as distinct until proven otherwise.
 2. **Match, don't pattern-match.** An upstream issue is relevant only if its failure mode matches your local failure mode, not just the library or feature area. A migration-generation fix does not resolve a runtime missing-table error, even if both involve the same library.
-3. **Use upstream material to refine the diagnosis, not to short-circuit it.** If an upstream issue narrows the problem to a specific version, config flag, or code path, use that to focus your investigation — do not copy the fix verbatim without verifying the preconditions match.
+3. **Use upstream material to refine the diagnosis, not to short-circuit it.** If an upstream issue narrows the problem to a specific version, config flag, or code path, use that to focus your investigation - do not copy the fix verbatim without verifying the preconditions match.
 
 ---
 
 ## Domain Ambiguity Defaults
 
 When inputs are unclear, prefer pragmatic defaults and continue:
-- Relationship unclear → default to one-to-many and note assumption
-- Missing properties → add `Name`; add `TenantId` when tenant-scoped
-- Lite mode + Gateway requested → keep Lite baseline; suggest Gateway as a later increment
+- Relationship unclear -> default to one-to-many and note assumption
+- Missing properties -> add `Name`; add `TenantId` when tenant-scoped
+- Lite mode + Gateway requested -> keep Lite baseline; suggest Gateway as a later increment
 
 ---
 
@@ -197,35 +197,35 @@ For phase gates and validation commands, see [execution-gates.md](execution-gate
 | Rate-limited 429 in integration tests | API rate limiter enabled in test host | Override limiter to `GetNoLimiter` in test factory |
 | `CS0104` RequestContext ambiguity | `Test.Support` and `EF.Common.Contracts` both define type | Use fully qualified `EF.Common.Contracts.RequestContext<...>` |
 | Audit save succeeds but handler side effect never happens | `AuditInterceptor` publishes to `IInternalMessageBus`, but the host is missing channel-queue support, the handler is not in DI, or handler assemblies were never registered into the bus | Register `AddChannelBackgroundTaskQueueWithShutdownHandling()` + `IInternalMessageBus` before DbContexts, add each `IMessageHandler<T>` to DI, then call `app.AutoRegisterMessageHandlers()` after `Build()`. See [bootstrapper.md](../skills/bootstrapper.md) and [message-handler-template.md](../templates/message-handler-template.md). |
-| `IInternalMessageBus` resolution error in test factory | `AuditInterceptor` registered by Bootstrapper, not removed by test DB swap | Remove `AuditInterceptor<string, Guid?>` and all pool/factory descriptors. See [test-templates-endpoint.md](../templates/test-templates-endpoint.md) → *Shared WebApplicationFactoryBase*. |
+| `IInternalMessageBus` resolution error in test factory | `AuditInterceptor` registered by Bootstrapper, not removed by test DB swap | Remove `AuditInterceptor<string, Guid?>` and all pool/factory descriptors. See [test-templates-endpoint.md](../templates/test-templates-endpoint.md) -> *Shared WebApplicationFactoryBase*. |
 | `Cannot consume scoped from singleton IDbContextPool` in tests | `AddDbContext` registers scoped options; original pooled factory registration still present | Remove `IDbContextPool<T>` descriptors (match by `ServiceType.FullName.Contains("DbContextPool")`) before re-registering |
 | `DbContextOptions must be DbContextOptions<T>` in tests | Multiple contexts sharing non-generic `DbContextOptions` constructor | Build typed options per context via `new DbContextOptionsBuilder<T>().UseInMemoryDatabase(name).Options` |
-| `CS9035` required member `AuditId` not set | `DbContextBase` declares `required` members; `new` operator enforces at compile time | Use `ConstructorInfo.Invoke()` via reflection to bypass — see `TestDbContextFactory` in [test-templates-endpoint.md](../templates/test-templates-endpoint.md) |
+| `CS9035` required member `AuditId` not set | `DbContextBase` declares `required` members; `new` operator enforces at compile time | Use `ConstructorInfo.Invoke()` via reflection to bypass - see `TestDbContextFactory` in [test-templates-endpoint.md](../templates/test-templates-endpoint.md) |
 | Create returns 201 but validation test expects 400 | DTO fields not applied to entity after create | Call `entity.Update(...)` after factory create |
 | Create/Update NullReferenceException in tests | `UpdateFromDto` not mocked | Mock `repoTrxn.UpdateFromDto(...)` to return `DomainResult<T>.Success(entity)` |
-| `CS1929` ReturnsAsync type mismatch on search mock | Query repo interface returns `PagedResponse<EntityDto>` but test uses `PagedResponse<Entity>` | Change mock to use DTO type — repos project to DTOs via `QueryPageProjectionAsync` |
+| `CS1929` ReturnsAsync type mismatch on search mock | Query repo interface returns `PagedResponse<EntityDto>` but test uses `PagedResponse<Entity>` | Change mock to use DTO type - repos project to DTOs via `QueryPageProjectionAsync` |
 | Manual Skip/Take/Count in query repo | Not using `QueryPageProjectionAsync` from RepositoryBase | Replace with `QueryPageProjectionAsync` + mapper projector + `BuildFilter`/`BuildOrderBy` methods |
 | Schema changes not reflected in TestContainer | Previous schema persists | `EnsureDeletedAsync()` before `EnsureCreatedAsync()` |
 | ProblemDetails stack traces leak in CI | Debug diagnostics enabled in all builds | Wrap diagnostic customization in `#if DEBUG` |
 | StructureValidator not found | Missing static validator namespace import | Add `using {Namespace}.Application.Services.Validation;` |
-| WASM build `DirectoryNotFoundException` (`unoresizetizer`) | Resizetizer 1.12.1 manifest-path issue | See fix snippet in `skills/ui-uno-platforms.md` → *UnoSplashScreen WASM Build Failure* |
+| WASM build `DirectoryNotFoundException` (`unoresizetizer`) | Resizetizer 1.12.1 manifest-path issue | See fix snippet in `skills/ui-uno-platforms.md` -> *UnoSplashScreen WASM Build Failure* |
 | `NotSupportedException` deserializing `Result<T>` in tests | `Result<T>` lacks parameterless constructor | Use `JsonDocument` parsing instead of `ReadFromJsonAsync<Result<T>>()`. Search endpoints serialize just the `PagedResponse<T>` value, not the wrapper. |
-| Aspire dashboard never opens / blank terminal | Missing `Properties/launchSettings.json` in AppHost | Create launchSettings.json with OTLP endpoints — see [aspire.md](../skills/aspire.md) → Preflight |
-| `MSB4057` "GetTargetPath" target missing | Uno.Sdk project referenced from AppHost | Comment out Uno ProjectReference and AddProject — run Uno WASM separately |
-| Functions storage/messaging clients refuse `127.0.0.1:10000/10001/10002` | `local.settings.json` fallbacks (`UseDevelopmentStorage=true`, empty Service Bus strings) beat Aspire-injected env values; Azurite under Aspire uses dynamic ports | Give Functions its own `.WithReference(...)` / host storage wiring and resolve shared client connection strings env-first before `local.settings.json` fallbacks. See [function-app.md](../skills/function-app.md) → Aspire Integration and [aspire.md](../skills/aspire.md) → Azure Service Bus Topics and Subscriptions. |
-| Audit rows show wrong user id / correlation id looks like the audit id | `RequestContext` constructor arguments were passed in the wrong order | Use `new RequestContext<string, Guid?>(correlationId, auditId, tenantId, roles)`. See [api-host-wiring.md](../patterns/api-host-wiring.md) → Request Context Resolution. |
+| Aspire dashboard never opens / blank terminal | Missing `Properties/launchSettings.json` in AppHost | Create launchSettings.json with OTLP endpoints - see [aspire.md](../skills/aspire.md) -> Preflight |
+| `MSB4057` "GetTargetPath" target missing | Uno.Sdk project referenced from AppHost | Comment out Uno ProjectReference and AddProject - run Uno WASM separately |
+| Functions storage/messaging clients refuse `127.0.0.1:10000/10001/10002` | `local.settings.json` fallbacks (`UseDevelopmentStorage=true`, empty Service Bus strings) beat Aspire-injected env values; Azurite under Aspire uses dynamic ports | Give Functions its own `.WithReference(...)` / host storage wiring and resolve shared client connection strings env-first before `local.settings.json` fallbacks. See [function-app.md](../skills/function-app.md) -> Aspire Integration and [aspire.md](../skills/aspire.md) -> Azure Service Bus Topics and Subscriptions. |
+| Audit rows show wrong user id / correlation id looks like the audit id | `RequestContext` constructor arguments were passed in the wrong order | Use `new RequestContext<string, Guid?>(correlationId, auditId, tenantId, roles)`. See [api-host-wiring.md](../patterns/api-host-wiring.md) -> Request Context Resolution. |
 | Event contracts drift between layers (Domain vs Application) | Bus payload records defined in `Domain.*.Events` and/or publisher still named `IDomainEventPublisher` | Move cross-process payloads to `Application.Contracts.Events` and publish through `IIntegrationEventPublisher`. Keep domain events in Domain only for aggregate-local invariants/dispatch. |
-| EF `fail:` log spam on every scheduler/host restart | `GenerateCreateScript()` runs CREATE against existing tables | Gate with `INFORMATION_SCHEMA.TABLES` existence check — see [data-persistence-advanced.md](data-persistence-advanced.md) → Third-Party Operational Store Schemas |
+| EF `fail:` log spam on every scheduler/host restart | `GenerateCreateScript()` runs CREATE against existing tables | Gate with `INFORMATION_SCHEMA.TABLES` existence check - see [data-persistence-advanced.md](data-persistence-advanced.md) -> Third-Party Operational Store Schemas |
 | `MSB3027` file lock / build fails with PID holding DLL | Orphaned `dotnet.exe` from prior run | `Get-Process -Name dotnet` then `Stop-Process -Name dotnet -Force` |
 | SQL container starts but auth fails under Aspire | `sql-password` parameter not in user secrets | `dotnet user-secrets set "Parameters:sql-password" "<pw>" --project AppHost` |
-| UI pager shows wrong "current page" / Next returns same rows | Client `PagedResponse.PageIndex` setter adds 0→1 offset on server-echoed 1-based `pageIndex` | Remove offset: setter/getter must pass `pageIndex` through unchanged. See [ui-uno-mvux.md](../skills/ui-uno-mvux.md) → *Pagination contract* |
-| Checklist/child state (e.g. `IsCompleted`) lost on new-parent save | UI does separate `ParentService.Create` then per-child `ChildService.Create` loop; server's `Child.Create(...)` factory doesn't accept the field | Bundle children into parent DTO for a single-payload save; Updater `createFunc` calls `Update()` after `Create()` for fields not in the factory signature. See [updater-template.md](../templates/updater-template.md) → *createFunc must apply ALL DTO fields* and [ui-uno-mvux.md](../skills/ui-uno-mvux.md) → *Buffered Child Items in Create Mode* |
-| Menu click stays on stacked sub-page (detail) / no-ops | Relative `NavigateRouteAsync("TaskList")` resolves against currently-visible Visibility-sibling | Use absolute route `/Main/{sibling}` via the parent-page navigator. See [ui-uno-mvux.md](../skills/ui-uno-mvux.md) → *Menu Navigation: Always Land On Top Page* |
-| `Assert.IsGreaterThanOrEqualTo` reports "Actual value <1> is not greater than or equal to expected value <2>" | Args inverted — signature is `(lowerBound, value)` (asserts `value >= lowerBound`) | Reorder: `Assert.IsGreaterThanOrEqualTo(lowerBound: 1, value: summary.OverdueTasks)` |
+| UI pager shows wrong "current page" / Next returns same rows | Client `PagedResponse.PageIndex` setter adds 0->1 offset on server-echoed 1-based `pageIndex` | Remove offset: setter/getter must pass `pageIndex` through unchanged. See [ui-uno-mvux.md](../skills/ui-uno-mvux.md) -> *Pagination contract* |
+| Checklist/child state (e.g. `IsCompleted`) lost on new-parent save | UI does separate `ParentService.Create` then per-child `ChildService.Create` loop; server's `Child.Create(...)` factory doesn't accept the field | Bundle children into parent DTO for a single-payload save; Updater `createFunc` calls `Update()` after `Create()` for fields not in the factory signature. See [updater-template.md](../templates/updater-template.md) -> *createFunc must apply ALL DTO fields* and [ui-uno-mvux.md](../skills/ui-uno-mvux.md) -> *Buffered Child Items in Create Mode* |
+| Menu click stays on stacked sub-page (detail) / no-ops | Relative `NavigateRouteAsync("TaskList")` resolves against currently-visible Visibility-sibling | Use absolute route `/Main/{sibling}` via the parent-page navigator. See [ui-uno-mvux.md](../skills/ui-uno-mvux.md) -> *Menu Navigation: Always Land On Top Page* |
+| `Assert.IsGreaterThanOrEqualTo` reports "Actual value <1> is not greater than or equal to expected value <2>" | Args inverted - signature is `(lowerBound, value)` (asserts `value >= lowerBound`) | Reorder: `Assert.IsGreaterThanOrEqualTo(lowerBound: 1, value: summary.OverdueTasks)` |
 | Mock-data assertion break when seed rows are added (`Expected:<3> Actual:<14>`) | Tests hardcode absolute counts/positions against a moving mock seed | Prefer `IsNotEmpty`, `Assert.Contains`, or assertions on a specific entity Id; reserve exact counts for sealed fixtures |
 | Aspire test suite hangs indefinitely | `[assembly: DoNotParallelize]` + no `[Timeout]` on a single hanging test blocks entire run | Add `[Timeout(300000)]` (5 min) to every Aspire integration test method; `[Timeout(120000)]` for Testcontainers-SQL-only tests |
-| Aspire integration tests take 5–10 min or hang on startup | `TASKFLOW_ASPIRE_TESTING` env var not set before `DistributedApplicationTestingBuilder.CreateAsync` — full environment (CosmosDB emulator etc.) starts | Set env var in `[AssemblyInitialize]` **before** `CreateAsync`; provide `AppHost/appsettings.Testing.json` with required parameters |
-| Multiple Aspire environments started per test run (slow: ~60–90 s per class) | `DistributedApplication` started in `[TestInitialize]` per class instead of shared via `[AssemblyInitialize]` | Move to `DatabaseFixture.AssemblyInit`; expose as `static DistributedApplication? AspireApp` — test classes reference it directly |
+| Aspire integration tests take 5-10 min or hang on startup | `TASKFLOW_ASPIRE_TESTING` env var not set before `DistributedApplicationTestingBuilder.CreateAsync` - full environment (CosmosDB emulator etc.) starts | Set env var in `[AssemblyInitialize]` **before** `CreateAsync`; provide `AppHost/appsettings.Testing.json` with required parameters |
+| Multiple Aspire environments started per test run (slow: ~60-90 s per class) | `DistributedApplication` started in `[TestInitialize]` per class instead of shared via `[AssemblyInitialize]` | Move to `DatabaseFixture.AssemblyInit`; expose as `static DistributedApplication? AspireApp` - test classes reference it directly |
 | Functions in Aspire integration tests connect to LocalDB instead of test SQL container | `local.settings.json` connection strings override Aspire-injected env vars | Remove DB connection strings from `local.settings.json`; leave only Azurite strings (e.g., `UseDevelopmentStorage=true`) |
 | `CS1061` on `CreateHttpClient` / `GetConnectionStringAsync` after removing local `DistributedApplication` field | Extension methods live in `Aspire.Hosting.Testing`; removing the field caused the `using` to be deleted | Keep `using Aspire.Hosting.Testing;` in every file that calls those extension methods |
 | Functions Aspire resource missing / test hangs on `func.exe` not found | `func.exe` (Azure Functions Core Tools) not on PATH; resource added unconditionally | Detect availability with `EnsureFuncToolAvailable()` in `DatabaseFixture`; set `TASKFLOW_INCLUDE_FUNCTIONS=true` only when found; tests that need Functions call `Assert.Inconclusive` when resource absent |
@@ -287,7 +287,7 @@ builder.Services.AddProblemDetails(options =>
 
 ## Razor vs C# Namespace Scoping
 
-`global using` in a `.cs` GlobalUsings.cs file applies only to C# source files — it does NOT affect Razor component C# code blocks.
+`global using` in a `.cs` GlobalUsings.cs file applies only to C# source files - it does NOT affect Razor component C# code blocks.
 For every namespace used inside a `.razor` file, add an explicit `@using Namespace.Here` in the nearest `_Imports.razor`.
 Rule of thumb: if a type is used both in `.cs` service layer code AND in `.razor` pages, it needs entries in BOTH `GlobalUsings.cs` AND `_Imports.razor`.
 
@@ -307,7 +307,7 @@ When a private package's public API is unknown or differs from docs/conventions:
 4. Use `Assembly.LoadFrom(path)`, wrap `GetTypes()` in a `ReflectionTypeLoadException` catch, then iterate types/members.
 5. `dotnet run` and inspect the output.
 
-> **Note:** `Assembly.ReflectionOnlyLoadFrom()` is not supported on modern .NET — use full load + exception handling instead.
+> **Note:** `Assembly.ReflectionOnlyLoadFrom()` is not supported on modern .NET - use full load + exception handling instead.
 > Binary text extraction (grep for strings in the DLL bytes) is useful as a quick fallback to spot type names before writing reflection code.
 
 ---

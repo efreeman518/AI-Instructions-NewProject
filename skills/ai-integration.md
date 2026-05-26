@@ -13,19 +13,19 @@ Use this only when the current slice actually needs semantic retrieval, grounded
 
 ## Non-Negotiables
 
-1. All AI services behind interfaces — testable, swappable.
+1. All AI services behind interfaces - testable, swappable.
 2. Embedding generation is infrastructure, not domain.
-3. Agent function tools delegate to existing `I{Entity}Service` application services — no domain logic in tools.
+3. Agent function tools delegate to existing `I{Entity}Service` application services - no domain logic in tools.
 4. Search indexes are projections, not source of truth.
 5. Use `DefaultAzureCredential` for Foundry/Search auth (no API keys in code). In production, prefer `ManagedIdentityCredential`.
 6. Configuration-driven model selection (appsettings, not hardcoded deployment names).
-7. Use **Microsoft Agent Framework** (`Microsoft.Agents.AI`) — the successor to Semantic Kernel and AutoGen. Do not scaffold with Semantic Kernel or AutoGen packages.
-8. Agent sessions (`AgentSession`) must be scoped per user/conversation — never share sessions across tenants.
+7. Use **Microsoft Agent Framework** (`Microsoft.Agents.AI`) - the successor to Semantic Kernel and AutoGen. Do not scaffold with Semantic Kernel or AutoGen packages.
+8. Agent sessions (`AgentSession`) must be scoped per user/conversation - never share sessions across tenants.
 9. Start with one agent and a small tool set. Do not scaffold multi-agent orchestration until a single-agent path is proven insufficient.
 10. System prompts live in files, not inline string literals spread through services.
 11. **Read DTO source files before writing any property access against them.** Response/DTO types may not expose the properties you assume. Writing against an assumed shape (e.g., `snapshot.PreferredLanguage` on a type that has no such property) produces `CS1061` compile errors. Always call `read_file` on the DTO before generating tool wrapper code or snapshot records.
 12. **Read the target class constructor before injecting new dependencies into scaffold agents or tool classes.** Generated constructors may differ from what session notes describe. Reading the actual constructor first avoids duplicate-parameter or mismatched-arity compile errors.
-13. **Scaffold mode is the default.** Foundry and AI Search are `deployment-only` external dependencies — no Aspire emulator or local alternative exists. When endpoints are absent from config, AI services must register as no-op stubs so the app boots without cloud credentials. Live endpoints are wired only when intentionally provisioned; log them in `HANDOFF.md` as deployment-only blockers.
+13. **Scaffold mode is the default.** Foundry and AI Search are `deployment-only` external dependencies - no Aspire emulator or local alternative exists. When endpoints are absent from config, AI services must register as no-op stubs so the app boots without cloud credentials. Live endpoints are wired only when intentionally provisioned; log them in `HANDOFF.md` as deployment-only blockers.
 
 ---
 
@@ -83,22 +83,22 @@ Generate only the folders used by the enabled feature set.
 
 ```
 src/Infrastructure/{Project}.Infrastructure.AI/
-├── {Project}.Infrastructure.AI.csproj
-├── Search/                                   # Only if useSearch: true
-│   ├── I{Project}SearchService.cs
-│   ├── {Project}SearchService.cs
-│   ├── {Entity}SearchIndexDefinition.cs
-│   └── {Entity}VectorizationHandler.cs
-├── Agents/                                   # Only if useAgents: true
-│   ├── I{Agent}Agent.cs
-│   ├── {Agent}AgentService.cs
-│   ├── Tools/
-│   │   └── {Tool}Tool.cs
-│   ├── Middleware/
-│   └── Prompts/
-├── Workflows/                                 # Only if workflow.enabled: true
-├── {Project}AiSettings.cs
-└── ServiceCollectionExtensions.cs
+|-- {Project}.Infrastructure.AI.csproj
+|-- Search/                                   # Only if useSearch: true
+|   |-- I{Project}SearchService.cs
+|   |-- {Project}SearchService.cs
+|   |-- {Entity}SearchIndexDefinition.cs
+|   `-- {Entity}VectorizationHandler.cs
+|-- Agents/                                   # Only if useAgents: true
+|   |-- I{Agent}Agent.cs
+|   |-- {Agent}AgentService.cs
+|   |-- Tools/
+|   |   `-- {Tool}Tool.cs
+|   |-- Middleware/
+|   `-- Prompts/
+|-- Workflows/                                 # Only if workflow.enabled: true
+|-- {Project}AiSettings.cs
+`-- ServiceCollectionExtensions.cs
 ```
 
 ---
@@ -231,7 +231,7 @@ Use when vectorizing large existing datasets or when eventual consistency is acc
 
 ## DI Registration
 
-AI services use conditional registration — absent config → no-op stubs registered, app boots without cloud credentials.
+AI services use conditional registration - absent config -> no-op stubs registered, app boots without cloud credentials.
 
 ```csharp
 public static class AiServiceCollectionExtensions
@@ -246,7 +246,7 @@ public static class AiServiceCollectionExtensions
 
         var settings = aiSection.Get<AiSettings>() ?? new AiSettings();
 
-        // Azure OpenAI / Foundry Models client — conditional on endpoint config
+        // Azure OpenAI / Foundry Models client - conditional on endpoint config
         if (!string.IsNullOrWhiteSpace(settings.FoundryEndpoint))
         {
             services.AddSingleton(new AzureOpenAIClient(
@@ -255,7 +255,7 @@ public static class AiServiceCollectionExtensions
         }
         else
         {
-            // TODO: [CONFIGURE] Foundry endpoint — set AiServices:FoundryEndpoint for live AI completions
+            // TODO: [CONFIGURE] Foundry endpoint - set AiServices:FoundryEndpoint for live AI completions
             // No-op: AzureOpenAIClient not registered; agents/search will register no-op stubs below
         }
 
@@ -271,7 +271,7 @@ public static class AiServiceCollectionExtensions
         }
         else if (settings.UseSearch)
         {
-            // TODO: [CONFIGURE] AI Search endpoint — set AiServices:SearchEndpoint for live search
+            // TODO: [CONFIGURE] AI Search endpoint - set AiServices:SearchEndpoint for live search
             services.AddScoped<IProjectSearchService, NoOpSearchService>();
         }
 
@@ -317,7 +317,7 @@ No-op stubs return empty results or a `Result.Failure("AI service not configured
 }
 ```
 
-> **Stub rule:** Generate all AI settings with `// TODO: [CONFIGURE]` comments. Use empty strings for endpoints — never hardcode real URLs.
+> **Stub rule:** Generate all AI settings with `// TODO: [CONFIGURE]` comments. Use empty strings for endpoints - never hardcode real URLs.
 
 ---
 
@@ -351,7 +351,7 @@ Cover the smallest useful surface first:
 ### Agent Tests
 
 ```csharp
-// ChatClientAgent requires IChatClient — use a mock or test double
+// ChatClientAgent requires IChatClient - use a mock or test double
 // For function tool tests, test tools directly (they're plain C# methods)
 var tools = new TaskItemTools(NullLogger<TaskItemTools>.Instance, mockService.Object, mockSearch.Object);
 var result = await tools.SearchTasks("overdue");
@@ -364,7 +364,7 @@ Mock `SearchClient` or use an integration test against a real test index. Verify
 
 ### Function Tool Tests
 
-Test function tools independently — they are plain C# methods that wrap domain services. Use standard unit test patterns with mocked `I{Entity}Service`.
+Test function tools independently - they are plain C# methods that wrap domain services. Use standard unit test patterns with mocked `I{Entity}Service`.
 
 ---
 
@@ -372,6 +372,6 @@ Test function tools independently — they are plain C# methods that wrap domain
 
 - [Microsoft Foundry](https://learn.microsoft.com/en-us/azure/ai-foundry/what-is-foundry)
 - [Agent Framework Overview](https://learn.microsoft.com/en-us/agent-framework/overview/)
-- [Agent Framework — Workflows](https://learn.microsoft.com/en-us/agent-framework/workflows/)
-- [Azure AI Search — .NET SDK](https://learn.microsoft.com/en-us/azure/search/search-howto-dotnet-sdk)
+- [Agent Framework - Workflows](https://learn.microsoft.com/en-us/agent-framework/workflows/)
+- [Azure AI Search - .NET SDK](https://learn.microsoft.com/en-us/azure/search/search-howto-dotnet-sdk)
 ````

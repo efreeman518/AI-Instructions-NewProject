@@ -12,8 +12,8 @@
 ## File: Domain/Model/Entities/{Entity}.cs
 
 > **EntityBase properties (inherited, do NOT redefine):**
-> - `Guid Id { get; init; }` — auto-generated `Guid.CreateVersion7()`, init-only, rejects `Guid.Empty`
-> - `byte[]? RowVersion { get; set; }` — nullable, configured via `.IsRowVersion()` in EF config
+> - `Guid Id { get; init; }` - auto-generated `Guid.CreateVersion7()`, init-only, rejects `Guid.Empty`
+> - `byte[]? RowVersion { get; set; }` - nullable, configured via `.IsRowVersion()` in EF config
 >
 > **Do NOT inherit `AuditableBase<T>`** unless audit fields must live on the entity itself. The default pattern uses `AuditInterceptor` on the `DbContext` to manage audit metadata externally.
 
@@ -27,14 +27,14 @@ namespace Domain.Model;
 
 public class {Entity} : EntityBase, ITenantEntity<Guid>  // [MULTI-TENANT] omit ITenantEntity<Guid> for single-tenant
 {
-    // ===== Factory Create — the ONLY way to create an instance =====
+    // ===== Factory Create - the ONLY way to create an instance =====
     public static DomainResult<{Entity}> Create(Guid tenantId, string name, /* additional params */)
     {
         var entity = new {Entity}(tenantId, name);
         return entity.Valid().Map(_ => entity);
     }
 
-    // ===== Private constructor — enforces factory usage =====
+    // ===== Private constructor - enforces factory usage =====
     private {Entity}(Guid tenantId, string name)
     {
         TenantId = tenantId;
@@ -44,15 +44,15 @@ public class {Entity} : EntityBase, ITenantEntity<Guid>  // [MULTI-TENANT] omit 
     // ===== EF Core parameterless constructor =====
     private {Entity}() { }
 
-    // ===== Properties — private setters enforce immutability outside domain methods =====
+    // ===== Properties - private setters enforce immutability outside domain methods =====
     public Guid TenantId { get; init; }  // init for tenant (set once)
     public string Name { get; private set; } = null!;
     public {Entity}Flags Flags { get; private set; } = {Entity}Flags.None;
 
-    // ===== Navigation Properties — ICollection<T>, never List<T> =====
+    // ===== Navigation Properties - ICollection<T>, never List<T> =====
     public ICollection<{ChildEntity}> {ChildEntity}s { get; private set; } = [];
 
-    // ===== Update — returns DomainResult for validation =====
+    // ===== Update - returns DomainResult for validation =====
     public DomainResult<{Entity}> Update(string? name = null, {Entity}Flags? flags = null)
     {
         if (name is not null) Name = name;
@@ -83,7 +83,7 @@ public class {Entity} : EntityBase, ITenantEntity<Guid>  // [MULTI-TENANT] omit 
         return DomainResult.Success();  // Desired-state: always succeeds
     }
 
-    // ===== Validation — called by Create() and Update() =====
+    // ===== Validation - called by Create() and Update() =====
     private DomainResult<{Entity}> Valid()
     {
         var errors = new List<DomainError>();
@@ -134,7 +134,7 @@ When the child collection property name differs from `{ChildEntity}s`, use the e
 
 ## File: Domain/Model/Entities/{Parent}{Related}.cs (Join Entity)
 
-Default many-to-many join entity pattern — inherits `EntityBase` with FK on both sides. Only use a pure composite-key join (no `EntityBase`) when confident the join will remain a pure association.
+Default many-to-many join entity pattern - inherits `EntityBase` with FK on both sides. Only use a pure composite-key join (no `EntityBase`) when confident the join will remain a pure association.
 
 ```csharp
 using EF.Domain;

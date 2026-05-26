@@ -1,6 +1,6 @@
 # Template Index
 
-Quick lookup: "I need to scaffold X" → load these files.
+Quick lookup: "I need to scaffold X" -> load these files.
 
 ## Phase 1 Discovery Artifacts
 
@@ -42,8 +42,8 @@ Quick lookup: "I need to scaffold X" → load these files.
 
 Testing skills (two files only):
 
-- `skills/testing.md` — Phase 5a/5b/5c TDD, harness tiers, integration hosts, template map.
-- `skills/testing-quality.md` — Phase 5d quality gates and hosted Playwright UI.
+- `skills/testing.md` - Phase 5a/5b/5c TDD, harness tiers, integration hosts, template map.
+- `skills/testing-quality.md` - Phase 5d quality gates and hosted Playwright UI.
 
 ## Contracts + TDD
 
@@ -58,7 +58,7 @@ Scaffold Uno Platform (multi-target WASM + mobile + desktop), Blazor (Server or 
 
 ### Uno Platform
 
-> **Design Standard:** Each main entity gets two pages — `{Entity}ListPage` (list/search) and `{Entity}Page` (unified add/edit + children). No separate detail or create pages. See templates for the pattern.
+> **Design Standard:** Each main entity gets two pages - `{Entity}ListPage` (list/search) and `{Entity}Page` (unified add/edit + children). No separate detail or create pages. See templates for the pattern.
 
 | Artifact | Template | Required Skill |
 |---|---|---|
@@ -115,14 +115,14 @@ Generated when `includeFlowEngine: true` in `.scaffold/resource-implementation.y
 
 | Phase | Templates to Load |
 |---|---|
-| **4 — Contracts** | Solution structure + contracts (see `ai/contract-scaffolding.md`) — also emits `Test.Support/WebApplicationFactoryBase`, `Test.Endpoints/CustomApiFactory`, `Test.E2E/SqlApiFactory`, `Test.Integration/AspireTestHost`, `Test.Integration/DbContextFactory` shells |
-| **5a — Foundation (TDD)** | `entity-template`, `ef-configuration-template`, `repository-template`, `domain-rules-template`, `appsettings-template`, **`updater-template` (required when entity has child collections)**, **`test-templates-domain`**, **`test-templates-repository`**, **`test-templates-integration`** (balanced+) |
-| **5b — App Core + Runtime (TDD for app/API, tests-after for runtime)** | `data-mapping-template`, `service-template`, `endpoint-template`, `structure-validator-template`, `exception-handler-template`, `message-handler-template` (if events), `health-check-template`, **`test-templates-service`**, **`test-templates-endpoint`**, **`test-templates-e2e`** (balanced+), `test-templates-integration` (pipeline tests, comprehensive) |
-| **5c — Optional Hosts** | `uno-ui-client-layer`, `uno-mvux-model-template`, `uno-xaml-page-template` (Uno); `skills/ui-react.md` (React); host-specific templates per enabled host; **`flowengine-trigger-template`** (when `includeFlowEngine: true` and Functions or Scheduler enabled) |
-| **5d — Quality + Delivery** | **`test-templates-quality`** (architecture + Playwright + Load + Benchmarks; Integration / E2E tiers are scaffolded earlier — 5d runs them as regression), `dockerfile-template`, **`flowengine-test-template`** (when `includeFlowEngine: true`), **`tech-design-template`** (generates `docs/tech-design.md` + `docs/tech-design.html`; see [../support/tech-design-diagrams.md](../support/tech-design-diagrams.md) for the render gate) |
-| **5e — Integration (Auth + AI)** | `ai-search-template`, `agent-template` (when AI in scope) |
+| **4 - Contracts** | Solution structure + contracts (see `ai/contract-scaffolding.md`) - also emits `Test.Support/WebApplicationFactoryBase`, `Test.Endpoints/CustomApiFactory`, `Test.E2E/SqlApiFactory`, `Test.Integration/AspireTestHost`, `Test.Integration/DbContextFactory` shells |
+| **5a - Foundation (TDD)** | `entity-template`, `ef-configuration-template`, `repository-template`, `domain-rules-template`, `appsettings-template`, **`updater-template` (required when entity has child collections)**, **`test-templates-domain`**, **`test-templates-repository`**, **`test-templates-integration`** (balanced+) |
+| **5b - App Core + Runtime (TDD for app/API, tests-after for runtime)** | `data-mapping-template`, `service-template`, `endpoint-template`, `structure-validator-template`, `exception-handler-template`, `message-handler-template` (if events), `health-check-template`, **`test-templates-service`**, **`test-templates-endpoint`**, **`test-templates-e2e`** (balanced+), `test-templates-integration` (pipeline tests, comprehensive) |
+| **5c - Optional Hosts** | `uno-ui-client-layer`, `uno-mvux-model-template`, `uno-xaml-page-template` (Uno); `skills/ui-react.md` (React); host-specific templates per enabled host; **`flowengine-trigger-template`** (when `includeFlowEngine: true` and Functions or Scheduler enabled) |
+| **5d - Quality + Delivery** | **`test-templates-quality`** (architecture + Playwright + Load + Benchmarks; Integration / E2E tiers are scaffolded earlier - 5d runs them as regression), `dockerfile-template`, **`flowengine-test-template`** (when `includeFlowEngine: true`), **`tech-design-template`** (generates `docs/tech-design.md` + `docs/tech-design.html`; see [../support/tech-design-diagrams.md](../support/tech-design-diagrams.md) for the render gate) |
+| **5e - Integration (Auth + AI)** | `ai-search-template`, `agent-template` (when AI in scope) |
 
-> **Note:** Use the Phase Router in `START-AI.md` and the Phase 5 file table in `ai/SKILL.md` for authoritative per-phase file lists. This index is a human/AI quick-reference for "I need to scaffold X → load template Y".
+> **Note:** Use the Phase Router in `START-AI.md` and the Phase 5 file table in `ai/SKILL.md` for authoritative per-phase file lists. This index is a human/AI quick-reference for "I need to scaffold X -> load template Y".
 
 ## CQRS Templates
 

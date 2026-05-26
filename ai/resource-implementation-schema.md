@@ -2,7 +2,7 @@
 
 Maps domain constructs from [domain-specification-schema.md](domain-specification-schema.md) to concrete Aspire/Azure resources, datatypes, and infrastructure.
 
-**JSON Schema:** [`schemas/resource-implementation.schema.json`](../schemas/resource-implementation.schema.json) — use for programmatic validation of `.scaffold/resource-implementation.yaml`.
+**JSON Schema:** [`schemas/resource-implementation.schema.json`](../schemas/resource-implementation.schema.json) - use for programmatic validation of `.scaffold/resource-implementation.yaml`.
 
 **Prerequisite:** Complete Phase 1 domain definition first, including `.scaffold/domain-specification.yaml`, `.scaffold/UBIQUITOUS-LANGUAGE.md`, and `.scaffold/DESIGN-DECISIONS.md`.
 
@@ -169,7 +169,7 @@ compliance:
 
 ### Data Store Quick Rules
 
-Binary content → `blob`. Relational + complex queries → `sql`. Simple key lookups → `table`. Document aggregates → `cosmosdb`. Uncertain → default to `sql`. For detailed selection guidance, see [skills/data-persistence.md](../skills/data-persistence.md) and [skills/azure-data-storage.md](../skills/azure-data-storage.md).
+Binary content -> `blob`. Relational + complex queries -> `sql`. Simple key lookups -> `table`. Document aggregates -> `cosmosdb`. Uncertain -> default to `sql`. For detailed selection guidance, see [skills/data-persistence.md](../skills/data-persistence.md) and [skills/azure-data-storage.md](../skills/azure-data-storage.md).
 
 ### SQL Type Defaults
 
@@ -217,7 +217,7 @@ builder.Property(e => e.EntityId).IsRequired();
 builder.HasIndex(e => new { e.EntityType, e.EntityId });
 ```
 
-> **CRITICAL — No navigation collections on parent entities.** Parent entities that participate in a polymorphic join (e.g., `TaskItem` and `Comment` both owning `Attachment`) must NOT declare `ICollection<PolymorphicChild>` navigation properties. EF convention-generates a real FK from each navigation, creating multiple conflicting FK constraints on the shared `EntityId`/`OwnerId` column. The polymorphic child references its owner via `EntityType` + `EntityId` properties only — no EF relationship is configured. Query polymorphic children explicitly: `db.Attachments.Where(a => a.OwnerType == type && a.OwnerId == id)`.
+> **CRITICAL - No navigation collections on parent entities.** Parent entities that participate in a polymorphic join (e.g., `TaskItem` and `Comment` both owning `Attachment`) must NOT declare `ICollection<PolymorphicChild>` navigation properties. EF convention-generates a real FK from each navigation, creating multiple conflicting FK constraints on the shared `EntityId`/`OwnerId` column. The polymorphic child references its owner via `EntityType` + `EntityId` properties only - no EF relationship is configured. Query polymorphic children explicitly: `db.Attachments.Where(a => a.OwnerType == type && a.OwnerId == id)`.
 
 ## Infrastructure Resources
 
@@ -258,7 +258,7 @@ Options: Azure Service Bus, Event Grid, Event Hubs. See [skills/messaging.md](..
 | `applicationStyle` | `service` | `service`, `cqrs`, `switch` |
 | `includeNotifications` | `false` | |
 | `includeFlowEngine` | `false` | Enables `EF.FlowEngine` (durable JSON workflow orchestration). Generates a dedicated FE DbContext + registration partial + workflow seeding + admin endpoints + test project. See [../skills/flowengine.md](../skills/flowengine.md). |
-| `flowEngineDbStrategy` | `same-db-separate-schema` | `same-db-separate-schema` (Variant A — preserves atomic outbox; default), `separate-db` (Variant B/C — outbox best-effort). See [../support/ef-packages-reference.md](../support/ef-packages-reference.md) § FlowEngine Data-Layout Variants. |
+| `flowEngineDbStrategy` | `same-db-separate-schema` | `same-db-separate-schema` (Variant A - preserves atomic outbox; default), `separate-db` (Variant B/C - outbox best-effort). See [../support/ef-packages-reference.md](../support/ef-packages-reference.md) section FlowEngine Data-Layout Variants. |
 
 ### UI Hosting (if applicable)
 
@@ -362,9 +362,9 @@ For AI services selection guidance and agent framework concepts, see [skills/ai-
 
 ### Optional Integrations
 
-- `externalApis` — external API integrations ([skills/external-api.md](../skills/external-api.md))
-- `includeGrpc` — gRPC services
-- `seedData` — initial data seeding
+- `externalApis` - external API integrations ([skills/external-api.md](../skills/external-api.md))
+- `includeGrpc` - gRPC services
+- `seedData` - initial data seeding
 
 #### Notifications
 
@@ -417,9 +417,9 @@ functionDefinitions:
 
 ### High-Ingest Operational Controls (Optional)
 
-- `throughputProfile` — expected RU/TU profile and autoscale behavior per entity/channel
-- `retentionPolicy` — TTL/archival expectations for time-series or audit data
-- `replayWindow` — expected replay/backfill window for event-driven processing
+- `throughputProfile` - expected RU/TU profile and autoscale behavior per entity/channel
+- `retentionPolicy` - TTL/archival expectations for time-series or audit data
+- `replayWindow` - expected replay/backfill window for event-driven processing
 
 ### Ingestion Semantics (Optional)
 
@@ -470,25 +470,25 @@ externalDependencyModes:
 
 ## Discovery Conversation Pattern
 
-Work through these in order during Phase 2. **Question 1 is asked first and must be resolved before any other Phase 2 work** — downstream gates, pre-flight, and Phase 4 scaffolding all branch on the answer.
+Work through these in order during Phase 2. **Question 1 is asked first and must be resolved before any other Phase 2 work** - downstream gates, pre-flight, and Phase 4 scaffolding all branch on the answer.
 
-1. **Package strategy & prefix** — Do you have private NuGet feed(s) for shared/base packages (e.g., entity bases, repository bases, request context, results, paged response, specifications, messaging interfaces)?
-   - **Yes (`feed`)** — supply feed URL(s) and the package prefix (e.g., `EF.*`, `Contoso.*`). Then walk the layer table in [`../support/ef-packages-reference.md`](../support/ef-packages-reference.md) and confirm the feed provides every layer. If any layers are missing, the strategy is promoted to **`hybrid`** and the missing layers go into `localPackageLayers`; they will be generated under the same prefix as the feed so they can be pushed into the feed later without renaming. The feed URL(s) are written to `customNugetFeeds`.
-   - **No (`local`)** — supply only a package prefix (e.g., `Contoso`). All base-contract layers are added to `localPackageLayers` and generated in Phase 4 under `src/Packages/<Prefix>.*` as packable projects (consumed via `<ProjectReference>`). `customNugetFeeds` stays empty. The developer may publish these to a feed later without restructuring.
+1. **Package strategy & prefix** - Do you have private NuGet feed(s) for shared/base packages (e.g., entity bases, repository bases, request context, results, paged response, specifications, messaging interfaces)?
+   - **Yes (`feed`)** - supply feed URL(s) and the package prefix (e.g., `EF.*`, `Contoso.*`). Then walk the layer table in [`../support/ef-packages-reference.md`](../support/ef-packages-reference.md) and confirm the feed provides every layer. If any layers are missing, the strategy is promoted to **`hybrid`** and the missing layers go into `localPackageLayers`; they will be generated under the same prefix as the feed so they can be pushed into the feed later without renaming. The feed URL(s) are written to `customNugetFeeds`.
+   - **No (`local`)** - supply only a package prefix (e.g., `Contoso`). All base-contract layers are added to `localPackageLayers` and generated in Phase 4 under `src/Packages/<Prefix>.*` as packable projects (consumed via `<ProjectReference>`). `customNugetFeeds` stays empty. The developer may publish these to a feed later without restructuring.
 
    `packagePrefix` is required in every mode. `EF` is the canonical example prefix used throughout these instructions, not a default.
-2. **Scaffold mode** — full, lite, or api-only? What optional hosts are needed? For web UI, choose Blazor, Uno WASM, React/Vite SPA, or explicit siblings; do not add a second UI stack by default.
-3. **Data store mapping** — for each entity: SQL (default), Cosmos, Table, or Blob? Binary content → blob, relational → sql, key-value → table, document aggregates → cosmosdb.
-4. **Property details** — add types, maxLength, precision/scale to every property. Resolve ambiguous Phase 1 kinds.
-5. **Relationship config** — join entities for many-to-many, cascade behavior, FK naming.
-6. **External dependencies** — declare a scaffold mode for each (emulator, lazy-optional, no-op stub, deployment-only). Think about what needs to run locally vs. what can be deferred.
-7. **Messaging & events** — which events need Service Bus topics? Which are in-process channel dispatches?
-8. **AI services** — if enabled: which entities need search indexes? Which decisions need agents? What models?
-9. **Testing profile** — minimal, balanced, or comprehensive? Which optional test types (E2E, architecture, load)?
+2. **Scaffold mode** - full, lite, or api-only? What optional hosts are needed? For web UI, choose Blazor, Uno WASM, React/Vite SPA, or explicit siblings; do not add a second UI stack by default.
+3. **Data store mapping** - for each entity: SQL (default), Cosmos, Table, or Blob? Binary content -> blob, relational -> sql, key-value -> table, document aggregates -> cosmosdb.
+4. **Property details** - add types, maxLength, precision/scale to every property. Resolve ambiguous Phase 1 kinds.
+5. **Relationship config** - join entities for many-to-many, cascade behavior, FK naming.
+6. **External dependencies** - declare a scaffold mode for each (emulator, lazy-optional, no-op stub, deployment-only). Think about what needs to run locally vs. what can be deferred.
+7. **Messaging & events** - which events need Service Bus topics? Which are in-process channel dispatches?
+8. **AI services** - if enabled: which entities need search indexes? Which decisions need agents? What models?
+9. **Testing profile** - minimal, balanced, or comprehensive? Which optional test types (E2E, architecture, load)?
 
 ---
 
-## Phase 2 → 3 Transition Gate
+## Phase 2 -> 3 Transition Gate
 
 Before moving to Phase 3 (Implementation Plan), verify all of the following:
 
@@ -501,9 +501,9 @@ Before moving to Phase 3 (Implementation Plan), verify all of the following:
 - [ ] `testingProfile` is set (`minimal`, `balanced`, or `comprehensive`)
 - [ ] `packageStrategy` is set (`feed`, `local`, or `hybrid`)
 - [ ] `packagePrefix` is set and non-empty (used to name packages/projects under the chosen prefix, e.g., `<Prefix>.Domain`)
-- [ ] If `packageStrategy: feed` — `customNugetFeeds` has at least one entry; `localPackageLayers` is `[]`
-- [ ] If `packageStrategy: local` — `customNugetFeeds` is `[]`; `localPackageLayers` covers every layer in [`../support/ef-packages-reference.md`](../support/ef-packages-reference.md)
-- [ ] If `packageStrategy: hybrid` — `customNugetFeeds` has at least one entry **and** `localPackageLayers` lists only the layers the feed does not provide
+- [ ] If `packageStrategy: feed` - `customNugetFeeds` has at least one entry; `localPackageLayers` is `[]`
+- [ ] If `packageStrategy: local` - `customNugetFeeds` is `[]`; `localPackageLayers` covers every layer in [`../support/ef-packages-reference.md`](../support/ef-packages-reference.md)
+- [ ] If `packageStrategy: hybrid` - `customNugetFeeds` has at least one entry **and** `localPackageLayers` lists only the layers the feed does not provide
 - [ ] `externalDependencyModes` declared for every external dependency
 - [ ] If `includeAiServices: true`: Foundry project name set, at least one model defined, each agent references a defined model, search indexes reference defined entities
 

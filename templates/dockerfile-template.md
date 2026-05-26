@@ -47,7 +47,7 @@ FROM mcr.microsoft.com/dotnet/aspnet:9.0-noble-chiseled-extra AS runtime
 WORKDIR /app
 COPY --from=publish /app/publish .
 
-# Health probes — configure at orchestrator level (Container Apps / Kubernetes),
+# Health probes - configure at orchestrator level (Container Apps / Kubernetes),
 # not via HEALTHCHECK directive (chiseled images have no shell/curl).
 # See skills/aspire.md for Container Apps health probe configuration.
 
@@ -73,13 +73,13 @@ COPY --from=publish /app/publish .
 
 ## Rules
 
-- **Always use chiseled base images** (`-noble-chiseled-extra`) for production — smaller attack surface, no shell.
+- **Always use chiseled base images** (`-noble-chiseled-extra`) for production - smaller attack surface, no shell.
 - **Restore layer caching:** Copy `.csproj` files first, then `dotnet restore`, then copy source. This ensures source changes don't invalidate the restore cache.
 - **Port:** Default to `8080` for Container Apps compatibility.
 - **Non-root:** Chiseled images run as non-root by default.
 - **Health check:** Match the path configured in `Program.cs` (`/health` or `/alive`).
 - **No secrets in image:** Use Aspire/Container Apps environment injection for connection strings.
-- Adjust COPY lines to match your actual solution project structure — add or remove projects as needed.
+- Adjust COPY lines to match your actual solution project structure - add or remove projects as needed.
 
 ## Verification Checklist
 
@@ -89,4 +89,4 @@ COPY --from=publish /app/publish .
 - [ ] Runtime uses chiseled non-root base image
 - [ ] `EXPOSE` port matches Container Apps / Aspire configuration
 - [ ] `ENTRYPOINT` matches the published assembly name
-- [ ] No `HEALTHCHECK` in image — health probes configured at orchestrator level (Container Apps / K8s)
+- [ ] No `HEALTHCHECK` in image - health probes configured at orchestrator level (Container Apps / K8s)

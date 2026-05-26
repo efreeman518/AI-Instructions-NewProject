@@ -1,4 +1,4 @@
-# CI/CD — GitHub Actions
+# CI/CD - GitHub Actions
 
 See dockerfile-template.md for container patterns.
 
@@ -31,12 +31,12 @@ Use GitHub Actions for:
 
 ```
 .github/
-├── workflows/
-│   ├── ci.yml
-│   ├── cd.yml
-│   └── infra.yml        # optional
-└── actions/
-    └── dotnet-build/    # optional composite action
+|-- workflows/
+|   |-- ci.yml
+|   |-- cd.yml
+|   `-- infra.yml        # optional
+`-- actions/
+    `-- dotnet-build/    # optional composite action
 ```
 
 ---
@@ -93,7 +93,7 @@ jobs:
 
       - run: dotnet restore src/{SolutionName}.slnx
 
-      # Vulnerability audit per support/execution-gates.md § Vulnerability Audit
+      # Vulnerability audit per support/execution-gates.md section Vulnerability Audit
       # High severity must be fixed or recorded in .scaffold/INSTRUCTION-GAPS.md
       - name: Vulnerability audit
         run: |
@@ -112,24 +112,24 @@ jobs:
         run: dotnet test src/Test/Test.Integration/Test.Integration.csproj --no-build --configuration Release
       - if: ${{ github.event_name == 'workflow_dispatch' && inputs.includeE2E == true }}
         run: dotnet test src/Test/Test.E2E/Test.E2E.csproj --no-build --configuration Release
-      # Test.PlaywrightUI requires a hosted stack — see "Hosted-stack orchestration" section below.
+      # Test.PlaywrightUI requires a hosted stack - see "Hosted-stack orchestration" section below.
 ```
 
 ### Test Category Policy
 
     | Category | PR Default | Optional / Manual |
     |---|---|---|
-    | `Unit` | required | — |
-    | `Endpoint` | required (WebApplicationFactory contract coverage) | — |
-    | `Architecture` | required | — |
-    | `Integration` | — | service-level vs real external services (workflow dispatch; Testcontainers required) |
-    | `E2E` | — | multi-endpoint workflow chains (workflow dispatch) |
-    | `PlaywrightUI` | — | browser UI; requires hosted stack (release/nightly) |
-    | `Load`, `Benchmark` | — | release/on-demand only |
+    | `Unit` | required | - |
+    | `Endpoint` | required (WebApplicationFactory contract coverage) | - |
+    | `Architecture` | required | - |
+    | `Integration` | - | service-level vs real external services (workflow dispatch; Testcontainers required) |
+    | `E2E` | - | multi-endpoint workflow chains (workflow dispatch) |
+    | `PlaywrightUI` | - | browser UI; requires hosted stack (release/nightly) |
+    | `Load`, `Benchmark` | - | release/on-demand only |
 
 ### Hosted-Stack Orchestration (`Test.PlaywrightUI`)
 
-Playwright tests cannot use `WebApplicationFactory` — they drive a real browser and need real Kestrel + UI host. The CI job must launch the stack, wait for health, run the tests, then tear down. For React/Vite, pass the actual UI resource URL from the hosted stack into the test project (for example `{APP}_REACT_BASE_URL`); do not assume the local Vite default port.
+Playwright tests cannot use `WebApplicationFactory` - they drive a real browser and need real Kestrel + UI host. The CI job must launch the stack, wait for health, run the tests, then tear down. For React/Vite, pass the actual UI resource URL from the hosted stack into the test project (for example `{APP}_REACT_BASE_URL`); do not assume the local Vite default port.
 
 ```yaml
 playwright:

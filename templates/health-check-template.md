@@ -45,4 +45,4 @@ app.MapHealthChecks("/readyz", new() { Predicate = r => r.Tags.Contains("ready")
 
 - One `IHealthCheck` class per external dependency.
 - Tag readiness checks with `"ready"` so liveness (`/healthz`) includes all, readiness (`/readyz`) filters.
-- Do not duplicate ServiceDefaults basic liveness checks — add domain-specific readiness only.
+- Do not duplicate ServiceDefaults basic liveness checks - add domain-specific readiness only.

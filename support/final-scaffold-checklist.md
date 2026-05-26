@@ -35,10 +35,10 @@ Verify the Aspire dashboard shows all enabled resources healthy before exercisin
 **Live smoke deferral.** The live AppHost boot may be skipped at the final-checklist stage when **all** of the following are recorded in the most recent sub-phase `HANDOFF.md`:
 
 - The sub-phase did not modify `Host/Aspire/AppHost` or the Aspire resource graph (record this fact explicitly, e.g., "AppHost / resource graph not modified this sub-phase").
-- A prior sub-phase recorded a green Aspire live boot in `HANDOFF.md` § Validation since the last AppHost change.
+- A prior sub-phase recorded a green Aspire live boot in `HANDOFF.md` section Validation since the last AppHost change.
 - This session's `TestCategory=Unit`, `TestCategory=Endpoint`, and (where applicable) `TestCategory=Integration` runs were all green.
 
-If any condition is missing, run the live boot. When deferred, copy the prior green boot's discovery evidence into this session's `HANDOFF.md` § Validation and mark the row `deferred — see <prior-sub-phase>`.
+If any condition is missing, run the live boot. When deferred, copy the prior green boot's discovery evidence into this session's `HANDOFF.md` section Validation and mark the row `deferred - see <prior-sub-phase>`.
 
 ---
 
@@ -64,8 +64,8 @@ Use `curl`, HTTPie, REST Client, or Scalar. Record status codes and endpoint dis
 
 ## Completion Criteria
 
-- [ ] `dotnet restore`, `dotnet build`, and `dotnet test` pass. The full `dotnet test` (no filter) is green — every category the scaffold produces is either passing or `Assert.Inconclusive` / `[Ignore]` with a recorded reason. No test assembly aborts in `[AssemblyInitialize]`.
-- [ ] Every test that is `[Ignore]`'d or marked `Assert.Inconclusive` for a deferred external dep is named in `HANDOFF.md` § Scaffold Acceptance with the unblocking step.
+- [ ] `dotnet restore`, `dotnet build`, and `dotnet test` pass. The full `dotnet test` (no filter) is green - every category the scaffold produces is either passing or `Assert.Inconclusive` / `[Ignore]` with a recorded reason. No test assembly aborts in `[AssemblyInitialize]`.
+- [ ] Every test that is `[Ignore]`'d or marked `Assert.Inconclusive` for a deferred external dep is named in `HANDOFF.md` section Scaffold Acceptance with the unblocking step.
 - [ ] Shared `<packagePrefix>.*` layers resolve according to `packageStrategy`: feed/hybrid feed layers restore from configured private feed (`NUGET_AUTH_TOKEN` or credential provider); local/hybrid local layers exist under `src/Packages/<packagePrefix>.*` and are consumed via `<ProjectReference>`.
 - [ ] `.scaffold/UBIQUITOUS-LANGUAGE.md` and `.scaffold/DESIGN-DECISIONS.md` still match the generated entity, service, and endpoint names.
 - [ ] Generated solution shape matches `skills/solution-structure.md` (no missing project, no orphan no-op stub).
@@ -76,24 +76,24 @@ Use `curl`, HTTPie, REST Client, or Scalar. Record status codes and endpoint dis
 - [ ] Health endpoint returns 200.
 - [ ] OpenAPI/Scalar loads.
 - [ ] **Aspire AppHost clean startup:** `dotnet run --project src/Host/Aspire/AppHost` reaches the dashboard with every registered resource in **Running** state, no exceptions in resource logs, and `/healthz` returning 200 on every host. Stub-mode external deps (`emulator`, `lazy-optional`, `no-op stub`, `deployment-only`) count as healthy when their stub/emulator path responds.
-- [ ] **Every UI host starts cleanly — Aspire-registered AND standalone:**
+- [ ] **Every UI host starts cleanly - Aspire-registered AND standalone:**
   - Blazor (when enabled): standalone `dotnet run` reaches `Application started` + root URL renders; when added to AppHost, the resource reaches Running and a Refit call returns data (or typed empty state).
   - React/Vite (when enabled): `npm run lint` + `npm run build` pass; standalone Vite root renders; when added to AppHost, the resource reaches Running on its current dynamic URL and one Gateway/API-backed page loads.
   - Uno (when enabled): the selected platform target (`<tfm>-browserwasm` / `<tfm>-android` / `<tfm>-ios`) builds through `TargetFrameworkOverride` and launches where local tooling supports it; before Android/iOS package builds, restore with `-p:BuildAllUnoTargets=true`; when added to AppHost, the ASP.NET Core WASM wrapper resource reaches Running.
-  - Backend connectivity from UI: at least one entity list page loads against the Gateway/API without console exceptions (empty or seeded data — both valid).
+  - Backend connectivity from UI: at least one entity list page loads against the Gateway/API without console exceptions (empty or seeded data - both valid).
 - [ ] If `applicationStyle: switch`, both `Application:Style=Service` and `Application:Style=Cqrs` have at least one endpoint-mode smoke test. The two modes expose the same route templates and response envelopes.
-- [ ] No generated source file outside the **scaffold-skipped surface** contains `throw new NotImplementedException`. The skipped surface is limited to: (a) `NoOp*` fallback stubs in `Infrastructure.Stubs/` (or equivalent) registered via `TryAddSingleton`/`TryAddScoped` for entities the scaffold contracts but does not activate, and (b) override methods on `<packagePrefix>.*` repository/storage base types that are only reachable through those `NoOp*` stubs. Per [../ai/contract-scaffolding.md](../ai/contract-scaffolding.md), even these stubs should prefer safe defaults (`Result.Success`, empty collections, completed `Task`) — throwing is permitted only when no safe default exists for the return shape.
+- [ ] No generated source file outside the **scaffold-skipped surface** contains `throw new NotImplementedException`. The skipped surface is limited to: (a) `NoOp*` fallback stubs in `Infrastructure.Stubs/` (or equivalent) registered via `TryAddSingleton`/`TryAddScoped` for entities the scaffold contracts but does not activate, and (b) override methods on `<packagePrefix>.*` repository/storage base types that are only reachable through those `NoOp*` stubs. Per [../ai/contract-scaffolding.md](../ai/contract-scaffolding.md), even these stubs should prefer safe defaults (`Result.Success`, empty collections, completed `Task`) - throwing is permitted only when no safe default exists for the return shape.
 - [ ] No scaffold placeholders remain in source/config.
-- [ ] No `<packagePrefix>.*` shared base type is reimplemented in application/domain/host layers — they live in feed packages or `src/Packages/<packagePrefix>.*` projects only, per `packageStrategy`.
-- [ ] **One public type per file** across all generated `.cs` files in `src/` (including `src/Packages/<Prefix>.*`). File name matches the type. Lumped files (multiple top-level public/internal types) are a failure unless they fall under the exception list in [../skills/solution-structure.md](../skills/solution-structure.md) § Non-Negotiables.
+- [ ] No `<packagePrefix>.*` shared base type is reimplemented in application/domain/host layers - they live in feed packages or `src/Packages/<packagePrefix>.*` projects only, per `packageStrategy`.
+- [ ] **One public type per file** across all generated `.cs` files in `src/` (including `src/Packages/<Prefix>.*`). File name matches the type. Lumped files (multiple top-level public/internal types) are a failure unless they fall under the exception list in [../skills/solution-structure.md](../skills/solution-structure.md) section Non-Negotiables.
 - [ ] Deployment-only dependencies are recorded as non-blocking residuals.
 - [ ] **Project root is clean.** Only the following files/dirs are expected at the project root after scaffold completion:
   - **Markdown:** `README.md`, `AGENTS.md`, `CLAUDE.md`, `HANDOFF.md`
   - **.NET config:** `global.json`, `nuget.config`, `dotnet-tools.json`, `Directory.Packages.props`, `Directory.Build.props`, `*.slnx`
   - **Ignore files:** `.gitignore`, `.dockerignore`, `.editorconfig`, `.gitattributes`
-  - **Dirs:** `src/`, `infra/` (when IaC enabled), `docs/` (optional — when `docs/tech-design.md` is generated, diagrams follow [tech-design-diagrams.md](tech-design-diagrams.md)), `.azure/` (optional), `.github/`, `.instructions/`, `.scaffold/`, `.vscode/` (optional), `.claude/` (optional)
+  - **Dirs:** `src/`, `infra/` (when IaC enabled), `docs/` (optional - when `docs/tech-design.md` is generated, diagrams follow [tech-design-diagrams.md](tech-design-diagrams.md)), `.azure/` (optional), `.github/`, `.instructions/`, `.scaffold/`, `.vscode/` (optional), `.claude/` (optional)
   - All Phase 1/2/3 generated artifacts (`domain-specification.yaml`, `resource-implementation.yaml`, `UBIQUITOUS-LANGUAGE.md`, `DESIGN-DECISIONS.md`, `implementation-plan.md`, `INSTRUCTION-GAPS.md`) live under `.scaffold/`, not at root.
-  - Anything else at root (`FOLLOWUP-PLAN.md`, `*.log`, `*.tmp`, ad-hoc notes) is leakage — investigate before declaring the scaffold complete. `FOLLOWUP-PLAN.md` is not a recognized scaffold artifact; if present, ask the developer where it came from.
+  - Anything else at root (`FOLLOWUP-PLAN.md`, `*.log`, `*.tmp`, ad-hoc notes) is leakage - investigate before declaring the scaffold complete. `FOLLOWUP-PLAN.md` is not a recognized scaffold artifact; if present, ask the developer where it came from.
 
 ---
 

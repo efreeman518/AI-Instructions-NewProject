@@ -6,8 +6,8 @@ Reference patterns: [../patterns/expected-output-index.md](../patterns/expected-
 
 ## TDD Protocol
 
-Phases 5a and 5b use test-first TDD: red → green → refactor. See [../ai/tdd-protocol.md](../ai/tdd-protocol.md).
-Phase 5c is tests-after for optional hosts. Phase 5d adds quality gate suites and a full regression — see [testing-quality.md](testing-quality.md).
+Phases 5a and 5b use test-first TDD: red -> green -> refactor. See [../ai/tdd-protocol.md](../ai/tdd-protocol.md).
+Phase 5c is tests-after for optional hosts. Phase 5d adds quality gate suites and a full regression - see [testing-quality.md](testing-quality.md).
 
 ## BDD Naming Convention
 
@@ -20,18 +20,18 @@ public async Task Given_ValidInput_When_EntityCreated_Then_ReturnsSuccess() { }
 
 ## Test Class Documentation Convention
 
-Every `[TestClass]` carries a 3–6 line class-level `<summary>` answering:
+Every `[TestClass]` carries a 3-6 line class-level `<summary>` answering:
 
 1. **What is exercised** (one line).
 2. **Tooling tier + why this tier** (what a lighter tier would miss).
-3. **Non-obvious quirks** (only when applicable — retry loops, warm-up waits, fixture reuse).
+3. **Non-obvious quirks** (only when applicable - retry loops, warm-up waits, fixture reuse).
 
-Method-level docs are **not** the convention — Given/When/Then names encode scenarios. Add per-method comments only for non-obvious quirks.
+Method-level docs are **not** the convention - Given/When/Then names encode scenarios. Add per-method comments only for non-obvious quirks.
 
 ```csharp
 /// <summary>
-/// Exercises the {Entity} create→search→update→delete flow over HTTP.
-/// Tier: Test.E2E (WAF + Testcontainers SQL) — InMemory provider would miss
+/// Exercises the {Entity} create->search->update->delete flow over HTTP.
+/// Tier: Test.E2E (WAF + Testcontainers SQL) - InMemory provider would miss
 /// shadow properties, raw SQL projection, and concurrency token behavior.
 /// </summary>
 [TestClass]
@@ -71,28 +71,28 @@ Test/
 | `Test.Endpoints` | `WebApplicationFactory<TProgram>` + EF InMemory | Single endpoint contract: status code, response shape, validation, auth | [test-templates-endpoint.md](../templates/test-templates-endpoint.md) |
 | `Test.E2E` | `WebApplicationFactory<TProgram>` + Testcontainers SQL | Multi-endpoint workflows against real SQL: paged search distinct-page, projection round-trip, FK constraints, child aggregate lifecycle | [test-templates-e2e.md](../templates/test-templates-e2e.md) |
 | `Test.Integration` | Aspire `DistributedApplicationTestingBuilder` | Multi-resource distributed-app workflows: SQL + Azurite + Service Bus + Functions; audit-pipeline + projection-pipeline | [test-templates-integration.md](../templates/test-templates-integration.md) |
-| `Test.PlaywrightUI` | Real hosted stack (Aspire / docker-compose / preview) | Browser-driven UI | [testing-quality.md](testing-quality.md) § Hosted Browser UI |
+| `Test.PlaywrightUI` | Real hosted stack (Aspire / docker-compose / preview) | Browser-driven UI | [testing-quality.md](testing-quality.md) section Hosted Browser UI |
 | `Test.Architecture` | `NetArchTest.Rules` | Layer dependency rules | [test-templates-quality.md](../templates/test-templates-quality.md) |
 | `Test.Load` | NBomber | Throughput / latency baselines | [test-templates-quality.md](../templates/test-templates-quality.md) |
 | `Test.Benchmarks` | BenchmarkDotNet | Per-operation micro-benchmarks | [test-templates-quality.md](../templates/test-templates-quality.md) |
 
 Rule: PlaywrightUI is a different harness. Never merge it with WAF tests.
 
-**Tier ladder — pick the cheapest tier that catches the failure mode you're testing.**
+**Tier ladder - pick the cheapest tier that catches the failure mode you're testing.**
 
 ```
 Pure unit (Test.Unit)
-  → CustomApiFactory (Test.Endpoints, WAF + InMemory)
-    → SqlApiFactory (Test.E2E, WAF + Testcontainers SQL)
-      → AspireTestHost (Test.Integration, distributed app)
-        → Hosted Playwright (Test.PlaywrightUI)
+  -> CustomApiFactory (Test.Endpoints, WAF + InMemory)
+    -> SqlApiFactory (Test.E2E, WAF + Testcontainers SQL)
+      -> AspireTestHost (Test.Integration, distributed app)
+        -> Hosted Playwright (Test.PlaywrightUI)
 ```
 
 Phase 4 generates the WAF base in `Test.Support` and the `CustomApiFactory` / `SqlApiFactory` / `AspireTestHost` / `DbContextFactory` shells in their respective test projects so the ladder is wired before any Phase 5 tests are written. See [../ai/contract-scaffolding.md](../ai/contract-scaffolding.md) (`### 4. Test Infrastructure`).
 
 ### Aspire Tier By Reuse (documented exception)
 
-Single-service tests (SQL-only, Azurite-only) **MAY** piggyback on the shared `AspireTestHost` fixture instead of spinning a parallel Testcontainers stack — purely to avoid duplicate container cost. Required when used:
+Single-service tests (SQL-only, Azurite-only) **MAY** piggyback on the shared `AspireTestHost` fixture instead of spinning a parallel Testcontainers stack - purely to avoid duplicate container cost. Required when used:
 
 - Class-level `<summary>` calls out the choice ("piggybacks on shared Aspire host to avoid second SQL container") so the deviation does not read as drift.
 - Test still gates on the specific resource via `WaitForResourceHealthyAsync`, not the whole app.
@@ -111,7 +111,7 @@ Keep versions centralized in `Directory.Packages.props`.
 
 ## Assertion Policy
 
-**Do not use FluentAssertions.** Version 8+ requires a commercial license. Do not add it as a NuGet reference under any circumstance. If `nuget.config` contains a `<package pattern="FluentAssertions" />` allowlist entry, remove it — its presence is a license-policy violation waiting to happen.
+**Do not use FluentAssertions.** Version 8+ requires a commercial license. Do not add it as a NuGet reference under any circumstance. If `nuget.config` contains a `<package pattern="FluentAssertions" />` allowlist entry, remove it - its presence is a license-policy violation waiting to happen.
 
 Allowed options:
 
@@ -156,7 +156,7 @@ Apply `= null!` to every non-nullable field in every generated test class.
 
 ## Assembly Initializer Safety
 
-`[AssemblyInitialize]` methods must **never throw**. A throwing `AssemblyInitialize` causes MSTest to abort the entire assembly — including tests that have no dependency on the failed setup.
+`[AssemblyInitialize]` methods must **never throw**. A throwing `AssemblyInitialize` causes MSTest to abort the entire assembly - including tests that have no dependency on the failed setup.
 
 For test assemblies that start external infrastructure (e.g., Testcontainers), apply this pattern:
 
@@ -171,7 +171,7 @@ public static async Task AssemblyInit(TestContext context)
     catch (Exception ex)
     {
         _startupError = ex;
-        // Do not rethrow — let individual tests mark themselves inconclusive
+        // Do not rethrow - let individual tests mark themselves inconclusive
     }
 }
 ```
@@ -202,7 +202,7 @@ This isolates startup flakiness (e.g., `RegexMatchTimeoutException` from Testcon
 
 Cover domain invariants, rules/specifications, service success/failure/not-found paths, mapper consistency.
 
-**Mapper Projection ↔ ToDto agreement.** Every mapper with both an EF-translatable `Projection` expression and a `ToDto` method needs a pin test that asserts both produce equivalent DTOs for the same entity. This catches the silent divergence where `Projection` (used by `Search`/`Get` query paths) omits a field or flattens a value object differently than `ToDto` (used by `Create`/`Update` response paths). Watch especially for owned types (`DateRange`, `Money`) — the projection's flat property access often disagrees with `ToDto`'s nested record construction.
+**Mapper Projection <-> ToDto agreement.** Every mapper with both an EF-translatable `Projection` expression and a `ToDto` method needs a pin test that asserts both produce equivalent DTOs for the same entity. This catches the silent divergence where `Projection` (used by `Search`/`Get` query paths) omits a field or flattens a value object differently than `ToDto` (used by `Create`/`Update` response paths). Watch especially for owned types (`DateRange`, `Money`) - the projection's flat property access often disagrees with `ToDto`'s nested record construction.
 
 ```csharp
 [TestMethod]
@@ -223,15 +223,15 @@ Use `WebApplicationFactory` and validate status code, response shape, validation
 
 ### Workflow E2E (Test.E2E)
 
-Use WAF + real SQL (often Testcontainers) for create→search→update→delete business flows through HTTP.
+Use WAF + real SQL (often Testcontainers) for create->search->update->delete business flows through HTTP.
 
-### Blazor — Three-Layer Coverage
+### Blazor - Three-Layer Coverage
 
 When `includeBlazorUI: true`, scaffold three tiers so failures localize:
 
-1. **In-isolation host smoke** (`Test.Endpoints/BlazorHostSmokeTests`) — `WebApplicationFactory<{Project}.Blazor.Program>` builds the host with no Refit backend. Catches DI / Refit registration / MudBlazor service-provider failures at startup. Fast (no Aspire, no SQL).
-2. **Aspire-mesh smoke** (`Test.Integration/Aspire/BlazorMeshSmokeTests`) — Blazor opt-in via `{APP}_INCLUDE_BLAZOR=true`; verifies the full graph (Gateway routing + Refit + tenant header) by hitting one page that round-trips through the API. Use lazy `EnsureStartedAsync` startup.
-3. **Hosted Playwright** (`Test.PlaywrightUI/BlazorSmokeTests`) — real browser against a hosted stack; comprehensive profile only.
+1. **In-isolation host smoke** (`Test.Endpoints/BlazorHostSmokeTests`) - `WebApplicationFactory<{Project}.Blazor.Program>` builds the host with no Refit backend. Catches DI / Refit registration / MudBlazor service-provider failures at startup. Fast (no Aspire, no SQL).
+2. **Aspire-mesh smoke** (`Test.Integration/Aspire/BlazorMeshSmokeTests`) - Blazor opt-in via `{APP}_INCLUDE_BLAZOR=true`; verifies the full graph (Gateway routing + Refit + tenant header) by hitting one page that round-trips through the API. Use lazy `EnsureStartedAsync` startup.
+3. **Hosted Playwright** (`Test.PlaywrightUI/BlazorSmokeTests`) - real browser against a hosted stack; comprehensive profile only.
 
 Each tier owns a different failure mode. Without tier 1, MudBlazor DI breakage is invisible until tier 2 / tier 3 fails with a misleading "page didn't load" symptom.
 
@@ -256,35 +256,35 @@ If the test posts JSON to an API and asserts HTTP response shape, it belongs in 
 
 ## Aspire Test Host (recipe)
 
-Name the fixture for what it actually wraps. If it owns the full `DistributedApplication` (DB + Functions + Storage + lifecycle), call it `AspireTestHost` — not `DatabaseFixture`. Split DB-context creation helpers into a separate `DbContextFactory` static class. Test fixtures benefit from single-responsibility naming since contributors grep by purpose.
+Name the fixture for what it actually wraps. If it owns the full `DistributedApplication` (DB + Functions + Storage + lifecycle), call it `AspireTestHost` - not `DatabaseFixture`. Split DB-context creation helpers into a separate `DbContextFactory` static class. Test fixtures benefit from single-responsibility naming since contributors grep by purpose.
 
 ### Shared environment rules
 
 1. **One shared app per assembly.** Start once in `[AssemblyInitialize]` and reuse. Never per test class.
-2. **Set scoped flags (e.g., `TASKFLOW_ASPIRE_TESTING`, `TASKFLOW_INCLUDE_FUNCTIONS`) before `CreateAsync`** — only for things AppHost reads via `Environment.GetEnvironmentVariable`. **Save and restore originals** in cleanup for hermeticity.
-3. **Pass parameters via `configureBuilder`, not env-var mutation.** AppHost binds `Parameters:*` through `IConfiguration` — write them into `hostSettings.Configuration` so test isolation stays clean.
+2. **Set scoped flags (e.g., `TASKFLOW_ASPIRE_TESTING`, `TASKFLOW_INCLUDE_FUNCTIONS`) before `CreateAsync`** - only for things AppHost reads via `Environment.GetEnvironmentVariable`. **Save and restore originals** in cleanup for hermeticity.
+3. **Pass parameters via `configureBuilder`, not env-var mutation.** AppHost binds `Parameters:*` through `IConfiguration` - write them into `hostSettings.Configuration` so test isolation stays clean.
 4. **Conditional Functions inclusion.** Detect `func.exe` once in fixture before startup. Set the include flag there, not per test class. Tests that require Functions call `Assert.Inconclusive` when the resource is absent.
 5. **Timeout mandatory.** `[Timeout]` on every Aspire integration test method (`300000` for full multi-service, `120000` for single-service).
 6. **`local.settings.json` override trap.** Hardcoded DB connection strings in Functions `local.settings.json` beat Aspire injection. Remove them (keep safe Azurite-style values only).
 7. **Keep `using Aspire.Hosting.Testing;`** in every file calling `CreateHttpClient()` or `GetConnectionStringAsync()` (they are extension methods).
 
-### Assertion Surface — Prefer Downstream Effects
+### Assertion Surface - Prefer Downstream Effects
 
-When the Aspire mesh test needs to verify that a message flowed (an event was published, a webhook was processed), **assert against a persistent downstream effect** — a row in SQL, a document in Cosmos, an entry in Table Storage — rather than against the message bus itself.
+When the Aspire mesh test needs to verify that a message flowed (an event was published, a webhook was processed), **assert against a persistent downstream effect** - a row in SQL, a document in Cosmos, an entry in Table Storage - rather than against the message bus itself.
 
 ```csharp
-// PREFER — poll the audit row that the message handler writes
+// PREFER - poll the audit row that the message handler writes
 await Wait.Until(
     () => tableClient.QueryAsync<AuditRow>(r => r.PartitionKey == correlationId).AnyAsync(),
     timeout: TimeSpan.FromSeconds(30));
 
-// AVOID — poll the topic/queue directly
+// AVOID - poll the topic/queue directly
 await Wait.Until(
     async () => await receiver.ReceiveMessageAsync(TimeSpan.FromSeconds(2)) is not null,
     timeout: TimeSpan.FromSeconds(180));
 ```
 
-**Why.** Aspire's Service Bus emulator under `DistributedApplicationTestingBuilder` does not always propagate topic→subscription routing within bounded test windows; queue trigger plumbing on Functions is similarly best-effort under emulator-mode. Verifying via the downstream artifact is robust against this class of tooling gap *and* exercises more of the production path (the message handler actually ran end-to-end). When the downstream effect is genuinely unavailable (no consumer wired in this test scope), `[Ignore]` the test with a reason rather than asserting against the bus and accepting flakes.
+**Why.** Aspire's Service Bus emulator under `DistributedApplicationTestingBuilder` does not always propagate topic->subscription routing within bounded test windows; queue trigger plumbing on Functions is similarly best-effort under emulator-mode. Verifying via the downstream artifact is robust against this class of tooling gap *and* exercises more of the production path (the message handler actually ran end-to-end). When the downstream effect is genuinely unavailable (no consumer wired in this test scope), `[Ignore]` the test with a reason rather than asserting against the bus and accepting flakes.
 
 ### Lazy Aspire Fixture Startup
 
@@ -341,10 +341,10 @@ For React/Vite, use the same pattern around `AddViteApp(...)` and pass the Gatew
 
 ### Async call discipline
 
-- **Per-call `.WaitAsync(timeout, ct)` on every async Aspire call.** Not a single umbrella `CancellationTokenSource(timeout)` — per-call so a hung step fails *that* step.
+- **Per-call `.WaitAsync(timeout, ct)` on every async Aspire call.** Not a single umbrella `CancellationTokenSource(timeout)` - per-call so a hung step fails *that* step.
 - **Gate on health, not status.** Aspire reports `Running` before SQL accepts connections / Azurite serves first request / Functions warms up. Call `WaitForResourceHealthyAsync(name, ct)` before talking to a resource.
-- **`GetConnectionStringAsync` returns `ValueTask<string?>`** — wrap as `.AsTask().WaitAsync(timeout, ct)`. `ValueTask` has no `WaitAsync` extension.
-- **Bound shutdown.** `[AssemblyCleanup(TestContext)]` (MSTest 3.x overload — use `testContext.CancellationToken`); call `StopAsync(...).WaitAsync(CleanupTimeout)` and catch `TimeoutException` so a stuck teardown does not hang CI.
+- **`GetConnectionStringAsync` returns `ValueTask<string?>`** - wrap as `.AsTask().WaitAsync(timeout, ct)`. `ValueTask` has no `WaitAsync` extension.
+- **Bound shutdown.** `[AssemblyCleanup(TestContext)]` (MSTest 3.x overload - use `testContext.CancellationToken`); call `StopAsync(...).WaitAsync(CleanupTimeout)` and catch `TimeoutException` so a stuck teardown does not hang CI.
 
 ### Fixture skeleton
 
@@ -352,7 +352,7 @@ For React/Vite, use the same pattern around `AddViteApp(...)` and pass the Gatew
 [AssemblyInitialize]
 public static async Task AssemblyInit(TestContext context)
 {
-    // Save originals first — restore in cleanup
+    // Save originals first - restore in cleanup
     SetEnvVar("TASKFLOW_ASPIRE_TESTING", "true");
     SetEnvVar("TASKFLOW_INCLUDE_FUNCTIONS", FuncToolAvailable() ? "true" : "false");
 
@@ -400,7 +400,7 @@ public static async Task Cleanup(TestContext context)
 | [../templates/test-templates-service.md](../templates/test-templates-service.md) | 5b | Service + mapper tests + consolidated `MapperProjectionParityTests` |
 | [../templates/test-templates-endpoint.md](../templates/test-templates-endpoint.md) | 5b | Endpoint contract tests via WAF + InMemory; `WebApplicationFactoryBase` reference |
 | [../templates/test-templates-e2e.md](../templates/test-templates-e2e.md) | 5b | `SqlApiFactory` + multi-endpoint `{Entity}WorkflowTests` against Testcontainers SQL |
-| [../templates/test-templates-quality.md](../templates/test-templates-quality.md) | 5d | Architecture / Playwright / Load / Benchmarks — load `testing-quality.md` instead |
+| [../templates/test-templates-quality.md](../templates/test-templates-quality.md) | 5d | Architecture / Playwright / Load / Benchmarks - load `testing-quality.md` instead |
 | [../templates/test-templates.md](../templates/test-templates.md) | on-demand | Full-reference fallback |
 
 ## Verification Checklist

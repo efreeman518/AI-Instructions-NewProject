@@ -56,7 +56,7 @@ public class SomeService(IBackgroundTaskQueue taskQueue)
     {
         taskQueue.QueueBackgroundWorkItem(async ct =>
         {
-            // Fire-and-forget work — runs outside request scope
+            // Fire-and-forget work - runs outside request scope
             // Create a new DI scope if you need scoped services
         });
     }
@@ -65,24 +65,24 @@ public class SomeService(IBackgroundTaskQueue taskQueue)
 
 ### Rules
 
-- Use for work that doesn't need persistence or retry — audit logging, cache invalidation, notifications.
+- Use for work that doesn't need persistence or retry - audit logging, cache invalidation, notifications.
 - For work that needs persistence, retry, or scheduling, use TickerQ instead.
-- The queue is in-memory — items are lost if the host crashes before processing.
+- The queue is in-memory - items are lost if the host crashes before processing.
 - Always create a new DI scope inside the work item if you need scoped services (DbContext, etc.).
 
 ## Minimal Scheduler Structure
 
 ```
 Host/{Host}.Scheduler/
-├── Program.cs
-├── RegisterSchedulerServices.cs
-├── Abstractions/IScheduledJobHandler.cs
-├── Jobs/BaseTickerQJob.cs
-├── Jobs/{Feature}Jobs.cs
-├── Handlers/{JobName}Handler.cs
-├── Infrastructure/{App}SchedulerExceptionHandler.cs
-├── Infrastructure/SchedulerHealthCheck.cs
-└── appsettings*.json
+|-- Program.cs
+|-- RegisterSchedulerServices.cs
+|-- Abstractions/IScheduledJobHandler.cs
+|-- Jobs/BaseTickerQJob.cs
+|-- Jobs/{Feature}Jobs.cs
+|-- Handlers/{JobName}Handler.cs
+|-- Infrastructure/{App}SchedulerExceptionHandler.cs
+|-- Infrastructure/SchedulerHealthCheck.cs
+`-- appsettings*.json
 ```
 
 Reference patterns: [../patterns/infrastructure-wiring.md](../patterns/infrastructure-wiring.md) (Aspire Resource Wiring).
@@ -133,7 +133,7 @@ public class ReminderJobs(...) : BaseTickerQJob(...)
 }
 ```
 
-- Job methods only map trigger → handler.
+- Job methods only map trigger -> handler.
 - Handler implements domain/application logic and remains testable.
 - `BaseTickerQJob` manages scope creation, telemetry, and exception wiring.
 
@@ -174,7 +174,7 @@ Key settings:
 - One-off jobs: use `ITimeTickerManager<T>.EnqueueAsync("JobName", scheduledTime, payload)`.
 - Cron job seeding: use `ICronTickerManager.AddAsync(new CronTickerEntity { Function = "JobName", Expression = "* * * * * *", ... })`.
   `ICronTickerManager` is NOT generic. Property names on `CronTickerEntity` are `Function` (not `FunctionName`) and `Expression` (not `CronExpression`).
-- In-memory mode (no `TickerQ.EntityFrameworkCore` configured) does NOT register `ICronTickerManager` — wrap cron seeding in a try-catch on `InvalidOperationException` so the host starts cleanly during development.
+- In-memory mode (no `TickerQ.EntityFrameworkCore` configured) does NOT register `ICronTickerManager` - wrap cron seeding in a try-catch on `InvalidOperationException` so the host starts cleanly during development.
 
 TickerQ cron format is six fields: seconds, minutes, hours, day-of-month, month, day-of-week.
 

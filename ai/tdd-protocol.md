@@ -16,8 +16,8 @@ Phase 4 already generated interfaces, DTOs, entity shells, test infrastructure, 
 2. **Confirm RED before implementing.** Run `dotnet test` and verify the new tests **fail with assertion errors**. If they pass against no-op stubs, tighten assertions until they fail. Record the failing test count.
 3. **Implement ONLY enough to pass.** Write the minimum production code needed to make the failing tests pass. Do not add untested behavior.
 4. **Confirm GREEN immediately.** Run `dotnet test` after implementation. All tests must pass. If any fail, fix before moving to the next slice.
-5. **Never batch multiple slices.** Complete the full RED → GREEN cycle for one entity slice before starting the next.
-6. **No simultaneous test + implementation files.** In a single file-generation pass, produce either test files OR implementation files — not both. The only exception is activating `{Entity}Builder.Build()` alongside entity implementation (Step 5 of Phase 5a).
+5. **Never batch multiple slices.** Complete the full RED -> GREEN cycle for one entity slice before starting the next.
+6. **No simultaneous test + implementation files.** In a single file-generation pass, produce either test files OR implementation files - not both. The only exception is activating `{Entity}Builder.Build()` alongside entity implementation (Step 5 of Phase 5a).
 7. **Do not accept compile-fail as RED.** Fix compile issues first, then confirm assertion-fail RED.
 
 ---
@@ -35,7 +35,7 @@ Rules:
 
 ---
 
-## Phase 5a — Foundation TDD (Per Entity Slice)
+## Phase 5a - Foundation TDD (Per Entity Slice)
 
 Process each entity in the dependency order established in Phase 4 (parents first, then children).
 
@@ -84,7 +84,7 @@ Git checkpoint after gate passes.
 
 ---
 
-## Phase 5b — App Core TDD (Per Entity Slice)
+## Phase 5b - App Core TDD (Per Entity Slice)
 
 1. **Write service tests** in `Test/Test.Unit/Services/{Entity}ServiceTests.cs` from `test-templates-service.md`.
 2. **Run RED**:
@@ -115,7 +115,7 @@ dotnet test --filter "TestCategory=Unit|TestCategory=Endpoint"
 
    - Place mock-based infrastructure tests in `Test.Unit` with `[TestCategory("Unit")]`.
    - Place WAF-based infrastructure tests in `Test.Endpoints` with `[TestCategory("Endpoint")]`.
-   - Service-level integration tests against real external services (Testcontainers SQL, real cache) belong in `Test.Integration` and run as part of Phase 5d's quality regression — not 5b's gate.
+   - Service-level integration tests against real external services (Testcontainers SQL, real cache) belong in `Test.Integration` and run as part of Phase 5d's quality regression - not 5b's gate.
 
    Re-run the same filter after writing them:
 
@@ -123,13 +123,13 @@ dotnet test --filter "TestCategory=Unit|TestCategory=Endpoint"
    dotnet test --filter "TestCategory=Unit|TestCategory=Endpoint"
    ```
 
-   When Aspire is enabled, also verify the AppHost gate per [`../support/execution-gates.md`](../support/execution-gates.md) § 5b before closing the session.
+   When Aspire is enabled, also verify the AppHost gate per [`../support/execution-gates.md`](../support/execution-gates.md) section 5b before closing the session.
 
 Git checkpoint after gate passes.
 
 ---
 
-## Phase 5c/5d/5e — Tests-After Protocol
+## Phase 5c/5d/5e - Tests-After Protocol
 
 Infrastructure and optional host phases do not follow TDD. Instead, implement first, then write tests at the end of the session to verify behavior.
 

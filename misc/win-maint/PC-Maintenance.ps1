@@ -1,7 +1,7 @@
 #Requires -RunAsAdministrator
 <#
 .SYNOPSIS
-    PC-Maintenance.ps1 — Reusable scheduled maintenance script
+    PC-Maintenance.ps1 - Reusable scheduled maintenance script
 
 .DESCRIPTION
     Two modes:
@@ -30,7 +30,7 @@ param(
     [string]$LogPath = "C:\Maintenance\Logs"
 )
 
-# ─── SETUP ────────────────────────────────────────────────────────────────────
+# --- SETUP --------------------------------------------------------------------
 
 $ErrorActionPreference = "SilentlyContinue"
 $WarningPreference     = "SilentlyContinue"
@@ -49,9 +49,9 @@ function Write-Log {
 
 function Write-Section($title) {
     Write-Log ""
-    Write-Log "══════════════════════════════════════════════════" "Cyan"
+    Write-Log "==================================================" "Cyan"
     Write-Log "  $title" "Cyan"
-    Write-Log "══════════════════════════════════════════════════" "Cyan"
+    Write-Log "==================================================" "Cyan"
 }
 
 function Get-FolderSizeBytes($path) {
@@ -68,7 +68,7 @@ function Format-Bytes($bytes) {
 
 function Clear-Directory($path, $label, [switch]$FilesOnly) {
     if (-not (Test-Path $path)) {
-        Write-Log "  [SKIP]   $label — path not found" "DarkGray"
+        Write-Log "  [SKIP]   $label - path not found" "DarkGray"
         return 0
     }
     $before = Get-FolderSizeBytes $path
@@ -81,23 +81,23 @@ function Clear-Directory($path, $label, [switch]$FilesOnly) {
     }
     $after = Get-FolderSizeBytes $path
     $freed = $before - $after
-    Write-Log "  [CLEAN]  $label — freed $(Format-Bytes $freed)" "Green"
+    Write-Log "  [CLEAN]  $label - freed $(Format-Bytes $freed)" "Green"
     return $freed
 }
 
 $totalFreed = 0
 
 Write-Log ""
-Write-Log "  PC Maintenance — $Mode Mode" "White"
+Write-Log "  PC Maintenance - $Mode Mode" "White"
 Write-Log "  $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  |  $env:COMPUTERNAME" "DarkGray"
 Write-Log "  Log: $LogFile" "DarkGray"
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-#  QUICK — runs in both modes
-# ═══════════════════════════════════════════════════════════════════════════════
+# ===============================================================================
+#  QUICK - runs in both modes
+# ===============================================================================
 
-# ─── 1. TEMP FILES ────────────────────────────────────────────────────────────
+# --- 1. TEMP FILES ------------------------------------------------------------
 Write-Section "1/10  Temp Files"
 
 $totalFreed += Clear-Directory $env:TEMP                          "User Temp (%TEMP%)"
@@ -112,7 +112,7 @@ $totalFreed += Clear-Directory "C:\ProgramData\Microsoft\Windows\WER\ReportArchi
 $totalFreed += Clear-Directory "C:\ProgramData\Microsoft\Windows\WER\ReportQueue"      "WER System Queue"
 
 
-# ─── 2. BROWSER CACHES ────────────────────────────────────────────────────────
+# --- 2. BROWSER CACHES --------------------------------------------------------
 Write-Section "2/10  Browser Caches"
 
 foreach ($base in @(
@@ -136,7 +136,7 @@ foreach ($base in @(
 }
 
 
-# ─── 3. WINDOWS UPDATE & DELIVERY OPTIMIZATION ───────────────────────────────
+# --- 3. WINDOWS UPDATE & DELIVERY OPTIMIZATION -------------------------------
 Write-Section "3/10  Windows Update Cache & Delivery Optimization"
 
 Stop-Service wuauserv -Force
@@ -149,7 +149,7 @@ $totalFreed += Clear-Directory "C:\Windows\ServiceProfiles\NetworkService\AppDat
 Start-Service DoSvc
 
 
-# ─── 4. THUMBNAIL & ICON CACHE ────────────────────────────────────────────────
+# --- 4. THUMBNAIL & ICON CACHE ------------------------------------------------
 Write-Section "4/10  Thumbnail & Icon Cache"
 
 Stop-Process -Name explorer -Force -ErrorAction SilentlyContinue
@@ -166,26 +166,26 @@ Get-ChildItem $thumbDB -File -ErrorAction SilentlyContinue |
 Start-Process explorer
 
 
-# ─── 5. DNS FLUSH ─────────────────────────────────────────────────────────────
+# --- 5. DNS FLUSH -------------------------------------------------------------
 Write-Section "5/10  DNS Cache"
 ipconfig /flushdns | Out-Null
 Write-Log "  [OK]     DNS cache flushed" "Green"
 
 
-# ─── 6. RECYCLE BIN ───────────────────────────────────────────────────────────
+# --- 6. RECYCLE BIN -----------------------------------------------------------
 Write-Section "6/10  Recycle Bin"
 $shell  = New-Object -ComObject Shell.Application
 $rb     = $shell.Namespace(0xa)
 $rbSize = ($rb.Items() | Measure-Object -Property Size -Sum).Sum
 Clear-RecycleBin -Force -ErrorAction SilentlyContinue
-Write-Log "  [CLEAN]  Recycle Bin — freed $(Format-Bytes $rbSize)" "Green"
+Write-Log "  [CLEAN]  Recycle Bin - freed $(Format-Bytes $rbSize)" "Green"
 $totalFreed += $rbSize
 
 
-# ─── 7. ALL SOURCE APP UPDATES ────────────────────────────────────────────────
-Write-Section "7/10  App Updates — All Sources"
+# --- 7. ALL SOURCE APP UPDATES ------------------------------------------------
+Write-Section "7/10  App Updates - All Sources"
 
-# ── winget ────────────────────────────────────────────────────────────────────
+# -- winget --------------------------------------------------------------------
 Write-Log "  [winget]  Refreshing source index..." "Gray"
 winget source update 2>&1 | Out-Null
 Write-Log "  [winget]  Upgrading all..." "Gray"
@@ -194,7 +194,7 @@ winget upgrade --all --silent --accept-package-agreements --accept-source-agreem
     ForEach-Object { Write-Log "    $_" "DarkGray" }
 Write-Log "  [OK]      winget complete" "Green"
 
-# ── Chocolatey ────────────────────────────────────────────────────────────────
+# -- Chocolatey ----------------------------------------------------------------
 if (Get-Command choco -ErrorAction SilentlyContinue) {
     Write-Log "  [choco]   Upgrading all..." "Gray"
     choco upgrade all -y --no-progress 2>&1 |
@@ -204,7 +204,7 @@ if (Get-Command choco -ErrorAction SilentlyContinue) {
     Write-Log "  [OK]      Chocolatey complete" "Green"
 }
 
-# ── Scoop ─────────────────────────────────────────────────────────────────────
+# -- Scoop ---------------------------------------------------------------------
 if (Get-Command scoop -ErrorAction SilentlyContinue) {
     Write-Log "  [scoop]   Updating all..." "Gray"
     scoop update 2>&1 | Out-Null
@@ -215,7 +215,7 @@ if (Get-Command scoop -ErrorAction SilentlyContinue) {
     Write-Log "  [OK]      Scoop complete" "Green"
 }
 
-# ── npm global packages ───────────────────────────────────────────────────────
+# -- npm global packages -------------------------------------------------------
 if (Get-Command npm -ErrorAction SilentlyContinue) {
     Write-Log "  [npm]     Updating global packages..." "Gray"
     npm update -g 2>&1 |
@@ -224,14 +224,14 @@ if (Get-Command npm -ErrorAction SilentlyContinue) {
     Write-Log "  [OK]      npm complete" "Green"
 }
 
-# ── pip global packages ───────────────────────────────────────────────────────
+# -- pip global packages -------------------------------------------------------
 if (Get-Command pip -ErrorAction SilentlyContinue) {
     Write-Log "  [pip]     Updating outdated packages..." "Gray"
     $outdated = pip list --outdated --format=json 2>&1 | ConvertFrom-Json -ErrorAction SilentlyContinue
     if ($outdated) {
         foreach ($pkg in $outdated) {
             pip install --upgrade $pkg.name --quiet 2>&1 | Out-Null
-            Write-Log "    [OK] $($pkg.name)  $($pkg.version) → $($pkg.latest_version)" "Green"
+            Write-Log "    [OK] $($pkg.name)  $($pkg.version) -> $($pkg.latest_version)" "Green"
         }
     } else {
         Write-Log "    All pip packages up to date" "DarkGray"
@@ -239,7 +239,7 @@ if (Get-Command pip -ErrorAction SilentlyContinue) {
     Write-Log "  [OK]      pip complete" "Green"
 }
 
-# ── dotnet global tools ───────────────────────────────────────────────────────
+# -- dotnet global tools -------------------------------------------------------
 if (Get-Command dotnet -ErrorAction SilentlyContinue) {
     Write-Log "  [dotnet]  Updating global tools..." "Gray"
     $tools = dotnet tool list --global 2>&1 | Select-Object -Skip 2
@@ -254,7 +254,7 @@ if (Get-Command dotnet -ErrorAction SilentlyContinue) {
 }
 
 
-# ─── 8. STORAGE SENSE ────────────────────────────────────────────────────────
+# --- 8. STORAGE SENSE --------------------------------------------------------
 Write-Section "8/10  Storage Sense"
 $storageSenseKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy"
 if (Test-Path $storageSenseKey) {
@@ -265,7 +265,7 @@ if (Test-Path $storageSenseKey) {
 }
 
 
-# ─── 9. OLD MAINTENANCE LOGS ─────────────────────────────────────────────────
+# --- 9. OLD MAINTENANCE LOGS -------------------------------------------------
 Write-Section "9/10  Pruning Old Maintenance Logs (>90 days)"
 $oldLogs = Get-ChildItem $LogPath -File -ErrorAction SilentlyContinue |
            Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-90) }
@@ -273,8 +273,8 @@ $oldLogs | Remove-Item -Force -ErrorAction SilentlyContinue
 Write-Log "  [CLEAN]  Removed $($oldLogs.Count) old log file(s)" "Green"
 
 
-# ─── 10. STALE SCHEDULED TASKS ───────────────────────────────────────────────
-Write-Section "10/10  Stale Scheduled Tasks — Broken File References"
+# --- 10. STALE SCHEDULED TASKS -----------------------------------------------
+Write-Section "10/10  Stale Scheduled Tasks - Broken File References"
 # Reports tasks pointing to missing executables.
 # Review flagged items in Autoruns and remove manually if appropriate.
 $staleFound = 0
@@ -303,17 +303,17 @@ Get-ScheduledTask -ErrorAction SilentlyContinue | ForEach-Object {
 if ($staleFound -eq 0) {
     Write-Log "  [OK]     No stale tasks found" "Green"
 } else {
-    Write-Log "  [NOTE]   $staleFound stale task(s) — review in Autoruns → Scheduled Tasks tab" "Yellow"
+    Write-Log "  [NOTE]   $staleFound stale task(s) - review in Autoruns -> Scheduled Tasks tab" "Yellow"
 }
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-#  DEEP — monthly additional steps
-# ═══════════════════════════════════════════════════════════════════════════════
+# ===============================================================================
+#  DEEP - monthly additional steps
+# ===============================================================================
 
 if ($Mode -eq "Deep") {
 
-    # ─── 11. POWERSHELL MODULE UPDATES ───────────────────────────────────────
+    # --- 11. POWERSHELL MODULE UPDATES ---------------------------------------
     Write-Section "11/19  PowerShell Module Updates (PSGallery)"
     Write-Log "  Checking installed modules for updates..." "Gray"
 
@@ -323,13 +323,13 @@ if ($Mode -eq "Deep") {
         try {
             $latest = Find-Module $mod.Name -ErrorAction SilentlyContinue
             if ($latest -and [version]$latest.Version -gt [version]$mod.Version) {
-                Write-Log "  Updating: $($mod.Name)  $($mod.Version) → $($latest.Version)" "Gray"
+                Write-Log "  Updating: $($mod.Name)  $($mod.Version) -> $($latest.Version)" "Gray"
                 Update-Module $mod.Name -Force -ErrorAction Stop
                 Write-Log "  [OK]      $($mod.Name) updated" "Green"
                 $modUpdated++
             }
         } catch {
-            Write-Log "  [SKIP]    $($mod.Name) — $($_.Exception.Message)" "DarkGray"
+            Write-Log "  [SKIP]    $($mod.Name) - $($_.Exception.Message)" "DarkGray"
         }
     }
     Write-Log "  [OK]     $modUpdated module(s) updated" "Green"
@@ -347,7 +347,7 @@ if ($Mode -eq "Deep") {
                     Write-Log "  [REMOVED] $($_.Name) v$($_.Version) (superseded)" "Green"
                     $modPruned++
                 } catch {
-                    Write-Log "  [SKIP]    $($_.Name) v$($_.Version) — in use or locked" "DarkGray"
+                    Write-Log "  [SKIP]    $($_.Name) v$($_.Version) - in use or locked" "DarkGray"
                 }
             }
         }
@@ -355,23 +355,23 @@ if ($Mode -eq "Deep") {
     Write-Log "  [OK]     $modPruned old module version(s) removed" "Green"
 
 
-    # ─── 12. DISM COMPONENT STORE CLEANUP ────────────────────────────────────
-    Write-Section "12/19  DISM — Component Store Cleanup (may take 5-20 min)"
+    # --- 12. DISM COMPONENT STORE CLEANUP ------------------------------------
+    Write-Section "12/19  DISM - Component Store Cleanup (may take 5-20 min)"
     Write-Log "  Running DISM /Online /Cleanup-Image /StartComponentCleanup ..." "Gray"
     & dism.exe /Online /Cleanup-Image /StartComponentCleanup /ResetBase 2>&1 |
         Select-Object -Last 5 | ForEach-Object { Write-Log "  $_" "DarkGray" }
     Write-Log "  [OK]     DISM component cleanup complete" "Green"
 
 
-    # ─── 13. SFC SCAN ─────────────────────────────────────────────────────────
-    Write-Section "13/19  SFC — System File Check"
+    # --- 13. SFC SCAN ---------------------------------------------------------
+    Write-Section "13/19  SFC - System File Check"
     Write-Log "  Running sfc /scannow (may take 20-60 min) ..." "Gray"
     & sfc.exe /scannow 2>&1 |
         Select-Object -Last 3 | ForEach-Object { Write-Log "  $_" "DarkGray" }
     Write-Log "  [OK]     SFC scan complete" "Green"
 
 
-    # ─── 14. DISK OPTIMIZATION ───────────────────────────────────────────────
+    # --- 14. DISK OPTIMIZATION -----------------------------------------------
     Write-Section "14/19  Disk Optimization"
     Get-Volume | Where-Object { $_.DriveLetter -and $_.FileSystemType -eq "NTFS" } |
         ForEach-Object {
@@ -395,8 +395,8 @@ if ($Mode -eq "Deep") {
         }
 
 
-    # ─── 15. EVENT LOG ARCHIVE ───────────────────────────────────────────────
-    Write-Section "15/19  Event Log — Archive Large Logs (>50MB)"
+    # --- 15. EVENT LOG ARCHIVE -----------------------------------------------
+    Write-Section "15/19  Event Log - Archive Large Logs (>50MB)"
     $archivePath = "C:\Maintenance\EventLogArchive"
     if (-not (Test-Path $archivePath)) { New-Item -Path $archivePath -ItemType Directory -Force | Out-Null }
 
@@ -407,9 +407,9 @@ if ($Mode -eq "Deep") {
             try {
                 wevtutil epl $_.LogName $archiveFile /ow:true 2>&1 | Out-Null
                 wevtutil cl  $_.LogName 2>&1 | Out-Null
-                Write-Log "  [ARCHIVE] $($_.LogName) → $(Split-Path $archiveFile -Leaf)" "Green"
+                Write-Log "  [ARCHIVE] $($_.LogName) -> $(Split-Path $archiveFile -Leaf)" "Green"
             } catch {
-                Write-Log "  [SKIP]    $($_.LogName) — could not archive" "DarkGray"
+                Write-Log "  [SKIP]    $($_.LogName) - could not archive" "DarkGray"
             }
         }
 
@@ -419,8 +419,8 @@ if ($Mode -eq "Deep") {
     Write-Log "  [OK]     Event log archives pruned (>6 months)" "Green"
 
 
-    # ─── 16. SERVICE DRIFT CHECK ─────────────────────────────────────────────
-    Write-Section "16/19  Service Drift — Re-disabling Crept-Back Services"
+    # --- 16. SERVICE DRIFT CHECK ---------------------------------------------
+    Write-Section "16/19  Service Drift - Re-disabling Crept-Back Services"
     # Windows updates and app installers sometimes silently re-enable
     # disabled services. This section detects and corrects drift automatically.
 
@@ -435,14 +435,14 @@ if ($Mode -eq "Deep") {
         "MicrosoftCopilotElevationService", # Copilot elevation service
         "CDPSvc",                           # Connected Devices Platform (Phone Link)
         "PhoneSvc",                         # Phone Link
-        "Ollama"                            # Local LLM server — start manually when needed
+        "Ollama"                            # Local LLM server - start manually when needed
     )
 
     $driftFound = 0
     foreach ($svcName in $shouldBeDisabled) {
         $svc = Get-Service $svcName -ErrorAction SilentlyContinue
         if ($svc -and $svc.StartType -ne "Disabled" -and $svc.StartType -ne "Manual") {
-            Write-Log "  [DRIFT]  $($svc.DisplayName) is '$($svc.StartType)' — re-disabling" "Yellow"
+            Write-Log "  [DRIFT]  $($svc.DisplayName) is '$($svc.StartType)' - re-disabling" "Yellow"
             Stop-Service $svc.Name -Force -ErrorAction SilentlyContinue
             Set-Service  $svc.Name -StartupType Disabled -ErrorAction SilentlyContinue
             $driftFound++
@@ -465,8 +465,8 @@ if ($Mode -eq "Deep") {
     }
 
 
-    # ─── 17. .NET SDK REPORT ─────────────────────────────────────────────────
-    Write-Section "17/19  .NET SDK — Installed Version Report"
+    # --- 17. .NET SDK REPORT -------------------------------------------------
+    Write-Section "17/19  .NET SDK - Installed Version Report"
     Write-Log "  Installed SDKs:" "Gray"
     dotnet --list-sdks 2>&1 | ForEach-Object { Write-Log "    $_" "DarkGray" }
     Write-Log ""
@@ -476,7 +476,7 @@ if ($Mode -eq "Deep") {
     Write-Log "    & 'C:\Program Files (x86)\dotnet-core-uninstall\dotnet-core-uninstall.exe' list" "White"
 
 
-    # ─── 18. LARGE FILE REPORT ───────────────────────────────────────────────
+    # --- 18. LARGE FILE REPORT -----------------------------------------------
     Write-Section "18/19  Large File Report (>500MB)"
     Write-Log "  Scanning profile for large files..." "Gray"
     $largeFiles = Get-ChildItem "C:\Users\$env:USERNAME" -Recurse -File -ErrorAction SilentlyContinue |
@@ -494,20 +494,20 @@ if ($Mode -eq "Deep") {
     }
 
 
-    # ─── 19. DISK HEALTH CHECK ───────────────────────────────────────────────
+    # --- 19. DISK HEALTH CHECK -----------------------------------------------
     Write-Section "19/19  Disk Health"
     Get-PhysicalDisk | ForEach-Object {
         $color = if ($_.HealthStatus -eq "Healthy") { "Green" } else { "Red" }
         Write-Log ("  {0,-40} {1,-8} {2}" -f $_.FriendlyName, $_.MediaType, $_.HealthStatus) $color
     }
 
-    # runs a quick scan of Windows Defender to check for malware — not a full scan since this is meant to be run weekly in Quick mode as well
+    # runs a quick scan of Windows Defender to check for malware - not a full scan since this is meant to be run weekly in Quick mode as well
     Start-MpScan -ScanType QuickScan
 
 } # end Deep mode
 
 
-# ─── SUMMARY ─────────────────────────────────────────────────────────────────
+# --- SUMMARY -----------------------------------------------------------------
 $elapsed  = [math]::Round(((Get-Date) - $StartTime).TotalMinutes, 1)
 $sections = if ($Mode -eq "Quick") { "10" } else { "19" }
 

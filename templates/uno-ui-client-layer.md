@@ -29,7 +29,7 @@ public partial record {Entity} : IEntityBase
     {
         Id = data.Id ?? Guid.Empty;
         Name = data.Name;
-        // Map all properties from data → record
+        // Map all properties from data -> record
     }
 
     // Default constructor for create scenarios
@@ -41,7 +41,7 @@ public partial record {Entity} : IEntityBase
     // ... add all entity properties
 
     // Computed properties (display helpers)
-    // public string DisplayText => $"{Name} — {SomeOtherProp}";
+    // public string DisplayText => $"{Name} - {SomeOtherProp}";
 
     /// <summary>
     /// Convert back to Kiota wire DTO for POST/PUT requests.
@@ -50,14 +50,14 @@ public partial record {Entity} : IEntityBase
     {
         Id = Id,
         Name = Name,
-        // Map all properties from record → data
+        // Map all properties from record -> data
     };
 }
 ```
 
 ### Model Rules
 
-- Use `partial record` with `init` properties — immutable by default
+- Use `partial record` with `init` properties - immutable by default
 - Provide an `internal` constructor that accepts the Kiota wire DTO (`{Entity}Data`)
 - Provide a `ToData()` method to convert back to the wire DTO
 - Keep computed/display properties as expression-bodied getters
@@ -167,10 +167,10 @@ public class {Entity}Service(
 - All methods return `ValueTask` or `ValueTask<T>`
 - Always accept `CancellationToken ct` as the last parameter
 - Return `IImmutableList<T>` (never `List<T>` or `IEnumerable<T>`)
-- Map Kiota wire DTOs → client records via constructor: `new {Entity}(data)`
-- Map client records → wire DTOs via `entity.ToData()` for POST/PUT
+- Map Kiota wire DTOs -> client records via constructor: `new {Entity}(data)`
+- Map client records -> wire DTOs via `entity.ToData()` for POST/PUT
 - Send `EntityMessage<T>` via `IMessenger` after every mutation (create, update, delete)
-- Register as singleton in `App.xaml.host.cs` → `ConfigureServices`
+- Register as singleton in `App.xaml.host.cs` -> `ConfigureServices`
 
 ## Shared Interfaces
 

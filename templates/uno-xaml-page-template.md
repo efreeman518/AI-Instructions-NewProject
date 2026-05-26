@@ -9,8 +9,8 @@
 ## Design Standard: Single Entity Page
 
 Each main entity gets **two** XAML pages:
-- **`{Entity}ListPage`** — list/search, navigates to entity page
-- **`{Entity}Page`** — unified add/edit with form fields + children (comments, checklist, etc.)
+- **`{Entity}ListPage`** - list/search, navigates to entity page
+- **`{Entity}Page`** - unified add/edit with form fields + children (comments, checklist, etc.)
 
 This replaces the old 3-page pattern (List + Detail + Create/Edit). The entity page:
 - Shows form fields (title, description, etc.) always
@@ -154,7 +154,7 @@ List item templates must not use `Button` as the root element. Put navigation at
                 </StackPanel>
             </Grid>
 
-            <!-- ═══════════ Form Fields ═══════════ -->
+            <!-- =========== Form Fields =========== -->
             <Border Style="{StaticResource InlineFormCardStyle}">
                 <utu:AutoLayout Spacing="16">
                     <TextBox Header="Title"
@@ -170,7 +170,7 @@ List item templates must not use `Button` as the root element. Put navigation at
                 </utu:AutoLayout>
             </Border>
 
-            <!-- ═══════════ Children Section (edit mode only) ═══════════ -->
+            <!-- =========== Children Section (edit mode only) =========== -->
             <!-- Repeat this pattern for each child collection (comments, checklist items, etc.) -->
             <utu:CardContentControl Style="{StaticResource FilledCardContentControlStyle}"
                                     Visibility="{Binding IsEditMode}">

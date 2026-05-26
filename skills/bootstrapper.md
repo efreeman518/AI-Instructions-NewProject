@@ -5,7 +5,7 @@
 
 ## Overview
 
-The **Bootstrapper project** is the centralized DI registration hub. It wires up all non-host-specific services (domain, application, infrastructure) so they can be shared across multiple deployable hosts — API, Function App, Scheduler, and integration tests — without duplicating registration code.
+The **Bootstrapper project** is the centralized DI registration hub. It wires up all non-host-specific services (domain, application, infrastructure) so they can be shared across multiple deployable hosts - API, Function App, Scheduler, and integration tests - without duplicating registration code.
 
 ## Project Structure
 
@@ -15,18 +15,18 @@ The **Bootstrapper project** is the centralized DI registration hub. It wires up
 
 ```
 Host/{Host}.Bootstrapper/
-├── RegisterServices.cs                       # Partial class - public orchestration methods
-├── Registration/
-│   ├── RegisterServices.Application.cs        # App services, message handlers
-│   ├── RegisterServices.Caching.cs            # FusionCache + Redis backplane
-│   ├── RegisterServices.Database.cs           # DbContext pooling, repositories
-│   ├── RegisterServices.Infrastructure.cs     # Blob storage, service bus, health checks
-│   └── RegisterServices.RequestContext.cs     # Scoped IRequestContext factory
-├── IStartupTask.cs                           # Startup task interface
-├── IHostExtensions.cs                        # Host extension for running startup tasks
-└── StartupTasks/
-    ├── ApplyEFMigrationsStartup.cs
-    └── WarmupDependencies.cs
+|-- RegisterServices.cs                       # Partial class - public orchestration methods
+|-- Registration/
+|   |-- RegisterServices.Application.cs        # App services, message handlers
+|   |-- RegisterServices.Caching.cs            # FusionCache + Redis backplane
+|   |-- RegisterServices.Database.cs           # DbContext pooling, repositories
+|   |-- RegisterServices.Infrastructure.cs     # Blob storage, service bus, health checks
+|   `-- RegisterServices.RequestContext.cs     # Scoped IRequestContext factory
+|-- IStartupTask.cs                           # Startup task interface
+|-- IHostExtensions.cs                        # Host extension for running startup tasks
+`-- StartupTasks/
+    |-- ApplyEFMigrationsStartup.cs
+    `-- WarmupDependencies.cs
 ```
 
 ## Registration Pattern
@@ -36,7 +36,7 @@ Host/{Host}.Bootstrapper/
 > See [../patterns/data-layer-wiring.md](../patterns/data-layer-wiring.md) for full registration pattern.
 
 ```csharp
-// Compact pattern — see reference app (TaskFlow) for full implementation
+// Compact pattern - see reference app (TaskFlow) for full implementation
 public static partial class RegisterServices
 {
     public static IServiceCollection RegisterDomainServices(this IServiceCollection services, IConfiguration config)
@@ -96,14 +96,14 @@ using EF.BackgroundServices.InternalMessageBus;
 using EF.BackgroundServices.Work;
 ```
 
-> **Note:** `AddBackgroundTaskQueue()` and `AddChannelBackgroundTaskQueue()` register different concrete types. If `AuditInterceptor` expects `ChannelBackgroundTaskQueue`, use `AddChannelBackgroundTaskQueueWithShutdownHandling()` — it registers both the queue and the hosted service that drains it on shutdown.
+> **Note:** `AddBackgroundTaskQueue()` and `AddChannelBackgroundTaskQueue()` register different concrete types. If `AuditInterceptor` expects `ChannelBackgroundTaskQueue`, use `AddChannelBackgroundTaskQueueWithShutdownHandling()` - it registers both the queue and the hosted service that drains it on shutdown.
 ```
 
 ## Conditional (Per-Host) Dependency Pattern
 
 Not every host wires every infrastructure client. The Functions host commonly omits `CosmosClient`, the Scheduler omits Service Bus senders, and Lite-mode API skips Redis. Any **shared** registration that depends on a client only some hosts have **must be opt-in**, not part of `RegisterInfrastructureServices` / `RegisterApplicationServices`.
 
-**Symptom of getting this wrong:** `UseDefaultServiceProvider(opt => opt.ValidateOnBuild = true)` throws at host startup with `"Unable to resolve service for type 'Microsoft.Azure.Cosmos.CosmosClient' while attempting to activate '{App}.Infrastructure.Cosmos.ActivityFeedRepository'."` — a host that never reads activity feed still fails to start because the registration is unconditional.
+**Symptom of getting this wrong:** `UseDefaultServiceProvider(opt => opt.ValidateOnBuild = true)` throws at host startup with `"Unable to resolve service for type 'Microsoft.Azure.Cosmos.CosmosClient' while attempting to activate '{App}.Infrastructure.Cosmos.ActivityFeedRepository'."` - a host that never reads activity feed still fails to start because the registration is unconditional.
 
 ### Rule
 
@@ -124,26 +124,26 @@ public static partial class RegisterServices
 ```
 
 ```csharp
-// Host/{App}.Api/Program.cs — opts in only when Cosmos is wired
+// Host/{App}.Api/Program.cs - opts in only when Cosmos is wired
 builder.AddAzureCosmosClient("ActivityFeedCosmos"); // Aspire-injected
 builder.Services
     .RegisterInfrastructureServices(config)
     .RegisterApplicationServices(config)
     .RegisterActivityFeedServices(config);          // <- per-host opt-in
 
-// Host/{App}.Functions/Program.cs — does NOT call RegisterActivityFeedServices
+// Host/{App}.Functions/Program.cs - does NOT call RegisterActivityFeedServices
 // because it has no AddAzureCosmosClient and no consumer of the feed.
 ```
 
-**Do not** rely on `TryAdd*` or runtime null-checks inside `RegisterInfrastructureServices` to "auto-detect" whether the client is present. `ValidateOnBuild` runs before any first request, sees the unsatisfied `CosmosClient` dependency, and fails — comments like `// registered when a CosmosClient is in the container` are not enforcement.
+**Do not** rely on `TryAdd*` or runtime null-checks inside `RegisterInfrastructureServices` to "auto-detect" whether the client is present. `ValidateOnBuild` runs before any first request, sees the unsatisfied `CosmosClient` dependency, and fails - comments like `// registered when a CosmosClient is in the container` are not enforcement.
 
-**Naming convention:** one feature → one `RegisterServices.{Feature}.cs` partial → one `Register{Feature}Services` extension. Apply to: Cosmos-backed features (activity feeds, audit ingest), Service Bus publishers/processors, Redis-only services (distributed locks, backplane caches), Event Hub producers/processors, and AI Search/Foundry clients.
+**Naming convention:** one feature -> one `RegisterServices.{Feature}.cs` partial -> one `Register{Feature}Services` extension. Apply to: Cosmos-backed features (activity feeds, audit ingest), Service Bus publishers/processors, Redis-only services (distributed locks, backplane caches), Event Hub producers/processors, and AI Search/Foundry clients.
 
 Record per-host opt-ins in `HANDOFF.md` under a `featureOptIns:` block so the next session knows which hosts call which extensions without re-reading every `Program.cs`.
 
 ### `IOptions<T>` Settings Types Must Be Instantiable
 
-Any class bound via `IOptions<T>` / `Configure<T>` must be **concrete and parameterless-constructible**. `OptionsFactory<T>.Create` calls `Activator.CreateInstance<T>()` before the configure delegate runs, so an `abstract` settings base (even one with no abstract members) crashes the first consumer with `MissingMethodException: Cannot dynamically create an instance of type '…SettingsBase'`. Either drop `abstract` from the base or make the consumer generic in `TSettings`; do not bind via `IOptions<AbstractBase>`.
+Any class bound via `IOptions<T>` / `Configure<T>` must be **concrete and parameterless-constructible**. `OptionsFactory<T>.Create` calls `Activator.CreateInstance<T>()` before the configure delegate runs, so an `abstract` settings base (even one with no abstract members) crashes the first consumer with `MissingMethodException: Cannot dynamically create an instance of type '...SettingsBase'`. Either drop `abstract` from the base or make the consumer generic in `TSettings`; do not bind via `IOptions<AbstractBase>`.
 
 ### Symmetric `Configure<T>` Across Hosts
 
@@ -161,7 +161,7 @@ services.Configure<ServiceBusSenderSettingsBase>(opts =>
 });
 ```
 
-The Phase 5c gate (`function-app`, `background-services`, `messaging`) must verify that any host registering an `ISender` / `IProcessor` also configures its settings — a green build does not catch this.
+The Phase 5c gate (`function-app`, `background-services`, `messaging`) must verify that any host registering an `ISender` / `IProcessor` also configures its settings - a green build does not catch this.
 
 ## Startup Task Pattern
 
@@ -240,7 +240,7 @@ builder.Services
     .RegisterDomainServices(builder.Configuration)
     .RegisterApplicationServices(builder.Configuration)
     .RegisterBackgroundServices(builder.Configuration);
-    // No RegisterApiServices — functions don't need endpoints/auth pipeline
+    // No RegisterApiServices - functions don't need endpoints/auth pipeline
 
 var app = builder.Build();
 app.AutoRegisterMessageHandlers();
@@ -249,14 +249,14 @@ await app.RunAsync();
 
 ## Key Principles
 
-1. **One Bootstrapper project** — All non-host-specific DI goes here
-2. **Host projects only add host-specific concerns** — API adds endpoints/auth, Functions add triggers, etc.
-3. **Extension method chaining** — Each `Register*()` returns `IServiceCollection` for fluent chaining
-4. **Private helper methods** — Keep the public surface clean; group related registrations
-5. **Configuration-driven** — Settings classes loaded from `IConfiguration` sections; bootstrapper reads config, never owns per-host defaults
-6. **Startup tasks run after Build()** — Before `RunAsync()`, migrations applied, caches warmed
-7. **Every host must supply its config** — Any key read inside `RegisterInfrastructureServices` (or any shared registration method) must exist in the `appsettings*.json` of every host that calls it: API, Scheduler, and Functions all need the same config keys
-8. **Build after DI changes** — Small registration changes (factory lambdas, new `using` imports, constructor signature changes) can break compile. Run a focused host build immediately after any registration edit to catch failures early
+1. **One Bootstrapper project** - All non-host-specific DI goes here
+2. **Host projects only add host-specific concerns** - API adds endpoints/auth, Functions add triggers, etc.
+3. **Extension method chaining** - Each `Register*()` returns `IServiceCollection` for fluent chaining
+4. **Private helper methods** - Keep the public surface clean; group related registrations
+5. **Configuration-driven** - Settings classes loaded from `IConfiguration` sections; bootstrapper reads config, never owns per-host defaults
+6. **Startup tasks run after Build()** - Before `RunAsync()`, migrations applied, caches warmed
+7. **Every host must supply its config** - Any key read inside `RegisterInfrastructureServices` (or any shared registration method) must exist in the `appsettings*.json` of every host that calls it: API, Scheduler, and Functions all need the same config keys
+8. **Build after DI changes** - Small registration changes (factory lambdas, new `using` imports, constructor signature changes) can break compile. Run a focused host build immediately after any registration edit to catch failures early
 
 ---
 
@@ -273,7 +273,7 @@ After generating the Bootstrapper, confirm:
 - [ ] `AutoRegisterMessageHandlers()` called after `Build()` to bind handler assemblies into `IInternalMessageBus`
 - [ ] FusionCache registered with Redis backplane (if caching is enabled)
 - [ ] Startup tasks registered as `IStartupTask` (migrations, cache warmup)
-- [ ] No host-specific concerns (no endpoints, no triggers, no YARP) — those belong in the host project
+- [ ] No host-specific concerns (no endpoints, no triggers, no YARP) - those belong in the host project
 - [ ] Cross-references: Every service/repository in [solution-structure.md](solution-structure.md) reference map is registered here
 
 ---

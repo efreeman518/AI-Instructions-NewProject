@@ -7,9 +7,9 @@
 ### For the Scaffolding Agent (writer)
 
 - **In an installed consumer app:** append findings to `.scaffold/INSTRUCTION-GAPS.md` (create the `.scaffold/` directory at project root if absent). Do not modify files under `.instructions/`.
-- **In this instruction repository:** append findings here as you encounter them — don't wait until the end of a session.
+- **In this instruction repository:** append findings here as you encounter them - don't wait until the end of a session.
 - **Don't modify instruction files directly** during scaffolding. Capture the finding instead.
-- Each finding should be **actionable** — reference specific file paths, section names, and line ranges when possible.
+- Each finding should be **actionable** - reference specific file paths, section names, and line ranges when possible.
 - Use the priority levels to help the maintenance agent triage work.
 - **During MCP discovery** (before each phase), log any new, deprecated, or changed MCP servers here so the maintenance agent can update the static MCP tables in `README.md` and Phase 3 capture guidance in `ai/implementation-plan.md` when needed. Tag MCP findings with `[MCP]` in the title.
 
@@ -17,13 +17,13 @@
 
 Your job is to read the findings below and apply approved changes to the instruction files in this repository. Follow these rules:
 
-1. **Read all findings** before making changes — some may conflict or supersede each other.
-2. **Group related findings** — multiple findings about the same file/section should be applied as a single coherent edit.
-3. **Preserve existing style and tone** — match the voice, formatting, and structure of the target file.
-4. **Update cross-references** — if a change in one file affects references in other files (e.g., adding a new skill creates a new row in the Phase 5 file table in `ai/SKILL.md`), update all references.
-5. **Validate consistency** — after making changes, check that the modified instructions don't contradict other instruction files.
-6. **Mark findings as applied** — after applying a finding, change its status from `pending` to `applied` and add the date.
-7. **Reject with reason** — if a finding is incorrect or not applicable, change its status to `rejected` with a brief explanation.
+1. **Read all findings** before making changes - some may conflict or supersede each other.
+2. **Group related findings** - multiple findings about the same file/section should be applied as a single coherent edit.
+3. **Preserve existing style and tone** - match the voice, formatting, and structure of the target file.
+4. **Update cross-references** - if a change in one file affects references in other files (e.g., adding a new skill creates a new row in the Phase 5 file table in `ai/SKILL.md`), update all references.
+5. **Validate consistency** - after making changes, check that the modified instructions don't contradict other instruction files.
+6. **Mark findings as applied** - after applying a finding, change its status from `pending` to `applied` and add the date.
+7. **Reject with reason** - if a finding is incorrect or not applicable, change its status to `rejected` with a brief explanation.
 
 ### Priority Levels
 
@@ -44,7 +44,7 @@ Your job is to read the findings below and apply approved changes to the instruc
 - **File(s) to update:** `skills/{file}.md`, `templates/{file}.md`
 - **Section:** {section name or heading within the file}
 - **Current behavior:** {what the instructions say or omit}
-- **Recommended change:** {what should be added, changed, or removed — be specific}
+- **Recommended change:** {what should be added, changed, or removed - be specific}
 - **Reason:** {why this improves future scaffolding}
 - **Priority:** critical | high | medium | low
 - **Discovered during:** {which phase or task surfaced this finding}
@@ -60,7 +60,7 @@ Your job is to read the findings below and apply approved changes to the instruc
 - **Recommended change:** {add to Essential/Recommended/Optional tier, update description, etc.}
 - **Reason:** {why this MCP improves the scaffolding workflow}
 - **Priority:** medium | low
-- **Discovered during:** {phase name — e.g., "Phase 5 MCP discovery before Uno UI scaffolding"}
+- **Discovered during:** {phase name - e.g., "Phase 5 MCP discovery before Uno UI scaffolding"}
 -->
 
 ---

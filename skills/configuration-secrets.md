@@ -5,11 +5,11 @@
 
 ## Overview
 
-Configuration flows through a strict hierarchy. Secrets are never committed — use User Secrets locally and Key Vault with managed identity in Azure.
+Configuration flows through a strict hierarchy. Secrets are never committed - use User Secrets locally and Key Vault with managed identity in Azure.
 
 See appsettings-template for config file patterns.
 
-Base types (`IKeyVaultManager`, `IKeyVaultCryptoUtility`) come from the `EF.KeyVault` package — see [package-dependencies.md](package-dependencies.md) and the [EF.Packages repo](https://github.com/efreeman518/EF.Packages) for full API details.
+Base types (`IKeyVaultManager`, `IKeyVaultCryptoUtility`) come from the `EF.KeyVault` package - see [package-dependencies.md](package-dependencies.md) and the [EF.Packages repo](https://github.com/efreeman518/EF.Packages) for full API details.
 
 ---
 
@@ -127,7 +127,7 @@ services.Configure<NotificationOptions>(config.GetSection(NotificationOptions.Se
 
 ### PostConfigure
 
-Use `PostConfigure<T>()` when settings need environment-specific overrides after initial binding — for example, swapping webhook URLs in development:
+Use `PostConfigure<T>()` when settings need environment-specific overrides after initial binding - for example, swapping webhook URLs in development:
 
 ```csharp
 services.PostConfigure<WebhookSettings>(options =>
@@ -188,7 +188,7 @@ static DefaultAzureCredential CreateAzureCredential(IConfiguration config)
 
 - `ManagedIdentityClientId`: set for user-assigned managed identity in Azure.
 - `SharedTokenCacheTenantId`: set for local dev when the default tenant doesn't match.
-- Omit both in simple Aspire dev — `DefaultAzureCredential` chains through developer credentials automatically.
+- Omit both in simple Aspire dev - `DefaultAzureCredential` chains through developer credentials automatically.
 
 ---
 

@@ -1,4 +1,4 @@
-# Tech Design Template — `docs/tech-design.md` + `docs/tech-design.html`
+# Tech Design Template - `docs/tech-design.md` + `docs/tech-design.html`
 
 Scaffold output: `docs/tech-design.md` and `docs/tech-design.html` in the target project, with rendered SVGs under `docs/assets/tech-design-diagrams/`. Diagrams follow the source-plus-SVG pattern in [../support/tech-design-diagrams.md](../support/tech-design-diagrams.md).
 
@@ -11,20 +11,20 @@ Reference example: <https://github.com/efreeman518/AI-Instructions-ReferenceApp/
 
 ## What It Does NOT Own
 
-- The diagram list. Section count and diagram inventory are **project-driven** — generate sections that the scaffolded code actually needs, named from the entity list (`.scaffold/domain-specification.yaml`), the resource list (`.scaffold/resource-implementation.yaml`), and the active design decisions (`.scaffold/DESIGN-DECISIONS.md`). Do not pad with stub sections for unused subsystems.
+- The diagram list. Section count and diagram inventory are **project-driven** - generate sections that the scaffolded code actually needs, named from the entity list (`.scaffold/domain-specification.yaml`), the resource list (`.scaffold/resource-implementation.yaml`), and the active design decisions (`.scaffold/DESIGN-DECISIONS.md`). Do not pad with stub sections for unused subsystems.
 
 ## Generation Rules
 
-1. Every diagram embeds an `.svg` from `docs/assets/tech-design-diagrams/` — never an inline `mermaid` fence. Filenames follow `{NN}-{kebab-name}.{mmd,svg}` (see [../support/tech-design-diagrams.md](../support/tech-design-diagrams.md) § Filename Convention).
+1. Every diagram embeds an `.svg` from `docs/assets/tech-design-diagrams/` - never an inline `mermaid` fence. Filenames follow `{NN}-{kebab-name}.{mmd,svg}` (see [../support/tech-design-diagrams.md](../support/tech-design-diagrams.md) section Filename Convention).
 2. Section headings use the numbered form (`## 2. {Section}`) so GitHub's auto-slugger produces `#2-{section}`.
-3. The HTML viewer references the **same** SVGs as the markdown — no second render pass.
+3. The HTML viewer references the **same** SVGs as the markdown - no second render pass.
 4. Replace `{ProjectName}` and other placeholders per [../ai/placeholder-tokens.md](../ai/placeholder-tokens.md).
 5. Run the render gate every time a `.mmd` file is added or edited. Run the final-doc validation before declaring the doc done.
 
 ## Markdown Doc Shell (`docs/tech-design.md`)
 
 ```md
-# {ProjectName} — Technical Design Document
+# {ProjectName} - Technical Design Document
 
 > **Audience**: Developers onboarding to the project
 > **Last updated**: {YYYY-MM}
@@ -63,7 +63,7 @@ N. [{Section title}](#n-{slug})
 <!-- Mermaid source: assets/tech-design-diagrams/{NN}-{kebab-name}.mmd -->
 ![{Title}](assets/tech-design-diagrams/{NN}-{kebab-name}.svg)
 
-> **Diagram legend:** {…}
+> **Diagram legend:** {...}
 
 ---
 
@@ -76,7 +76,7 @@ Cross-section references use the same slug form: `[See Section 11: Audit Strateg
 
 ## HTML Viewer Shell (`docs/tech-design.html`)
 
-Self-contained — no CDN, no build step. Open directly from the filesystem or serve as a static asset. The shell below is the minimum; layout/typography tokens match the GitHub dark palette and can be overridden per project.
+Self-contained - no CDN, no build step. Open directly from the filesystem or serve as a static asset. The shell below is the minimum; layout/typography tokens match the GitHub dark palette and can be overridden per project.
 
 ```html
 <!DOCTYPE html>
@@ -84,7 +84,7 @@ Self-contained — no CDN, no build step. Open directly from the filesystem or s
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{ProjectName} — Technical Design</title>
+<title>{ProjectName} - Technical Design</title>
 <style>
   :root {
     --bg: #0d1117; --surface: #161b22; --border: #30363d;
@@ -213,11 +213,11 @@ Self-contained — no CDN, no build step. Open directly from the filesystem or s
   </nav>
 
   <main class="content">
-    <h1>{ProjectName} — Technical Design Document</h1>
-    <p class="subtitle">Audience: developers onboarding to the project · Last updated: {YYYY-MM}</p>
+    <h1>{ProjectName} - Technical Design Document</h1>
+    <p class="subtitle">Audience: developers onboarding to the project - Last updated: {YYYY-MM}</p>
 
     <h2 id="1-overview">1. Overview</h2>
-    <!-- … -->
+    <!-- ... -->
 
     <h2 id="2-{slug}">2. {Section title}</h2>
     <p>{Intro.}</p>
@@ -231,16 +231,16 @@ Self-contained — no CDN, no build step. Open directly from the filesystem or s
 
 </div>
 
-<button class="to-top" id="toTop" aria-label="Back to top">↑</button>
+<button class="to-top" id="toTop" aria-label="Back to top">up</button>
 
 <div class="zoom-overlay" id="zoom" role="dialog" aria-modal="true" aria-label="Diagram viewer">
   <div class="zoom-stage" id="zoomStage">
     <div class="zoom-title" id="zoomTitle"></div>
     <div class="zoom-controls">
       <button data-act="zoom-in"  aria-label="Zoom in">+</button>
-      <button data-act="zoom-out" aria-label="Zoom out">−</button>
-      <button data-act="reset"    aria-label="Reset">⤾</button>
-      <button data-act="close"    aria-label="Close">×</button>
+      <button data-act="zoom-out" aria-label="Zoom out">-</button>
+      <button data-act="reset"    aria-label="Reset">-></button>
+      <button data-act="close"    aria-label="Close">x</button>
     </div>
     <img id="zoomImg" alt="" />
   </div>
@@ -378,18 +378,18 @@ Self-contained — no CDN, no build step. Open directly from the filesystem or s
 </html>
 ```
 
-The script is intentionally compact (~80 lines of JS, no dependencies). Drop it as-is — only the body markup is project-specific.
+The script is intentionally compact (~80 lines of JS, no dependencies). Drop it as-is - only the body markup is project-specific.
 
 ## When to Generate
 
-`docs/tech-design.md` is a Phase 5d deliverable. Generate it after `test-templates-quality` is in place and the scaffold has reached Definition of Done (see [../ai/SKILL.md](../ai/SKILL.md) § Scaffold Definition of Done). The doc reflects the *shipped* topology — sections whose backing code is not generated are dropped, not stubbed.
+`docs/tech-design.md` is a Phase 5d deliverable. Generate it after `test-templates-quality` is in place and the scaffold has reached Definition of Done (see [../ai/SKILL.md](../ai/SKILL.md) section Scaffold Definition of Done). The doc reflects the *shipped* topology - sections whose backing code is not generated are dropped, not stubbed.
 
 Generation order per session:
 
 1. Decide the section list from the actual scaffold output (entities, hosts, integrations, design decisions).
 2. Sketch each `.mmd` source per section need.
-3. Run the **render gate** (see [../support/tech-design-diagrams.md](../support/tech-design-diagrams.md) § Render Gate) to produce `.svg` siblings.
+3. Run the **render gate** (see [../support/tech-design-diagrams.md](../support/tech-design-diagrams.md) section Render Gate) to produce `.svg` siblings.
 4. Write `docs/tech-design.md` using the markdown shell above, embedding the rendered SVGs.
 5. Write `docs/tech-design.html` using the HTML viewer shell, mirroring the TOC.
-6. Run the **final-doc validation** — Mermaid-runtime grep, `git diff --check`, SVG-reference check, TOC anchor check.
+6. Run the **final-doc validation** - Mermaid-runtime grep, `git diff --check`, SVG-reference check, TOC anchor check.
 7. Spot-check the GitHub render after pushing and open `tech-design.html` from disk to confirm zoom/scroll-spy/shortcuts work offline.

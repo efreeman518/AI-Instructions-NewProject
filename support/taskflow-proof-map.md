@@ -2,11 +2,11 @@
 
 Use this file when you need to prove that an instruction, pattern, or scaffolded output already exists in the TaskFlow reference app.
 
-**Local sibling clone preferred:** if `../AI-Instructions-ReferenceApp/` exists relative to the target project's parent, read TaskFlow files via the Read tool — paths in the proof table below are relative to the TaskFlow repo root, so prefix with `../AI-Instructions-ReferenceApp/`. Fall back to GitHub MCP only when the local clone is absent: <https://github.com/efreeman518/AI-Instructions-ReferenceApp>
+**Local sibling clone preferred:** if `../AI-Instructions-ReferenceApp/` exists relative to the target project's parent, read TaskFlow files via the Read tool - paths in the proof table below are relative to the TaskFlow repo root, so prefix with `../AI-Instructions-ReferenceApp/`. Fall back to GitHub MCP only when the local clone is absent: <https://github.com/efreeman518/AI-Instructions-ReferenceApp>
 
 Load this file on demand. Keep it out of the default phase context.
 
-> **TaskFlow is a multi-tenant application.** It demonstrates tenant boundary validation, tenant query filters, tenant-scoped services, and global-admin bypass. When scaffolding a single-tenant app, the multi-tenant patterns shown in TaskFlow do not apply — see `// [MULTI-TENANT]` markers in the service template.
+> **TaskFlow is a multi-tenant application.** It demonstrates tenant boundary validation, tenant query filters, tenant-scoped services, and global-admin bypass. When scaffolding a single-tenant app, the multi-tenant patterns shown in TaskFlow do not apply - see `// [MULTI-TENANT]` markers in the service template.
 
 ---
 
@@ -23,7 +23,7 @@ Load this file on demand. Keep it out of the default phase context.
 
 | Phase / Concern | TaskFlow area to inspect | What it proves |
 |---|---|---|
-| Phase 1 shared language | `.scaffold/UBIQUITOUS-LANGUAGE.md`, `.scaffold/DESIGN-DECISIONS.md`, `.scaffold/domain-specification.yaml`, `.scaffold/implementation-plan.md` (TaskFlow itself currently keeps these at project root — new scaffolds put them under `.scaffold/`) | Shared terminology, rejected synonyms, decision dependencies, and vertical slice order are explicit before code generation. |
+| Phase 1 shared language | `.scaffold/UBIQUITOUS-LANGUAGE.md`, `.scaffold/DESIGN-DECISIONS.md`, `.scaffold/domain-specification.yaml`, `.scaffold/implementation-plan.md` (TaskFlow itself currently keeps these at project root - new scaffolds put them under `.scaffold/`) | Shared terminology, rejected synonyms, decision dependencies, and vertical slice order are explicit before code generation. |
 | Phase 4 contract scaffolding | `src/Domain/TaskFlow.Domain.Model`, `src/Application/TaskFlow.Application.Contracts`, `src/Application/TaskFlow.Application.Models`, `src/Test/Test.Support` | Entity shells, contracts, DTOs, builders, and test infrastructure exist before TDD starts. |
 | Phase 5a domain model | `src/Domain/TaskFlow.Domain.Model` | `Create()` / `Update()` patterns, value objects, domain rules, and aggregate shape. |
 | Phase 5a domain shared | `src/Domain/TaskFlow.Domain.Shared` | Shared enums, value-object base types, cross-aggregate primitives. |
@@ -45,7 +45,7 @@ Load this file on demand. Keep it out of the default phase context.
 | Phase 5c React UI | `src/UI/TaskFlow.React` | React + TypeScript Vite SPA alternative; same Gateway-backed client flow, Vite proxy/Aspire JavaScript host wiring, dark-mode persistence, and full workflow parity. |
 | Phase 4 Test infrastructure | `src/Test/Test.Support/WebApplicationFactoryBase.cs`, `src/Test/Test.Endpoints/CustomApiFactory.cs`, `src/Test/Test.E2E/SqlApiFactory.cs`, `src/Test/Test.Integration/AspireTestHost.cs`, `src/Test/Test.Integration/DbContextFactory.cs` | Shared WAF base constrained to `DbContextBase<string, Guid?>`; thin derived factories per harness; Aspire fixture with full distributed-app lifecycle + per-call `.WaitAsync` discipline; integration `DbContextFactory` piggybacks on `AspireTestHost.ConnectionString`. |
 | Phase 5a integration tier | `src/Test/Test.Integration/MigrationAndRepositoryTests.cs` | EF migrations apply against real SQL; CRUD + child includes + M:N junction navigation + tenant query filter + polymorphic-attachment index checks against the migrated schema. |
-| Phase 5b integration tier | `src/Test/Test.Integration/AuditLogRepositoryAzuriteTests.cs`, `src/Test/Test.Integration/ApiAuditPipelineTests.cs`, `src/Test/Test.Integration/DomainEventPipelineTests.cs` | Audit-pipeline against real Azurite (partition/row key shapes); full HTTP request → audit middleware → Azurite read-back with polling helper; projection pipeline reads through query-side repos and emits view documents. |
+| Phase 5b integration tier | `src/Test/Test.Integration/AuditLogRepositoryAzuriteTests.cs`, `src/Test/Test.Integration/ApiAuditPipelineTests.cs`, `src/Test/Test.Integration/DomainEventPipelineTests.cs` | Audit-pipeline against real Azurite (partition/row key shapes); full HTTP request -> audit middleware -> Azurite read-back with polling helper; projection pipeline reads through query-side repos and emits view documents. |
 | Phase 5b E2E tier | `src/Test/Test.E2E/SqlApiFactory.cs`, `src/Test/Test.E2E/TaskItemCrudE2ETests.cs` | Static Testcontainers SQL lifecycle on the derived `SqlApiFactory`; multi-endpoint workflows (CRUD round-trip, paged search across distinct pages, child-aggregate lifecycles) against real SQL. |
 | Mapper parity (consolidated) | `src/Test/Test.Unit/Mappers/MapperProjectionParityTests.cs` | Single class pinning compile-projection / `ToDto` agreement for every mapper + inlined-child parity for aggregate roots + owned-type flattening parity. |
 | Phase 5d quality (.NET test projects) | `src/Test/Test.Unit`, `src/Test/Test.Integration`, `src/Test/Test.Endpoints`, `src/Test/Test.E2E`, `src/Test/Test.Architecture`, `src/Test/Test.Load`, `src/Test/Test.Benchmarks`, `src/Test/Test.Support` | `dotnet test`-runnable test project layout and quality-gate coverage. |
@@ -99,11 +99,11 @@ Use these links first. If a branch or path has moved, search inside the same rep
 
 ## High-Value Proof Checks
 
-- **Multi-tenant proof:** TaskFlow demonstrates full multi-tenancy — `ITenantEntity<Guid>`, `ITenantBoundaryValidator`, `ValidationHelper`, `TenantBoundaryLoggingExtensions`, tenant query filters, tenant stamping, and global-admin bypass. Not all scaffolds require multi-tenancy.
+- **Multi-tenant proof:** TaskFlow demonstrates full multi-tenancy - `ITenantEntity<Guid>`, `ITenantBoundaryValidator`, `ValidationHelper`, `TenantBoundaryLoggingExtensions`, tenant query filters, tenant stamping, and global-admin bypass. Not all scaffolds require multi-tenancy.
 - **Service pattern proof:** TaskFlow services use `BuildResponse` helper, `ErrorConstants.ERROR_ITEM_NOTFOUND`, `nameof(Entity)`, `[LoggerMessage]` source-gen logging, and `DefaultRequest<T>`/`DefaultResponse<T>` as `record` types.
 - **Dual DbContext proof:** TaskFlow uses `TaskFlowDbContextTrxn` for writes and `TaskFlowDbContextQuery` for read-only/no-tracking access.
 - **Repository proof:** TaskFlow splits repository contracts and implementations into transaction and query variants.
-- **Middleware proof:** The API pipeline is ordered as security headers → correlation ID → exception handling → rate limiting → auth → gateway claim enrichment → authorization → endpoints.
+- **Middleware proof:** The API pipeline is ordered as security headers -> correlation ID -> exception handling -> rate limiting -> auth -> gateway claim enrichment -> authorization -> endpoints.
 - **Gateway proof:** The gateway forwards bearer tokens and original claims through an encoded header.
 - **Scheduler proof:** TickerQ jobs are registered as explicit scheduled handlers, not hidden inside random hosted services.
 - **Scaffold-auth proof:** Local/dev completion does not require live cloud auth; scaffold auth supplies trusted claims until Phase 5e finalizes identity.

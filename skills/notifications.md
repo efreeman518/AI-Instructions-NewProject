@@ -1,6 +1,6 @@
 # Notifications
 
-Reference patterns: [../ai/SKILL.md](../ai/SKILL.md) § Non-Negotiables (pattern index).
+Reference patterns: [../ai/SKILL.md](../ai/SKILL.md) section Non-Negotiables (pattern index).
 
 ## Purpose
 
@@ -29,25 +29,25 @@ Use integrated for low/moderate throughput; standalone for high volume or operat
 
 ```
 src/Infrastructure/{Project}.Infrastructure.Notification/
-├── ServiceCollectionExtensions.cs
-├── INotificationService.cs
-├── NotificationService.cs
-├── NotificationServiceSettings.cs
-├── Configuration/NotificationOptions.cs
-├── Model/
-├── Providers/
-└── Exceptions/
+|-- ServiceCollectionExtensions.cs
+|-- INotificationService.cs
+|-- NotificationService.cs
+|-- NotificationServiceSettings.cs
+|-- Configuration/NotificationOptions.cs
+|-- Model/
+|-- Providers/
+`-- Exceptions/
 ```
 
 ### Standalone host (optional)
 
 ```
 src/Host/{Host}.Notification/
-├── Program.cs
-├── RegisterNotificationServices.cs
-├── Endpoints/
-├── Services/
-└── Telemetry/
+|-- Program.cs
+|-- RegisterNotificationServices.cs
+|-- Endpoints/
+|-- Services/
+`-- Telemetry/
 ```
 
 ---
@@ -78,7 +78,7 @@ public static IServiceCollection AddNotificationInfrastructure(
 {
     var notificationSection = config.GetSection("Notification");
 
-    // Email provider — register only when config exists
+    // Email provider - register only when config exists
     var emailSection = notificationSection.GetSection("Email");
     if (emailSection.Exists())
     {
@@ -94,7 +94,7 @@ public static IServiceCollection AddNotificationInfrastructure(
         };
     }
 
-    // SMS provider — register only when config exists
+    // SMS provider - register only when config exists
     var smsSection = notificationSection.GetSection("Sms");
     if (smsSection.Exists())
     {
@@ -109,7 +109,7 @@ public static IServiceCollection AddNotificationInfrastructure(
         };
     }
 
-    // Unified service — always registered; graceful no-op when providers are absent
+    // Unified service - always registered; graceful no-op when providers are absent
     services.AddSingleton<INotificationService, NotificationService>();
 
     services.AddHttpClient("NotificationClient")
@@ -158,8 +158,8 @@ public class SmtpEmailProvider(
 ```
 
 **Rules for provider implementations:**
-1. Catch and wrap vendor exceptions — never let them propagate to `NotificationService`.
-2. Return `NotificationResult` (success/failed) — let the caller decide whether to retry.
+1. Catch and wrap vendor exceptions - never let them propagate to `NotificationService`.
+2. Return `NotificationResult` (success/failed) - let the caller decide whether to retry.
 3. Log at `Warning` for transient failures, `Error` for permanent failures (invalid address, auth failure).
 4. Accept cancellation tokens throughout.
 
@@ -201,7 +201,7 @@ This eliminates external dependencies during development while preserving the fu
 For high-volume or latency-tolerant notifications, decouple with messaging:
 
 ```
-[API / Event Handler] → publishes NotifyCommand → [Service Bus Queue] → [Notification Handler] → [Provider]
+[API / Event Handler] -> publishes NotifyCommand -> [Service Bus Queue] -> [Notification Handler] -> [Provider]
 ```
 
 **NotifyCommand message:**
@@ -321,15 +321,15 @@ public async Task SendAsync_VendorReturns200_ReturnsSuccess()
 ### Integration tests (unified service)
 
 Register real `NotificationService` with stub providers. Verify:
-- Missing provider ⇒ graceful no-op, warning logged, no exception.
-- Present provider ⇒ delegated correctly.
-- Multiple channels in single notification ⇒ all providers called.
+- Missing provider => graceful no-op, warning logged, no exception.
+- Present provider => delegated correctly.
+- Multiple channels in single notification => all providers called.
 
 ### Message-driven tests (if using Service Bus)
 
 Use the standard `IMessageHandler<T>` test patterns from the messaging skill:
 - Handler deserialises `NotifyCommand` and calls `INotificationService.SendAsync`.
-- Failed send ⇒ message is not completed (dead-lettered for retry).
+- Failed send => message is not completed (dead-lettered for retry).
 
 ---
 

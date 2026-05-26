@@ -2,7 +2,7 @@
 
 Reference patterns: [../patterns/api-host-wiring.md](../patterns/api-host-wiring.md) (Request Context Resolution), [../patterns/data-layer-wiring.md](../patterns/data-layer-wiring.md) (Multi-tenant Query Filter).
 
-> **Applicability:** This skill applies only when the domain specification enables multi-tenancy. The TaskFlow reference app demonstrates full multi-tenant patterns. For single-tenant scaffolds, skip this entire file — omit `ITenantEntity<Guid>`, `ITenantBoundaryValidator`, tenant query filters, tenant stamping, and tenant-scoped search enforcement. The service template marks optional sections with `// [MULTI-TENANT]`.
+> **Applicability:** This skill applies only when the domain specification enables multi-tenancy. The TaskFlow reference app demonstrates full multi-tenant patterns. For single-tenant scaffolds, skip this entire file - omit `ITenantEntity<Guid>`, `ITenantBoundaryValidator`, tenant query filters, tenant stamping, and tenant-scoped search enforcement. The service template marks optional sections with `// [MULTI-TENANT]`.
 
 ## Purpose
 
@@ -94,7 +94,7 @@ Core responsibilities:
 4. fail on tenant mismatch,
 5. prevent tenant reassignment after entity creation.
 
-Implementation pattern — `TenantBoundaryValidator` is a thin `internal sealed class` that delegates all logic to static `ValidationHelper`:
+Implementation pattern - `TenantBoundaryValidator` is a thin `internal sealed class` that delegates all logic to static `ValidationHelper`:
 
 ```csharp
 internal sealed class TenantBoundaryValidator : ITenantBoundaryValidator
@@ -116,9 +116,9 @@ internal sealed class TenantBoundaryValidator : ITenantBoundaryValidator
 
 Supporting files in `Application.Services/Rules/`:
 
-- **`ValidationHelper`** — static class with the actual boundary logic; uses `[LoggerMessage]` extensions for structured logging.
-- **`TenantBoundaryLoggingExtensions`** — `[LoggerMessage]` source-generated extensions (`LogValidationFailure`, `LogTenantFilterManipulation`, `LogTenantChangeAttempt`).
-- **`TenantRules`** — simple static rule methods (e.g., `PreventTenantChange` without logging for domain-level use).
+- **`ValidationHelper`** - static class with the actual boundary logic; uses `[LoggerMessage]` extensions for structured logging.
+- **`TenantBoundaryLoggingExtensions`** - `[LoggerMessage]` source-generated extensions (`LogValidationFailure`, `LogTenantFilterManipulation`, `LogTenantChangeAttempt`).
+- **`TenantRules`** - simple static rule methods (e.g., `PreventTenantChange` without logging for domain-level use).
 
 ---
 

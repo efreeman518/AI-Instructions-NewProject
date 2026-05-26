@@ -8,17 +8,17 @@ Durable, JSON-defined workflow orchestration. Load when `includeFlowEngine: true
 - [bootstrapper.md](bootstrapper.md)
 - [data-persistence.md](data-persistence.md)
 - [aspire.md](aspire.md)
-- [../support/ef-packages-reference.md](../support/ef-packages-reference.md) § Workflow Engine and § FlowEngine Data-Layout Variants
+- [../support/ef-packages-reference.md](../support/ef-packages-reference.md) section Workflow Engine and section FlowEngine Data-Layout Variants
 
 Package version: track `EF.FlowEngine` latest stable. Surface area assumed below is **1.0.104+** (interface-composition DbContext, `WorkflowDefinitionJsonOptions.Default`, `AddWorkflowJsonSeeding`, `AddAzureOpenAIAgentClient` factory overload).
 
 ## Non-Negotiables
 
-1. FlowEngine is a **separate DbContext** from the app's primary `{Project}DbContextTrxn`. Do not subclass `DbContextBase<TUser,TKey>` — use interface composition.
-2. Default data layout is **Variant A** (same database, separate schema). This is the only layout that preserves FE's atomic outbox guarantee. Choosing `separate-db` degrades `message`/`integration`/`agent` delivery to best-effort — flag in `HANDOFF.md` and wire FE message nodes to the app's existing at-least-once publisher.
+1. FlowEngine is a **separate DbContext** from the app's primary `{Project}DbContextTrxn`. Do not subclass `DbContextBase<TUser,TKey>` - use interface composition.
+2. Default data layout is **Variant A** (same database, separate schema). This is the only layout that preserves FE's atomic outbox guarantee. Choosing `separate-db` degrades `message`/`integration`/`agent` delivery to best-effort - flag in `HANDOFF.md` and wire FE message nodes to the app's existing at-least-once publisher.
 3. Workflow JSON files are **content-copied** by the API csproj and seeded by `AddWorkflowJsonSeeding()`. The test project must include a file-presence guard.
 4. FE migrations live in their own history table (do not share `__EFMigrationsHistory` with the app DbContext) and are applied by a dedicated startup task.
-5. Admin endpoints are mapped with an **explicit prefix** — `MapFlowEngineAdmin(prefix: "/api/flowengine")`. The default-prefix drift documented upstream is worked around by always passing it.
+5. Admin endpoints are mapped with an **explicit prefix** - `MapFlowEngineAdmin(prefix: "/api/flowengine")`. The default-prefix drift documented upstream is worked around by always passing it.
 
 ---
 
@@ -28,8 +28,8 @@ Package version: track `EF.FlowEngine` latest stable. Surface area assumed below
 src/
   Infrastructure/
     {Project}.Data/
-      {Project}DbContextTrxn.cs          # primary app context — inherits DbContextBase<string, Guid?>
-      {Project}FlowEngineDbContext.cs    # FE context — interface composition (this file)
+      {Project}DbContextTrxn.cs          # primary app context - inherits DbContextBase<string, Guid?>
+      {Project}FlowEngineDbContext.cs    # FE context - interface composition (this file)
       ConfigureFlowEngineSqlOptions.cs   # FE-specific sqlServerOptionsAction
     {Project}.Bootstrapper/
       RegisterServices.FlowEngine.cs     # partial: AddFlowEngine fluent chain
@@ -190,11 +190,11 @@ Always pass the prefix explicitly. The default-prefix value is unstable across F
 
 FlowEngine workflows must be invoked by something. The three canonical patterns live in [../templates/flowengine-trigger-template.md](../templates/flowengine-trigger-template.md):
 
-- **Service Bus subscriber in `{Project}.Functions`** — when `includeFunctionApp: true` and an integration event should start a workflow.
-- **Inline call from a service** — when the trigger is an in-process command (e.g., from an API endpoint).
-- **TickerQ recurring job in `{Project}.Scheduler`** — when `includeScheduler: true` and the workflow runs on a cron.
+- **Service Bus subscriber in `{Project}.Functions`** - when `includeFunctionApp: true` and an integration event should start a workflow.
+- **Inline call from a service** - when the trigger is an in-process command (e.g., from an API endpoint).
+- **TickerQ recurring job in `{Project}.Scheduler`** - when `includeScheduler: true` and the workflow runs on a cron.
 
-`IWorkflowTrigger` is **not** an FE-shipped interface; it is an app-level façade over `IFlowEngine` used to keep the trigger sites thin. Generate it in `{Project}.Application.Services`.
+`IWorkflowTrigger` is **not** an FE-shipped interface; it is an app-level facade over `IFlowEngine` used to keep the trigger sites thin. Generate it in `{Project}.Application.Services`.
 
 ---
 
@@ -208,13 +208,13 @@ FlowEngine workflows must be invoked by something. The three canonical patterns 
 | **5b** | Generate `RegisterServices.FlowEngine.cs` partial, `ApplyFlowEngineMigrationsStartup`, and the `MapFlowEngineAdmin` call in the API host. Place a single placeholder workflow JSON in `Workflows/` and emit the seeding hosted service. |
 | **5c** | Emit the chosen trigger template(s) when `includeFunctionApp` or `includeScheduler` is enabled. |
 | **5d** | Generate `Test.Integration.{Project}.FlowEngine` with the four-validity-tier guards (deserialize, validate, registry round-trip, builder, file-presence). |
-| **5e** | When AI in scope, FE `agent` nodes use `AddAzureOpenAIAgentClient` factory overload — wire `AzureOpenAIClient` from the app's existing AI bootstrap. |
+| **5e** | When AI in scope, FE `agent` nodes use `AddAzureOpenAIAgentClient` factory overload - wire `AzureOpenAIClient` from the app's existing AI bootstrap. |
 
 ## Anti-patterns
 
 - Subclassing the FE outbox/circuit-breaker abstract bases. Use interface composition instead.
 - Adding FE `DbSet`s to the app's primary DbContext. Use a separate FE context.
 - Sharing `__EFMigrationsHistory`. Use the dedicated history table constant on the FE context.
-- Omitting the workflow-JSON file-presence test. The failure mode is "instance start returns workflow not found at runtime" — silent until exercised.
+- Omitting the workflow-JSON file-presence test. The failure mode is "instance start returns workflow not found at runtime" - silent until exercised.
 - Calling `MapFlowEngineAdmin()` without a prefix. Always pass `/api/flowengine` explicitly.
 - Wiring FE `message` nodes when `flowEngineDbStrategy: separate-db` without an at-least-once relay. Atomic outbox is gone in Variant B/C.

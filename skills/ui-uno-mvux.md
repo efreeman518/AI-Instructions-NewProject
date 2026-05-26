@@ -1,11 +1,11 @@
-# Uno Platform UI — MVUX, Routing, XAML, Business Services, Auth
+# Uno Platform UI - MVUX, Routing, XAML, Business Services, Auth
 
 Presentation-layer rules: MVUX models, navigation, XAML patterns, business-service contracts, and auth wiring. Loaded during Phase 5c when an Uno UI project is in scope.
 
 Companion files:
-- [ui-uno.md](ui-uno.md) — index + decision table
-- [ui-uno-shell.md](ui-uno-shell.md) — project setup, app hosting, shell control
-- [ui-uno-platforms.md](ui-uno-platforms.md) — WASM debugging, Android, CI requirements
+- [ui-uno.md](ui-uno.md) - index + decision table
+- [ui-uno-shell.md](ui-uno-shell.md) - project setup, app hosting, shell control
+- [ui-uno-platforms.md](ui-uno-platforms.md) - WASM debugging, Android, CI requirements
 
 ---
 
@@ -20,7 +20,7 @@ Use partial records in `Presentation/`:
 
 ### Feed Refresh After Mutations (Version Counter Pattern)
 
-MVUX feeds are pull-based — they do not re-evaluate automatically when the underlying data changes. After a create/update/delete operation, the UI stays stale unless the feed is explicitly invalidated.
+MVUX feeds are pull-based - they do not re-evaluate automatically when the underlying data changes. After a create/update/delete operation, the UI stays stale unless the feed is explicitly invalidated.
 
 **Pattern:** Add an `IState<int>` version counter. Increment it after every mutation. Make the feed depend on the counter so it re-evaluates.
 
@@ -29,10 +29,10 @@ public partial record CategoryTreeModel(
     INavigator Navigator,
     ICategoryApiService CategoryService)
 {
-    // Version counter — increment after any mutation
+    // Version counter - increment after any mutation
     public IState<int> CategoriesVersion => State<int>.Value(this, () => 0);
 
-    // Feed depends on version — re-evaluates when version changes
+    // Feed depends on version - re-evaluates when version changes
     public IListFeed<CategoryModel> Categories => ListFeed.Async(async ct =>
     {
         _ = await CategoriesVersion;  // creates dependency
@@ -55,10 +55,10 @@ public partial record CategoryTreeModel(
 
 ### Cross-Model Refresh via Messenger
 
-When a mutation in model A (e.g. Task Save) must refresh model B (e.g. Task List) and B is already constructed on a visible page, `IListFeed` + version counter doesn't help — the receiving model needs a push. Pattern:
+When a mutation in model A (e.g. Task Save) must refresh model B (e.g. Task List) and B is already constructed on a visible page, `IListFeed` + version counter doesn't help - the receiving model needs a push. Pattern:
 
 1. Define a marker record message: `public sealed record TaskItemsChangedMessage(bool ResetToFirstPage = false);`
-2. Receiver registers in its constructor (explicit ctor required — positional-record ctor has no body):
+2. Receiver registers in its constructor (explicit ctor required - positional-record ctor has no body):
    ```csharp
    Messenger.Register<TaskListModel, TaskItemsChangedMessage>(this, static (recipient, msg) =>
    {
@@ -69,21 +69,21 @@ When a mutation in model A (e.g. Task Save) must refresh model B (e.g. Task List
 3. Sender sends after save: `Messenger.Send(new TaskItemsChangedMessage(ResetToFirstPage: true));`
 
 Non-negotiables:
-- Registered with **StrongReferenceMessenger** (see host wiring above) — weak references let records get collected.
-- Receive handler is `static` and takes `recipient` — closing over `this` defeats weak-reference safety and produces analyzer warnings.
+- Registered with **StrongReferenceMessenger** (see host wiring above) - weak references let records get collected.
+- Receive handler is `static` and takes `recipient` - closing over `this` defeats weak-reference safety and produces analyzer warnings.
 - Parameter name in the lambda must not be `_` (conflicts with discard in some generator paths). Use `msg` / `message`.
 
 ### Buffered Child Items in Create Mode
 
 When a form can add/check child items (checklist, attachments, comments) before the parent entity has been saved, give each buffered item a client-generated `Guid.NewGuid()` Id so the UI can match items by Id immediately. On Save:
 
-1. Bundle the buffered children into the parent DTO (`dto.ChecklistItems`, `dto.Comments`, ...) with `Id = null` on each — the server `Updater` will assign real Ids.
-2. Send **one** POST (create) or PUT (update) for the parent + children together. Do NOT loop separate `ChildService.CreateAsync(...)` calls after the parent create — state on the buffered child (e.g. a pre-checked `IsCompleted`) gets silently dropped when the child's domain `Create()` doesn't accept that field. See [updater-template.md](../templates/updater-template.md) → *createFunc must apply ALL DTO fields*.
+1. Bundle the buffered children into the parent DTO (`dto.ChecklistItems`, `dto.Comments`, ...) with `Id = null` on each - the server `Updater` will assign real Ids.
+2. Send **one** POST (create) or PUT (update) for the parent + children together. Do NOT loop separate `ChildService.CreateAsync(...)` calls after the parent create - state on the buffered child (e.g. a pre-checked `IsCompleted`) gets silently dropped when the child's domain `Create()` doesn't accept that field. See [updater-template.md](../templates/updater-template.md) -> *createFunc must apply ALL DTO fields*.
 3. Client DTO mapper must include the children. Easy miss: `MapToDto` that only copies scalar fields produces a payload the server parses as "no children".
-4. Mutations on buffered items (e.g. toggle checked) must only hit the server if the parent is already persisted. Gate with `if (Entity?.Id is not null)` — otherwise the server returns 404 on a non-existent parent and the UI rolls back.
+4. Mutations on buffered items (e.g. toggle checked) must only hit the server if the parent is already persisted. Gate with `if (Entity?.Id is not null)` - otherwise the server returns 404 on a non-existent parent and the UI rolls back.
 
 ```csharp
-// ✅ Correct — single payload, children embedded
+// OK Correct - single payload, children embedded
 var model = (Entity ?? new TaskItemModel()) with
 {
     Title = title,
@@ -99,7 +99,7 @@ var saved = isCreate
     ? await TaskItemService.CreateAsync(model, ct)
     : await TaskItemService.UpdateAsync(model, ct);
 
-// ❌ Wrong — post-create loop silently drops child fields that Create() can't take
+// FAIL Wrong - post-create loop silently drops child fields that Create() can't take
 var saved = await TaskItemService.CreateAsync(model, ct);
 foreach (var c in pendingChecklist)
     await ChecklistItemService.CreateAsync(c with { Id = null, TaskItemId = saved.Id!.Value }, ct);
@@ -110,7 +110,7 @@ public async ValueTask ToggleChecklistItem(ChecklistItemModel item, Cancellation
 {
     var updated = item with { IsCompleted = !item.IsCompleted };
 
-    // Update UI state first — this is the source of truth while buffered.
+    // Update UI state first - this is the source of truth while buffered.
     await ChecklistItems.UpdateAsync((IImmutableList<ChecklistItemModel>? list) =>
     {
         var src = list ?? ImmutableList<ChecklistItemModel>.Empty;
@@ -122,26 +122,26 @@ public async ValueTask ToggleChecklistItem(ChecklistItemModel item, Cancellation
     if (Entity?.Id is not null)
     {
         try { await ChecklistItemService.UpdateAsync(updated, ct); }
-        catch { /* state rollback not required — buffered flow survives */ }
+        catch { /* state rollback not required - buffered flow survives */ }
     }
 }
 ```
 
 ### Menu Navigation: Always Land On Top Page
 
-A persistent side-nav / bottom-tab menu must land on the **top** page regardless of any sub-page stacked in the content region. Three distinct traps must be handled together — solving only one leaves the nav broken in a different way.
+A persistent side-nav / bottom-tab menu must land on the **top** page regardless of any sub-page stacked in the content region. Three distinct traps must be handled together - solving only one leaves the nav broken in a different way.
 
 **Architecture recap** (after `PanelVisibilityNavigator` wires up):
 
 - `RootGrid` is the region host with `Region.Navigator="Visibility"`.
-- Its children are `FrameView` instances — one per top-level sibling route (`Dashboard`, `TaskList`, …). Auto-created on first visit to each sibling. Not declared in XAML.
+- Its children are `FrameView` instances - one per top-level sibling route (`Dashboard`, `TaskList`, ...). Auto-created on first visit to each sibling. Not declared in XAML.
 - Each `FrameView` wraps a private `Frame` that owns its own back-stack.
 
-**Trap 1 — absolute `/Main/X` routes no-op.** Calling `navigator.NavigateRouteAsync(element, "/Main/TaskList")` from MainPage walks *up* to the Shell's `FrameNavigator`. That Frame already has `MainPage` loaded, so it returns `Success=true` without descending into the Visibility sub-region. Symptom: click logs a `FrameNavigator Request: /Main/TaskList` line and nothing visually changes. **Do not use rooted paths for sibling switching.**
+**Trap 1 - absolute `/Main/X` routes no-op.** Calling `navigator.NavigateRouteAsync(element, "/Main/TaskList")` from MainPage walks *up* to the Shell's `FrameNavigator`. That Frame already has `MainPage` loaded, so it returns `Success=true` without descending into the Visibility sub-region. Symptom: click logs a `FrameNavigator Request: /Main/TaskList` line and nothing visually changes. **Do not use rooted paths for sibling switching.**
 
-**Trap 2 — relative route on the parent navigator can silently report success without flipping sibling `Visibility`.** `this.Navigator()` from MainPage returns the composite parent navigator. Dispatched down, it sometimes leaves the previously-active sibling (e.g. `TaskItem`) still `Visible`, so the detail paints on top of the newly-active sibling. Always run a `ForceSiblingVisibility` pass after the nav call.
+**Trap 2 - relative route on the parent navigator can silently report success without flipping sibling `Visibility`.** `this.Navigator()` from MainPage returns the composite parent navigator. Dispatched down, it sometimes leaves the previously-active sibling (e.g. `TaskItem`) still `Visible`, so the detail paints on top of the newly-active sibling. Always run a `ForceSiblingVisibility` pass after the nav call.
 
-**Trap 3 — detail pages are *stacked inside* the source sibling's `Frame`, not created as new siblings.** When `TaskListModel.OpenDetail` calls `Navigator.NavigateRouteAsync(this, "TaskItem", data: item)`, the model's injected `Navigator` is TaskList's inner `Frame` navigator, not the parent Visibility navigator — so `TaskItemPage` is pushed onto `TaskList`'s Frame stack. Flipping sibling visibility without popping that Frame leaves the user staring at Edit Task even though `TaskList` is now the active sibling.
+**Trap 3 - detail pages are *stacked inside* the source sibling's `Frame`, not created as new siblings.** When `TaskListModel.OpenDetail` calls `Navigator.NavigateRouteAsync(this, "TaskItem", data: item)`, the model's injected `Navigator` is TaskList's inner `Frame` navigator, not the parent Visibility navigator - so `TaskItemPage` is pushed onto `TaskList`'s Frame stack. Flipping sibling visibility without popping that Frame leaves the user staring at Edit Task even though `TaskList` is now the active sibling.
 
 #### Proven pattern
 
@@ -167,20 +167,20 @@ private async void NavigateTopClick(object sender, RoutedEventArgs e)
         element.Tag is not string sibling ||
         string.IsNullOrWhiteSpace(sibling)) return;
 
-    // (Optional dirty-guard check — see "Cross-Model Form Dirty Guard")
+    // (Optional dirty-guard check - see "Cross-Model Form Dirty Guard")
     // var guard = App.Host?.Services.GetService<IFormGuard>();
     // if (guard?.IsDirtyAsync is { } d && await d(default) && !await ConfirmDiscardAsync()) return;
     // guard?.Clear();
 
     // 1) Target the INNER visibility-region navigator with a RELATIVE route.
-    //    Never "/Main/X" — that hops to Shell's FrameNavigator and no-ops.
+    //    Never "/Main/X" - that hops to Shell's FrameNavigator and no-ops.
     var inner = RootGrid?.Navigator();
     var resp = inner is not null
         ? await inner.NavigateRouteAsync(this, sibling)
         : null;
     if (resp?.Success != true) return;
 
-    // 2) Force sibling visibility — PanelVisibilityNavigator can report
+    // 2) Force sibling visibility - PanelVisibilityNavigator can report
     //    success without collapsing the prior active sibling. Match the
     //    child FrameView by Region.Name attached property.
     if (RootGrid is null) return;
@@ -213,7 +213,7 @@ private static Frame? FindChildFrame(DependencyObject root)
 }
 ```
 
-**Route qualifiers** (for reference only — do NOT use them for menu navigation):
+**Route qualifiers** (for reference only - do NOT use them for menu navigation):
 `/` = root (dispatches to Shell `FrameNavigator`, no-ops on already-loaded Main),
 `../` = parent, `-/` = back-then-forward, `!` = dialog, `./` = current scope.
 
@@ -225,15 +225,15 @@ public ValueTask OpenDetail(TaskItemModel item, CancellationToken ct) =>
     Navigator.NavigateRouteAsync(this, "../TaskItem", data: item, cancellation: ct);
 ```
 
-This creates a `TaskItem` `FrameView` as a proper sibling of `TaskList`/`Dashboard`. The menu-click handler then only needs steps 1 and 2 — no Frame popping. Trade-off: `NavigateBackAsync` from the detail is no longer a push-pop back to the list; it navigates to whichever sibling the `Visibility` region treats as "previous". Test both flows.
+This creates a `TaskItem` `FrameView` as a proper sibling of `TaskList`/`Dashboard`. The menu-click handler then only needs steps 1 and 2 - no Frame popping. Trade-off: `NavigateBackAsync` from the detail is no longer a push-pop back to the list; it navigates to whichever sibling the `Visibility` region treats as "previous". Test both flows.
 
 ### WASM Console Logging: Use `Console.WriteLine`, Not `Debug.WriteLine`
 
-In Uno WASM, `System.Diagnostics.Debug.WriteLine` does NOT reach the browser DevTools console by default — only framework `ILogger` output (prefixed `info:` / `warn:`) is routed there. For ad-hoc diagnostics in code-behind or models, use `Console.WriteLine` — it shows as a plain line in the browser console.
+In Uno WASM, `System.Diagnostics.Debug.WriteLine` does NOT reach the browser DevTools console by default - only framework `ILogger` output (prefixed `info:` / `warn:`) is routed there. For ad-hoc diagnostics in code-behind or models, use `Console.WriteLine` - it shows as a plain line in the browser console.
 
 ```csharp
-Console.WriteLine($"[MainPage] NavigateTopClick tag={tag}");  // ✅ appears in browser console
-System.Diagnostics.Debug.WriteLine("...");                    // ❌ swallowed in WASM
+Console.WriteLine($"[MainPage] NavigateTopClick tag={tag}");  // OK appears in browser console
+System.Diagnostics.Debug.WriteLine("...");                    // FAIL swallowed in WASM
 ```
 
 ### WASM Rebuild / Hot-Reload Trap
@@ -244,7 +244,7 @@ Recovery:
 
 1. Stop the running host (`Ctrl+C` on `dotnet run`, or terminate the Aspire resource).
 2. `dotnet build src/UI/{Project}.Uno --no-incremental` (forces a clean package hash).
-3. In the browser, unregister any service worker (DevTools → Application → Service Workers) and hard-refresh (`Ctrl+F5`) — or open the origin in a new tab; never reload an existing tab.
+3. In the browser, unregister any service worker (DevTools -> Application -> Service Workers) and hard-refresh (`Ctrl+F5`) - or open the origin in a new tab; never reload an existing tab.
 
 Do not debug perceived "code didn't work" symptoms without verifying the new bundle actually loaded (grep for one of your new `Console.WriteLine` tags in the console).
 
@@ -268,12 +268,12 @@ internal sealed class FormGuard : IFormGuard
 ```
 
 ```csharp
-// App.xaml.host.cs — register as singleton
+// App.xaml.host.cs - register as singleton
 services.AddSingleton<IFormGuard, FormGuard>();
 ```
 
 ```csharp
-// TaskItemPageModel.cs — register on Reset, clear on Save/Delete
+// TaskItemPageModel.cs - register on Reset, clear on Save/Delete
 public TaskItemPageModel(..., IFormGuard formGuard)
 {
     FormGuard = formGuard;
@@ -306,7 +306,7 @@ private async ValueTask<bool> ComputeIsDirtyAsync(CancellationToken ct)
 ```
 
 ```csharp
-// MainPage.xaml.cs — consult guard BEFORE any menu navigation
+// MainPage.xaml.cs - consult guard BEFORE any menu navigation
 var guard = App.Host?.Services.GetService<IFormGuard>();
 if (guard?.IsDirtyAsync is { } isDirty)
 {
@@ -332,15 +332,15 @@ private async Task<bool> ConfirmDiscardAsync()
 
 Non-negotiables:
 
-- `IFormGuard` is a **singleton**. The delegate registration is overwritten each time a detail model is constructed — latest wins.
+- `IFormGuard` is a **singleton**. The delegate registration is overwritten each time a detail model is constructed - latest wins.
 - Compare against a **mutable `_baseline` field**, not `Entity` (the record's `Entity` is `init`-only; post-save refresh replaces `_baseline`, not `Entity`).
-- **Re-register in `Reset()`** — `PanelVisibilityNavigator` reuses model instances on re-visit, so `Reset()` is called but the constructor is not.
-- **Clear on Save / Delete** success — stale `IsDirtyAsync` delegates from previously-closed detail forms otherwise block the next menu click with a false-positive prompt.
+- **Re-register in `Reset()`** - `PanelVisibilityNavigator` reuses model instances on re-visit, so `Reset()` is called but the constructor is not.
+- **Clear on Save / Delete** success - stale `IsDirtyAsync` delegates from previously-closed detail forms otherwise block the next menu click with a false-positive prompt.
 - The baseline comparison must include buffered-child inputs (`NewChecklistTitle`, `NewCommentBody`) as well as the scalar form fields.
 
 #### Blazor equivalent
 
-Blazor has a built-in `NavigationManager.RegisterLocationChangingHandler` — no cross-model service needed. Register in `OnInitialized`, capture a baseline snapshot after load/save, check dirty in the handler, and use a `_bypassDirtyCheck` flag to suppress the prompt on programmatic post-save redirects:
+Blazor has a built-in `NavigationManager.RegisterLocationChangingHandler` - no cross-model service needed. Register in `OnInitialized`, capture a baseline snapshot after load/save, check dirty in the handler, and use a `_bypassDirtyCheck` flag to suppress the prompt on programmatic post-save redirects:
 
 ```csharp
 // TaskItemPage.razor
@@ -371,7 +371,7 @@ private async Task SaveAsync()
 public void Dispose() => _locationChangingRegistration?.Dispose();
 ```
 
-MudBlazor's `MudNavLink` renders a standard anchor that triggers `NavigationManager.NavigateTo`, so `LocationChanging` fires reliably — no special menu-click handler is required on the Blazor side.
+MudBlazor's `MudNavLink` renders a standard anchor that triggers `NavigationManager.NavigateTo`, so `LocationChanging` fires reliably - no special menu-click handler is required on the Blazor side.
 
 ### URL Sync: Disable AddressBarUpdateEnabled (Chefs Pattern)
 
@@ -391,10 +391,10 @@ The app is still fully navigable via the in-app menu; only the browser URL stops
 Save/Cancel actions should use `Navigator.NavigateBackAsync(this)` instead of `Navigator.NavigateRouteAsync(this, "Dashboard")`. Hardcoded route names break when the user arrives from a different page (e.g., navigating to TaskForm from TaskList vs Dashboard).
 
 ```csharp
-// ✅ Correct — returns to wherever the user came from
+// OK Correct - returns to wherever the user came from
 await Navigator.NavigateBackAsync(this, cancellation: ct);
 
-// ❌ Wrong — always goes to Dashboard even if user came from TaskList
+// FAIL Wrong - always goes to Dashboard even if user came from TaskList
 await Navigator.NavigateRouteAsync(this, "Dashboard", cancellation: ct);
 ```
 
@@ -420,15 +420,15 @@ To make ListView items navigable (e.g., clicking a task row opens its detail pag
 </ListView>
 ```
 
-**Do not** rely on `ListView.SelectionChanged` or `ItemClick` for navigation — these are less reliable with MVUX data binding than the declarative `uen:Navigation.Request` approach.
+**Do not** rely on `ListView.SelectionChanged` or `ItemClick` for navigation - these are less reliable with MVUX data binding than the declarative `uen:Navigation.Request` approach.
 
 ### MVUX Pitfalls
 
 - **`Feed.Async` type inference**: `Feed.Async(service.GetAsync)` may fail with CS0411/CS0453 when the return type is a reference type or the delegate signature is ambiguous. Always use an explicit lambda: `Feed.Async(async ct => await service.GetAsync(ct))`.
 - **`IListFeed` return type**: `ListFeed.Async(...)` callbacks must return `IImmutableList<T>`. Call `.ToImmutableList()` on results. Requires `using System.Collections.Immutable;` (add as global using in csproj, see Project File Rules).
-- **Nullable state**: `IState<T?>` with `State.UpdateAsync` produces CS8714 warnings. Suppress with `#nullable disable` in the record or accept the warning — it's cosmetic.
+- **Nullable state**: `IState<T?>` with `State.UpdateAsync` produces CS8714 warnings. Suppress with `#nullable disable` in the record or accept the warning - it's cosmetic.
 - **No optional parameters on command methods**: The MVUX Bindable generator emits a compile error like `CS0103: The name 'False' does not exist` when a command method has an optional parameter (e.g. `public ValueTask Refresh(bool hard = false, CancellationToken ct = default)`). Split into two methods (`Refresh(ct)` + `RefreshHard(ct)`) or take the parameter as state instead. CancellationToken default is fine.
-- **`IListState<T>.UpdateAsync` overload ambiguity**: There are two overloads — one updates a single item, one updates the whole list. When you pass a bare lambda the compiler picks the single-item one and you get `'IImmutableList<T>' does not contain 'FindIndex'` or `Operator '??' cannot be applied...`. Explicitly type the parameter to disambiguate:
+- **`IListState<T>.UpdateAsync` overload ambiguity**: There are two overloads - one updates a single item, one updates the whole list. When you pass a bare lambda the compiler picks the single-item one and you get `'IImmutableList<T>' does not contain 'FindIndex'` or `Operator '??' cannot be applied...`. Explicitly type the parameter to disambiguate:
   ```csharp
   await Items.UpdateAsync((IImmutableList<ChildModel>? list) =>
   {
@@ -481,9 +481,9 @@ Shell and MainPage serve **distinct roles** in the navigation hierarchy. Mixing 
 | Chrome | `MainPage` | Header bar, sidebar/bottom `TabBar`, content `Frame` or region | `ViewMap<MainPage, MainModel>` nested under root, `IsDefault: true` |
 | Content | Page views | Page-specific UI | Nested under `Main` route |
 
-**Critical**: Shell must NOT contain app chrome (headers, tabs, navigation bars). The `ExtendedSplashScreen` manages the navigation bootstrap chain — placing chrome in Shell means it either gets covered by the splash screen or, when the splash is removed, the navigation Frame stops receiving page content.
+**Critical**: Shell must NOT contain app chrome (headers, tabs, navigation bars). The `ExtendedSplashScreen` manages the navigation bootstrap chain - placing chrome in Shell means it either gets covered by the splash screen or, when the splash is removed, the navigation Frame stops receiving page content.
 
-**Why chrome cannot live inside `Splash.Content`**: Uno's navigation bootstrap replaces the entire `ExtendedSplashScreen.Content` subtree with a `FrameView` at runtime once the host finishes loading. Any Grid/Border/StackPanel you author inside `Splash.Content` is thrown away — observable symptom is a header or nav bar that renders before the splash clears and then vanishes. All persistent chrome belongs in **MainPage**, never in Shell.
+**Why chrome cannot live inside `Splash.Content`**: Uno's navigation bootstrap replaces the entire `ExtendedSplashScreen.Content` subtree with a `FrameView` at runtime once the host finishes loading. Any Grid/Border/StackPanel you author inside `Splash.Content` is thrown away - observable symptom is a header or nav bar that renders before the splash clears and then vanishes. All persistent chrome belongs in **MainPage**, never in Shell.
 
 ### Route Registration Pattern (Chefs-Aligned)
 
@@ -491,13 +491,13 @@ Shell and MainPage serve **distinct roles** in the navigation hierarchy. Mixing 
 private static void RegisterRoutes(IViewRegistry views, IRouteRegistry routes)
 {
     views.Register(
-        // Viewless root — Shell resolves via NavigateAsync<Shell>()
+        // Viewless root - Shell resolves via NavigateAsync<Shell>()
         new ViewMap(ViewModel: typeof(ShellModel)),
         // MainPage is the app chrome shell (header, tabs, content frame)
         new ViewMap<MainPage, MainModel>(),
         new ViewMap<DashboardPage, DashboardModel>(),
         new ViewMap<{Entity}ListPage, {Entity}ListModel>(),
-        // Single entity page — Entity? data: null=create, non-null=edit
+        // Single entity page - Entity? data: null=create, non-null=edit
         new ViewMap<{Entity}Page, {Entity}PageModel>(Data: new DataMap<{Entity}Model>()),
         new ViewMap<SettingsPage, SettingsModel>()
     );
@@ -526,10 +526,10 @@ private static void RegisterRoutes(IViewRegistry views, IRouteRegistry routes)
 
 ### Route Non-Negotiables
 
-1. **Root ViewMap is viewless**: `new ViewMap(ViewModel: typeof(ShellModel))` — no `<TView>` type parameter. Shell is resolved by `NavigateAsync<Shell>()`, not by the route map.
-2. **MainPage is a nested route with `IsDefault: true`**: The navigation system navigates Shell → Main → Dashboard. Without the `Main` intermediate route, page content renders directly in Shell's Frame with no chrome.
+1. **Root ViewMap is viewless**: `new ViewMap(ViewModel: typeof(ShellModel))` - no `<TView>` type parameter. Shell is resolved by `NavigateAsync<Shell>()`, not by the route map.
+2. **MainPage is a nested route with `IsDefault: true`**: The navigation system navigates Shell -> Main -> Dashboard. Without the `Main` intermediate route, page content renders directly in Shell's Frame with no chrome.
 3. **Tab routes nest under Main**: Dashboard, entity lists, and other tab-navigable pages must be children of the `Main` route so they render inside MainPage's content region (which has `uen:Region.Attached="True"`).
-4. **Chrome-free routes nest under root**: Settings, login, profile — routes that should NOT show the tab bar — go as siblings of `Main`, not children of it.
+4. **Chrome-free routes nest under root**: Settings, login, profile - routes that should NOT show the tab bar - go as siblings of `Main`, not children of it.
 
 ## XAML Rules
 
@@ -544,7 +544,7 @@ private static void RegisterRoutes(IViewRegistry views, IRouteRegistry routes)
 - **`uen:NavigationBar`** (`Uno.Extensions.Navigation.UI.NavigationBar`) does not exist. For top bars use `utu:NavigationBar` from `Uno.Toolkit.UI`, or omit and rely on `NavigationView` header.
 - **`uen:ContentControl`** doesn't exist. For navigation content regions, use `<Frame />` inside a `<Grid uen:Region.Attached="true">`.
 - **`NavigationView` content area**: Place a `<Grid uen:Region.Attached="true"><Frame /></Grid>` as the `NavigationView` content for region-based navigation.
-- **`utu:AutoLayout.PrimaryAlignment`** valid values are `Stretch`, `Center`, `End` — there is no `Start`. Using `Start` produces a XAML parse error with no useful message. Default to `Stretch` for full-width content.
+- **`utu:AutoLayout.PrimaryAlignment`** valid values are `Stretch`, `Center`, `End` - there is no `Start`. Using `Start` produces a XAML parse error with no useful message. Default to `Stretch` for full-width content.
 
 ### Responsive Menu Pattern (Side-Nav Wide / Bottom-Tabs Narrow)
 
@@ -568,11 +568,11 @@ Use `utu:Responsive` with `Normal` (mobile/narrow) and `Wide` (desktop) breakpoi
 </Grid>
 ```
 
-Both menus call the same `NavigateTopClick` code-behind handler (see Menu Navigation section). Do not try to use a single `utu:TabBar` for both layouts — its `OnClickBehaviors` default to stack-aware navigation, which conflicts with the "always-to-top" requirement.
+Both menus call the same `NavigateTopClick` code-behind handler (see Menu Navigation section). Do not try to use a single `utu:TabBar` for both layouts - its `OnClickBehaviors` default to stack-aware navigation, which conflicts with the "always-to-top" requirement.
 
-### Grid Paging — Fixed Header & Pager, Scrollable Body
+### Grid Paging - Fixed Header & Pager, Scrollable Body
 
-When a list spans more rows than the viewport, the header and pager must stay visible while only the rows scroll. Use a three-row `Grid` with `Auto / * / Auto` and put the `ScrollViewer` around only the items region. Do NOT put the outer page content inside a `ScrollViewer` — the inner list will never get a scrollbar because the outer one absorbs all the height.
+When a list spans more rows than the viewport, the header and pager must stay visible while only the rows scroll. Use a three-row `Grid` with `Auto / * / Auto` and put the `ScrollViewer` around only the items region. Do NOT put the outer page content inside a `ScrollViewer` - the inner list will never get a scrollbar because the outer one absorbs all the height.
 
 ```xml
 <Grid RowDefinitions="Auto,*,Auto">
@@ -603,37 +603,37 @@ In `Business/Services`:
 - Convert transport DTOs to UI models at service boundary.
 - Surface `Result`/failure states usable by MVUX models.
 
-### Client–API Contract Rules
+### Client-API Contract Rules
 
 The API wraps all CRUD payloads in `DefaultRequest<T>` (inbound) and `DefaultResponse<T>` (outbound). The Kiota client stub (or hand-written `TaskFlowApiClient`) must match this envelope.
 
-**Request wrapping** — POST (create) and PUT (update) endpoints expect `{"item": {dto}}`, not the bare DTO:
+**Request wrapping** - POST (create) and PUT (update) endpoints expect `{"item": {dto}}`, not the bare DTO:
 
 ```csharp
-// ✅ CORRECT — wraps DTO in DefaultRequest envelope
+// OK CORRECT - wraps DTO in DefaultRequest envelope
 var response = await _http.PostAsJsonAsync("/api/categories",
     new DefaultRequest<CategoryDto> { Item = dto }, ct);
 
-// ❌ WRONG — sends bare DTO, API deserializes Item as null → NRE
+// FAIL WRONG - sends bare DTO, API deserializes Item as null -> NRE
 var response = await _http.PostAsJsonAsync("/api/categories", dto, ct);
 ```
 
-**Response unwrapping** — GET and mutating endpoints return `{"item": {dto}}`:
+**Response unwrapping** - GET and mutating endpoints return `{"item": {dto}}`:
 
 ```csharp
-// ✅ CORRECT — unwraps from DefaultResponse envelope
+// OK CORRECT - unwraps from DefaultResponse envelope
 var wrapper = await _http.GetFromJsonAsync<DefaultResponse<CategoryDto>>(url, ct);
 return wrapper?.Item;
 
-// ❌ WRONG — reads bare DTO, all properties are null/default
+// FAIL WRONG - reads bare DTO, all properties are null/default
 return await _http.GetFromJsonAsync<CategoryDto>(url, ct);
 ```
 
-**Search is different** — search endpoints accept `SearchRequest<TFilter>` directly (no wrapping) and return `PagedResponse<T>` with a `data` array (not `DefaultResponse`).
+**Search is different** - search endpoints accept `SearchRequest<TFilter>` directly (no wrapping) and return `PagedResponse<T>` with a `data` array (not `DefaultResponse`).
 
 #### Pagination contract
 
-1-based `pageIndex`. The server API expects `pageIndex` (not `pageNumber`) and treats it as **1-based**. Never send `0`. The hand-written client stub must match that wire name and base exactly — using `pageNumber` or 0-based indexing silently returns page 1 for every request.
+1-based `pageIndex`. The server API expects `pageIndex` (not `pageNumber`) and treats it as **1-based**. Never send `0`. The hand-written client stub must match that wire name and base exactly - using `pageNumber` or 0-based indexing silently returns page 1 for every request.
 
 ```csharp
 public class SearchRequest<TFilter> where TFilter : class, new()
@@ -643,7 +643,7 @@ public class SearchRequest<TFilter> where TFilter : class, new()
     // Internal 1-based value; never exposed on the wire under this name.
     [JsonIgnore] public int PageNumber { get; set; } = 1;
 
-    // What the server actually reads — same 1-based value, wire name "pageIndex".
+    // What the server actually reads - same 1-based value, wire name "pageIndex".
     [JsonPropertyName("pageIndex")]
     public int PageIndex { get => PageNumber; set => PageNumber = value; }
 
@@ -651,23 +651,23 @@ public class SearchRequest<TFilter> where TFilter : class, new()
 }
 ```
 
-When debugging paging that "always returns page 1": inspect the serialized request body in devtools. If you see `"pageNumber"` in the payload, or `"pageIndex": 0`, the contract is wrong — the server is silently coercing both to page 1.
+When debugging paging that "always returns page 1": inspect the serialized request body in devtools. If you see `"pageNumber"` in the payload, or `"pageIndex": 0`, the contract is wrong - the server is silently coercing both to page 1.
 
-**Response side must also stay 1-based — no offset conversion in `PagedResponse`.** The server echoes the same 1-based `pageIndex` in responses. A client-side `PagedResponse.PageIndex` setter that treats the incoming value as 0-based (`PageNumber = value + 1`) silently desyncs the UI page counter by one — first page shows as "Page 2", "Next" jumps past the actual next page, etc. The response parser must pass `pageIndex` through unchanged:
+**Response side must also stay 1-based - no offset conversion in `PagedResponse`.** The server echoes the same 1-based `pageIndex` in responses. A client-side `PagedResponse.PageIndex` setter that treats the incoming value as 0-based (`PageNumber = value + 1`) silently desyncs the UI page counter by one - first page shows as "Page 2", "Next" jumps past the actual next page, etc. The response parser must pass `pageIndex` through unchanged:
 
 ```csharp
 public class PagedResponse<T>
 {
     [JsonPropertyName("pageNumber")] public int PageNumber { get; set; }
 
-    // Server emits 1-based pageIndex — keep client PageNumber 1-based too.
+    // Server emits 1-based pageIndex - keep client PageNumber 1-based too.
     [JsonPropertyName("pageIndex")]
     public int PageIndex { get => PageNumber; set => PageNumber = value; }
     // ...
 }
 ```
 
-Symptom to watch for: pager displays the correct total pages but the "current page" number is one higher than the data actually shown, or "Next" returns the same rows as the page just shown. Inspect the raw response JSON — if server returns `"pageIndex": 1` but client state shows `PageNumber = 2`, the setter is adding an offset.
+Symptom to watch for: pager displays the correct total pages but the "current page" number is one higher than the data actually shown, or "Next" returns the same rows as the page just shown. Inspect the raw response JSON - if server returns `"pageIndex": 1` but client state shows `PageNumber = 2`, the setter is adding an offset.
 
 Client-side wrapper classes:
 
@@ -695,7 +695,7 @@ public class DefaultResponse<T>
 
 Scaffold with `.AddCustom()` (no external identity provider required). When ready for production:
 
-1. Register app in **Entra External ID** (CIAM) — get `ClientId` + `Authority`
+1. Register app in **Entra External ID** (CIAM) - get `ClientId` + `Authority`
 2. Update `appsettings.json` `EntraExternal` section with real tenant values
 3. Replace `.AddCustom(...)` with `.AddMsal()` in `App.xaml.host.cs`
 4. Change `<UnoFeatures>` in `.csproj`: `AuthenticationCustom` to `AuthenticationMsal`

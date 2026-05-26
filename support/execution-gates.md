@@ -24,9 +24,9 @@ Run once per machine/repo before beginning any scaffolding phase.
 
 ### Development Tools
 
-- [ ] Git repo initialized with `.gitignore` for .NET, **patched** for this scaffold's `src/Packages/` source folder and `Test.E2E/` project (see [../skills/solution-structure.md](../skills/solution-structure.md) § Required Root Files (Cross-Platform Hygiene))
+- [ ] Git repo initialized with `.gitignore` for .NET, **patched** for this scaffold's `src/Packages/` source folder and `Test.E2E/` project (see [../skills/solution-structure.md](../skills/solution-structure.md) section Required Root Files (Cross-Platform Hygiene))
 - [ ] Current machine- or user-global Python 3 installed for scaffold helper scripts. Verify from a fresh shell per [python-setup.md](python-setup.md); do not rely on a repo `.venv` as the machine launcher.
-- [ ] Tracked-source validation runs after `git add .` — see [Tracked-Source Validation](#tracked-source-validation) below.
+- [ ] Tracked-source validation runs after `git add .` - see [Tracked-Source Validation](#tracked-source-validation) below.
 - [ ] `.NET SDK` installed (`dotnet --version`)
 - [ ] Docker running (if Aspire uses SQL/Redis containers)
 - [ ] `nuget.config` includes `nuget.org` + all custom/private feeds (see Private Feed Auth below)
@@ -52,7 +52,7 @@ $missing  = Compare-Object $expected $tracked -PassThru | Where-Object SideIndic
 if ($missing) { throw ".csproj files excluded by .gitignore: $missing" }
 ```
 
-Failure means a `.gitignore` rule is silently shadowing a source folder. Fix the `.gitignore` (do **not** force-add the excluded files — the next scaffold folder will hit the same hidden rule). This generalizes: any future folder whose name collides with stock VS ignore patterns surfaces here, not on a CI fresh clone.
+Failure means a `.gitignore` rule is silently shadowing a source folder. Fix the `.gitignore` (do **not** force-add the excluded files - the next scaffold folder will hit the same hidden rule). This generalizes: any future folder whose name collides with stock VS ignore patterns surfaces here, not on a CI fresh clone.
 
 ### Shared Base-Type Readiness (Phase 3 Pre-Flight)
 
@@ -107,7 +107,7 @@ Manual equivalent (substitute `{packagePrefix}` for your prefix, e.g., `EF`):
 **Step 3:** Set the auth token via environment variable:
 
 ```powershell
-# PowerShell — session-scoped (recommended for local dev)
+# PowerShell - session-scoped (recommended for local dev)
 $env:NUGET_AUTH_TOKEN = "<package-read-token>"
 
 # Or persist in user profile (PowerShell $PROFILE)
@@ -138,7 +138,7 @@ Gate: `dotnet restore` exits 0 against `nuget.org` only.
 
 Both blocks above apply. The feed supplies the layers it covers; layers in `localPackageLayers` are generated locally under the **same** `packagePrefix` so they can be published into the feed later without renaming.
 
-### AI Assistant — MCP Servers
+### AI Assistant - MCP Servers
 
 Configure these in your AI client (VS Code `settings.json` or Claude Desktop config) so the AI can look up current docs and interact with tools during scaffolding.
 
@@ -167,13 +167,13 @@ dotnet build
 dotnet test --filter "TestCategory=Unit"   # or scope to current sub-phase (Endpoint, Integration, etc.)
 ```
 
-Run `dotnet restore` only when one of the following is true (otherwise skip — it is wasted work):
+Run `dotnet restore` only when one of the following is true (otherwise skip - it is wasted work):
 
 - `Directory.Packages.props` or any `.csproj` changed since the last restore.
-- Phase-boundary transition (Phase 4 → 5a, 5a → 5b, etc.).
+- Phase-boundary transition (Phase 4 -> 5a, 5a -> 5b, etc.).
 - Operator forces a clean restore (e.g., feed change, lock-file corruption).
 
-Phase-completion gates and the Pre-Merge Gate still run a full `dotnet restore` — see § Phase Gates and § Pre-Merge Gate.
+Phase-completion gates and the Pre-Merge Gate still run a full `dotnet restore` - see section Phase Gates and section Pre-Merge Gate.
 
 Gate passes when build and the scoped test command succeed (plus any sub-phase-specific checks listed below).
 
@@ -183,7 +183,7 @@ Gate passes when build and the scoped test command succeed (plus any sub-phase-s
 
 ## Phase Gates
 
-## 4 — Contract Scaffolding
+## 4 - Contract Scaffolding
 
 Required:
 - solution structure compiles (`.slnx`, all project files, `Directory.Packages.props`),
@@ -199,7 +199,7 @@ Exit criteria:
 - [ ] `Test.Endpoints/CustomApiFactory.cs`, `Test.E2E/SqlApiFactory.cs`, `Test.Integration/AspireTestHost.cs`, `Test.Integration/DbContextFactory.cs` all compile and inherit/use the shared `WebApplicationFactoryBase` (no duplicated swap-out plumbing)
 - [ ] `{Entity}DtoBuilder` returns valid DTOs
 - [ ] No domain logic in entity shells (only `throw new NotImplementedException`)
-- [ ] `<packagePrefix>.*` shared base types are consumed from feed packages or `src/Packages/<packagePrefix>.*` projects per `packageStrategy` — never reimplemented in application/domain/host layers
+- [ ] `<packagePrefix>.*` shared base types are consumed from feed packages or `src/Packages/<packagePrefix>.*` projects per `packageStrategy` - never reimplemented in application/domain/host layers
 - [ ] Phase 4 scaffold structure validator passes
 - [ ] **Phase 4 test shells pass:** `dotnet test --filter "TestCategory=Unit|TestCategory=Endpoint"` exits 0 (no assemblies abort in `[AssemblyInitialize]`, no shells throw)
 
@@ -213,7 +213,7 @@ dotnet test --filter "TestCategory=Unit|TestCategory=Endpoint"
 
 ---
 
-## 5a — Foundation (TDD)
+## 5a - Foundation (TDD)
 
 Required:
 - domain + data-access projects build,
@@ -235,7 +235,7 @@ dotnet build
 dotnet test --filter "TestCategory=Unit"
 ```
 
-Scaffold migration (remove old, create fresh baseline — see [../patterns/data-layer-wiring.md](../patterns/data-layer-wiring.md)):
+Scaffold migration (remove old, create fresh baseline - see [../patterns/data-layer-wiring.md](../patterns/data-layer-wiring.md)):
 
 ```powershell
 # Remove any existing migrations first
@@ -252,7 +252,7 @@ dotnet ef migrations add InitialCreate `
 
 > **Scaffold rule:** During scaffolding, always start fresh. Do not accumulate incremental migrations until the baseline is established and the project is in production.
 
-## 5b — App Core + Runtime/Edge (TDD for app/API, tests-after for runtime)
+## 5b - App Core + Runtime/Edge (TDD for app/API, tests-after for runtime)
 
 Required:
 - DTOs/mappers/services compile,
@@ -286,7 +286,7 @@ Runtime/Host checks (enabled features only):
 
 ### Aspire AppHost
 
-Preflight (run before first launch — see [../skills/aspire.md](../skills/aspire.md) § Preflight):
+Preflight (run before first launch - see [../skills/aspire.md](../skills/aspire.md) section Preflight):
 - [ ] Docker running (`docker info` succeeds)
 - [ ] No stale containers holding required ports (`docker ps`)
 - [ ] `dotnet restore` on AppHost succeeds
@@ -296,11 +296,11 @@ Gate:
 - [ ] Required Aspire CLI env vars are set before terminal `dotnet run`
 - [ ] `dotnet build src/Host/Aspire/AppHost` succeeds
 - [ ] `dotnet run --project src/Host/Aspire/AppHost` starts resources
-- [ ] Dashboard reachable (URL from console output — do not reuse prior session URLs)
+- [ ] Dashboard reachable (URL from console output - do not reuse prior session URLs)
 - [ ] **All registered resources reach Running with no `Error`/`Critical` log entries from project-owned categories**
 - [ ] Health probes return 200: `/healthz` on every API/host project once that host declares itself ready (Aspire-registered UIs that don't expose health probes count as healthy when their root URL renders without exception)
-- [ ] Data-plane spot check: at least one backing store (SQL tables exist, Redis reachable, seed rows present) verified directly — not just via dashboard liveness
-- [ ] **Stub-mode external dependencies (`emulator`, `lazy-optional`, `no-op stub`, `deployment-only`) respond without throwing** — live cloud credentials are not required for this gate
+- [ ] Data-plane spot check: at least one backing store (SQL tables exist, Redis reachable, seed rows present) verified directly - not just via dashboard liveness
+- [ ] **Stub-mode external dependencies (`emulator`, `lazy-optional`, `no-op stub`, `deployment-only`) respond without throwing** - live cloud credentials are not required for this gate
 
 ### Gateway
 
@@ -315,9 +315,9 @@ dotnet test --filter "TestCategory=Unit|TestCategory=Endpoint"
 dotnet run --project src/Host/Aspire/AppHost
 ```
 
-After Aspire verification, write infrastructure tests (health checks, config loading, caching) and re-run `dotnet test --filter "TestCategory=Unit|TestCategory=Endpoint"` to confirm. Do not run an unfiltered `dotnet test` here — service-level integration tests live in `Test.Integration` and are scoped to the Phase 5d quality regression.
+After Aspire verification, write infrastructure tests (health checks, config loading, caching) and re-run `dotnet test --filter "TestCategory=Unit|TestCategory=Endpoint"` to confirm. Do not run an unfiltered `dotnet test` here - service-level integration tests live in `Test.Integration` and are scoped to the Phase 5d quality regression.
 
-## 5c — Optional Hosts (Tests-After)
+## 5c - Optional Hosts (Tests-After)
 
 Run only for enabled hosts.
 
@@ -358,14 +358,14 @@ Run only the targets selected in `.scaffold/resource-implementation.yaml`. Keep 
 
 If targeting Android (`<tfm>-android`):
 - [ ] Android Studio or SDK command-line tools installed with Platform-Tools, Emulator, one recent platform, and one AVD
-- [ ] Android SDK path resolved (see `skills/ui-uno-platforms.md` § Android SDK Discovery)
+- [ ] Android SDK path resolved (see `skills/ui-uno-platforms.md` section Android SDK Discovery)
 - [ ] Android restore/build uses `dotnet restore ... -p:BuildAllUnoTargets=true` followed by `dotnet build ... -p:TargetFrameworkOverride=$(LatestStableTfm)-android --no-restore`
 - [ ] `project.assets.json` contains `Uno.WinUI.Runtime.Skia.Android` for Skia Android targets before runtime debugging starts
 - [ ] `<EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>`, `<AndroidEnableAssemblyCompression>false</AndroidEnableAssemblyCompression>`, and `.so` uncompressed file extension settings are set if manual ADB/Appium sideloading is used
-- [ ] Emulator host networking uses `10.0.2.2` for local backend calls (see `skills/ui-uno-platforms.md` § Emulator Host Networking)
+- [ ] Emulator host networking uses `10.0.2.2` for local backend calls (see `skills/ui-uno-platforms.md` section Emulator Host Networking)
 - [ ] MSTest/Appium mobile smoke passes when native Android UI testing is in scope: `dotnet test src/Test/Test.Mobile/Test.Mobile.csproj --filter TestCategory=MobileUI`
 
-> **Starter-library escape hatch:** If the repo currently contains only a single-TFM starter library or shell-contract scaffold instead of a real Uno multi-target app, Phase 5c for Uno must be recorded as **blocked**. `NETSDK1139` on `<tfm>-browserwasm` is expected in that scenario and is evidence that Uno scaffolding is still missing — not an environment glitch. Do not debug/workaround it; record the status as `blocked — Uno multi-target not yet created` and move on.
+> **Starter-library escape hatch:** If the repo currently contains only a single-TFM starter library or shell-contract scaffold instead of a real Uno multi-target app, Phase 5c for Uno must be recorded as **blocked**. `NETSDK1139` on `<tfm>-browserwasm` is expected in that scenario and is evidence that Uno scaffolding is still missing - not an environment glitch. Do not debug/workaround it; record the status as `blocked - Uno multi-target not yet created` and move on.
 
 If targeting iOS (`<tfm>-ios`):
 - [ ] Windows compile gate status recorded
@@ -379,7 +379,7 @@ Also verify:
 Scheduler:
 
 - [ ] Scheduler connection string configured
-- [ ] Scheduler operational tables exist (verify schema ownership — see [troubleshooting.md](troubleshooting.md) § Third-Party Operational Store Schema Triage)
+- [ ] Scheduler operational tables exist (verify schema ownership - see [troubleshooting.md](troubleshooting.md) section Third-Party Operational Store Schema Triage)
 
 ```powershell
 dotnet run --project src/Host/{Host}.Scheduler
@@ -391,8 +391,8 @@ Blazor UI (if `includeBlazorUI: true`):
 
 - [ ] Blazor host project builds (`dotnet build src/UI/{Project}.Blazor`)
 - [ ] Gateway/OpenAPI endpoint reachable for Refit client generation
-- [ ] **Standalone clean start:** `dotnet run --project src/UI/{Project}.Blazor` reaches `Application started`, `/healthz` returns 200, the root URL renders without exceptions in console logs, and at least one entity list page loads (empty or seeded — both valid)
-- [ ] **Aspire-registered clean start (when Blazor is added to AppHost):** the Blazor resource reaches Running, dashboard logs are exception-free, and a Refit call from the Blazor host through the Gateway to the API returns data (or a typed empty state) — not a console exception
+- [ ] **Standalone clean start:** `dotnet run --project src/UI/{Project}.Blazor` reaches `Application started`, `/healthz` returns 200, the root URL renders without exceptions in console logs, and at least one entity list page loads (empty or seeded - both valid)
+- [ ] **Aspire-registered clean start (when Blazor is added to AppHost):** the Blazor resource reaches Running, dashboard logs are exception-free, and a Refit call from the Blazor host through the Gateway to the API returns data (or a typed empty state) - not a console exception
 - [ ] Auth path matches `AuthMode` (scaffold principal or live provider per Phase 5e)
 
 ```powershell
@@ -419,9 +419,9 @@ Uno UI startup (post-build, in addition to the platform-target checks above):
 
 - [ ] **Standalone clean start:** the selected Uno target (`<tfm>-browserwasm` / `<tfm>-android` / `<tfm>-ios`) launches or builds to the available local gate and renders the shell with no WASM load errors / no Android startup crashes / no compile failures
 - [ ] **Aspire-registered clean start (when an Uno host is added to AppHost):** AppHost registers the ASP.NET Core WASM wrapper host, not the Uno SDK project; the resource reaches Running and serves its entry point without exception
-- [ ] At least one entity list page loads against the Gateway/API (empty or seeded data — both valid), proving the Kiota/Refit client resolves the configured backend URL
+- [ ] At least one entity list page loads against the Gateway/API (empty or seeded data - both valid), proving the Kiota/Refit client resolves the configured backend URL
 
-A scaffold may declare 5c complete with `[Ignore]` UI tests for unresolved external auth/AI deps, but **not** with a UI host that throws on startup. See [../ai/SKILL.md](../ai/SKILL.md) § Scaffold Definition of Done.
+A scaffold may declare 5c complete with `[Ignore]` UI tests for unresolved external auth/AI deps, but **not** with a UI host that throws on startup. See [../ai/SKILL.md](../ai/SKILL.md) section Scaffold Definition of Done.
 
 Notifications (if `includeNotifications: true`):
 
@@ -432,7 +432,7 @@ Notifications (if `includeNotifications: true`):
 
 For deployment-only channels (e.g., real Azure Communication Services), record blocker in `HANDOFF.md`; the no-op stub is sufficient for scaffold completion.
 
-## 5d — Quality Gates + Delivery
+## 5d - Quality Gates + Delivery
 
 Unit, service, endpoint, and integration tests already exist from Phases 5a/5b/5c. Phase 5d adds quality gate tests and runs a full regression.
 
@@ -463,16 +463,16 @@ az bicep build --file infra/main.bicep
 ```
 
 Delivery checks:
-- [ ] Full test suite passes (regression — not first-time creation for unit/endpoint/integration)
+- [ ] Full test suite passes (regression - not first-time creation for unit/endpoint/integration)
 - [ ] Architecture tests enforce layering rules
 - [ ] `az bicep build --file infra/main.bicep` succeeds *(if IaC enabled)*
 - [ ] Aspire <-> IaC names/connection strings are aligned
 
-## 5e — Integration (Auth + AI)
+## 5e - Integration (Auth + AI)
 
 ### Authentication Finalization (within 5e)
 
-**Scaffold mode is the default.** Authentication finalization is complete when the app builds, tests pass, and auth works with the config-driven scaffold principal. Live identity provider setup is supplemental hardening — it does **not** block scaffold completion.
+**Scaffold mode is the default.** Authentication finalization is complete when the app builds, tests pass, and auth works with the config-driven scaffold principal. Live identity provider setup is supplemental hardening - it does **not** block scaffold completion.
 
 Required (scaffold mode):
 - `AuthMode` toggle present in config (`Scaffold` vs provider name)
@@ -480,7 +480,7 @@ Required (scaffold mode):
 - Auth stubs/no-op passthrough removed or gated behind `AuthMode` check
 - Endpoint tests pass against the scaffold auth path
 
-Required (live provider — only when intentionally provisioned):
+Required (live provider - only when intentionally provisioned):
 - Auth provider configured with real tenant values
 - Authenticated endpoint behavior verified against live tokens
 - Scaffold stub gated by config so it does not activate in production
@@ -500,10 +500,10 @@ If live Entra setup is not yet performed, log it in `HANDOFF.md` as a deployment
 
 Required (scaffold mode):
 - AI service interfaces compile and resolve from DI
-- Config sections absent → services register as no-op stubs (not throws/missing-registration)
+- Config sections absent -> services register as no-op stubs (not throws/missing-registration)
 - AI DI/configuration compiles
 
-Required (live endpoints — only when provisioned):
+Required (live endpoints - only when provisioned):
 - Search service responds
 - Agent endpoint responds
 - Integration tests pass against live resources
@@ -577,13 +577,13 @@ az bicep build --file infra/main.bicep
 - Infra/environment failures: log in `HANDOFF.md`, classify blocker, continue non-blocked scope.
 - Instruction gaps: in a consumer app, append to `.scaffold/INSTRUCTION-GAPS.md`; in this instruction repository, append to `support/UPDATE-INSTRUCTIONS.md`.
 - If a step fails, log the blocker in `HANDOFF.md` (see [HANDOFF.md template](HANDOFF.md)) and continue with non-blocked work.
-- Pattern reference: [../ai/SKILL.md](../ai/SKILL.md) § Non-Negotiables — pattern index for composition wiring.
+- Pattern reference: [../ai/SKILL.md](../ai/SKILL.md) section Non-Negotiables - pattern index for composition wiring.
 
 ---
 
 ## Mid-Session Rollback Protocol
 
-See [OPERATIONS.md](OPERATIONS.md) § Mid-Session Rollback Protocol.
+See [OPERATIONS.md](OPERATIONS.md) section Mid-Session Rollback Protocol.
 
 ---
 
@@ -604,7 +604,7 @@ dotnet test
 ```powershell
 # API host (required)
 dotnet run --project src/Host/{Host}.Api -- --urls "http://localhost:5100"
-# Verify: GET http://localhost:5100/health → 200 OK (Ctrl+C after)
+# Verify: GET http://localhost:5100/health -> 200 OK (Ctrl+C after)
 
 # Aspire (if enabled)
 dotnet run --project src/Host/Aspire/AppHost
@@ -620,11 +620,11 @@ func host start --port 7100
 ### 3. API Endpoint Smoke
 For each scaffolded entity, verify the CRUD cycle works:
 ```
-POST /v1/tenant/{tenantId}/{entity-route}       → 201 + Location header
-GET  /v1/tenant/{tenantId}/{entity-route}/{id}   → 200 + entity body
-POST /v1/tenant/{tenantId}/{entity-route}/search → 200 + paged results
-PUT  /v1/tenant/{tenantId}/{entity-route}/{id}   → 200 + updated body
-DEL  /v1/tenant/{tenantId}/{entity-route}/{id}   → 204
+POST /v1/tenant/{tenantId}/{entity-route}       -> 201 + Location header
+GET  /v1/tenant/{tenantId}/{entity-route}/{id}   -> 200 + entity body
+POST /v1/tenant/{tenantId}/{entity-route}/search -> 200 + paged results
+PUT  /v1/tenant/{tenantId}/{entity-route}/{id}   -> 200 + updated body
+DEL  /v1/tenant/{tenantId}/{entity-route}/{id}   -> 204
 ```
 Use `http` (HTTPie), `curl`, or the Scalar UI at `/scalar/v1`.
 
@@ -635,5 +635,5 @@ Use `http` (HTTPie), `curl`, or the Scalar UI at `/scalar/v1`.
 - [ ] OpenAPI/Scalar UI loads at `/scalar/v1`
 - [ ] No unresolved `// TODO: [CONFIGURE]` stubs remain in production paths (stubs in auth/external-API are expected until Phase 5e)
 - [ ] Aspire dashboard shows all registered resources (if enabled)
-- [ ] Compiler-warning policy applied (see § Compiler-Warning Policy below)
-- [ ] Vulnerability audit run (see § Vulnerability Audit below)
+- [ ] Compiler-warning policy applied (see section Compiler-Warning Policy below)
+- [ ] Vulnerability audit run (see section Vulnerability Audit below)

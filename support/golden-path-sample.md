@@ -231,7 +231,7 @@ externalDependencyModes:
 
 Run these from the generated app root.
 
-After Phases 1–3, developer reviews the YAML artifacts (`.scaffold/domain-specification.yaml`, `.scaffold/UBIQUITOUS-LANGUAGE.md`, `.scaffold/DESIGN-DECISIONS.md`, `.scaffold/resource-implementation.yaml`, `.scaffold/implementation-plan.md`) against their schemas in `ai/`.
+After Phases 1-3, developer reviews the YAML artifacts (`.scaffold/domain-specification.yaml`, `.scaffold/UBIQUITOUS-LANGUAGE.md`, `.scaffold/DESIGN-DECISIONS.md`, `.scaffold/resource-implementation.yaml`, `.scaffold/implementation-plan.md`) against their schemas in `ai/`.
 
 After Phase 4:
 

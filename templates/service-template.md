@@ -1,6 +1,6 @@
 # Service Template
 
-> **When to read:** Phase 5b, when generating an application service for an entity — orchestrating repositories, mapping DTOs, returning `Result<T>` / `Result<DefaultResponse>`.
+> **When to read:** Phase 5b, when generating an application service for an entity - orchestrating repositories, mapping DTOs, returning `Result<T>` / `Result<DefaultResponse>`.
 > **Skip if:** Pure projection (no orchestration); query-only with no domain rules; service already exists.
 
 | | |
@@ -77,7 +77,7 @@ internal class {Entity}Service(
     {
         var dto = request.Item;
 
-        // [MULTI-TENANT] Stamp tenant from request context — DTOs arrive without TenantId from API layer
+        // [MULTI-TENANT] Stamp tenant from request context - DTOs arrive without TenantId from API layer
         dto.TenantId = RequestTenantId ?? Guid.Empty;
 
         // Structure validation (delegates to StructureValidators for common checks)
@@ -110,7 +110,7 @@ internal class {Entity}Service(
 
         await _cache.SetAsync($"{Entity}:{entity.Id}", entity.ToDto(), token: ct);
 
-        // Publish integration event (fire-and-forget — entity is already saved)
+        // Publish integration event (fire-and-forget - entity is already saved)
         try
         {
             await messageBus.PublishAsync(
@@ -177,7 +177,7 @@ internal class {Entity}Service(
         return Result<DefaultResponse<{Entity}Dto>>.Success(BuildResponse(entity.ToDto()));
     }
 
-    // ===== Delete (idempotent — return success if not found) =====
+    // ===== Delete (idempotent - return success if not found) =====
     public async Task<Result> DeleteAsync(Guid id, CancellationToken ct = default)
     {
         var entity = await repoTrxn.Get{Entity}Async(id, false, ct);
@@ -234,16 +234,16 @@ public interface I{Entity}Service
 
 ## Common Mistakes (Verified via Test Failures)
 
-1. **Delete no-op** — Forgetting `repoTrxn.Delete(entity)` before `SaveChangesAsync`. The entity is loaded but never marked for deletion. Save commits nothing.
-2. **CreateAsync incomplete** — `Entity.Create()` only accepts factory constructor args. Additional DTO properties (e.g., `EstimatedHours`, `ActualHours`, `Description`) must be applied via `entity.Update(...)` after creation. If omitted, domain validation that depends on those fields won't trigger.
-3. **Wrong SaveChangesAsync** — `DbContextBase.SaveChangesAsync(CancellationToken)` throws `NotImplementedException` by design. Must use `SaveChangesAsync(OptimisticConcurrencyWinner.ClientWins, ct)`.
-4. **Post-mapping search results** — When the query repo uses `QueryPageProjectionAsync` and returns `PagedResponse<{Entity}Dto>`, the service MUST direct-return: `return await repoQuery.Search{Entity}Async(request, ct);`. Do NOT re-wrap into a new `PagedResponse` or call `.ToDto()` — the projection already happened at the SQL level.
-5. **Missing UpdateFromDto mock in tests** — `CreateAsync` uses `.Bind(e => repoTrxn.UpdateFromDto(e, dto))` and `UpdateAsync` calls `repoTrxn.UpdateFromDto(entity, dto, RelatedDeleteBehavior.RelationshipAndEntity)`. If tests don't mock `UpdateFromDto`, they get `NullReferenceException`. Always mock with `It.IsAny<RelatedDeleteBehavior>()` so both call shapes match: `_repoTrxnMock.Setup(r => r.UpdateFromDto(It.IsAny<{Entity}>(), It.IsAny<{Entity}Dto>(), It.IsAny<RelatedDeleteBehavior>())).Returns((Entity e, EntityDto _, RelatedDeleteBehavior _) => DomainResult<{Entity}>.Success(e));`
-6. **[Multi-tenant only] Missing TenantId stamp** — Services MUST stamp `dto.TenantId = RequestTenantId ?? Guid.Empty` on the DTO immediately after `var dto = request.Item;` in both `CreateAsync` and `UpdateAsync`. DTOs arrive from the API layer without TenantId populated. Without the stamp, `StructureValidators.ValidateCreate<T>` rejects `Guid.Empty` and every Create/Update test fails. Use `dto.TenantId` (not `RequestTenantId`) in subsequent boundary-validator and `ToEntity()` calls.
-7. **Update not-found returns Failure** — Use `Result<DefaultResponse<{Entity}Dto>>.Failure($"{ErrorConstants.ERROR_ITEM_NOTFOUND}: {dto.Id}")`, not `Success` with `Item = null`.
-8. **Inline entity name strings** — Always use `nameof({Entity})` in boundary-validator calls and error messages, not hardcoded strings.
-9. **Missing BuildResponse** — All success paths should use the private static `BuildResponse` helper, not inline `new() { Item = ... }`.
-10. **[Multi-tenant only] Missing PreventTenantChange in Update** — After boundary check, before domain update, call `tenantBoundaryValidator.PreventTenantChange(...)` to reject tenant reassignment.
+1. **Delete no-op** - Forgetting `repoTrxn.Delete(entity)` before `SaveChangesAsync`. The entity is loaded but never marked for deletion. Save commits nothing.
+2. **CreateAsync incomplete** - `Entity.Create()` only accepts factory constructor args. Additional DTO properties (e.g., `EstimatedHours`, `ActualHours`, `Description`) must be applied via `entity.Update(...)` after creation. If omitted, domain validation that depends on those fields won't trigger.
+3. **Wrong SaveChangesAsync** - `DbContextBase.SaveChangesAsync(CancellationToken)` throws `NotImplementedException` by design. Must use `SaveChangesAsync(OptimisticConcurrencyWinner.ClientWins, ct)`.
+4. **Post-mapping search results** - When the query repo uses `QueryPageProjectionAsync` and returns `PagedResponse<{Entity}Dto>`, the service MUST direct-return: `return await repoQuery.Search{Entity}Async(request, ct);`. Do NOT re-wrap into a new `PagedResponse` or call `.ToDto()` - the projection already happened at the SQL level.
+5. **Missing UpdateFromDto mock in tests** - `CreateAsync` uses `.Bind(e => repoTrxn.UpdateFromDto(e, dto))` and `UpdateAsync` calls `repoTrxn.UpdateFromDto(entity, dto, RelatedDeleteBehavior.RelationshipAndEntity)`. If tests don't mock `UpdateFromDto`, they get `NullReferenceException`. Always mock with `It.IsAny<RelatedDeleteBehavior>()` so both call shapes match: `_repoTrxnMock.Setup(r => r.UpdateFromDto(It.IsAny<{Entity}>(), It.IsAny<{Entity}Dto>(), It.IsAny<RelatedDeleteBehavior>())).Returns((Entity e, EntityDto _, RelatedDeleteBehavior _) => DomainResult<{Entity}>.Success(e));`
+6. **[Multi-tenant only] Missing TenantId stamp** - Services MUST stamp `dto.TenantId = RequestTenantId ?? Guid.Empty` on the DTO immediately after `var dto = request.Item;` in both `CreateAsync` and `UpdateAsync`. DTOs arrive from the API layer without TenantId populated. Without the stamp, `StructureValidators.ValidateCreate<T>` rejects `Guid.Empty` and every Create/Update test fails. Use `dto.TenantId` (not `RequestTenantId`) in subsequent boundary-validator and `ToEntity()` calls.
+7. **Update not-found returns Failure** - Use `Result<DefaultResponse<{Entity}Dto>>.Failure($"{ErrorConstants.ERROR_ITEM_NOTFOUND}: {dto.Id}")`, not `Success` with `Item = null`.
+8. **Inline entity name strings** - Always use `nameof({Entity})` in boundary-validator calls and error messages, not hardcoded strings.
+9. **Missing BuildResponse** - All success paths should use the private static `BuildResponse` helper, not inline `new() { Item = ... }`.
+10. **[Multi-tenant only] Missing PreventTenantChange in Update** - After boundary check, before domain update, call `tenantBoundaryValidator.PreventTenantChange(...)` to reject tenant reassignment.
 
 ## Policy Notes
 

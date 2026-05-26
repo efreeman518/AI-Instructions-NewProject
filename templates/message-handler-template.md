@@ -179,10 +179,10 @@ public class ProviderWebhookReceivedHandler(
 
 ## Notes
 
-- Handlers should be **thin** — delegate complex logic to services or domain methods.
+- Handlers should be **thin** - delegate complex logic to services or domain methods.
 - Each handler handles **one event type**. Use separate handler classes for different events.
 - Handlers run **in-process** via `IInternalMessageBus`. For cross-service messaging, use Azure Service Bus (see [function-app.md](../skills/function-app.md) for Service Bus triggers).
 - `AuditInterceptor` publishes `AuditEntry<...>` through this same bus after `SaveChangesAsync`. If queue/bus/handler wiring is incomplete, entity saves succeed but audit/side-effect handlers never run.
-- Keep handlers **idempotent** — the same event may be delivered more than once in retry scenarios.
+- Keep handlers **idempotent** - the same event may be delivered more than once in retry scenarios.
 - Use `CancellationToken` and honor cancellation in all async operations.
 - If workflow compensation metadata exists, keep rollback handlers explicit and ordered according to workflow policy.

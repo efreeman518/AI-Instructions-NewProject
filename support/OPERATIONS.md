@@ -1,6 +1,6 @@
 # Operational Protocols
 
-Single source of truth for the protocols an AI session needs at the boundaries of normal work — when something fails, when state changes, when an assumption breaks, when context limits matter.
+Single source of truth for the protocols an AI session needs at the boundaries of normal work - when something fails, when state changes, when an assumption breaks, when context limits matter.
 
 The Phase 5 **Decision Table** at the top of [../ai/SKILL.md](../ai/SKILL.md) is the fast-lookup index. This file is the detail.
 
@@ -29,7 +29,7 @@ If a sub-phase fails after the one-pass fix attempt:
 - log the blocker in `HANDOFF.md`,
 - continue only with non-blocked work.
 
-Mid-session checkpoint trigger: 15+ generated files **or** 3+ build/fix cycles. Update `HANDOFF.md` immediately — do not wait for the gate.
+Mid-session checkpoint trigger: 15+ generated files **or** 3+ build/fix cycles. Update `HANDOFF.md` immediately - do not wait for the gate.
 
 ## Missing-Inputs Protocol
 
@@ -75,4 +75,4 @@ Until all three are present, the slice is incomplete regardless of `dotnet build
 
 ## Context Budgets (advisory)
 
-Target ≤30K tokens of instruction context per Phase 5 sub-phase, ≤16K in compact-mode harnesses. On 200K+ context models with no harness constraint, treat as a focus signal — load the curated set in the **Phase 5 file table** in `ai/SKILL.md`, add files only when the current sub-phase clearly needs them. Lost-in-the-middle is real even at 200K, so loading every skill hurts output quality.
+Target <=30K tokens of instruction context per Phase 5 sub-phase, <=16K in compact-mode harnesses. On 200K+ context models with no harness constraint, treat as a focus signal - load the curated set in the **Phase 5 file table** in `ai/SKILL.md`, add files only when the current sub-phase clearly needs them. Lost-in-the-middle is real even at 200K, so loading every skill hurts output quality.

@@ -8,11 +8,11 @@ Workflow JSONs are the production wiring of FlowEngine. They are loaded from dis
 
 | Stage | Silent failure mode |
 |---|---|
-| File present in build output | csproj `<Content>` glob excludes the file → seeding has nothing to seed → `StartAsync(workflowId)` returns "not found" at runtime. |
-| JSON deserializes to `WorkflowDefinition` | Missing `JsonStringEnumConverter` → `NodeKind` deserializes as default → workflow runs but nodes are wrong. Resolved in FE 1.0.104 by `WorkflowDefinitionJsonOptions.Default`. |
-| Definition passes FE validation | Invalid edges or missing required fields → registry rejects on first start, not at deploy. |
-| Definition round-trips through `IWorkflowRegistry` | Registry write/read mismatch → workflow appears in dev tests but the registry returns stale data in prod. |
-| `WorkflowDefinitionBuilder.FromJson(json).Build()` hydrates | Empty builder bug (pre-1.0.104) → silent zero-node workflow. Fixed in 1.0.104; assertion stays as regression guard. |
+| File present in build output | csproj `<Content>` glob excludes the file -> seeding has nothing to seed -> `StartAsync(workflowId)` returns "not found" at runtime. |
+| JSON deserializes to `WorkflowDefinition` | Missing `JsonStringEnumConverter` -> `NodeKind` deserializes as default -> workflow runs but nodes are wrong. Resolved in FE 1.0.104 by `WorkflowDefinitionJsonOptions.Default`. |
+| Definition passes FE validation | Invalid edges or missing required fields -> registry rejects on first start, not at deploy. |
+| Definition round-trips through `IWorkflowRegistry` | Registry write/read mismatch -> workflow appears in dev tests but the registry returns stale data in prod. |
+| `WorkflowDefinitionBuilder.FromJson(json).Build()` hydrates | Empty builder bug (pre-1.0.104) -> silent zero-node workflow. Fixed in 1.0.104; assertion stays as regression guard. |
 
 The five-tier test below covers every stage. Generate one class per workflow JSON declared in `Workflows/`.
 
@@ -35,7 +35,7 @@ public class {WorkflowPascalName}WorkflowTests
     private static string WorkflowsDirectory => Path.Combine(AppContext.BaseDirectory, "Workflows");
     private static string WorkflowPath => Path.Combine(WorkflowsDirectory, WorkflowFileName);
 
-    // Tier 1 — file presence (G-005 guard).
+    // Tier 1 - file presence (G-005 guard).
     // Catches: csproj <Content> glob regression, accidental .gitignore, build-server filesystem-case issues.
     [TestMethod]
     public void Workflow_File_Is_Copied_To_Output()
@@ -46,7 +46,7 @@ public class {WorkflowPascalName}WorkflowTests
             $"<Content Include=\"Workflows\\*.json\"> with CopyToOutputDirectory=PreserveNewest.");
     }
 
-    // Tier 2 — JSON deserializes to WorkflowDefinition with the canonical options.
+    // Tier 2 - JSON deserializes to WorkflowDefinition with the canonical options.
     // Catches: enum-as-string regressions, missing JsonStringEnumConverter, schema drift.
     [TestMethod]
     public void Workflow_Deserializes_With_Canonical_Options()
@@ -60,7 +60,7 @@ public class {WorkflowPascalName}WorkflowTests
         Assert.IsTrue(def.Nodes.Count > 0, "Definition has zero nodes.");
     }
 
-    // Tier 3 — Definition passes FE validation.
+    // Tier 3 - Definition passes FE validation.
     [TestMethod]
     public void Workflow_Passes_FlowEngine_Validation()
     {
@@ -75,7 +75,7 @@ public class {WorkflowPascalName}WorkflowTests
             $"Validation failed:\n{string.Join("\n", result.Errors)}");
     }
 
-    // Tier 4 — round-trip through an in-memory registry.
+    // Tier 4 - round-trip through an in-memory registry.
     [TestMethod]
     public async Task Workflow_RoundTrips_Through_Registry()
     {
@@ -93,7 +93,7 @@ public class {WorkflowPascalName}WorkflowTests
         Assert.AreEqual(def.Nodes.Count, hydrated.Nodes.Count);
     }
 
-    // Tier 5 — Builder.FromJson hydration (regression guard for the pre-1.0.104 empty-builder bug).
+    // Tier 5 - Builder.FromJson hydration (regression guard for the pre-1.0.104 empty-builder bug).
     [TestMethod]
     public void Workflow_Builder_FromJson_Hydrates_Nodes()
     {
@@ -103,7 +103,7 @@ public class {WorkflowPascalName}WorkflowTests
         Assert.IsTrue(
             built.Nodes.Count > 0,
             "WorkflowDefinitionBuilder.FromJson(json).Build() produced zero nodes. " +
-            "Pre-1.0.104 regression — upgrade EF.FlowEngine.");
+            "Pre-1.0.104 regression - upgrade EF.FlowEngine.");
     }
 }
 ```
@@ -139,7 +139,7 @@ public class AllWorkflowsArePresentTests
 }
 ```
 
-## csproj — Test Project Output Wiring
+## csproj - Test Project Output Wiring
 
 The test project must `<Content>`-include the workflow JSONs (relative to the API project) and copy them to its own output, otherwise `AppContext.BaseDirectory` won't see them at test time:
 
@@ -158,10 +158,10 @@ The exact `Include` path depends on the solution layout; adjust the `..\..` segm
 
 | Tier | Catches | Cost |
 |---|---|---|
-| 1 — File presence | csproj/glob drift, gitignore, filesystem case | One `File.Exists` per workflow |
-| 2 — Deserialize | JSON schema drift, enum converter regressions | One JSON parse |
-| 3 — Validate | Bad edges, missing required fields | One validator pass |
-| 4 — Registry round-trip | Registry serialization mismatch | One in-memory write/read |
-| 5 — Builder hydration | FE 1.0.104 regression guard | One builder run |
+| 1 - File presence | csproj/glob drift, gitignore, filesystem case | One `File.Exists` per workflow |
+| 2 - Deserialize | JSON schema drift, enum converter regressions | One JSON parse |
+| 3 - Validate | Bad edges, missing required fields | One validator pass |
+| 4 - Registry round-trip | Registry serialization mismatch | One in-memory write/read |
+| 5 - Builder hydration | FE 1.0.104 regression guard | One builder run |
 
-All five run in the unit-test tier — no SQL, no Aspire, no real registry. Add to `Test.Integration.{Project}.FlowEngine` for the project naming convention; the tier semantics are pure unit-test.
+All five run in the unit-test tier - no SQL, no Aspire, no real registry. Add to `Test.Integration.{Project}.FlowEngine` for the project naming convention; the tier semantics are pure unit-test.

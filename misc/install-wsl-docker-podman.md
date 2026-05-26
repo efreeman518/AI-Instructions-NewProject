@@ -203,7 +203,7 @@ In Podman Desktop, you'll see tabs for:
 - **Volumes** - Manage container storage volumes
 - **Pods** - Manage Podman pods
 
-You can manage containers directly from the GUI — start, stop, remove, view logs, etc.
+You can manage containers directly from the GUI - start, stop, remove, view logs, etc.
 
 ### Command Line Access
 

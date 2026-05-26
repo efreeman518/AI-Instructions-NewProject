@@ -6,20 +6,20 @@ Scaffold a single Uno codebase (browserwasm + Android + iOS) that calls the **Ga
 
 - UI auth: `EntraExternal` (or configured UI auth provider)
 - API auth: token relay through Gateway
-- Pattern: Views (`XAML`) ↔ Presentation (`MVUX`) ↔ Business services ↔ Kiota client ↔ Gateway
+- Pattern: Views (`XAML`) <-> Presentation (`MVUX`) <-> Business services <-> Kiota client <-> Gateway
 
 References:
 - [../ai/domain-specification-schema.md](../ai/domain-specification-schema.md)
 - [../ai/resource-implementation-schema.md](../ai/resource-implementation-schema.md)
 - See [../patterns/expected-output-index.md](../patterns/expected-output-index.md).
 - [../ai/SKILL.md](../ai/SKILL.md)
-- Reference app: [Uno Chefs](https://github.com/unoplatform/uno.chefs) — canonical Uno example for MVUX, navigation, Kiota HTTP, and page structure
+- Reference app: [Uno Chefs](https://github.com/unoplatform/uno.chefs) - canonical Uno example for MVUX, navigation, Kiota HTTP, and page structure
 
 ---
 
 ## Skill File Map
 
-This skill is split for context-budget-friendly loading. Use the table to decide what to load for the current task — load only what you need.
+This skill is split for context-budget-friendly loading. Use the table to decide what to load for the current task - load only what you need.
 
 | File | Load when |
 |---|---|
@@ -27,7 +27,7 @@ This skill is split for context-budget-friendly loading. Use the table to decide
 | **[ui-uno-mvux.md](ui-uno-mvux.md)** | Writing presentation code: MVUX models, feed-refresh patterns, cross-model messaging, navigation menus, XAML pitfalls, business services, client-API contract (`DefaultRequest`/`DefaultResponse`/pagination), auth patterns. |
 | **[ui-uno-platforms.md](ui-uno-platforms.md)** | Platform-specific work: WASM debugging, port exclusion, Android SDK + emulator, Resizetizer issues, CI requirements (`wasm-tools` workload). |
 
-For frontier-model loading (≥200K context), all three may be loaded together. For constrained context, load by task.
+For frontier-model loading (>=200K context), all three may be loaded together. For constrained context, load by task.
 
 ---
 
@@ -66,7 +66,7 @@ src/Host/{Project}.Uno.WasmHost/
   Program.cs              # Aspire/browserwasm wrapper host
 ```
 
-Detailed structure rules live in [ui-uno-shell.md](ui-uno-shell.md) § Project File Rules.
+Detailed structure rules live in [ui-uno-shell.md](ui-uno-shell.md) section Project File Rules.
 
 ## Generation Checklist
 
@@ -80,7 +80,7 @@ Detailed structure rules live in [ui-uno-shell.md](ui-uno-shell.md) § Project F
 - [ ] Each entity uses single page pattern: `{Entity}Page` with form fields + children sections
 - [ ] Children sections visible only in edit mode (`Visibility="{Binding IsEditMode}"`)
 - [ ] `FormTextBoxStyle` applied to all TextBox inputs for visible borders
-- [ ] Route mappings and page-model bindings compile (see [ui-uno-mvux.md](ui-uno-mvux.md) § Routing + Mapping)
+- [ ] Route mappings and page-model bindings compile (see [ui-uno-mvux.md](ui-uno-mvux.md) section Routing + Mapping)
 - [ ] `Shell.xaml` has `ExtendedSplashScreen.Content` containing `<Frame />`
 - [ ] `Shell.xaml.cs` implements `IContentControlProvider`
 - [ ] `ShellModel` navigates to first route in constructor

@@ -1,8 +1,8 @@
 # Domain Specification Schema (Phase 1 Output)
 
-Pure business domain model — no implementation details, no datatypes, no databases.
+Pure business domain model - no implementation details, no datatypes, no databases.
 
-**JSON Schema:** [`schemas/domain-specification.schema.json`](../schemas/domain-specification.schema.json) — use for programmatic validation of `.scaffold/domain-specification.yaml`.
+**JSON Schema:** [`schemas/domain-specification.schema.json`](../schemas/domain-specification.schema.json) - use for programmatic validation of `.scaffold/domain-specification.yaml`.
 
 ## Output Contract
 
@@ -10,8 +10,8 @@ Write Phase 1 output to `.scaffold/domain-specification.yaml` in the target proj
 
 Phase 1 also writes:
 
-- `.scaffold/UBIQUITOUS-LANGUAGE.md` — shared domain vocabulary for future AI/developer sessions.
-- `.scaffold/DESIGN-DECISIONS.md` — decision log and dependency graph for design choices.
+- `.scaffold/UBIQUITOUS-LANGUAGE.md` - shared domain vocabulary for future AI/developer sessions.
+- `.scaffold/DESIGN-DECISIONS.md` - decision log and dependency graph for design choices.
 
 Run the shared understanding interview before finalizing this YAML. See [shared-understanding-interview.md](shared-understanding-interview.md).
 
@@ -27,12 +27,12 @@ OrganizationName: ""       # optional namespace prefix
 
 Define what the business calls things, their lifecycle, and how they relate.
 
-> **⚠️ Naming Conflicts:** Avoid entity names that collide with C# framework types. Common conflicts:
-> - `Task` → conflicts with `System.Threading.Tasks.Task` — use `WorkItem`, `ProjectTask`, or `JobTask`
-> - `Thread` → conflicts with `System.Threading.Thread` — use `Discussion`, `Conversation`
-> - `Timer` → conflicts with `System.Threading.Timer` — use `Reminder`, `Schedule`
-> - `Type` → conflicts with `System.Type` — use `Category`, `Classification`
-> - `String`, `Object`, `Action`, `Attribute`, `File`, `Path` → all conflict with System types
+> **WARNING Naming Conflicts:** Avoid entity names that collide with C# framework types. Common conflicts:
+> - `Task` -> conflicts with `System.Threading.Tasks.Task` - use `WorkItem`, `ProjectTask`, or `JobTask`
+> - `Thread` -> conflicts with `System.Threading.Thread` - use `Discussion`, `Conversation`
+> - `Timer` -> conflicts with `System.Threading.Timer` - use `Reminder`, `Schedule`
+> - `Type` -> conflicts with `System.Type` - use `Category`, `Classification`
+> - `String`, `Object`, `Action`, `Attribute`, `File`, `Path` -> all conflict with System types
 >
 > These collisions cause subtle compilation errors or require `global::` disambiguations throughout the codebase.
 
@@ -58,7 +58,7 @@ entities:
 ### Property Rules
 
 - `kind`: `string` (default) | `enum` | `flags_enum` | `number` | `date` | `boolean` | `identifier` | `money` | `text`
-- No `type`, `maxLength`, `precision` here — those are Phase 2 concerns
+- No `type`, `maxLength`, `precision` here - those are Phase 2 concerns
 - `required`: business requirement, not database nullability
 - For operational reason fields (`ReasonCode` style), prefer:
   - fixed, stable set -> `enum`
@@ -69,13 +69,13 @@ entities:
 Enums are appropriate for a **fixed, closed set of named values** with no transition logic. Two misuses to avoid:
 
 **1. Do not use an enum in place of a state machine.**
-If the values have allowed transitions, guards, or trigger events, model it as a `stateMachine` (see State Machines section). An enum with transition logic buried in service code is a state machine in disguise — it will accumulate `switch` statements and invariant violations across the codebase.
+If the values have allowed transitions, guards, or trigger events, model it as a `stateMachine` (see State Machines section). An enum with transition logic buried in service code is a state machine in disguise - it will accumulate `switch` statements and invariant violations across the codebase.
 
 Wrong: `Status: enum [Draft, Active, Suspended, Closed]` when only certain transitions are valid.
 Right: declare a `stateMachine` with explicit `states`, `transitions`, and guards.
 
 **2. Do not collapse multiple domain entities into one entity by misusing an enum discriminator.**
-If objects with different `Type` values have different properties, relationships, lifecycles, or rules, they are separate entities — not one entity with a `Kind`/`Type` enum. Collapsing them produces nullable columns, conditional logic everywhere, and violated invariants.
+If objects with different `Type` values have different properties, relationships, lifecycles, or rules, they are separate entities - not one entity with a `Kind`/`Type` enum. Collapsing them produces nullable columns, conditional logic everywhere, and violated invariants.
 
 Wrong: a single `Notification` entity with `Type: enum [Email, SMS, Push]` where each type has different required fields and delivery rules.
 Right: a shared `Notification` base entity (or interface) with separate `EmailNotification`, `SmsNotification`, `PushNotification` entities.
@@ -84,22 +84,22 @@ Apply enum freely when the values are genuinely interchangeable labels with no s
 
 ### Relationship Types
 
-- `one-to-many` — parent owns children. Specify cascade behavior.
+- `one-to-many` - parent owns children. Specify cascade behavior.
   ```yaml
   children:
     - { name: Comments, entity: Comment, relationship: one-to-many, cascadeDelete: true }
   ```
-- `many-to-many` — peer association. Join entity details are Phase 2.
+- `many-to-many` - peer association. Join entity details are Phase 2.
   ```yaml
   children:
     - { name: Tags, entity: Tag, relationship: many-to-many }
   ```
-- `self-referencing` — hierarchical structures within the same entity.
+- `self-referencing` - hierarchical structures within the same entity.
   ```yaml
   children:
     - { name: Children, entity: TodoItem, relationship: self-referencing, selfReferenceKey: ParentId }
   ```
-- `polymorphic-join` — shared attachment pattern across parent types.
+- `polymorphic-join` - shared attachment pattern across parent types.
   ```yaml
   children:
     - { name: Attachments, entity: Attachment, relationship: polymorphic-join, polymorphicEntityTypes: [TodoItem, Comment] }
@@ -260,7 +260,7 @@ ugcLifecyclePolicy:
 
 ## AI Capabilities (Optional)
 
-Capture business-level intent for AI-powered features. No implementation details — those are Phase 2 concerns.
+Capture business-level intent for AI-powered features. No implementation details - those are Phase 2 concerns.
 
 ### Semantic Search
 
@@ -299,7 +299,7 @@ Identify decisions or processes where an AI agent could assist. Focus on what th
         - "Extract key points from article body"
 ```
 
-Add AI capabilities when search should be meaning-based (not just keyword filters), decisions involve classification/ranking/NL reasoning, or content generation/summarization is needed. Implementation details (models, indexes, prompts) are Phase 2/4 concerns — see [skills/ai-integration.md](../skills/ai-integration.md).
+Add AI capabilities when search should be meaning-based (not just keyword filters), decisions involve classification/ranking/NL reasoning, or content generation/summarization is needed. Implementation details (models, indexes, prompts) are Phase 2/4 concerns - see [skills/ai-integration.md](../skills/ai-integration.md).
 
 ---
 
@@ -314,8 +314,8 @@ authScenario: enterprise          # enterprise | external | hybrid
 ```
 
 Auth provider options:
-- **Enterprise / internal:** `EntraID` — SSO, conditional access, group-based roles
-- **External / consumer:** `EntraExternal`, `Google`, `Facebook`, `Apple`, `OAuth2` — social/OIDC providers
+- **Enterprise / internal:** `EntraID` - SSO, conditional access, group-based roles
+- **External / consumer:** `EntraExternal`, `Google`, `Facebook`, `Apple`, `OAuth2` - social/OIDC providers
 - **Hybrid:** combine `EntraID` for internal with `EntraExternal` or social providers for external users
 
 > **Note:** Authentication is configured in the final integration phase (Phase 5e). During earlier phases, auth is stubbed. See [skills/identity-management.md](../skills/identity-management.md).
@@ -326,20 +326,20 @@ Auth provider options:
 
 Work through these in order during Phase 1 after loading [shared-understanding-interview.md](shared-understanding-interview.md):
 
-1. **Core entities** — what does the business call things?
-2. **Relationships** — who owns what? What references what?
-3. **Lifecycle** — what states does each entity go through?
-4. **Rules** — what must be true? What constraints exist?
-5. **Events** — what happens that other parts of the system care about?
-6. **Workflows** — what multi-step processes exist beyond CRUD?
-7. **AI capabilities** — what searches should be "smart"? What decisions could an agent help with? What content should be generated or summarized?
-8. **Tenancy/auth** — who can see/do what?
+1. **Core entities** - what does the business call things?
+2. **Relationships** - who owns what? What references what?
+3. **Lifecycle** - what states does each entity go through?
+4. **Rules** - what must be true? What constraints exist?
+5. **Events** - what happens that other parts of the system care about?
+6. **Workflows** - what multi-step processes exist beyond CRUD?
+7. **AI capabilities** - what searches should be "smart"? What decisions could an agent help with? What content should be generated or summarized?
+8. **Tenancy/auth** - who can see/do what?
 
 After each branch, recap the current understanding, confirmed language, design decisions, open conflicts, and deferred items. Do not write final YAML until every branch is confirmed, defaulted, or deferred.
 
 ---
 
-## Phase 1 → 2 Transition Gate
+## Phase 1 -> 2 Transition Gate
 
 Before moving to Phase 2 (Resource Definition), verify all of the following:
 

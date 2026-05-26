@@ -8,7 +8,7 @@
 
 ## File: Infrastructure/Repositories/Updaters/{Entity}Updater.cs
 
-The updater is a **DbContext extension method** — this gives it access to `db.Delete()` for explicit EF change-tracker removal of orphaned children.
+The updater is a **DbContext extension method** - this gives it access to `db.Delete()` for explicit EF change-tracker removal of orphaned children.
 
 ```csharp
 using EF.Data;
@@ -67,7 +67,7 @@ internal static class {Entity}Updater
                     if (result.IsSuccess) updatedEntity.{Entity}Tags.Add(result.Value!);
                     return result;
                 },
-                // updateFunc omitted — junction has no updatable properties
+                // updateFunc omitted - junction has no updatable properties
                 removeFunc: toRemove =>
                 {
                     if (relatedDeleteBehavior == RelatedDeleteBehavior.None) return DomainResult.Success();
@@ -94,7 +94,7 @@ public static class CollectionUtility
     /// <summary>
     /// Synchronize a database collection with an incoming DTO collection.
     /// Matches by key; creates new items, updates matching items, removes missing items.
-    /// Error aggregation is handled internally — returns a combined DomainResult.
+    /// Error aggregation is handled internally - returns a combined DomainResult.
     /// </summary>
     /// <typeparam name="TEntity">Entity type in the database collection.</typeparam>
     /// <typeparam name="TDto">DTO type in the incoming collection.</typeparam>
@@ -102,7 +102,7 @@ public static class CollectionUtility
     /// <param name="dbCollection">The entity's navigation collection (ICollection).</param>
     /// <param name="dtoCollection">The incoming DTOs with desired state.</param>
     /// <param name="getDbId">Key selector for entity.</param>
-    /// <param name="getDtoId">Key selector for DTO (returns TId? — null/default = new item).</param>
+    /// <param name="getDtoId">Key selector for DTO (returns TId? - null/default = new item).</param>
     /// <param name="createFunc">Creates entity from DTO. Must add to collection if successful. Returns DomainResult.</param>
     /// <param name="updateFunc">Optional. Updates existing entity from DTO. Returns DomainResult.</param>
     /// <param name="removeFunc">Optional. Removes entity from collection. Returns DomainResult. If null, no deletes occur (partial update).</param>
@@ -136,7 +136,7 @@ public static class CollectionUtility
 
 ### Owned 1:N Child (Comments, ChecklistItems)
 
-All three callbacks needed — create adds to collection, update delegates to entity method, remove calls `db.Delete()` to mark for EF deletion:
+All three callbacks needed - create adds to collection, update delegates to entity method, remove calls `db.Delete()` to mark for EF deletion:
 
 ```csharp
 CollectionUtility.SyncCollectionWithResult<Comment, CommentDto, Guid>(
@@ -162,7 +162,7 @@ CollectionUtility.SyncCollectionWithResult<Comment, CommentDto, Guid>(
 
 #### createFunc must apply ALL DTO fields
 
-Domain factory methods often take a minimal field set (e.g., `ChecklistItem.Create(tenantId, taskItemId, title, sortOrder)` — no `IsCompleted`). If the DTO carries additional state (a pre-checked checkbox buffered in a create form, a status flag, a completion date), the `createFunc` must follow the `Create` with an `Update` call to apply those fields. Otherwise the UI's single-payload aggregate save silently drops them on newly-inserted children. Pattern:
+Domain factory methods often take a minimal field set (e.g., `ChecklistItem.Create(tenantId, taskItemId, title, sortOrder)` - no `IsCompleted`). If the DTO carries additional state (a pre-checked checkbox buffered in a create form, a status flag, a completion date), the `createFunc` must follow the `Create` with an `Update` call to apply those fields. Otherwise the UI's single-payload aggregate save silently drops them on newly-inserted children. Pattern:
 
 ```csharp
 createFunc: incomingDto =>
@@ -170,7 +170,7 @@ createFunc: incomingDto =>
     var result = ChecklistItem.Create(updatedEntity.TenantId, updatedEntity.Id, incomingDto.Title, incomingDto.SortOrder);
     if (result.IsSuccess)
     {
-        // Create() has no IsCompleted arg — apply it via Update() so buffered
+        // Create() has no IsCompleted arg - apply it via Update() so buffered
         // "checked" state isn't lost when the parent + children are POSTed together.
         if (incomingDto.IsCompleted) result.Value!.Update(isCompleted: true);
         updatedEntity.Comments.Add(result.Value!);
@@ -183,7 +183,7 @@ Rule: for every field the DTO can carry that the domain factory doesn't accept, 
 
 ### M:N Junction (Tags via TaskItemTag)
 
-Only create + remove needed — junction entities have no updatable properties. Match on the foreign key (TagId), not the junction entity's own Id:
+Only create + remove needed - junction entities have no updatable properties. Match on the foreign key (TagId), not the junction entity's own Id:
 
 ```csharp
 CollectionUtility.SyncCollectionWithResult<TaskItemTag, TagDto, Guid>(
@@ -204,7 +204,7 @@ CollectionUtility.SyncCollectionWithResult<TaskItemTag, TagDto, Guid>(
         updatedEntity.TaskItemTags.Remove(toRemove);
         return DomainResult.Success();
     });
-    // updateFunc omitted — no properties to update on junction
+    // updateFunc omitted - no properties to update on junction
 ```
 
 ### Partial Update (no removes)
@@ -219,13 +219,13 @@ CollectionUtility.SyncCollectionWithResult<Address, AddressDto, Guid>(
     i => i.Id,
     createFunc: incomingDto => { ... },
     updateFunc: (existing, incomingDto) => existing.Update(incomingDto.Street, incomingDto.City));
-    // removeFunc omitted — unmatched addresses are kept
+    // removeFunc omitted - unmatched addresses are kept
 ```
 
 ## Usage in Repository
 
 ```csharp
-// In {Entity}RepositoryTrxn — delegates to DbContext extension method:
+// In {Entity}RepositoryTrxn - delegates to DbContext extension method:
 public DomainResult<{Entity}> UpdateFromDto(
     {Entity} entity, {Entity}Dto dto,
     RelatedDeleteBehavior relatedDeleteBehavior = RelatedDeleteBehavior.None)
@@ -237,11 +237,11 @@ public DomainResult<{Entity}> UpdateFromDto(
 ## Usage in Service (via .Bind chaining)
 
 ```csharp
-// CreateAsync — chain entity creation with child sync:
+// CreateAsync - chain entity creation with child sync:
 var result = dto.ToEntity(tenantId)
     .Bind(entity => repoTrxn.UpdateFromDto(entity, dto));
 
-// UpdateAsync — after updating scalar properties:
+// UpdateAsync - after updating scalar properties:
 var syncResult = repoTrxn.UpdateFromDto(entity, dto);
 if (syncResult.IsFailure) return Result<DefaultResponse<{Entity}Dto>>.Failure(syncResult.Errors);
 ```
@@ -258,16 +258,16 @@ if (syncResult.IsFailure) return Result<DefaultResponse<{Entity}Dto>>.Failure(sy
 
 ## Notes
 
-- Updater is a **static extension method on `{Project}DbContextTrxn`** — gives access to `db.Delete()` for EF change-tracker removal
+- Updater is a **static extension method on `{Project}DbContextTrxn`** - gives access to `db.Delete()` for EF change-tracker removal
 - Repository delegates via `DB.UpdateFromDto(entity, dto, relatedDeleteBehavior)` where `DB` is the `RepositoryBase` context property
-- Uses railway `.Bind()` flow: `entity.Update(...).Bind(updatedEntity => DomainResult.Combine(...).Map(updatedEntity))` — parent update errors short-circuit child syncs
+- Uses railway `.Bind()` flow: `entity.Update(...).Bind(updatedEntity => DomainResult.Combine(...).Map(updatedEntity))` - parent update errors short-circuit child syncs
 - `RelatedDeleteBehavior` gates whether `removeFunc` actually deletes: `None` = no-op, `RelationshipOnly` / `RelationshipAndEntity` = `db.Delete(toRemove)` + collection remove
-- **CRITICAL:** Must call `db.Delete(toRemove)` in removeFunc, not just `collection.Remove()` — without explicit EF delete, orphaned children remain in DB when relationship isn't cascade-delete
-- `dto.{ChildEntity}s ?? []` — null-coalesce to empty array so `SyncCollectionWithResult` gets a valid collection (null DTO collection = no changes, empty = remove all)
+- **CRITICAL:** Must call `db.Delete(toRemove)` in removeFunc, not just `collection.Remove()` - without explicit EF delete, orphaned children remain in DB when relationship isn't cascade-delete
+- `dto.{ChildEntity}s ?? []` - null-coalesce to empty array so `SyncCollectionWithResult` gets a valid collection (null DTO collection = no changes, empty = remove all)
 - `CollectionUtility.SyncCollectionWithResult` handles error aggregation internally via `DomainResult.Combine()`
-- All callbacks return `DomainResult` (not void) — even remove must return `DomainResult.Success()`
-- `DomainResult<T>` inherits from `DomainResult` — domain factory methods (`Create`, `Update`) return `DomainResult<T>` which satisfies the `Func<TDto, DomainResult>` parameter
-- Uses the entity's domain methods (`Create`, `Update`) — never mutates properties directly
-- `createFunc` must add the new entity to the parent's navigation collection — `SyncCollectionWithResult` does not do this automatically
-- `getDtoId` returns `TId?` — null or default(TId) signals a new item (create path)
+- All callbacks return `DomainResult` (not void) - even remove must return `DomainResult.Success()`
+- `DomainResult<T>` inherits from `DomainResult` - domain factory methods (`Create`, `Update`) return `DomainResult<T>` which satisfies the `Func<TDto, DomainResult>` parameter
+- Uses the entity's domain methods (`Create`, `Update`) - never mutates properties directly
+- `createFunc` must add the new entity to the parent's navigation collection - `SyncCollectionWithResult` does not do this automatically
+- `getDtoId` returns `TId?` - null or default(TId) signals a new item (create path)
 - Explicit generic type args (`<TEntity, TDto, TId>`) recommended when lambdas make inference ambiguous

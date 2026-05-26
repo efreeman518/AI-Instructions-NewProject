@@ -6,7 +6,7 @@
 
   Unlike update-python-and-context-tools.ps1 (which is machine/user scoped),
   this script intentionally writes INTO the project directory, because the
-  VS Code Copilot extension only discovers customization from the workspace —
+  VS Code Copilot extension only discovers customization from the workspace -
   there is no user-global Copilot instructions location.
 
   What `rtk init --copilot` installs here:
@@ -16,7 +16,7 @@
     .github\copilot-instructions.md  RTK usage boilerplate
 
   IMPORTANT CAVEATS
-    - This is RTK only. Headroom canNOT proxy the VS Code Copilot extension —
+    - This is RTK only. Headroom canNOT proxy the VS Code Copilot extension -
       the extension uses GitHub's proprietary endpoints and ignores
       OPENAI_BASE_URL / ANTHROPIC_BASE_URL. Headroom routing only applies to
       the Copilot CLI, which the machine-level script already configures.
@@ -63,12 +63,12 @@ $hookFile      = Join-Path $githubDir   "hooks\rtk-rewrite.json"
 $instrFile     = Join-Path $githubDir   "copilot-instructions.md"
 $instrBak      = "$instrFile.bak"
 
-Write-Step "RTK Copilot integration — project: $projectRoot"
+Write-Step "RTK Copilot integration - project: $projectRoot"
 
 # Guard: must look like a project (a git repo). This prevents the
 # "ran it in the wrong folder" footgun that motivated this script.
 if (-not (Test-Path $gitDir)) {
-    Write-Warn "No .git directory found here — this does not look like a project root."
+    Write-Warn "No .git directory found here - this does not look like a project root."
     Write-Warn "cd into the repo you want to configure, then re-run."
     exit 1
 }
@@ -80,7 +80,7 @@ if (-not $rtk) {
     exit 1
 }
 
-# ── Uninstall ─────────────────────────────────────────────────────────────────
+# -- Uninstall -----------------------------------------------------------------
 if ($Uninstall) {
     Write-Step "Uninstall"
     if (Test-Path $hookFile) {
@@ -95,26 +95,26 @@ if ($Uninstall) {
 
     if (Test-Path $instrFile) {
         $first = (Get-Content $instrFile -TotalCount 1)
-        if ($first -match 'RTK\s*[-—]\s*Token-Optimized') {
+        if ($first -match 'RTK\s*[--]\s*Token-Optimized') {
             if ($DryRun) { Write-Info "[DryRun] would remove RTK-generated $instrFile" }
             else { Remove-Item $instrFile -Force; Write-OK "Removed RTK-generated $instrFile" }
         } else {
-            Write-Warn "$instrFile is not RTK's boilerplate — left in place."
+            Write-Warn "$instrFile is not RTK's boilerplate - left in place."
         }
     }
     if (Test-Path $instrBak) {
-        Write-Info "A backup exists at $instrBak — restore it manually if needed."
+        Write-Info "A backup exists at $instrBak - restore it manually if needed."
     }
-    Write-Step "Done — reload VS Code to deactivate."
+    Write-Step "Done - reload VS Code to deactivate."
     exit 0
 }
 
-# ── Install ───────────────────────────────────────────────────────────────────
+# -- Install -------------------------------------------------------------------
 
 # Protect an existing, non-RTK copilot-instructions.md.
 if (Test-Path $instrFile) {
     $first = (Get-Content $instrFile -TotalCount 1)
-    $isRtkBoilerplate = $first -match 'RTK\s*[-—]\s*Token-Optimized'
+    $isRtkBoilerplate = $first -match 'RTK\s*[--]\s*Token-Optimized'
     if (-not $isRtkBoilerplate) {
         if (-not $Force) {
             Write-Warn "$instrFile already exists and is not RTK boilerplate."
@@ -145,4 +145,4 @@ Write-Step "Next steps"
 Write-Info "1. Reload VS Code (Developer: Reload Window) so the Copilot extension picks up the hook."
 Write-Info "2. Decide whether to commit .github\hooks\rtk-rewrite.json + .github\copilot-instructions.md"
 Write-Info "   or add them to .gitignore (the hook only affects Copilot AGENT-mode terminal commands)."
-Write-Info "3. Headroom is NOT involved — it cannot proxy the VS Code Copilot extension (only the Copilot CLI)."
+Write-Info "3. Headroom is NOT involved - it cannot proxy the VS Code Copilot extension (only the Copilot CLI)."

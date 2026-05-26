@@ -1,6 +1,6 @@
 # External API Integration
 
-> **Shared infrastructure pattern:** External APIs and messaging services both follow the same integration chain: **Settings class → Named client/auth handler → DI extension method → Resilience pipeline → Wrapper service**. This file shows the pattern for external APIs. For messaging-specific adapters (Service Bus, Event Grid, Event Hub), see [messaging.md](messaging.md) which follows the same structural conventions.
+> **Shared infrastructure pattern:** External APIs and messaging services both follow the same integration chain: **Settings class -> Named client/auth handler -> DI extension method -> Resilience pipeline -> Wrapper service**. This file shows the pattern for external APIs. For messaging-specific adapters (Service Bus, Event Grid, Event Hub), see [messaging.md](messaging.md) which follows the same structural conventions.
 
 Use one infrastructure project per external API: `Infrastructure.{ServiceName}`.
 
@@ -207,16 +207,16 @@ When an external provider posts callbacks into your system:
 
 When an external API is not yet configured (no credentials, no base URL, or provider not chosen):
 
-1. **Generate a compilable stub** — implement `I{ServiceName}Service` as a no-op that returns `DomainResult.Success()` with placeholder data
-2. **Mark all integration points** with `// TODO: [CONFIGURE] {ServiceName} — replace stub with real implementation`
+1. **Generate a compilable stub** - implement `I{ServiceName}Service` as a no-op that returns `DomainResult.Success()` with placeholder data
+2. **Mark all integration points** with `// TODO: [CONFIGURE] {ServiceName} - replace stub with real implementation`
 3. **Include comments** in `appsettings.json` sections indicating placeholder values
 4. The project must **build and run** with stubs in place (no exceptions, graceful no-ops)
 
 ```csharp
-// Stub implementation — replace when external provider is configured
+// Stub implementation - replace when external provider is configured
 public class {ServiceName}ServiceStub : I{ServiceName}Service
 {
-    // TODO: [CONFIGURE] {ServiceName} — replace this stub with the real {ServiceName}Service implementation
+    // TODO: [CONFIGURE] {ServiceName} - replace this stub with the real {ServiceName}Service implementation
     public Task<DomainResult<PaymentResultDto>> ProcessPaymentAsync(PaymentRequestDto request, CancellationToken ct = default)
         => Task.FromResult(DomainResult<PaymentResultDto>.Success(new PaymentResultDto
         {
