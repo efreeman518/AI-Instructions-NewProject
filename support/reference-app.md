@@ -30,4 +30,6 @@ For a phase-by-phase pointer map into the reference app, use [taskflow-proof-map
 
 The TaskFlow reference app demonstrates `applicationStyle: switch`: side-by-side service and CQRS endpoint registration with one mapped at runtime. Default configuration is `Application:Style=Service`; set `TASKFLOW_APPLICATION_STYLE=Cqrs` or `Application:Style=Cqrs` to map CQRS endpoints and register handlers. CQRS handlers use the existing repository contracts directly. CQRS endpoints avoid central request dispatchers, request buses, and generic `Send()` entrypoints so each route shows the exact request and handler it invokes.
 
+TaskFlow keeps DTOs in `Application.Models` and static mappers in `Application.Mappers` so service and CQRS endpoints share one demo contract. A stricter CQRS implementation can consolidate feature-specific models, mappers, projections, validators, and handlers under `Application.Cqrs/Features/{Entity}` when those shapes are not shared.
+
 TaskFlow also demonstrates the route-versioning boundary: public domain API routes are versioned under `/api/v1/*`, while operational and host-management routes stay unversioned (`/health/*`, `/alive`, `/healthz`, `/api/flowengine/*`, and Functions host health `/api/health`). Azure Functions business HTTP triggers mirror the public versioned contract under the Functions default `/api` prefix.

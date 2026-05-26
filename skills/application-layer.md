@@ -74,20 +74,26 @@ Reference patterns: [../patterns/expected-output-index.md](../patterns/expected-
 
 ```
 Application/
-├── Application.Contracts/
-│   ├── Services/
-│   ├── Repositories/
-│   ├── Events/
-│   └── Constants/
-├── Application.Mappers/         # Separate project — NOT inside Contracts
-├── Application.Models/
-├── Application.Services/
-│   └── Rules/
-├── Application.Cqrs/            # when applicationStyle: cqrs or switch
-└── Application.MessageHandlers/
+  Application.Contracts/
+    Services/
+    Repositories/
+    Events/
+    Constants/
+  Application.Mappers/         # separate project, not inside Contracts
+  Application.Models/
+  Application.Services/
+    Rules/
+  Application.Cqrs/            # when applicationStyle: cqrs or switch
+    Features/
+      {Entity}/
+      Shared/
+    Registration/
+  Application.MessageHandlers/
 ```
 
-When `applicationStyle` is `cqrs` or `switch`, also generate `{Project}.Application.Cqrs` with `Requests/`, `Handlers/`, `Registration/`, and optional `Validation/` folders.
+When `applicationStyle` is `cqrs` or `switch`, also generate `{Project}.Application.Cqrs` with feature folders under `Features/{Entity}/`, shared CQRS helpers under `Features/Shared/`, and root registration under `Registration/`.
+
+The TaskFlow reference app intentionally keeps DTOs in `Application.Models` and static mappers in `Application.Mappers` so the service and CQRS styles share one demo contract. A fuller CQRS vertical-slice implementation can consolidate feature-specific models, mappers, projections, validators, and handlers under `Application.Cqrs/Features/{Entity}` when those contracts no longer need to be shared.
 
 ---
 
@@ -147,10 +153,16 @@ Flow pattern:
 
 When `.scaffold/resource-implementation.yaml` sets `applicationStyle: cqrs` or `switch`, add `{Project}.Application.Cqrs` alongside services:
 
-- `Requests/` contains one command/query record per endpoint operation and implements `ICommand<TResponse>` or `IQuery<TResponse>`.
-- `Handlers/` contains one `IRequestHandler<TRequest,TResponse>` implementation per request. No handler implements `I{Entity}Service`.
-- `Registration/` owns `CqrsHandlerRegistrationCatalog` plus `Add{Project}CqrsApplication(...)`.
-- `Validation/` owns CQRS-specific `IRequestValidator<TRequest>` implementations when validation should happen before handler execution.
+- `Features/{Entity}/{Entity}Requests.cs` contains one command/query record per endpoint operation and implements `ICommand<TResponse>` or `IQuery<TResponse>`.
+- `Features/{Entity}/{Entity}Handlers.cs` contains one `IRequestHandler<TRequest,TResponse>` implementation per request. No handler implements `I{Entity}Service`.
+- `Features/{Entity}/{Entity}CqrsRegistrations.cs` owns that feature's `CqrsHandlerRegistration` entries.
+- `Features/{Entity}/{Entity}CommandValidators.cs` owns CQRS-specific `IRequestValidator<TRequest>` implementations when validation should happen before handler execution.
+- `Features/{Entity}/{Entity}StructureValidator.cs` may mirror service structure validation when the CQRS path needs its own validator surface.
+- `Features/Shared/` owns small CQRS-only helpers such as response wrapping, save error handling, search cancellation handling, best-effort event publishing, validation result mapping, tenant boundary helpers, and shared error text.
+- `Registration/CqrsHandlerRegistrationCatalog.cs` aggregates feature-owned registration fragments.
+- `Registration/CqrsApplicationRegistration.cs` owns `Add{Project}CqrsApplication(...)` and registers validators plus decorated handlers.
+
+Keep DTOs and static mappers in `Application.Models` and `Application.Mappers` by default. This mirrors TaskFlow and keeps `service`, `cqrs`, and `switch` styles on one HTTP contract and one repository projection surface. For a CQRS-only or stricter vertical-slice implementation, move feature-specific models, mappers, projections, validators, or persistence adapters into `Features/{Entity}` when those shapes intentionally diverge from the shared API contract.
 
 Use `EF.CQRS` / `<packagePrefix>.CQRS` only for handler contracts, validators, decorator registration, and validation response factories. Do not add MediatR, a dispatcher, a request bus, or a generic `Send` method. Minimal API endpoints inject the specific handler they call.
 
@@ -253,7 +265,8 @@ catch (Exception ex)
 - [ ] `ErrorConstants` exists in `Application.Contracts` with shared error keys
 - [ ] `ServiceErrorMessages` exists in `Application.Services/Rules`
 - [ ] service implements `I{Entity}Service` and uses repo split correctly
-- [ ] when `applicationStyle` is `cqrs` or `switch`: `{Project}.Application.Cqrs` contains request/handler pairs and handler registration catalog
+- [ ] when `applicationStyle` is `cqrs` or `switch`: `{Project}.Application.Cqrs/Features/{Entity}` contains request/handler pairs, optional validators, and feature registration fragments
+- [ ] when `applicationStyle` is `cqrs` or `switch`: root CQRS registration aggregates feature registrations and exposes `Add{Project}CqrsApplication(...)`
 - [ ] service has `BuildResponse` helper method
 - [ ] service uses `nameof({Entity})` in boundary-validator and error messages
 - [ ] **[Multi-tenant only]** `ITenantEntityDto` defined, `DefaultResponse` includes `TenantInfoDto?`
@@ -266,11 +279,11 @@ catch (Exception ex)
 
 ---
 
-**TaskFlow proof (local):** `../AI-Instructions-ReferenceApp/src/Application/TaskFlow.Application.Services/TaskItemService.cs` + `Rules/ServiceErrorMessages.cs`, plus mappers at `../AI-Instructions-ReferenceApp/src/Application/TaskFlow.Application.Mappers/TaskItemMapper.cs`
+**TaskFlow proof (local):** `../AI-Instructions-ReferenceApp/src/Application/TaskFlow.Application.Services/TaskItemService.cs` + `Rules/ServiceErrorMessages.cs`, mappers at `../AI-Instructions-ReferenceApp/src/Application/TaskFlow.Application.Mappers/TaskItemMapper.cs`, and CQRS feature folders at `../AI-Instructions-ReferenceApp/src/Application/TaskFlow.Application.Cqrs/Features/`
 **TaskFlow proof (remote fallback):** <https://github.com/efreeman518/AI-Instructions-ReferenceApp/blob/main/src/Application/TaskFlow.Application.Services/TaskItemService.cs>
 
 ## Service vs CQRS
 
-The application layer supports three scaffold styles: `service`, `cqrs`, and `switch`. `service` keeps use-case flow inside `I{Entity}Service` implementations. `cqrs` keeps use-case flow inside command/query handlers and maps endpoints directly to specific handlers. `switch` emits both endpoint sets and selects one through `Application:Style` / `<APP>_APPLICATION_STYLE`. CQRS avoids central request dispatchers, request buses, and generic `Send()` entrypoints so route-to-handler flow remains explicit and handler registration stays reviewable.
+The application layer supports three scaffold styles: `service`, `cqrs`, and `switch`. `service` keeps use-case flow inside `I{Entity}Service` implementations. `cqrs` keeps use-case flow inside command/query handlers under `Application.Cqrs/Features/{Entity}` and maps endpoints directly to specific handlers. `switch` emits both endpoint sets and selects one through `Application:Style` / `<APP>_APPLICATION_STYLE`. CQRS avoids central request dispatchers, request buses, and generic `Send()` entrypoints so route-to-handler flow remains explicit and handler registration stays reviewable.
 
 CQRS validation uses project-owned validators plus a handler decorator. Do not add FluentValidation or other third-party validation packages for the CQRS path.

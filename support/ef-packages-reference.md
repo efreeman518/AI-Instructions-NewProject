@@ -95,7 +95,7 @@ Add when `applicationStyle` is `cqrs` or `switch`. In local mode, generate this 
 | `ValidationRequestHandlerDecorator<TRequest,TResponse>` | EF.CQRS | Validation decorator around handlers |
 | `AddDecoratedRequestHandler<TRequest,TResponse,THandler>()` | EF.CQRS | DI helper that registers the concrete handler and decorated interface |
 
-**Dispatch rule:** EF.CQRS has no MediatR dependency, dispatcher, request bus, or generic `Send` method. Minimal API endpoints inject the exact `IRequestHandler<TRequest,TResponse>` they call.
+**Dispatch rule:** EF.CQRS has no MediatR dependency, dispatcher, request bus, or generic `Send` method. Minimal API endpoints inject the exact `IRequestHandler<TRequest,TResponse>` they call. Scaffold request records, handlers, validators, and per-feature registration fragments under `Application.Cqrs/Features/{Entity}`.
 
 ### Background Services (EF.BackgroundServices)
 

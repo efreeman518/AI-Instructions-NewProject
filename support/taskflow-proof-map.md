@@ -28,7 +28,7 @@ Load this file on demand. Keep it out of the default phase context.
 | Phase 5a domain model | `src/Domain/TaskFlow.Domain.Model` | `Create()` / `Update()` patterns, value objects, domain rules, and aggregate shape. |
 | Phase 5a domain shared | `src/Domain/TaskFlow.Domain.Shared` | Shared enums, value-object base types, cross-aggregate primitives. |
 | Phase 5a data persistence | `src/Infrastructure/TaskFlow.Infrastructure.Data`, `src/Infrastructure/TaskFlow.Infrastructure.Repositories` | Dual DbContext split, EF configuration, repository split, and save/query separation. |
-| Phase 5b application layer | `src/Application/TaskFlow.Application.Services`, `src/Application/TaskFlow.Application.Mappers` | Service shape, result flow, mapper conventions, validator placement, `BuildResponse` helper, `ErrorConstants` usage, `nameof(Entity)`, `[LoggerMessage]` source-gen logging. Multi-tenant: tenant boundary validation, tenant filter manipulation logging, `PreventTenantChange` in Update. |
+| Phase 5b application layer | `src/Application/TaskFlow.Application.Services`, `src/Application/TaskFlow.Application.Mappers`, `src/Application/TaskFlow.Application.Cqrs/Features` | Service shape, result flow, mapper conventions, CQRS feature-folder handler shape, validator placement, `BuildResponse` helper, `ErrorConstants` usage, `nameof(Entity)`, `[LoggerMessage]` source-gen logging. TaskFlow shares models and mappers between service and CQRS as a demo compromise; stricter CQRS slices can consolidate feature-specific models and mappers under the feature. Multi-tenant: tenant boundary validation, tenant filter manipulation logging, `PreventTenantChange` in Update. |
 | Phase 5b message handlers | `src/Application/TaskFlow.Application.MessageHandlers` | Domain-event and integration-event consumer pattern, separate from aggregate emission. |
 | Phase 5b storage / external infrastructure | `src/Infrastructure/TaskFlow.Infrastructure.Storage` | Blob, Service Bus, and Cosmos repositories with no-op stubs for unconfigured states. |
 | Phase 5b API endpoints | `src/Host/TaskFlow.Api` | Minimal API grouping, endpoint conventions, exception handling, and registration flow. |
@@ -70,6 +70,7 @@ Use these links first. If a branch or path has moved, search inside the same rep
 | Application models | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Application/TaskFlow.Application.Models> |
 | Application services | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Application/TaskFlow.Application.Services> |
 | Application mappers | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Application/TaskFlow.Application.Mappers> |
+| Application CQRS features | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Application/TaskFlow.Application.Cqrs/Features> |
 | Application message handlers | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Application/TaskFlow.Application.MessageHandlers> |
 | Data infrastructure | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Infrastructure/TaskFlow.Infrastructure.Data> |
 | Repositories | <https://github.com/efreeman518/AI-Instructions-ReferenceApp/tree/main/src/Infrastructure/TaskFlow.Infrastructure.Repositories> |

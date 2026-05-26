@@ -22,12 +22,13 @@ Use this when adding a new entity to an **already-scaffolded** solution. Skip fu
 1. `ai/SKILL.md` (base reference)
 2. `ai/placeholder-tokens.md`
 3. Backend templates: `entity-template.md`, `ef-configuration-template.md`, `repository-template.md`, `data-mapping-template.md`, `service-template.md`, `endpoint-template.md`, `structure-validator-template.md`
-4. If domain rules needed: `domain-rules-template.md`
-5. **If child collections (1:N owned or M:N junction): `updater-template.md` is required** — the repository's `UpdateFromDto` delegates to a DbContext extension method that uses `CollectionUtility.SyncCollectionWithResult` to add/update/remove children in one call. Without this, aggregate edits silently drop client-side removals.
-6. Test templates per profile (see § Test Slice below): `test-templates-domain.md`, `test-templates-repository.md`, `test-templates-service.md`, `test-templates-endpoint.md`, and for balanced+ profiles `test-templates-integration.md` + `test-templates-e2e.md`
-7. If Uno UI enabled: `uno-mvux-model-template.md`, `uno-xaml-page-template.md`, `uno-ui-client-layer.md`
-8. If Blazor UI enabled: `skills/ui-blazor.md` — add a Refit method group, entity list page, and entity new/edit page
-9. If React UI enabled: `skills/ui-react.md` — add API hooks, entity list page, detail/edit page, and form components
+4. If `applicationStyle` is `cqrs` or `switch`: `cqrs-handler-template.md`, `cqrs-endpoint-template.md`, `cqrs-validation-template.md`, `test-templates-cqrs.md`
+5. If domain rules needed: `domain-rules-template.md`
+6. **If child collections (1:N owned or M:N junction): `updater-template.md` is required** — the repository's `UpdateFromDto` delegates to a DbContext extension method that uses `CollectionUtility.SyncCollectionWithResult` to add/update/remove children in one call. Without this, aggregate edits silently drop client-side removals.
+7. Test templates per profile (see § Test Slice below): `test-templates-domain.md`, `test-templates-repository.md`, `test-templates-service.md`, `test-templates-endpoint.md`, and for balanced+ profiles `test-templates-integration.md` + `test-templates-e2e.md`
+8. If Uno UI enabled: `uno-mvux-model-template.md`, `uno-xaml-page-template.md`, `uno-ui-client-layer.md`
+9. If Blazor UI enabled: `skills/ui-blazor.md` — add a Refit method group, entity list page, and entity new/edit page
+10. If React UI enabled: `skills/ui-react.md` — add API hooks, entity list page, detail/edit page, and form components
 
 ### Slice Execution Order
 
@@ -41,17 +42,23 @@ Use this when adding a new entity to an **already-scaffolded** solution. Skip fu
 8. Add a method to `MapperProjectionParityTests.cs` for the new mapper
 9. Create StructureValidator in `Application.Services/Rules`
 10. Create service + interface (use `repoTrxn.UpdateFromDto(entity, dto, RelatedDeleteBehavior.RelationshipAndEntity)` in `UpdateAsync` for aggregate roots so client-side child removals hard-delete)
-11. Create endpoint
-12. Wire DI in `RegisterServices.cs` (repos + service)
-13. Map endpoints in `WebApplicationBuilderExtensions.cs`
-14. Run migration: `dotnet ef migrations add Add{Entity} ...`
-15. Write tests in the order matching the profile: Unit → Endpoint → Integration (real SQL via Aspire piggyback) → E2E (multi-endpoint workflow).
+11. If `applicationStyle` is `cqrs` or `switch`: create `Application.Cqrs/Features/{Entity}/` requests, handlers, optional command validators, structure validator, and `{Entity}CqrsRegistrations`; keep small helpers in `Application.Cqrs/Features/Shared/`
+12. If `applicationStyle` is `cqrs` or `switch`: keep DTOs and mappers shared by default, matching TaskFlow; for CQRS-only feature contracts, consolidate feature-specific models, mappers, projections, validators, and handlers under `Application.Cqrs/Features/{Entity}`
+13. Create endpoint
+14. If `applicationStyle` is `cqrs` or `switch`: create `Endpoints/Cqrs/{Entity}CqrsEndpoints.cs` with the same route templates and DTO envelopes as the service endpoint
+15. Wire DI in `RegisterServices.cs` (repos + service, plus CQRS application registration when enabled)
+16. Map endpoints in `WebApplicationBuilderExtensions.cs`; for `switch`, map only service or CQRS routes based on `ApplicationStyleResolver`
+17. Run migration: `dotnet ef migrations add Add{Entity} ...`
+18. Write tests in the order matching the profile: Unit -> Endpoint -> Integration (real SQL via Aspire piggyback) -> E2E (multi-endpoint workflow).
 
 ### Wiring Checklist
 
 - [ ] `DbSet<{Entity}>` added to `{App}DbContextTrxn` and `{App}DbContextQuery`
 - [ ] Repos + service registered in `RegisterServices.cs`
 - [ ] `Map{Entity}Endpoints()` called in `WebApplicationBuilderExtensions.cs`
+- [ ] If `applicationStyle` is `cqrs` or `switch`: CQRS feature registration is included in `CqrsHandlerRegistrationCatalog`
+- [ ] If `applicationStyle` is `cqrs` or `switch`: shared DTO/mapper placement is intentional, or feature-specific DTO/mapper placement is consolidated under `Application.Cqrs/Features/{Entity}`
+- [ ] If `applicationStyle` is `switch`: `WebApplicationBuilderExtensions.cs` maps exactly one CRUD endpoint set at runtime
 - [ ] **[Multi-tenant only]** `ITenantBoundaryValidator` registered (once, not per entity)
 - [ ] Aspire AppHost updated (only if new project added to solution)
 
@@ -99,7 +106,14 @@ For entity `{Entity}`:
 | App | `src/Application/{Project}.Application.Contracts/Mappers/{Entity}Mapper.cs` | [data-mapping-template.md](../templates/data-mapping-template.md) | yes |
 | App | `src/Application/{Project}.Application.Services/Services/{Entity}Service.cs` | [service-template.md](../templates/service-template.md) | yes |
 | App (optional) | `src/Application/{Project}.Application.Services/Validators/{Entity}Validator.cs` | — | if custom validator used |
+| App (CQRS) | `src/Application/{Project}.Application.Cqrs/Features/{Entity}/{Entity}Requests.cs` | [cqrs-handler-template.md](../templates/cqrs-handler-template.md) | if cqrs or switch |
+| App (CQRS) | `src/Application/{Project}.Application.Cqrs/Features/{Entity}/{Entity}Handlers.cs` | [cqrs-handler-template.md](../templates/cqrs-handler-template.md) | if cqrs or switch |
+| App (CQRS) | `src/Application/{Project}.Application.Cqrs/Features/{Entity}/{Entity}CqrsRegistrations.cs` | [cqrs-handler-template.md](../templates/cqrs-handler-template.md) | if cqrs or switch |
+| App (CQRS optional) | `src/Application/{Project}.Application.Cqrs/Features/{Entity}/{Entity}CommandValidators.cs` | [cqrs-validation-template.md](../templates/cqrs-validation-template.md) | if command validators used |
+| App (CQRS shared) | `src/Application/{Project}.Application.Cqrs/Features/Shared/CqrsHandlerSupport.cs` | [cqrs-handler-template.md](../templates/cqrs-handler-template.md) | if cqrs or switch |
+| App (CQRS shared) | `src/Application/{Project}.Application.Cqrs/Registration/CqrsApplicationRegistration.cs` | [cqrs-handler-template.md](../templates/cqrs-handler-template.md) | if cqrs or switch |
 | API | `src/Host/{Host}.Api/Endpoints/{Entity}Endpoints.cs` | [endpoint-template.md](../templates/endpoint-template.md) | yes |
+| API (CQRS) | `src/Host/{Host}.Api/Endpoints/Cqrs/{Entity}CqrsEndpoints.cs` | [cqrs-endpoint-template.md](../templates/cqrs-endpoint-template.md) | if cqrs or switch |
 
 ---
 
@@ -109,6 +123,8 @@ For entity `{Entity}`:
 |---|---|
 | `src/Host/{Host}.Bootstrapper/RegisterServices.cs` | register repos + service (+ validators if used) |
 | `src/Host/{Host}.Api/WebApplicationBuilderExtensions.cs` | add `Map{Entity}Endpoints()` |
+| `src/Application/{Project}.Application.Cqrs/Registration/CqrsHandlerRegistrationCatalog.cs` | aggregate `{Entity}CqrsRegistrations` when cqrs or switch |
+| `src/Host/{Host}.Api/WebApplicationBuilderExtensions.cs` | add CQRS route switch when `applicationStyle: switch` |
 | `src/Infrastructure/{Project}.Infrastructure.Data/{App}DbContextTrxn.cs` | add `DbSet<{Entity}>` |
 | `src/Infrastructure/{Project}.Infrastructure.Data/{App}DbContextQuery.cs` | add `DbSet<{Entity}>` |
 
@@ -132,6 +148,7 @@ dotnet ef migrations add Add{Entity} --project src/Infrastructure/{Project}.Infr
 | `src/Test/Test.Unit/Mappers/{Entity}MapperTests.cs` | [test-templates-service.md](../templates/test-templates-service.md) | all |
 | `src/Test/Test.Unit/Mappers/MapperProjectionParityTests.cs` (add a method per entity) | [test-templates-service.md](../templates/test-templates-service.md) | all |
 | `src/Test/Test.Endpoints/Endpoints/{Entity}EndpointsTests.cs` | [test-templates-endpoint.md](../templates/test-templates-endpoint.md) | all |
+| `src/Test/Test.Unit/Cqrs/{Entity}CqrsValidationTests.cs` | [test-templates-cqrs.md](../templates/test-templates-cqrs.md) | if cqrs or switch |
 | `src/Test/Test.Integration/{Entity}RepositoryIntegrationTests.cs` | [test-templates-integration.md](../templates/test-templates-integration.md) | balanced+ |
 | `src/Test/Test.E2E/{Entity}WorkflowTests.cs` | [test-templates-e2e.md](../templates/test-templates-e2e.md) | balanced+ |
 | `src/Test/Test.Architecture/` updates | [test-templates-quality.md](../templates/test-templates-quality.md) | balanced+ |
@@ -201,6 +218,8 @@ Skill: [ui-react.md](../skills/ui-react.md).
 - [ ] `I{Entity}RepositoryQuery` -> `{Entity}RepositoryQuery` registered
 - [ ] `I{Entity}Service` -> `{Entity}Service` registered
 - [ ] `Map{Entity}Endpoints()` wired in API builder extensions
+- [ ] If `applicationStyle` is `cqrs` or `switch`: request/handler/registration files are colocated under `Application.Cqrs/Features/{Entity}`
+- [ ] If `applicationStyle` is `switch`: service and CQRS endpoint contract tests pass under both `Service` and `Cqrs`
 - [ ] **[Multi-tenant only]** `ITenantBoundaryValidator` -> `TenantBoundaryValidator` registered (once for all entities)
 
 ### Data Access

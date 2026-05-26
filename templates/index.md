@@ -126,7 +126,7 @@ Generated when `includeFlowEngine: true` in `.scaffold/resource-implementation.y
 
 ## CQRS Templates
 
-- [cqrs-handler-template.md](cqrs-handler-template.md) — command/query handler shape.
-- [cqrs-endpoint-template.md](cqrs-endpoint-template.md) — direct handler endpoint mapping.
-- [cqrs-validation-template.md](cqrs-validation-template.md) — custom validation decorator pattern.
-- [test-templates-cqrs.md](test-templates-cqrs.md) — handler, validation, and architecture tests.
+- [cqrs-handler-template.md](cqrs-handler-template.md) - feature-folder command/query handler and registration shape.
+- [cqrs-endpoint-template.md](cqrs-endpoint-template.md) - direct handler endpoint mapping.
+- [cqrs-validation-template.md](cqrs-validation-template.md) - feature-folder command validator pattern.
+- [test-templates-cqrs.md](test-templates-cqrs.md) - handler, validation, and architecture tests.

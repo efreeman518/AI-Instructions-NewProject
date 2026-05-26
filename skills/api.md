@@ -298,6 +298,7 @@ When `applicationStyle: switch`, generate both endpoint sets:
 
 - `Endpoints/{Entity}Endpoints.cs` injects `I{Entity}Service`.
 - `Endpoints/Cqrs/{Entity}CqrsEndpoints.cs` injects the specific `IRequestHandler<TRequest,TResponse>`.
+- CQRS request types are imported from `Application.Cqrs/Features/{Entity}` namespaces.
 - `Application.Contracts/ApplicationStyle.cs` owns `ApplicationStyleResolver` with config key `Application:Style`, env var `<APP>_APPLICATION_STYLE`, default `Service`, and allowed values `Service` / `Cqrs`.
 
 At route mapping time, map one set of CRUD endpoints:

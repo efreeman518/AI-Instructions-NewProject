@@ -64,6 +64,9 @@ PHASE_PATTERN = re.compile(r"\bPhase\s+(\d+[a-z]?)\b")
 # Inline link pattern: [text](target). Skip absolute URLs and anchors-only.
 LINK_PATTERN = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
 
+# Fenced code blocks can contain scaffold examples with placeholder links.
+FENCED_CODE_PATTERN = re.compile(r"(^|\n)[ \t]{0,3}(`{3,}|~{3,})[^\n]*\n.*?\n[ \t]{0,3}\2[ \t]*(?=\n|$)", re.DOTALL)
+
 # Markdown headings (ATX style) for the section-anchor check.
 HEADING_PATTERN = re.compile(r"^#{1,6}\s+(.+?)\s*$", re.MULTILINE)
 
@@ -158,6 +161,15 @@ def display_path(path: Path) -> str:
     return str(path)
 
 
+def strip_fenced_code_blocks(text: str) -> str:
+    """Remove fenced code while preserving line numbers for diagnostics."""
+
+    def replace_with_blank_lines(match: re.Match[str]) -> str:
+        return "\n" * match.group(0).count("\n")
+
+    return FENCED_CODE_PATTERN.sub(replace_with_blank_lines, text)
+
+
 def iter_markdown_files() -> list[Path]:
     files_by_path: dict[Path, None] = {}
     for top in INSTRUCTIONS_TOP_LEVEL_MD:
@@ -188,7 +200,7 @@ def iter_markdown_files() -> list[Path]:
 
 
 def check_links(path: Path, findings: Findings) -> None:
-    text = path.read_text(encoding="utf-8")
+    text = strip_fenced_code_blocks(path.read_text(encoding="utf-8"))
     # Adjacent-duplicate detection: same [label](target) appearing twice in the
     # same line (the drift pattern we want to catch — copy/paste with no edit).
     for line_no, line in enumerate(text.splitlines(), start=1):
@@ -257,7 +269,7 @@ def heading_matches_section(headings: list[str], target: str) -> bool:
 
 
 def check_section_anchors(path: Path, findings: Findings, headings_cache: dict[Path, list[str]]) -> None:
-    text = path.read_text(encoding="utf-8")
+    text = strip_fenced_code_blocks(path.read_text(encoding="utf-8"))
     for line_no, line in enumerate(text.splitlines(), start=1):
         for match in SECTION_REF_PATTERN.finditer(line):
             target_link = match.group("linkpath") or match.group("tickpath")

@@ -2,7 +2,13 @@
 
 Use when `.scaffold/resource-implementation.yaml` sets `applicationStyle: cqrs` or `switch`.
 
+Place request records, handlers, validators, and feature registration in `Application.Cqrs/Features/{Entity}/`. Keep shared CQRS helpers in `Application.Cqrs/Features/Shared/`. The root `Registration/CqrsHandlerRegistrationCatalog.cs` aggregates the per-feature registration fragments.
+
+Default scaffold and TaskFlow reference app: keep DTOs in `Application.Models` and static mappers in `Application.Mappers` so service and CQRS styles share one HTTP contract. Full CQRS vertical slice: move feature-specific models, mappers, projections, and adapters into `Application.Cqrs/Features/{Entity}` when they are not shared with service endpoints.
+
 ```csharp
+namespace {Project}.Application.Cqrs.Features.{EntityPlural};
+
 public sealed record Create{Entity}Command(DefaultRequest<{Entity}Dto> Request)
     : ICommand<Result<DefaultResponse<{Entity}Dto>>>;
 
@@ -33,12 +39,11 @@ internal sealed class Create{Entity}Handler(
 
         var entity = entityResult.Value!;
         repoTrxn.Create(ref entity);
-        await repoTrxn.SaveChangesAsync(OptimisticConcurrencyWinner.ClientWins, ct);
 
-        return Result<DefaultResponse<{Entity}Dto>>.Success(new DefaultResponse<{Entity}Dto>
-        {
-            Item = entity.ToDto()
-        });
+        var save = await CqrsHandlerSupport.TrySaveAsync(repoTrxn, logger, "Error creating {Entity}", ct);
+        if (save.IsFailure) return Result<DefaultResponse<{Entity}Dto>>.Failure(save.ErrorMessage!);
+
+        return HandlerHelpers.Success(entity.ToDto());
     }
 }
 ```
@@ -50,3 +55,31 @@ Rules:
 - One command/query maps to one handler registration.
 - Handler injects only repositories and collaborators it uses.
 - Reuse existing repository contracts; do not create CQRS-specific repositories unless the domain needs a genuinely different abstraction.
+- Keep DTOs in `Application.Models` and mappers in `Application.Mappers` for the default scaffold and TaskFlow reference app. For a CQRS-only or stricter vertical-slice implementation, move feature-specific models, mappers, projections, or adapters into the feature folder when the CQRS contract intentionally differs.
+- Use `CqrsHandlerSupport` only for small ceremony: save error handling, search cancellation, best-effort publish, and validation-result mapping. Do not hide create/update/delete flow behind generic base handlers.
+
+Per-feature registration fragment:
+
+```csharp
+namespace {Project}.Application.Cqrs.Features.{EntityPlural};
+
+internal static class {Entity}CqrsRegistrations
+{
+    public static IReadOnlyList<CqrsHandlerRegistration> Registrations { get; } =
+    [
+        new(typeof(Create{Entity}Command), typeof(Result<DefaultResponse<{Entity}Dto>>), typeof(Create{Entity}Handler)),
+    ];
+}
+```
+
+Root catalog aggregates feature fragments:
+
+```csharp
+public static class CqrsHandlerRegistrationCatalog
+{
+    public static IReadOnlyList<CqrsHandlerRegistration> Registrations { get; } =
+    [
+        ..{Entity}CqrsRegistrations.Registrations,
+    ];
+}
+```

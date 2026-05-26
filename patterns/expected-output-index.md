@@ -44,9 +44,13 @@ Expected file layout when scaffolding is complete. All paths relative to project
 | Tenant rules | `Application/Application.Services/Rules/TenantRules.cs` *(multi-tenant only)* |
 | Message handler | `Application/Application.MessageHandlers/TodoItemCreatedEventHandler.cs` |
 | Application style switch | `Application/Application.Contracts/ApplicationStyle.cs` *(when applicationStyle: switch)* |
-| CQRS requests | `Application/Application.Cqrs/Requests/{App}Requests.cs` *(when applicationStyle: cqrs or switch)* |
-| CQRS handlers | `Application/Application.Cqrs/Handlers/{Entity}Handlers.cs` *(when applicationStyle: cqrs or switch)* |
-| CQRS registration | `Application/Application.Cqrs/Registration/CqrsApplicationRegistration.cs` *(when applicationStyle: cqrs or switch)* |
+| CQRS requests | `Application/Application.Cqrs/Features/{Entity}/{Entity}Requests.cs` *(when applicationStyle: cqrs or switch)* |
+| CQRS handlers | `Application/Application.Cqrs/Features/{Entity}/{Entity}Handlers.cs` *(when applicationStyle: cqrs or switch)* |
+| CQRS feature registration | `Application/Application.Cqrs/Features/{Entity}/{Entity}CqrsRegistrations.cs` *(when applicationStyle: cqrs or switch)* |
+| CQRS shared helpers | `Application/Application.Cqrs/Features/Shared/CqrsHandlerSupport.cs` *(when applicationStyle: cqrs or switch)* |
+| CQRS root registration | `Application/Application.Cqrs/Registration/CqrsApplicationRegistration.cs` *(when applicationStyle: cqrs or switch)* |
+
+Default scaffold and TaskFlow reference app keep DTOs and mappers in `Application.Models` and `Application.Mappers` so service and CQRS styles share one contract. A CQRS-only vertical slice may instead put feature-specific models, mappers, projections, and adapters under `Application.Cqrs/Features/{Entity}` when those shapes are not shared.
 
 ## API Host
 | Artifact | Path |

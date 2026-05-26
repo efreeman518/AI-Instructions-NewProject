@@ -4,6 +4,8 @@ Use for `applicationStyle: cqrs` or `switch`. Endpoints keep the same HTTP route
 
 Map relative routes only. The API host owns the outer route group and versioning decision, for example `/api/v1/{entity}` for public domain endpoints. Operational, health, gateway, Functions host-health, and package-owned admin endpoints stay outside the entity/CQRS endpoint template unless they are explicit business API contracts.
 
+Import request types from the feature namespace, for example `using {Project}.Application.Cqrs.Features.{EntityPlural};`.
+
 ```csharp
 group.MapPost("/", async (
     HttpContext httpContext,
@@ -29,3 +31,5 @@ if (style == ApplicationStyle.Cqrs)
 else
     app.Map{Entity}Endpoints(problemDetailsIncludeStackTrace);
 ```
+
+Keep CQRS endpoint files in `Host/{Host}.Api/Endpoints/Cqrs/{Entity}CqrsEndpoints.cs`; only application request/handler code moves into `Application.Cqrs/Features/{Entity}`.
