@@ -20,7 +20,7 @@ public class DesignTimeDbContextFactoryTrxn : IDesignTimeDbContextFactory<{Proje
             ?? throw new InvalidOperationException("Set EFCORETOOLSDB env var");
 
         var optionsBuilder = new DbContextOptionsBuilder<{Project}DbContextTrxn>();
-        optionsBuilder.UseSqlServer(connectionString);
+        optionsBuilder.UseSqlServer(connectionString, sql => sql.UseCompatibilityLevel(170));
 
         var context = new {Project}DbContextTrxn(optionsBuilder.Options);
         context.AuditId = "design-time";
@@ -38,7 +38,7 @@ public class DesignTimeDbContextFactoryQuery : IDesignTimeDbContextFactory<{Proj
             ?? throw new InvalidOperationException("Set EFCORETOOLSDB env var");
 
         var optionsBuilder = new DbContextOptionsBuilder<{Project}DbContextQuery>();
-        optionsBuilder.UseSqlServer(connectionString);
+        optionsBuilder.UseSqlServer(connectionString, sql => sql.UseCompatibilityLevel(170));
 
         var context = new {Project}DbContextQuery(optionsBuilder.Options);
         context.AuditId = "design-time";

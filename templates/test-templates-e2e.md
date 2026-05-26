@@ -63,10 +63,14 @@ public sealed class SqlApiFactory : WebApplicationFactoryBase<Program, {App}DbCo
     }
 
     protected override DbContextOptions BuildTrxnOptions() =>
-        new DbContextOptionsBuilder<{App}DbContextTrxn>().UseSqlServer(_connectionString).Options;
+        new DbContextOptionsBuilder<{App}DbContextTrxn>()
+            .UseSqlServer(_connectionString, sql => sql.UseCompatibilityLevel(170))
+            .Options;
 
     protected override DbContextOptions BuildQueryOptions() =>
-        new DbContextOptionsBuilder<{App}DbContextQuery>().UseSqlServer(_connectionString).Options;
+        new DbContextOptionsBuilder<{App}DbContextQuery>()
+            .UseSqlServer(_connectionString, sql => sql.UseCompatibilityLevel(170))
+            .Options;
 }
 ```
 

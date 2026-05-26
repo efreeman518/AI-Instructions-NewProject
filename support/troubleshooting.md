@@ -144,6 +144,7 @@ When a third-party library (scheduler, queue, dashboard, job runner) uses EF-bac
 
 ```csharp
 var taskflowDb = builder.AddSqlServer("sql")
+    .WithImageTag("2025-latest")
     .AddDatabase("taskflow-db");
 
 var api = builder.AddProject<Projects.TaskFlow_Api>("api")

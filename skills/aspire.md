@@ -134,6 +134,7 @@ Services like `AddSqlServer`, `AddRedis`, `AddPostgres`, `AddRabbitMQ` already r
 4. Use `WaitFor(...)` for startup ordering dependencies.
 5. Keep Gateway as public ingress, backend hosts internal.
 6. Keep AppHost resource names aligned with IaC modules in [iac.md](iac.md).
+7. Pin SQL Server containers to `WithImageTag("2025-latest")`; EF SQL registrations must use `UseCompatibilityLevel(170)`.
 
 ---
 
@@ -173,7 +174,8 @@ public static class LocalSqlSettings
 var sqlPassword = builder.AddParameter("sql-password", LocalSqlSettings.SharedSaPassword, secret: true);
 var sqlServer = builder.AddSqlServer("sql", sqlPassword)
     .WithLifetime(ContainerLifetime.Persistent)
-    .WithDataVolume("{project}-sql-data");
+    .WithDataVolume("{project}-sql-data")
+    .WithImageTag("2025-latest");
 ```
 
 `AppHost/appsettings.Development.json` and `appsettings.Testing.json` must **not** contain a `Parameters` section. Leave them as `{}`.

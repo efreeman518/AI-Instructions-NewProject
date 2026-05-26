@@ -134,7 +134,10 @@ Both contexts define the same `DbSet<{Entity}>`; query context is configured for
 ## Aspire AppHost Pattern
 
 ```csharp
-var sql = builder.AddSqlServer("sql").AddDatabase("{project}db").WithDataVolume();
+var sql = builder.AddSqlServer("sql")
+    .WithImageTag("2025-latest")
+    .WithDataVolume()
+    .AddDatabase("{project}db");
 var redis = builder.AddRedis("redis");
 
 var api = builder.AddProject<Projects.{Host}_Api>("{host}api").WithReference(sql).WithReference(redis);

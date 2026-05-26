@@ -87,6 +87,7 @@ public static class FlowEngineSqlOptions
 {
     public static void Configure(SqlServerDbContextOptionsBuilder b)
     {
+        b.UseCompatibilityLevel(170);
         b.MigrationsAssembly(typeof({Project}FlowEngineDbContext).Assembly.FullName);
         b.MigrationsHistoryTable(
             {Project}FlowEngineDbContext.MigrationsHistoryTable,

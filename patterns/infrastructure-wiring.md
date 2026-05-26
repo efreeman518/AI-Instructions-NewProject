@@ -122,6 +122,7 @@ var builder = DistributedApplication.CreateBuilder(args);
 // -- Shared infrastructure
 var sqlPassword = builder.AddParameter("sql-password", secret: true);
 var sql = builder.AddSqlServer("sql", sqlPassword)
+    .WithImageTag("2025-latest")
     .WithDataVolume("{app}-sql-data")
     .AddDatabase("{App}Db");
 

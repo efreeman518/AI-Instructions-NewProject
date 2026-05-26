@@ -182,7 +182,7 @@ That's the entire file. The pooled-context swap, interceptor removal, factory pl
 
 ## Test.E2E derived factory (Testcontainers SQL)
 
-`Test/Test.E2E/SqlApiFactory.cs` is identical except the options use `UseSqlServer(connectionString)` and the class manages a static Testcontainers SQL lifecycle (`StartContainerAsync` / `StopContainerAsync`). Full template: [test-templates-e2e.md](test-templates-e2e.md) § SqlApiFactory.
+`Test/Test.E2E/SqlApiFactory.cs` is identical except the options use `UseSqlServer(connectionString, sql => sql.UseCompatibilityLevel(170))` and the class manages a static Testcontainers SQL lifecycle (`StartContainerAsync` / `StopContainerAsync`). Full template: [test-templates-e2e.md](test-templates-e2e.md) § SqlApiFactory.
 
 ## Multi-resource Integration tier
 

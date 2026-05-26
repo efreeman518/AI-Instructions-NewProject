@@ -192,7 +192,8 @@ internal static class DbContextFactory
     internal static {App}DbContextTrxn CreateTrxnContext(string? connString = null)
     {
         var options = new DbContextOptionsBuilder<{App}DbContextTrxn>()
-            .UseSqlServer(connString ?? AspireTestHost.ConnectionString)
+            .UseSqlServer(connString ?? AspireTestHost.ConnectionString,
+                sql => sql.UseCompatibilityLevel(170))
             .Options;
         return new {App}DbContextTrxn(options) { AuditId = "integration-test" };
     }
@@ -200,7 +201,8 @@ internal static class DbContextFactory
     internal static {App}DbContextQuery CreateQueryContext(string? connString = null)
     {
         var options = new DbContextOptionsBuilder<{App}DbContextQuery>()
-            .UseSqlServer(connString ?? AspireTestHost.ConnectionString)
+            .UseSqlServer(connString ?? AspireTestHost.ConnectionString,
+                sql => sql.UseCompatibilityLevel(170))
             .Options;
         return new {App}DbContextQuery(options) { AuditId = "integration-test" };
     }

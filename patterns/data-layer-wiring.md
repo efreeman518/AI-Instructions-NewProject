@@ -12,6 +12,8 @@ For base types used here (`DbContextBase`, `DbContextScopedFactory`, `AuditInter
 
 Dual-context registration: pooled factories for Trxn and Query contexts, `DbContextScopedFactory` wrappers for scoped resolution, audit interceptor on Trxn only, `ConnectionNoLockInterceptor` on both, Azure vs local SQL detection, `ReadOnly` intent injection for Query.
 
+Set all SQL Server and Azure SQL EF registrations to compatibility level 170. This is SQL Server 2025 compatibility and enables native JSON type support, vector data types, and related indexing features.
+
 ### DbSet Declarations
 
 Declare all DbSets in the **abstract base context**, not in the concrete Trxn/Query contexts. Use auto-property syntax with `null!` initializer:
@@ -92,7 +94,7 @@ private static void ConfigureSqlOptions(DbContextOptionsBuilder options, string 
     {
         options.UseSqlServer(connectionString, sqlOptions =>
         {
-            sqlOptions.UseCompatibilityLevel(160);
+            sqlOptions.UseCompatibilityLevel(170);
             sqlOptions.EnableRetryOnFailure(maxRetryCount: 5,
                 maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
         });
