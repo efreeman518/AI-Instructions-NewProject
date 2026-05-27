@@ -36,6 +36,7 @@ INSTRUCTIONS_FILES = [
     "README.md",
     "CLAUDE.md",
     "START-AI.md",
+    "GROUND-RULES.md",
 ]
 
 INSTRUCTIONS_DIRS = [
@@ -205,6 +206,7 @@ SMOKE_CHECK_PAYLOAD = [
     ".instructions/START-AI.md",
     ".instructions/README.md",
     ".instructions/CLAUDE.md",
+    ".instructions/GROUND-RULES.md",
     ".instructions/ai/SKILL.md",
     ".instructions/support/execution-gates.md",
     ".instructions/support/HANDOFF.md",
