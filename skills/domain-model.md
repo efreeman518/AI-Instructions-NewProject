@@ -202,6 +202,16 @@ After generating domain entities, confirm:
 - [ ] Shared entities (Tag, etc.) are `sealed class` with `IEquatable<T>` and `Normalize` helper
 - [ ] Cross-references: Entity properties align with [data-mapping-template.md](../templates/data-mapping-template.md), EF config covers all relationships per [ef-configuration-template.md](../templates/ef-configuration-template.md)
 
+## Pitfalls
+
+- Anemic entities (only auto-properties; all behavior pushed to services) - defeats the rich domain model and lets services drift into god classes. Encapsulate invariants on the entity; expose mutation via named methods returning `DomainResult`.
+- Public constructors on entities - bypasses validation and the `DomainResult<T>` failure path. All creation goes through static `Create()`.
+- Public setters - the entity loses control over which transitions are valid. Use `private set` and a named mutation method per state change.
+- Using an enum where a closed value-object set is the right model (e.g., shipping address, money amount, schedule expression) - enums collapse business meaning to a label; value objects keep behavior and equality with the data.
+- Magic numbers for length/range limits - drift across `Valid()`, EF configuration, and DTO validation is inevitable. Use `DomainConstants` so every layer reads the same source.
+- EF attributes or `DbContext` references inside the domain layer - reverses the dependency direction (`GR-12` authority map). Configuration belongs in `Infrastructure.Data` configurations.
+- Letting a child-collection mutation surface bypass the entity's `Add*()` / `Remove*()` methods - silently violates invariants. The repository's updater should call entity methods, not mutate collections directly.
+
 ---
 
 **TaskFlow proof (local):** `../AI-Instructions-ReferenceApp/src/Domain/TaskFlow.Domain.Model/TaskItem/TaskItem.cs` and `../AI-Instructions-ReferenceApp/src/Domain/TaskFlow.Domain.Model/Rules/TaskItemStatusTransitionRule.cs`

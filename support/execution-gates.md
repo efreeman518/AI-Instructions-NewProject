@@ -8,7 +8,7 @@ Use this file for:
 - exit criteria,
 - pre-merge quality gates.
 
-If another file disagrees on validation gates or commands, this file wins. Session routing and load rules remain owned by [../START-AI.md](../START-AI.md) and [../ai/SKILL.md](../ai/SKILL.md).
+If another file disagrees on validation gates or commands, this file wins. Session routing and load rules remain owned by [../START-AI.md](../START-AI.md) and [../ai/SKILL.md](../ai/SKILL.md). The 1-page binding-rule index (`GR-01`...`GR-12`) lives at [../GROUND-RULES.md](../GROUND-RULES.md); gates below cite the `GR-NN` they enforce.
 
 ---
 
@@ -149,7 +149,7 @@ Configure these in your AI client (VS Code `settings.json` or Claude Desktop con
 Phase 3 must populate the **Tooling & Environment Readiness** section of `.scaffold/implementation-plan.md`. Before closing Phase 3:
 
 - [ ] Artifact consistency check in `.scaffold/implementation-plan.md` is complete: language, domain spec, resource mapping, decisions, and Phase 4 tasks agree
-- [ ] No `NEEDS CLARIFICATION` marker blocks Phase 4 contract scaffolding
+- [ ] No `[OPEN QUESTION: ...]` marker blocks Phase 4 contract scaffolding (**GR-10**). Run a literal-string scan across `.scaffold/domain-specification.yaml`, `.scaffold/UBIQUITOUS-LANGUAGE.md`, `.scaffold/DESIGN-DECISIONS.md`, and `.scaffold/implementation-plan.md`; classify any remaining marker as **blocking Phase 4** (halt) or **non-blocking deferred** (record in `HANDOFF.md` section Open Questions and proceed).
 - [ ] All CLIs required by resource YAML technology choices are identified with install commands
 - [ ] MCP server discovery completed (npm search, MCP registry) for project-specific libraries
 - [ ] CLI preference applied: CLIs chosen over MCP servers where both exist (lower token cost)

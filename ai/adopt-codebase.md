@@ -78,6 +78,8 @@ Confirm, correct, or mark deferred?
 
 Keep at most five unresolved assumptions active. Before writing `.scaffold/` artifacts, each assumption must be confirmed, corrected, or converted to a deferred decision with `Needed Before` populated.
 
+When the developer's answer remains ambiguous and a safe default is not available, drop an inline `[OPEN QUESTION: <single-sentence question>]` marker into the artifact where the gap will surface during later phases (**GR-10**), and mirror it to `HANDOFF.md` section Open Questions. The handoff into Phase 2 must include either a resolution or an explicit non-blocking deferral - markers do not silently carry forward.
+
 ## Inference Rules
 
 - **Code statements are facts; developer answers are rationale.** When code says `class Order : Entity` and the developer says "Order isn't really an aggregate root," record both: code-asserted aggregate, developer-flagged ambiguity. Do not silently override the code.

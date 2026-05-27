@@ -37,6 +37,8 @@ This table should be empty before Phase 2 unless the ambiguity is non-blocking a
 |---|---|---|---|
 | `{{Term}}` | _What is unclear._ | no | `D-###` |
 
+For a vocabulary gap that is not yet ready to become a row above, drop an inline `[OPEN QUESTION: <single-sentence question>]` marker next to the closest term it touches (**GR-10**) and mirror it in `HANDOFF.md` section Open Questions. Markers must be resolved or converted to deferred decisions before the next phase gate.
+
 ## Entities And Aggregates
 
 | Entity | Aggregate Role | Tenant Scope | Ownership Notes |

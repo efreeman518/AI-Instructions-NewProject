@@ -40,6 +40,10 @@ flowchart TD
 |---|---|---|---|---|
 | D-### | Phase 5e | no | Auth finalization | _What remains unresolved._ |
 
+## Open Question Markers
+
+Use `[OPEN QUESTION: <single-sentence question>]` inline anywhere in this file (or in `.scaffold/domain-specification.yaml` / `.scaffold/UBIQUITOUS-LANGUAGE.md`) when an ambiguity does not yet resolve to a decision (**GR-10**). Mirror each marker in `HANDOFF.md` section Open Questions. Resolve, downgrade to a deferred decision with `Needed Before`, or remove the marker before the next phase gate.
+
 ## Assumptions
 
 Use this table for assumptions that were accepted, corrected, or deferred during Phase 1 or brownfield adoption.

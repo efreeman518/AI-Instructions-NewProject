@@ -33,8 +33,8 @@ Treat Phase 1 artifacts as tests for the conversation: another AI session should
 - Classify ambiguity before asking. Use the taxonomy below so questions stay targeted.
 - Ask only questions whose answer changes an artifact, a decision, a resource choice, a test, or a generated contract.
 - Prefer one focused correction loop over broad brainstorming. After a recap, ask at most five targeted clarification questions before continuing.
-- Use `NEEDS CLARIFICATION: <topic>` only when no safe default or deferral exists. Keep at most three active markers at any time.
-- Resolve each marker before Phase 2, or convert it to a `deferred` decision with `Needed Before` set to the phase that must revisit it.
+- Use `[OPEN QUESTION: <single-sentence question>]` only when no safe default or deferral exists (**GR-10**). Place the marker inline in the relevant `.scaffold/` artifact (`domain-specification.yaml`, `UBIQUITOUS-LANGUAGE.md`, or `DESIGN-DECISIONS.md`) and mirror it to `HANDOFF.md` section Open Questions. Keep at most three active markers at any time.
+- Resolve each marker before Phase 2, or convert it to a `deferred` decision with `Needed Before` set to the phase that must revisit it. A marker still present at the next phase gate halts the next phase until resolved or explicitly downgraded to non-blocking.
 - Do not hide assumptions. Record the assumption, why it is reasonable, what could break if it is wrong, and whether the developer confirmed it.
 
 ## Ambiguity Taxonomy
@@ -124,7 +124,7 @@ Before writing Phase 1 outputs, confirm:
 - [ ] Every rejected synonym or ambiguous term is recorded.
 - [ ] Every non-obvious design choice has a decision record with dependencies.
 - [ ] No open decision blocks Phase 2 resource mapping.
-- [ ] No unresolved `NEEDS CLARIFICATION` marker blocks Phase 2. Any remaining uncertainty is recorded as a non-blocking deferred decision with `Needed Before`.
+- [ ] No unresolved `[OPEN QUESTION: ...]` marker blocks Phase 2 (**GR-10**). Any remaining uncertainty is recorded as a non-blocking deferred decision with `Needed Before` set, and is mirrored in `HANDOFF.md` section Open Questions.
 - [ ] Each success criterion is measurable in business terms, not implementation terms.
 - [ ] Developer has reviewed the final recap.
 

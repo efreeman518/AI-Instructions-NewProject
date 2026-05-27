@@ -246,6 +246,15 @@ await repoTrxn.SaveChangesAsync(OptimisticConcurrencyWinner.ClientWins, ct);
 - [ ] Multi-store changes deploy code before SQL migration
 - [ ] Mappings/repositories align with [entity-template.md](../templates/entity-template.md) and [repository-template.md](../templates/repository-template.md)
 
+## Pitfalls
+
+- Sharing one DbContext for transactional writes and query reads - defeats the Trxn/Query split, prevents no-tracking read configuration, and causes change-tracker pollution under load. Always emit both `{App}DbContextTrxn` and `{App}DbContextQuery` over the shared base.
+- Skipping audit or tenant interceptors on a newly added DbContext - misses tenancy filtering and audit columns silently; the failure surfaces as cross-tenant data in tests months later.
+- Updating aggregate roots with child collections without an `{Entity}Updater.cs` DbContext extension - client-side child removals silently drop because EF will not detach orphans without an explicit sync call. Use `CollectionUtility.SyncCollectionWithResult`.
+- Inline backfill SQL inside an EF migration - blocks deployment on long-running data work and offers no retry handle. Use a background job for complex transforms; keep migrations idempotent and structural.
+- Mega-migrations that bundle multiple features - hard to revert and obscures the diff. One migration per feature/slice, named `YYYYMMDD_Description`.
+- Renaming a migration after it has been shared - every other developer's state diverges; never rename a migration once pushed.
+
 ---
 
 **TaskFlow proof (local):** `../AI-Instructions-ReferenceApp/src/Infrastructure/TaskFlow.Infrastructure.Repositories/TaskItemRepositoryTrxn.cs` + `TaskItemRepositoryQuery.cs`, plus `../AI-Instructions-ReferenceApp/src/Host/TaskFlow.Bootstrapper/Registration/RegisterServices.Database.cs`

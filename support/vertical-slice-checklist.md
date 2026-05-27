@@ -16,6 +16,7 @@ Use this when adding a new entity to an **already-scaffolded** solution. Skip fu
 - [ ] Identify existing: `RegisterServices.cs`, `{App}DbContextTrxn`, `{App}DbContextQuery`, `WebApplicationBuilderExtensions.cs`
 - [ ] Confirm `scaffoldMode` and `testingProfile` from `.scaffold/resource-implementation.yaml`
 - [ ] If this slice introduces a new domain term, role, event, custom action, or design decision, append it to `.scaffold/UBIQUITOUS-LANGUAGE.md` / `.scaffold/DESIGN-DECISIONS.md` and update `.scaffold/domain-specification.yaml` **before** generating code (see [../README.md](../README.md) section Phase-1 Artifact Lifecycle)
+- [ ] Scan `.scaffold/*` for `[OPEN QUESTION: ...]` markers (**GR-10**) within the slice's entity scope; halt the slice if any blocking marker remains, or downgrade to a non-blocking deferred decision before generation
 - [ ] Inspect existing neighboring slices before asking questions. If the code answers naming, folder placement, route shape, or DI pattern, follow the code and record only assumptions that affect generated artifacts.
 - [ ] For each assumption, record evidence, risk if wrong, confidence, and outcome in `.scaffold/DESIGN-DECISIONS.md` section Assumptions.
 - [ ] Trace the slice before generation: accepted language term -> `domain-specification.yaml` entity/action/rule -> `resource-implementation.yaml` store/host/dependency -> test category.

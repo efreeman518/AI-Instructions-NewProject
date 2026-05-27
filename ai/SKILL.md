@@ -38,8 +38,10 @@ This sizing does **not** change phase semantics, gates, or conflict-resolution o
 
 ## Non-Negotiables
 
-- **Authority map:** `START-AI.md` owns session boot, phase routing, and load rules. `support/execution-gates.md` owns validation gates and commands. This file (`ai/SKILL.md`) owns Phase 5 load sets, non-negotiables, and concern routing. Individual skills own implementation detail; templates own generated file shape.
-- **Phase-1 artifacts are the binding source of truth.** `.scaffold/domain-specification.yaml`, `.scaffold/UBIQUITOUS-LANGUAGE.md`, and `.scaffold/DESIGN-DECISIONS.md` are not snapshots - every session must keep them current. *Fix the artifact first, then the code; when drift exists, the artifact loses to code reality.* Update them **before** generating code that introduces a new term/decision; update them **after** code when drift is discovered. Canonical lifecycle (forward propagation, drift signal, mid-scaffold rollback): [../START-AI.md](../START-AI.md) section Phase-1 Artifact Lifecycle Rule and [../README.md](../README.md) section Phase-1 Artifact Lifecycle.
+> The 1-page constitutional summary lives at [../GROUND-RULES.md](../GROUND-RULES.md) with stable identifiers (`GR-01`...`GR-12`). The detail below is the implementation reference; the `GR-NN` tags after each bullet name the rule it enforces.
+
+- **Authority map (GR-12):** `START-AI.md` owns session boot, phase routing, and load rules. `support/execution-gates.md` owns validation gates and commands. This file (`ai/SKILL.md`) owns Phase 5 load sets, non-negotiables, and concern routing. Individual skills own implementation detail; templates own generated file shape.
+- **Phase-1 artifacts are the binding source of truth (GR-01).** `.scaffold/domain-specification.yaml`, `.scaffold/UBIQUITOUS-LANGUAGE.md`, and `.scaffold/DESIGN-DECISIONS.md` are not snapshots - every session must keep them current. *Fix the artifact first, then the code; when drift exists, the artifact loses to code reality.* Update them **before** generating code that introduces a new term/decision; update them **after** code when drift is discovered. Canonical lifecycle (forward propagation, drift signal, mid-scaffold rollback): [../START-AI.md](../START-AI.md) section Phase-1 Artifact Lifecycle Rule and [../README.md](../README.md) section Phase-1 Artifact Lifecycle.
 - **Conflict resolution order:** For routing/loading/session-boundary conflicts, follow `START-AI.md`. For validation command/gate conflicts, follow `support/execution-gates.md`. For implementation conflicts, use this file (`ai/SKILL.md`) > individual skill files > templates.
 - **Composition patterns** (cross-project wiring) live in `patterns/`. Load only when the current sub-phase needs cross-project orchestration:
   - [../patterns/data-layer-wiring.md](../patterns/data-layer-wiring.md) - DB context pooling, OnModelCreating order, startup tasks, seed data, scaffold migration strategy. Phase 5a, 5b.
@@ -49,13 +51,13 @@ This sizing does **not** change phase semantics, gates, or conflict-resolution o
   Prefer template-owned implementation detail over duplicating wiring; use pattern files for orchestration decisions across projects only.
 - **Load [../support/ef-packages-reference.md](../support/ef-packages-reference.md) before Phase 5a** to know which base types (DbContextBase, DomainResult, IRequestContext, etc.) are part of the shared base-contract set. These types are sourced as `<packagePrefix>.<Layer>` packages from `customNugetFeeds` when `packageStrategy: feed`, or as project references against `src/Packages/<packagePrefix>.<Layer>` when `packageStrategy: local` (and the listed layers when `packageStrategy: hybrid`). Do not regenerate these types into application/domain/host layers regardless of mode - they live in the `<packagePrefix>.*` layer only.
 - **Reference app - TaskFlow.** When a skill or template is ambiguous, consult it. Rules for when/how to consult, local sibling preference, and the do-not-copy-wholesale constraint live in [../support/reference-app.md](../support/reference-app.md). Use [../support/taskflow-proof-map.md](../support/taskflow-proof-map.md) for the phase -> area index.
-- Generate code only in the user's new project directory.
-- Use `.slnx` (not legacy `.sln`).
-- Use central package management (`Directory.Packages.props`).
-- **One public type per file** - universal rule across generated app code and `src/Packages/<Prefix>.*` vendored sources alike. File name matches the type. Lumped files (multiple DTOs, message types, nested helpers) are split at generation time, not deferred. See [../skills/solution-structure.md](../skills/solution-structure.md) section Non-Negotiables for the exception list.
-- After adding packages, update to latest stable and verify restore/build.
-- Record instruction gaps in `.scaffold/INSTRUCTION-GAPS.md` (do not hot-edit installed `.instructions/` files mid-scaffold). Create the `.scaffold/` directory at project root if absent. Instruction maintainers can later copy approved findings into [../support/UPDATE-INSTRUCTIONS.md](../support/UPDATE-INSTRUCTIONS.md).
-- Prefer latest stable .NET SDK and package releases. MCP server setup: see [../README.md](../README.md).
+- Generate code only in the user's new project directory **(GR-07)**.
+- Use `.slnx` (not legacy `.sln`) **(GR-03)**.
+- Use central package management (`Directory.Packages.props`) **(GR-03)**.
+- **One public type per file (GR-02)** - universal rule across generated app code and `src/Packages/<Prefix>.*` vendored sources alike. File name matches the type. Lumped files (multiple DTOs, message types, nested helpers) are split at generation time, not deferred. See [../skills/solution-structure.md](../skills/solution-structure.md) section Non-Negotiables for the exception list.
+- After adding packages, update to latest stable and verify restore/build **(GR-08)**.
+- Record instruction gaps in `.scaffold/INSTRUCTION-GAPS.md` (do not hot-edit installed `.instructions/` files mid-scaffold) **(GR-07)**. Create the `.scaffold/` directory at project root if absent. Instruction maintainers can later copy approved findings into [../support/UPDATE-INSTRUCTIONS.md](../support/UPDATE-INSTRUCTIONS.md).
+- Prefer latest stable .NET SDK and package releases **(GR-08)**. MCP server setup: see [../README.md](../README.md).
 - All mode/profile/flag defaults come from [resource-implementation-schema.md](resource-implementation-schema.md) (**Canonical Defaults**).
 
 ## Phase 5 file table
@@ -122,21 +124,23 @@ Generate one complete slice, validate, then move to next slice.
 - `DomainResult`-style railway flow
 - Tenant-safe defaults where enabled
 - SQL defaults: `nvarchar(N)`, `decimal(10,4)`, `datetime2`
-- Stub external dependencies for local compile/run - generate compilable no-op implementations with `// TODO: [CONFIGURE]` comments at every integration point (stub class, DI registration, appsettings section)
-- **Every external dependency must declare one scaffold-time mode** before Phase 5 code is generated for it. Valid modes:
+- Stub external dependencies for local compile/run **(GR-06)** - generate compilable no-op implementations with `// TODO: [CONFIGURE]` comments at every integration point (stub class, DI registration, appsettings section)
+- **Every external dependency must declare one scaffold-time mode (GR-05)** before Phase 5 code is generated for it. Valid modes:
   - `emulator` - Aspire-hosted or local emulator available (SQL, Redis, Azure Storage Emulator, Service Bus emulator)
   - `lazy-optional` - config-driven; service activates only when config section is present/non-empty; absent = no-op passthrough
   - `no-op stub` - compile-time stub that satisfies the interface and returns safe defaults; no cloud call made
   - `deployment-only` - live integration deferred to deployment; **a no-op stub must still be generated** so the solution compiles and runs locally. Stub must satisfy the interface, return safe defaults, and carry a `// TODO: [CONFIGURE]` comment. Blocker logged in `HANDOFF.md`.
 - **Schema ownership for third-party operational stores:** When a dependency (scheduler, queue dashboard, job runner, etc.) persists data through its own EF-backed or SQL-backed operational tables, determine **who owns schema creation** before writing startup code. Check for: (a) library-managed auto-create (e.g., `EnsureCreated` at startup), (b) library-provided migrations or SQL scripts you must run, (c) a design-time factory the library expects in your project, or (d) manual migration ownership where you must add `DbSet`/configurations for the library's tables. Record the answer in `resource-implementation.yaml` under `externalDependencyModes`. Do not assume a library will create its tables just because its startup code runs without error - missing schema often surfaces as seeding or runtime failures, not startup crashes.
-- **Scaffold is complete when: solution builds, unit/endpoint tests pass, and the app boots end-to-end without any manual cloud setup.** Manual cloud provisioning (Entra, Key Vault, Foundry, ACS) must use `lazy-optional` or `no-op stub` mode and cannot block scaffold completion.
+- **Scaffold is complete when: solution builds, unit/endpoint tests pass, and the app boots end-to-end without any manual cloud setup (GR-11).** Manual cloud provisioning (Entra, Key Vault, Foundry, ACS) must use `lazy-optional` or `no-op stub` mode and cannot block scaffold completion.
 - No commercial-licensed test packages. Use MSTest built-in assertions as the baseline. See [../skills/testing.md](../skills/testing.md) for approved assertion options.
-- **Minimize third-party packages.** Default to BCL + `Microsoft.Extensions.*` + the reference-app stack already in TaskFlow (Yarp, Scalar, ZiggyCreatures FusionCache, StackExchange.Redis, Moq, NetArchTest, NBomber, Testcontainers, BenchmarkDotNet, MudBlazor, Refit, Azure.*, Aspire). When `includeReactUI: true`, the React allowlist is React, Vite, TypeScript, React Router, TanStack Query, Material UI, lucide-react, and Playwright. Treat those lists as the allowlist; any other package requires developer confirmation, with the bar being "**high value** the reference-app stack cannot deliver." Prefer a small in-house extension method - promoted to a shared `src/Packages/<packagePrefix>.<Layer>` project when reusable - over a new dependency. See [../skills/package-dependencies.md](../skills/package-dependencies.md) section Minimize Third-Party Dependencies.
+- **Minimize third-party packages (GR-04).** Default to BCL + `Microsoft.Extensions.*` + the reference-app stack already in TaskFlow (Yarp, Scalar, ZiggyCreatures FusionCache, StackExchange.Redis, Moq, NetArchTest, NBomber, Testcontainers, BenchmarkDotNet, MudBlazor, Refit, Azure.*, Aspire). When `includeReactUI: true`, the React allowlist is React, Vite, TypeScript, React Router, TanStack Query, Material UI, lucide-react, and Playwright. Treat those lists as the allowlist; any other package requires developer confirmation, with the bar being "**high value** the reference-app stack cannot deliver." Prefer a small in-house extension method - promoted to a shared `src/Packages/<packagePrefix>.<Layer>` project when reusable - over a new dependency. See [../skills/package-dependencies.md](../skills/package-dependencies.md) section Minimize Third-Party Dependencies.
 - Keep Aspire config and IaC names aligned
 - Start with minimal viable profiles, promote later
 - **Seed deterministic startup data early.** For scaffold, demo, or local-development modes, generate seed data for the minimum required user/profile/domain state so that first-run UI and API flows work against real records. Do not spend time hardening first-run UX around empty datasets - seed first, polish later.
 
 ## Scaffold Definition of Done
+
+> Indexed as **GR-11** in [../GROUND-RULES.md](../GROUND-RULES.md). The list below is the canonical detail; the ground-rule entry is the short-form citation.
 
 A scaffolded solution is **not complete** until all of the following hold. Treat these as hard gates - if any fail, fix before declaring the scaffold finished, or record the deviation in `HANDOFF.md` with the specific dependency or sub-phase that's blocking.
 

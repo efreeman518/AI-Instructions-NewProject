@@ -28,7 +28,7 @@ Run this check before writing Phase 4 tasks. Fix source artifacts first, not gen
 - [ ] Every command/action, state, event, policy, role, and external system used by the plan is present in `.scaffold/UBIQUITOUS-LANGUAGE.md`.
 - [ ] Every entity maps to a store, host exposure, and test category in `.scaffold/resource-implementation.yaml`, or has an explicit "no generated resource" note.
 - [ ] Every design decision that affects generation order, auth, tenancy, contracts, hosting, package strategy, or external dependency mode is `confirmed`, `defaulted`, or non-blocking `deferred`.
-- [ ] No `NEEDS CLARIFICATION` marker remains in Phase 4 scope.
+- [ ] No `[OPEN QUESTION: ...]` marker remains in Phase 4 scope (**GR-10**). Markers still present must be either resolved or downgraded to a non-blocking deferred decision with `Needed Before` set.
 
 ## Implementation Steps
 
@@ -117,7 +117,7 @@ Run this check before writing Phase 4 tasks. Fix source artifacts first, not gen
 
 Resolve before Phase 5 starts:
 
-Use `NEEDS CLARIFICATION: <topic>` only when no safe default or deferral exists. Keep the list short; each item must name the phase it blocks.
+Use `[OPEN QUESTION: <single-sentence question>]` only when no safe default or deferral exists (**GR-10**). Place each marker inline in the relevant `.scaffold/` artifact and mirror it under `HANDOFF.md` section Open Questions. Keep the list short; each item must name the phase it blocks.
 
 | Topic | Blocks Phase | Decision / Artifact | Resolution |
 |---|---|---|---|
@@ -254,7 +254,7 @@ Before starting Phase 4 (contract scaffolding), verify all of the following:
 - [ ] Developer reviews `.scaffold/implementation-plan.md` against `ai/implementation-plan.md` schema
 - [ ] Domain specification and resource implementation YAML files are complete
 - [ ] `.scaffold/UBIQUITOUS-LANGUAGE.md` and `.scaffold/DESIGN-DECISIONS.md` exist and match the domain/resource artifacts
-- [ ] Artifact Consistency Check is complete and no `NEEDS CLARIFICATION` marker remains in Phase 4 scope
+- [ ] Artifact Consistency Check is complete and no `[OPEN QUESTION: ...]` marker remains in Phase 4 scope (**GR-10**)
 - [ ] Decision Dependency Graph is populated and has no unresolved blockers for Phase 4
 - [ ] Tooling & Environment Readiness section populated (CLIs identified, MCP discovery complete)
 - [ ] All required CLIs verified or install commands provided

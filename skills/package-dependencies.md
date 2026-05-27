@@ -369,3 +369,11 @@ Pattern reference: [external-api.md](external-api.md)
 - [ ] Internal message bus namespaces are correct
 - [ ] If `applicationStyle` is `cqrs` or `switch`: `<packagePrefix>.CQRS` is sourced by feed or local project, and no MediatR/dispatcher package was added
 - [ ] Azure client factories and package-required DI wiring are registered
+
+## Pitfalls
+
+- Adding a package outside the allowlist without recording the decision in `.scaffold/DESIGN-DECISIONS.md` (**GR-04**) - drift compounds: each undocumented dependency makes the next one easier to slip in, and license/security review has no audit trail.
+- Hard-coding a package version in instructions, templates, or `Directory.Packages.props` examples - violates the latest-stable rule (**GR-08**). Use `<latest-stable>` placeholders and let scaffold-time resolution pin the version.
+- Adding MediatR or a similar dispatcher when `applicationStyle` is `cqrs` or `switch` - the scaffold ships `<packagePrefix>.CQRS` for exactly that role; layering MediatR on top fragments the request pipeline.
+- Pinning a private-feed PAT into `nuget.config` instead of `%NUGET_AUTH_TOKEN%` / `$NUGET_AUTH_TOKEN` - leaks the credential into source control on the next push.
+- Skipping `dotnet restore` verification after generating `src/Packages/<packagePrefix>.*` projects in `local`/`hybrid` mode - the first hint of a missing layer otherwise surfaces as a build error mid-Phase-5 with no easy diff to read.

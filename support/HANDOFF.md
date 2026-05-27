@@ -62,6 +62,14 @@ Run before `dotnet restore` in any new session:
 - Goal:
 - Scope for this session:
 
+## Open Questions
+
+Mirror every `[OPEN QUESTION: ...]` marker present in `.scaffold/*` at session close (**GR-10**). One row per marker; resolve or downgrade before the next phase gate.
+
+| Marker text | Artifact:Line | Blocks phase | Disposition (resolved / deferred D-### / non-blocking) |
+|---|---|---|---|
+| | | | |
+
 ## Deferred
 
 Out of scope for this session - do not attempt unless explicitly re-scoped:

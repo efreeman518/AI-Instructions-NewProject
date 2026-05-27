@@ -425,6 +425,15 @@ public static async Task Cleanup(TestContext context)
 - [ ] Env vars set for AppHost are saved/restored in cleanup.
 - [ ] Aspire-tier fixture is named for what it wraps (`AspireTestHost` for full distributed app, not `DatabaseFixture`).
 
+## Pitfalls
+
+- Horizontal slicing of tests across an entity (write all unit tests, then all endpoint tests, then all integration tests) - breaks the red/green/refactor loop and lets unverified entities accumulate. Slice vertically: one entity, all its tiers, green, next entity.
+- Marking a test `Assert.Inconclusive` without recording the deferral in `HANDOFF.md` section Deferred External Dependencies - turns silent gaps into invisible debt that never returns to green.
+- Aborting an `[AssemblyInitialize]` when infrastructure fails to start - flips the entire assembly red and hides genuine code failures. Use the assembly-initializer safety pattern (mark dependents `Inconclusive` instead).
+- Adding FluentAssertions or another commercial-licensed assertion package - violates the assertion baseline (**GR-04**). Use MSTest built-in assertions plus the approved options in this skill.
+- Sharing a single Aspire fixture across assemblies - couples startup costs and obscures which assembly owns which env vars; create one fixture per assembly that needs it.
+- Skipping the `<summary>` on a `[TestClass]` - test classes without scope/tier/quirks notes accumulate dead weight nobody can re-evaluate.
+
 ## CQRS Test Routing
 
 For `applicationStyle: switch`, run endpoint and E2E tests in both modes by overriding `Application:Style` or `<APP>_APPLICATION_STYLE`. The same HTTP contract tests should pass against service endpoints and CQRS endpoints. For `applicationStyle: cqrs`, run the same HTTP contract suite against CQRS endpoints as the only mapped endpoint set.
