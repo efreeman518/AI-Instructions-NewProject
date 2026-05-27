@@ -20,6 +20,16 @@ Checkpoint commands and pass criteria are canonical in [../support/execution-gat
 - Mode: {{scaffoldMode}} | Testing: {{testingProfile}}
 - Enabled hosts: {{list}}
 
+## Artifact Consistency Check
+
+Run this check before writing Phase 4 tasks. Fix source artifacts first, not generated code.
+
+- [ ] Every entity in `.scaffold/domain-specification.yaml` has accepted terms in `.scaffold/UBIQUITOUS-LANGUAGE.md`.
+- [ ] Every command/action, state, event, policy, role, and external system used by the plan is present in `.scaffold/UBIQUITOUS-LANGUAGE.md`.
+- [ ] Every entity maps to a store, host exposure, and test category in `.scaffold/resource-implementation.yaml`, or has an explicit "no generated resource" note.
+- [ ] Every design decision that affects generation order, auth, tenancy, contracts, hosting, package strategy, or external dependency mode is `confirmed`, `defaulted`, or non-blocking `deferred`.
+- [ ] No `NEEDS CLARIFICATION` marker remains in Phase 4 scope.
+
 ## Implementation Steps
 
 ### Phase 4 - Contract Scaffolding
@@ -107,9 +117,13 @@ Checkpoint commands and pass criteria are canonical in [../support/execution-gat
 
 Resolve before Phase 5 starts:
 
-1. _[list any unresolved design decisions]_
-2. _[ambiguous requirements]_
-3. _[external dependency unknowns]_
+Use `NEEDS CLARIFICATION: <topic>` only when no safe default or deferral exists. Keep the list short; each item must name the phase it blocks.
+
+| Topic | Blocks Phase | Decision / Artifact | Resolution |
+|---|---|---|---|
+| _Unresolved design decision_ | Phase 4 | `D-###` | _Resolve, default, or defer_ |
+| _Ambiguous requirement_ | Phase 5a | `.scaffold/domain-specification.yaml` | _Resolve, default, or defer_ |
+| _External dependency unknown_ | Phase 5b | `.scaffold/resource-implementation.yaml` | _Resolve, default, or defer_ |
 
 ## Decision Dependency Graph
 
@@ -240,6 +254,7 @@ Before starting Phase 4 (contract scaffolding), verify all of the following:
 - [ ] Developer reviews `.scaffold/implementation-plan.md` against `ai/implementation-plan.md` schema
 - [ ] Domain specification and resource implementation YAML files are complete
 - [ ] `.scaffold/UBIQUITOUS-LANGUAGE.md` and `.scaffold/DESIGN-DECISIONS.md` exist and match the domain/resource artifacts
+- [ ] Artifact Consistency Check is complete and no `NEEDS CLARIFICATION` marker remains in Phase 4 scope
 - [ ] Decision Dependency Graph is populated and has no unresolved blockers for Phase 4
 - [ ] Tooling & Environment Readiness section populated (CLIs identified, MCP discovery complete)
 - [ ] All required CLIs verified or install commands provided

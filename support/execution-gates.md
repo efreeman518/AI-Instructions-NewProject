@@ -148,6 +148,8 @@ Configure these in your AI client (VS Code `settings.json` or Claude Desktop con
 
 Phase 3 must populate the **Tooling & Environment Readiness** section of `.scaffold/implementation-plan.md`. Before closing Phase 3:
 
+- [ ] Artifact consistency check in `.scaffold/implementation-plan.md` is complete: language, domain spec, resource mapping, decisions, and Phase 4 tasks agree
+- [ ] No `NEEDS CLARIFICATION` marker blocks Phase 4 contract scaffolding
 - [ ] All CLIs required by resource YAML technology choices are identified with install commands
 - [ ] MCP server discovery completed (npm search, MCP registry) for project-specific libraries
 - [ ] CLI preference applied: CLIs chosen over MCP servers where both exist (lower token cost)

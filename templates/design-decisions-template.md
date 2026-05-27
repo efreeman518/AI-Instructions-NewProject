@@ -6,6 +6,17 @@ Record design choices made during scaffolding. Keep this file short enough that 
 
 Use one of: `proposed`, `confirmed`, `defaulted`, `deferred`, `superseded`.
 
+## Record A Decision When
+
+Record a decision only when one of these is true:
+
+- It is hard to reverse after code generation.
+- It would surprise a future maintainer without context.
+- There was a real tradeoff between viable options.
+- It affects resource mapping, contracts, tests, auth, tenancy, hosting, package strategy, or external dependencies.
+
+Do not record obvious facts already covered by `.scaffold/domain-specification.yaml` or `.scaffold/resource-implementation.yaml`.
+
 ## Decision Dependency Graph
 
 ```mermaid
@@ -28,6 +39,14 @@ flowchart TD
 | ID | Revisit In | Blocking? | Needed Before | Notes |
 |---|---|---|---|---|
 | D-### | Phase 5e | no | Auth finalization | _What remains unresolved._ |
+
+## Assumptions
+
+Use this table for assumptions that were accepted, corrected, or deferred during Phase 1 or brownfield adoption.
+
+| ID | Assumption | Evidence | Risk If Wrong | Confidence | Outcome |
+|---|---|---|---|---|---|
+| A-### | _What was inferred._ | _User answer or file:line._ | _What would break._ | medium | confirmed |
 
 ## Superseded Decisions
 

@@ -112,6 +112,14 @@ Issues encountered and fixed this session (so the next session does not re-inves
 
 - <none>
 
+## UAT / Acceptance Gaps
+
+Use this for human smoke-test or review findings. Do not mix these with instruction gaps unless the root cause is bad scaffold guidance.
+
+| Source | Gap | Current Evidence | Root Cause | Closure Plan | Status |
+|--------|-----|------------------|------------|--------------|--------|
+| | | | | | |
+
 ## Completed
 
 - <none>

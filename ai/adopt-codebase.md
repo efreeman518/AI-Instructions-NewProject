@@ -52,6 +52,32 @@ Walk these sources in order. Earlier sources establish the vocabulary; later sou
 
 For each pass, summarize findings to the developer in a short recap (same shape as [shared-understanding-interview.md](shared-understanding-interview.md) section Branch Recap Format). Ask: *"Is this correct, or should anything change before I continue?"*
 
+## Codebase-First Assumptions Mode
+
+Do not ask the developer questions the code can answer. Inspect first, then ask only about ambiguity, rationale, or intent not visible in code.
+
+When an inference is likely but not certain, present it as an assumption:
+
+```markdown
+### Assumption: {short title}
+
+Evidence:
+- `{file:line}` - {what the code states}
+
+Assumption:
+- {what will be recorded if accepted}
+
+Risk if wrong:
+- {what generated artifact, resource, test, or contract would be affected}
+
+Confidence:
+- high | medium | low
+
+Confirm, correct, or mark deferred?
+```
+
+Keep at most five unresolved assumptions active. Before writing `.scaffold/` artifacts, each assumption must be confirmed, corrected, or converted to a deferred decision with `Needed Before` populated.
+
 ## Inference Rules
 
 - **Code statements are facts; developer answers are rationale.** When code says `class Order : Entity` and the developer says "Order isn't really an aggregate root," record both: code-asserted aggregate, developer-flagged ambiguity. Do not silently override the code.
@@ -96,6 +122,7 @@ Before declaring the adopt session complete:
 - [ ] Every entity in `Domain.Model/Entities/` appears in `domain-specification.yaml`.
 - [ ] Every public type/property name in `Domain.Model` and `Application.Models` is either in `UBIQUITOUS-LANGUAGE.md` or explicitly excluded (e.g., framework base types).
 - [ ] At least one `D-###` exists for each visible architectural choice: package strategy, persistence stack, identity provider (if present), caching (if present), gateway (if present), multi-tenancy (if present), hosting model.
+- [ ] Every assumption raised during inspection is confirmed, corrected, or deferred with `Needed Before`.
 - [ ] `HANDOFF.md` written with `currentPhase: 2`.
 
 ## Non-Goals
