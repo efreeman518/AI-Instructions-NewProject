@@ -158,6 +158,12 @@ builder.AddProject<Projects.{Project}_Api>("{project}-api")
     .WithReference(eventHub);
 ```
 
+### Local Inspection
+
+For Service Bus emulator inspection, pin the AMQP port (`5672`) and expose a management endpoint (`5300`) on non-test runs. **Messentra** is the recommended UI (it is an inspector, not an emulator - Aspire still owns the emulator container). Health probe: `http://localhost:5300/health`. SDK clients use `Endpoint=sb://localhost;...;UseDevelopmentEmulator=true;`; administration-client tools use `Endpoint=sb://localhost:5300;...;UseDevelopmentEmulator=true;`.
+
+See [aspire.md](aspire.md) -> *Local Explorer Tooling* for the canonical port matrix and the `RunAsEmulator(...)` pattern.
+
 ## Rules
 
 1. One settings class per concrete sender/processor (`*SettingsBase` inheritance).

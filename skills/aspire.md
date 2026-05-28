@@ -110,7 +110,9 @@ var serviceBus = builder.AddAzureServiceBus("servicebus").RunAsEmulator();
 var eventHubs = builder.AddAzureEventHubs("eventhubs").RunAsEmulator();
 ```
 
-> **Do NOT use `ContainerLifetime.Persistent` on Azure emulator containers** (Storage, Service Bus, Cosmos, Event Hubs). Persistent emulator containers survive Aspire restarts but get stranded on deleted Podman/Docker networks, causing `netavark "eth2 already exists"` errors and broken restarts. Only SQL Server and Redis use `Persistent` + named volumes - Azure emulators should use the default ephemeral lifetime.
+> **Do NOT use `ContainerLifetime.Persistent` on Azure emulator containers** (Storage, Service Bus, Cosmos, Event Hubs) by default. Persistent emulator containers survive Aspire restarts but get stranded on deleted Podman/Docker networks, causing `netavark "eth2 already exists"` errors and broken restarts. Only SQL Server and Redis use `Persistent` + named volumes - Azure emulators should use the default ephemeral lifetime.
+>
+> **Narrow exception: Cosmos preview emulator.** Cosmos image is large and slow to start, so a long local-dev session may justify `ContainerLifetime.Persistent` on the Cosmos preview emulator specifically. If used, document the restart cleanup procedure (manually remove the container and its network when network errors appear) in `HANDOFF.md`. Do not extend this exception to Azurite, Service Bus, or Event Hubs without an explicit reason - those startup costs are low and not worth the stranding risk.
 
 ### Azure Service Bus Topics and Subscriptions
 
@@ -123,6 +125,135 @@ sb.AddQueue("commands"); // optional queue
 > **API note (Aspire 9.3.0+):** Use `AddTopic(name, subscriptions[])` - the chained `.AddServiceBusTopic().AddServiceBusSubscription()` API does not exist. Queues use `AddQueue(name)`.
 
 Services like `AddSqlServer`, `AddRedis`, `AddPostgres`, `AddRabbitMQ` already run local containers by default.
+
+---
+
+## Local Explorer Tooling (Non-Test Runs)
+
+Stable host ports plus integrated explorer UIs make local-dev sessions inspectable without rediscovering connection strings or ports on every restart. **All explorer wiring below is local-dev only.** Gate it behind an `isTesting` flag so test runs keep dynamic ports and skip explorer containers entirely.
+
+### Decision Rule
+
+1. **Pin host ports** for resources humans inspect from host tools (SQL Server, Redis, Azurite, Service Bus, Cosmos gateway/Data Explorer).
+2. **Keep test runs dynamic.** Wrap pinned ports and explorer containers in `if (!isTesting)` so parallel test runs and CI do not collide on fixed ports.
+3. **Prefer Aspire-integrated browser UIs** when the hosting package offers one (`WithRedisInsight`, `WithDataExplorer`). They reuse the Aspire container network and avoid host-tool installation.
+4. **Use first-party desktop tools as the supported fallback** when browser UIs are third-party or weaker (Microsoft Azure Storage Explorer for Azurite, VS Code SQL extension for SQL).
+5. **Record connection strings and ports in `HANDOFF.md`**, not in code comments, so future sessions can attach without rediscovering values.
+
+### Canonical Local Port Matrix
+
+| Resource | Host port | Tool | Notes |
+| --- | ---: | --- | --- |
+| SQL Server | `38433` | VS Code SQL extension | Host: `localhost,38433`. From another container on the Aspire network: `sql,1433`. |
+| Redis | `6379` | RedisInsight (Aspire-managed) | Pin via `port` arg on `AddRedis`. |
+| RedisInsight UI | `5540` | Browser | `WithRedisInsight(...)` - browser UI, no desktop install. |
+| Azurite Blob | `10000` | Microsoft Azure Storage Explorer (desktop) | Default port enables Storage Explorer auto-detection. |
+| Azurite Queue | `10001` | Microsoft Azure Storage Explorer (desktop) | Default port enables Storage Explorer auto-detection. |
+| Azurite Table | `10002` | Microsoft Azure Storage Explorer (desktop) | Default port enables Storage Explorer auto-detection. |
+| Service Bus AMQP | `5672` | SDKs, emulator-aware tools | Messaging connection endpoint. |
+| Service Bus management | `5300` | Messentra, admin client | Admin endpoint; health at `http://localhost:5300/health`. |
+| Cosmos gateway | `8081` | SDKs | Required by Cosmos explorer and clients. |
+| Cosmos Data Explorer | `1234` | Browser | `WithDataExplorer(1234)` on preview emulator. |
+
+Browser UIs running in Docker do not resolve host `localhost`. From inside an explorer container, use the Aspire service DNS name on the Aspire network (e.g., `sql`, `redis`) or `host.docker.internal` for host services.
+
+### Redis + RedisInsight (preferred)
+
+`builder.AddRedis(...)` accepts an explicit `port` and an Aspire-managed RedisInsight browser UI via `WithRedisInsight`. RedisInsight pre-wires environment variables for the Redis resource - no manual config inside the UI.
+
+```csharp
+var redisPwd = builder.AddParameter(
+    "redis-password",
+    () => "{Project}!Redis#Pwd123",
+    secret: true);
+
+var redis = builder.AddRedis("redis", port: isTesting ? null : 6379, password: redisPwd)
+    .WithImageTag("latest");
+
+if (!isTesting)
+{
+    redis = redis
+        .WithDataVolume("{project}-redis-data")
+        .WithLifetime(ContainerLifetime.Persistent)
+        .WithRedisInsight(insight => insight
+            .WithHostPort(5540)
+            .WithDataVolume("{project}-redisinsight-data")
+            .WithLifetime(ContainerLifetime.Persistent));
+}
+```
+
+Redis + RedisInsight are not Azure emulators - persistent lifetime + named volume is the normal pattern. The RedisInsight UI lives at `http://localhost:5540`.
+
+### Service Bus Emulator + Management Endpoint
+
+Pin the AMQP port for SDK clients and expose an HTTP management endpoint for admin clients and health probes. **Messentra** is a UI-only inspector (not an emulator); Aspire still owns the emulator container.
+
+```csharp
+var serviceBus = builder.AddAzureServiceBus("servicebus")
+    .RunAsEmulator(emulator =>
+    {
+        var serviceBusEmulator = emulator.WithImageTag("latest");
+
+        if (!isTesting)
+        {
+            serviceBusEmulator
+                .WithHostPort(5672)
+                .WithEndpoint(targetPort: 5300, port: 5300, scheme: "http", name: "management");
+        }
+    });
+```
+
+Connection-string forms differ by tool:
+
+- Messaging SDK: `Endpoint=sb://localhost;...;UseDevelopmentEmulator=true;`
+- Administration-client tools: `Endpoint=sb://localhost:5300;...;UseDevelopmentEmulator=true;`
+
+In Messentra, save the namespace under Options, then click `+` in Explorer to select it - the saved connection does not auto-load.
+
+### Azurite + Storage Explorer
+
+Microsoft Azure Storage Explorer (desktop) is the supported tool for Azurite. With Blob/Queue/Table on default ports `10000`/`10001`/`10002`, it auto-detects local emulator. Browser-based storage explorers are third-party; use only with explicit approval.
+
+Host connection string for Azurite tools:
+
+```text
+DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;
+```
+
+### Cosmos Preview Emulator + Data Explorer
+
+Use the preview emulator with pinned gateway and Data Explorer ports for local dev. Keep Cosmos out of default test runs - the image is large and startup is slow.
+
+```csharp
+var cosmos = builder.AddAzureCosmosDB("cosmos");
+
+if (!isTesting)
+{
+    cosmos = cosmos.RunAsPreviewEmulator(emulator => emulator
+        .WithGatewayPort(8081)
+        .WithDataExplorer(1234));
+}
+```
+
+When `http://localhost:1234` spins forever, **inspect the Cosmos resource health and container logs first** - the Data Explorer is loaded from the emulator itself, so a stalled emulator presents as a stuck UI. Do not assume the explorer is broken before the gateway/emulator is healthy.
+
+### SQL + VS Code SQL Extension
+
+VS Code SQL extension (`mssql`) is the default developer tool for local SQL Server. Pin the host port to `38433` for non-test runs; tests use dynamic ports.
+
+```text
+Server=localhost,38433;Database={project}db;User Id=sa;Password={sql-password};Encrypt=True;TrustServerCertificate=True;
+```
+
+From a containerized SQL UI on the same Aspire network: server `sql`, port `1433`.
+
+### Test-Mode Discipline
+
+Fixed ports and explorer UIs are **local-dev affordances only**. In test runs:
+
+- Use Aspire/Testcontainers-injected connection strings, not pinned ports.
+- Skip explorer containers (e.g. RedisInsight) from the test graph unless a specific test requires them.
+- Gate every explorer wiring on `if (!isTesting)`. The `isTesting` flag is the same one already used to scope opt-in resources - see [testing.md](testing.md) -> *Opt-In Graph Scope via Env Flag*.
 
 ---
 

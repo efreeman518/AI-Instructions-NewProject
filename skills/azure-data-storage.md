@@ -17,6 +17,13 @@ Base types for each store come from dedicated `EF.*` packages - see [package-dep
 | Table Storage | Low-cost, high-volume key-value access; `PartitionKey + RowKey` driven queries | `PartitionKey` aligned to dominant query shape; `RowKey` unique within partition | `AddAzureStorage().AddTables()` |
 | Cosmos DB | Document-first aggregates (nested JSON, high-throughput partitioned access, global distribution) | Dominant read/query path (e.g., `TenantId`) | `AddAzureCosmosDB()` |
 
+### Local Inspection Tools
+
+- **Azurite (Blob/Queue/Table):** Microsoft Azure Storage Explorer (desktop) is the supported first-party tool. Keep Aspire host ports on the defaults `10000`/`10001`/`10002` so Storage Explorer auto-detects the emulator. Browser-based storage explorers are third-party - use only with explicit approval.
+- **Cosmos DB preview emulator:** Use the built-in Data Explorer (`WithDataExplorer(1234)`) for local inspection. When `http://localhost:1234` spins forever, inspect the Cosmos resource health first - the explorer is served from the emulator itself.
+
+See [aspire.md](aspire.md) -> *Local Explorer Tooling* for the canonical port matrix, the `isTesting` gate, and the Cosmos preview emulator persistence exception.
+
 Quick positioning against SQL:
 
 - **SQL:** relational joins + transactions + FK relationships + migrations.

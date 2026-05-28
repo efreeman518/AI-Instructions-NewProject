@@ -13,6 +13,8 @@ Application -> FusionCache (L1 memory) -> Redis (L2 distributed)
                          \-> Redis backplane (invalidation sync)
 ```
 
+For local Redis inspection under Aspire, use the **Aspire-managed RedisInsight browser UI** (`WithRedisInsight`) over the Windows desktop app - it ships with the resource and avoids manual config. See [aspire.md](aspire.md) -> *Local Explorer Tooling* for the canonical pinned-port pattern and `isTesting` gate.
+
 ## Non-Negotiables
 
 1. Use `IFusionCacheProvider` (named caches), not a single global cache instance.

@@ -149,6 +149,46 @@ Use underscores in `Projects.{Host}_Api` style identifiers.
 
 ---
 
+## Local Explorer Tool Install Cheat Sheet
+
+> **Subject to change.** Vendor URLs, install paths, and UI flows drift. Verified at the date stamped in repo history; re-confirm before publishing scaffold output. Tool versions, marketplace names, and bundle structures change without notice.
+
+Tools below are the **recommended human-facing inspectors** for each local Aspire resource. The agent does not install these - the human developer does, once per workstation.
+
+| Tool | Inspects | Vendor URL | Install | First connect |
+|---|---|---|---|---|
+| **VS Code SQL extension (`mssql`)** | SQL Server | [marketplace.visualstudio.com/items?itemName=ms-mssql.mssql](https://marketplace.visualstudio.com/items?itemName=ms-mssql.mssql) | VS Code Extensions view -> search `mssql` -> Install | Activity Bar SQL icon -> Add Connection -> `localhost,38433` / SQL Login / `sa` / `{sql-password}` |
+| **Microsoft Azure Storage Explorer** | Azurite (Blob/Queue/Table) | [azure.microsoft.com/products/storage/storage-explorer](https://azure.microsoft.com/en-us/products/storage/storage-explorer/) | Download installer for your OS -> run | Auto-detects Azurite on default ports `10000`/`10001`/`10002` under Local & Attached -> Storage Accounts -> Emulator (Default Ports). Manual: plug icon -> Local storage emulator. HTTPS Azurite requires importing the self-signed cert via Edit -> SSL Certificates. |
+| **RedisInsight (Aspire-managed)** | Redis | Bundled - no install | `WithRedisInsight(...)` in AppHost - container ships with Aspire | Open `http://localhost:5540`. Aspire pre-wires the Redis connection - no manual setup. |
+| **Messentra** | Service Bus emulator | [messentra.com](https://www.messentra.com/) | Download installer for your OS (Win/macOS/Linux) | Options -> add connection with `Endpoint=sb://localhost;...;UseDevelopmentEmulator=true;` -> save -> Explorer `+` -> select saved connection |
+| **Cosmos Data Explorer** | Cosmos preview emulator | Bundled - no install | `WithDataExplorer(1234)` in AppHost - served from the emulator | Open `http://localhost:1234`. If it spins, check Cosmos resource health first - the explorer comes from the emulator itself. |
+
+**Connection-string defaults** (full forms in [../skills/aspire.md](../skills/aspire.md) -> *Local Explorer Tooling*):
+
+- Azurite: `UseDevelopmentStorage=true` (or the full `DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;...` string)
+- Service Bus SDK: `Endpoint=sb://localhost;...;UseDevelopmentEmulator=true;`
+- Service Bus admin client: `Endpoint=sb://localhost:5300;...;UseDevelopmentEmulator=true;`
+- SQL host: `Server=localhost,38433;Database={project}db;User Id=sa;Password={sql-password};Encrypt=True;TrustServerCertificate=True;`
+
+---
+
+## Local Explorer Ports (Non-Test Runs)
+
+Canonical pinned ports for local Aspire runs. Tests use dynamic ports - gate via `if (!isTesting)`. Full matrix and decision rules: [../skills/aspire.md](../skills/aspire.md) -> *Local Explorer Tooling*.
+
+| Resource | Host port | Default tool |
+|---|---:|---|
+| SQL Server | `38433` | VS Code SQL extension |
+| Redis | `6379` | RedisInsight (Aspire-managed) |
+| RedisInsight UI | `5540` | Browser |
+| Azurite Blob/Queue/Table | `10000`/`10001`/`10002` | Microsoft Azure Storage Explorer (desktop) |
+| Service Bus AMQP | `5672` | SDK |
+| Service Bus management | `5300` | Messentra |
+| Cosmos gateway | `8081` | SDK |
+| Cosmos Data Explorer | `1234` | Browser |
+
+---
+
 ## Common Config Keys
 
 | Key | Purpose |

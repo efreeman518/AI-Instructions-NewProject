@@ -110,6 +110,12 @@ public class {Project}DbContextQuery(DbContextOptions<{Project}DbContextQuery> o
 
 Register query context with `NoTracking` behavior.
 
+### Local Inspection Tools
+
+For local-dev SQL inspection, use the **VS Code SQL extension** (`mssql`). When the Aspire AppHost is the SQL host, pin the host port to `38433` for non-test runs and connect via `Server=localhost,38433`.
+
+See [aspire.md](aspire.md) -> *Local Explorer Tooling* for the canonical port matrix and the `isTesting` gate that keeps these ports out of test runs.
+
 ### Bootstrapper Alignment
 
 Keep full registration details in [bootstrapper.md](bootstrapper.md):
