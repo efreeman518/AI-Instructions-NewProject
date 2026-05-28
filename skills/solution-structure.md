@@ -65,6 +65,7 @@ src/
 |   |-- Test.PlaywrightUI/            # browser-driven UI tests against hosted stack (Aspire/docker-compose)
 |   |-- Test.Load/                    # NBomber (comprehensive profile)
 |   |-- Test.Benchmarks/              # BenchmarkDotNet (comprehensive profile)
+|   |-- Test.Mutation/                # Stryker.NET mutation tests (comprehensive profile)
 |   `-- Test.Support/                 # shared bases, builders, fixtures
 |-- Directory.Packages.props
 |-- global.json
@@ -110,6 +111,13 @@ src/Packages/**/obj/
 ```
 
 Also **remove the line `*.e2e`** from the stock template. It targets a legacy Visual Studio trace format this scaffold never produces, but it matches the `Test.E2E/` project directory case-insensitively on Windows and silently excludes the entire E2E test project from git.
+
+**Add ignore patterns for generated test output:** Stryker.NET reports are local quality artifacts and should not be committed. Append:
+
+```gitignore
+# Generated test output
+**/StrykerOutput/
+```
 
 **Add ignore patterns for scaffold-session leakage:** Aspire's local launcher and other tooling occasionally drop transient log files at project root (e.g. `c..tmpaspire-run.log`). These are not scaffold artifacts and should never be committed. Append:
 

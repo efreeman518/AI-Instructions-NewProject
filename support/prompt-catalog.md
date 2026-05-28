@@ -113,7 +113,7 @@ Note: Uno UI is always a dedicated session within 5c. Use the same session start
 
 ```text
 Unit/endpoint/integration tests already exist from 5a/5b/5c.
-Scaffold quality gate tests (architecture, load, benchmarks per profile: {minimal|balanced|comprehensive}), IaC, CI/CD, Dockerfile.
+Scaffold quality gate tests (architecture, load, benchmarks, mutation per profile: {minimal|balanced|comprehensive}), IaC, CI/CD, Dockerfile.
 Run full regression: `dotnet test`. Also `az bicep build --file infra/main.bicep` (if IaC enabled).
 Update HANDOFF.md and close session.
 ```

@@ -190,7 +190,7 @@ Gate passes when build and the scoped test command succeed (plus any sub-phase-s
 Required:
 - solution structure compiles (`.slnx`, all project files, `Directory.Packages.props`),
 - all interfaces, DTOs, entity shells, and no-op stubs compile,
-- test projects compile (Test.Support, Test.Unit, Test.Integration, Test.Endpoints, Test.E2E, profile-specific projects: Test.Architecture, Test.PlaywrightUI, Test.Load, Test.Benchmarks).
+- test projects compile (Test.Support, Test.Unit, Test.Integration, Test.Endpoints, Test.E2E, profile-specific projects: Test.Architecture, Test.PlaywrightUI, Test.Load, Test.Benchmarks, Test.Mutation).
 
 Exit criteria:
 - [ ] Solution structure matches `skills/solution-structure.md`
@@ -442,6 +442,7 @@ Unit, service, endpoint, and integration tests already exist from Phases 5a/5b/5
 - Architecture tests (NetArchTest layering rules)
 - Load tests (NBomber, if comprehensive profile)
 - Benchmarks (BenchmarkDotNet, if comprehensive profile)
+- Mutation tests (Stryker.NET, if comprehensive profile)
 - E2E Playwright tests (if comprehensive profile + UI enabled)
 
 **Also in this phase:**
@@ -450,12 +451,25 @@ Unit, service, endpoint, and integration tests already exist from Phases 5a/5b/5
 Required profile gate (full regression):
 - `minimal`: Unit + Endpoint
 - `balanced`: Unit + Endpoint + Integration + Architecture
-- `comprehensive`: Balanced + E2E/Load/Benchmark (when enabled)
+- `comprehensive`: Balanced + E2E/Load/Benchmark/Mutation (when enabled)
 
 Commands:
 
 ```powershell
-dotnet test
+rtk dotnet test
+```
+
+Run mutation test prerequisites from repo root when the project exists:
+
+```powershell
+rtk dotnet tool restore
+rtk dotnet test src/Test/Test.Mutation/Test.Mutation.csproj
+```
+
+Then run Stryker from `src/Test/Test.Mutation`:
+
+```powershell
+rtk dotnet tool run dotnet-stryker
 ```
 
 IaC (if enabled):

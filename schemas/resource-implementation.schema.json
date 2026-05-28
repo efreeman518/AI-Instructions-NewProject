@@ -104,6 +104,7 @@
     "includeE2ETests": { "type": "boolean", "default": false },
     "includeLoadTests": { "type": "boolean", "default": false },
     "includeBenchmarkTests": { "type": "boolean", "default": false },
+    "includeMutationTests": { "type": "boolean", "default": false },
     "azureRegion": { "type": "string", "default": "eastus2" },
     "iacEnvironments": {
       "type": "array",

@@ -152,7 +152,7 @@ Infrastructure and optional host phases do not follow TDD. Instead, implement fi
 
 5c tests: optional host smoke tests, scheduler/function trigger tests, and Uno/Blazor/React client tests when applicable.
 
-5d tests: architecture, load, benchmark, E2E, vulnerability, and delivery checks according to `testingProfile`.
+5d tests: architecture, load, benchmark, mutation, E2E, vulnerability, and delivery checks according to `testingProfile`.
 
 5e tests: auth endpoint behavior plus AI service registration/no-op behavior; live provider checks only when provisioned.
 

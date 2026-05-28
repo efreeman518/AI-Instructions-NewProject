@@ -42,7 +42,7 @@ Follow `solution-structure.md` exactly:
 - `.slnx`, `Directory.Packages.props`, `global.json`, `nuget.config`
 - All project folders and `.csproj` files per the canonical layout
 - Project references wired per the dependency direction contract
-- Test projects: `Test.Support`, `Test.Unit`, `Test.Integration`, `Test.Endpoints`, `Test.E2E`, plus profile-specific projects (`Test.Architecture`, `Test.PlaywrightUI`, `Test.Load`, `Test.Benchmarks`) per `testingProfile`
+- Test projects: `Test.Support`, `Test.Unit`, `Test.Integration`, `Test.Endpoints`, `Test.E2E`, plus profile-specific projects (`Test.Architecture`, `Test.PlaywrightUI`, `Test.Load`, `Test.Benchmarks`, `Test.Mutation`) per `testingProfile`
 
 ### 2. Contracts (Per Entity)
 
@@ -191,6 +191,7 @@ The shared base is the **single source of truth** for swapping the production Db
 - `Test.Integration/` - project file with MSTest + Testcontainers + Aspire.Hosting.Testing + Azure.Data.Tables; references `AppHost`, `Test.Support`, and every Application/Infrastructure project. Contains the `AspireTestHost` + `DbContextFactory` shells from above. Phase 5a populates `{Entity}RepositoryIntegrationTests`; Phase 5b populates `ApiAuditPipelineTests`, `DomainEventPipelineTests`, `AuditLogRepositoryAzuriteTests`. See [test-templates-integration.md](../templates/test-templates-integration.md).
 - `Test.Endpoints/` - project file with MSTest + `Microsoft.AspNetCore.Mvc.Testing`, derived `CustomApiFactory`, no test classes yet (Phase 5b adds endpoint contract tests via WAF)
 - `Test.E2E/` - project file with MSTest + `Microsoft.AspNetCore.Mvc.Testing` + Testcontainers, derived `SqlApiFactory`, no test classes yet (Phase 5b adds multi-endpoint workflow tests against Testcontainers SQL - see [test-templates-e2e.md](../templates/test-templates-e2e.md))
+- `Test.Mutation/` - comprehensive profile project file with MSTest, references to focused target projects, and `stryker-config.json`; no test classes yet (Phase 5d adds focused mutation samples via Stryker.NET - see [test-templates-quality.md](../templates/test-templates-quality.md))
 
 ### 5. No-Op DI Stubs
 

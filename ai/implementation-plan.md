@@ -77,6 +77,7 @@ Run this check before writing Phase 4 tasks. Fix source artifacts first, not gen
 - [ ] Architecture tests (NetArchTest layering rules)
 - [ ] Load tests (if comprehensive profile)
 - [ ] Benchmarks (if comprehensive profile)
+- [ ] Mutation tests (if comprehensive profile or `includeMutationTests: true`)
 - [ ] Browser UI Playwright tests against hosted stack (if comprehensive profile + UI enabled) - `Test.PlaywrightUI`, C# MSTest + `Microsoft.Playwright.MSTest`
 - [ ] IaC templates (Bicep)
 - [ ] CI/CD pipeline

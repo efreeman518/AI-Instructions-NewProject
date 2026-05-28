@@ -91,6 +91,7 @@ Default scaffold and TaskFlow reference app keep DTOs and mappers in `Applicatio
 | Mobile UI smoke | `Test/Test.Mobile/*` (MSTest + Appium; opt-in Android/iOS native launch checks) *(when Uno mobile native testing is enabled)* |
 | Load | `Test/Test.Load/{Entity}LoadTests.cs` |
 | Benchmark | `Test/Test.Benchmarks/{Entity}Benchmarks.cs` |
+| Mutation | `Test/Test.Mutation/Domain/{Entity}MutationSamples.cs`, `Test/Test.Mutation/stryker-config.json` |
 
 ## Aspire
 | Artifact | Path |

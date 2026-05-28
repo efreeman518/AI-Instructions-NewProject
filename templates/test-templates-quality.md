@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Generates** | `Test/Test.Architecture/**`, `Test/Test.PlaywrightUI/**`, `Test/Test.Mobile/**` (when Uno native mobile testing is enabled), `Test/Test.Load/**`, `Test/Test.Benchmarks/**` |
+| **Generates** | `Test/Test.Architecture/**`, `Test/Test.PlaywrightUI/**`, `Test/Test.Mobile/**` (when Uno native mobile testing is enabled), `Test/Test.Load/**`, `Test/Test.Benchmarks/**`, `Test/Test.Mutation/**` |
 | **Requires** | Core implementation phases complete (5a-5c) |
 | **Phase** | 5d (Quality + Delivery) |
 | **Protocol** | These tests are written AFTER implementation. Unit/endpoint/integration tests already exist from 5a/5b/5c. Phase 5d adds quality gates and runs a full regression. |
@@ -230,6 +230,141 @@ public class {Entity}Benchmarks
 
 ---
 
+## Mutation Tests (Stryker.NET)
+
+Mutation tests are still MSTest classes. Stryker.NET is the separate runner: it mutates the configured target project, reruns the filtered MSTest suite, and writes a report under `StrykerOutput`.
+
+Install Stryker.NET as a repo-local dotnet tool. If `.config/dotnet-tools.json` does not exist yet, create it first.
+
+```powershell
+rtk dotnet new tool-manifest
+rtk dotnet tool install dotnet-stryker
+rtk dotnet tool restore
+```
+
+### File: `Test/Test.Mutation/Test.Mutation.csproj`
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MSTest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Domain\{Project}.Domain.Model\{Project}.Domain.Model.csproj" />
+    <ProjectReference Include="..\Test.Support\Test.Support.csproj" />
+  </ItemGroup>
+
+</Project>
+```
+
+### File: `Test/Test.Mutation/stryker-config.json`
+
+Replace `{TargetFramework}` with the concrete TFM generated for the solution.
+
+```json
+{
+  "stryker-config": {
+    "solution": "../../{SolutionName}.slnx",
+    "project": "{Project}.Domain.Model.csproj",
+    "configuration": "Debug",
+    "target-framework": "{TargetFramework}",
+    "mutation-level": "Standard",
+    "test-case-filter": "TestCategory=Mutation",
+    "reporters": [
+      "progress",
+      "html",
+      "cleartext"
+    ],
+    "thresholds": {
+      "high": 80,
+      "low": 60,
+      "break": 0
+    },
+    "mutate": [
+      "**/{Entity}.cs",
+      "**/Rules/{Entity}*.cs"
+    ]
+  }
+}
+```
+
+### File: `Test/Test.Mutation/Domain/{Entity}MutationSamples.cs`
+
+```csharp
+using {Project}.Domain.Model;
+using {Project}.Domain.Shared.Constants;
+using Test.Support;
+
+namespace Test.Mutation.Domain;
+
+/// <summary>
+/// Mutation tests are normal MSTest tests. Stryker.NET mutates the configured target project
+/// and reruns this filtered MSTest suite to decide which mutants are killed or survived.
+/// Run the suite from repo root:
+/// <code>
+/// rtk dotnet tool restore
+/// rtk dotnet test src/Test/Test.Mutation/Test.Mutation.csproj
+/// </code>
+/// Then run Stryker from src/Test/Test.Mutation:
+/// <code>
+/// rtk dotnet tool run dotnet-stryker
+/// </code>
+/// The HTML mutation report is written under StrykerOutput.
+/// </summary>
+[TestClass]
+[TestCategory("Mutation")]
+public class {Entity}MutationSamples
+{
+    [TestMethod]
+    public void Given_NameAtMinimumLength_When_EntityCreated_Then_Succeeds()
+    {
+        var name = new string('a', DomainConstants.RULE_DEFAULT_NAME_LENGTH_MIN);
+
+        var result = {Entity}.Create(TestConstants.DefaultTenantId, name);
+
+        Assert.IsTrue(result.IsSuccess);
+        Assert.AreEqual(name, result.Value!.Name);
+    }
+
+    [TestMethod]
+    public void Given_NameBelowMinimumLength_When_EntityCreated_Then_FailsWithMinimumLengthMessage()
+    {
+        var name = new string('a', DomainConstants.RULE_DEFAULT_NAME_LENGTH_MIN - 1);
+
+        var result = {Entity}.Create(TestConstants.DefaultTenantId, name);
+
+        Assert.IsTrue(result.IsFailure);
+        StringAssert.Contains(
+            string.Join(";", result.Errors),
+            $"Name must be at least {DomainConstants.RULE_DEFAULT_NAME_LENGTH_MIN} characters.");
+    }
+}
+```
+
+Run commands:
+
+```powershell
+rtk dotnet test src/Test/Test.Mutation/Test.Mutation.csproj
+```
+
+From `src/Test/Test.Mutation`:
+
+```powershell
+rtk dotnet tool run dotnet-stryker
+```
+
+Add `**/StrykerOutput/` to `.gitignore`.
+
 ---
 
 ## Integration & E2E Tests (moved to dedicated templates)
@@ -256,4 +391,4 @@ dotnet test
 Profile gates:
 - `minimal`: Unit + Endpoint pass
 - `balanced`: Unit + Endpoint + Integration + Architecture pass
-- `comprehensive`: Balanced + E2E/Load/Benchmark pass
+- `comprehensive`: Balanced + E2E/Load/Benchmark/Mutation pass

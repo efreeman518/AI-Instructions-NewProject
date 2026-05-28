@@ -161,7 +161,7 @@ dotnet ef migrations add Add{Entity} --project src/Infrastructure/{Project}.Infr
 
 - `minimal`: Unit + Endpoint pass; mapper parity test exists.
 - `balanced`: Minimal + `{Entity}RepositoryIntegrationTests` (real SQL via Aspire piggyback) + `{Entity}WorkflowTests` (multi-endpoint workflow against Testcontainers SQL) + Architecture pass.
-- `comprehensive`: Balanced + Load + Benchmark (where enabled) + audit-pipeline / projection-pipeline integration tests where the entity participates in either.
+- `comprehensive`: Balanced + Load + Benchmark + Mutation (where enabled) + audit-pipeline / projection-pipeline integration tests where the entity participates in either.
 
 For composite slices, include at least one integration scenario that traverses all participating entities.
 

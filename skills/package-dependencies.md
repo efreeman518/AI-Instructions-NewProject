@@ -56,6 +56,7 @@ These are already part of the reference app and may be added without developer d
 | `NBomber` | Load tests | [testing.md](testing.md) |
 | `Testcontainers.*` | Real-infra integration/E2E tests | [testing.md](testing.md) |
 | `BenchmarkDotNet` | Microbenchmarks | [testing.md](testing.md) |
+| `dotnet-stryker` (local tool) | Mutation testing runner | [testing-quality.md](testing-quality.md) |
 | `MudBlazor` | Blazor component library | [ui-blazor.md](ui-blazor.md) |
 | `Refit` / `Refit.HttpClientFactory` | Typed HTTP clients | [external-api.md](external-api.md) |
 | `Azure.*` (Identity, Storage, KeyVault, Cosmos, ServiceBus, EventGrid, EventHubs, AI) | Azure SDK | [azure-data-storage.md](azure-data-storage.md), [security.md](security.md), [messaging.md](messaging.md), [ai-integration.md](ai-integration.md) |
