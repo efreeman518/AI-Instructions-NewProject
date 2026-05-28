@@ -675,8 +675,17 @@ Invoke-Maybe {
     foreach ($inst in $allInstances) {
         if ($inst -ieq $rtkExe) { continue }
         Write-Warn "Shadowing rtk found: $inst - syncing to v$RtkVersion"
-        Copy-Item -LiteralPath $rtkExe -Destination $inst -Force
-        Write-OK "Synced: $inst"
+        # Stop any rtk.exe process running from this path before overwriting
+        Get-Process -Name "rtk" -ErrorAction SilentlyContinue |
+            Where-Object { $_.Path -ieq $inst } |
+            ForEach-Object { Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue }
+        Start-Sleep -Milliseconds 300
+        try {
+            Copy-Item -LiteralPath $rtkExe -Destination $inst -Force -ErrorAction Stop
+            Write-OK "Synced: $inst"
+        } catch {
+            Write-Fail "Could not sync $inst - $($_.Exception.Message)"
+        }
     }
 } "sync shadowing rtk locations"
 
