@@ -559,3 +559,6 @@ $freePct = [math]::Round(($drive.Free / ($drive.Used + $drive.Free)) * 100, 0)
 $color   = if ($freePct -lt 15) { "Red" } elseif ($freePct -lt 25) { "Yellow" } else { "Green" }
 Write-Log "  C: free now: $freeGB GB  ($freePct%)" $color
 Write-Log ""
+
+Write-Host "  Press any key to close..." -ForegroundColor Cyan
+$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")

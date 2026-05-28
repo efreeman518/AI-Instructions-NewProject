@@ -53,10 +53,10 @@ if (Test-Path $ScriptSource) {
 
 
 # --- TASK SETTINGS ------------------------------------------------------------
-# Run as SYSTEM with highest privileges, hidden
+# Run as the current user, interactive (window shows on desktop), elevated
 $principal = New-ScheduledTaskPrincipal `
-    -UserId    "SYSTEM" `
-    -LogonType ServiceAccount `
+    -UserId    "$env:USERDOMAIN\$env:USERNAME" `
+    -LogonType Interactive `
     -RunLevel  Highest
 
 # -StartWhenAvailable: runs at next opportunity if machine was off at scheduled time
@@ -79,7 +79,7 @@ Write-Host "  Registering: $QuickTaskName" -ForegroundColor Cyan
 
 $quickAction = New-ScheduledTaskAction `
     -Execute  $psExe `
-    -Argument "-NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$ScriptDest`" -Mode Quick"
+    -Argument "-ExecutionPolicy Bypass -File `"$ScriptDest`" -Mode Quick"
 
 $quickTrigger = New-ScheduledTaskTrigger `
     -Weekly `
@@ -108,7 +108,7 @@ Write-Host "  Registering: $DeepTaskName" -ForegroundColor Cyan
 
 $deepAction = New-ScheduledTaskAction `
     -Execute  $psExe `
-    -Argument "-NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$ScriptDest`" -Mode Deep"
+    -Argument "-ExecutionPolicy Bypass -File `"$ScriptDest`" -Mode Deep"
 
 # Monthly: 1st Sunday. Build via XML since PS doesn't have a native "first Sunday" trigger.
 # We use a weekly trigger filtered by the XML schedule.
