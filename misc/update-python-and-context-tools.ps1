@@ -314,9 +314,10 @@ if ($SkipPythonUpdate) {
     # from the legacy Python Launcher (C:\Windows\py.exe) which only supports 'py -X.Y'.
     $isNewMgr = $false
     try {
-        $pyList = & py list 2>&1
-        # Legacy launcher prints "WARNING: ... legacy py.exe command" on unsupported subcommands
-        $isNewMgr = ($pyList -notmatch "WARNING.*legacy" -and $pyList -notmatch "unavailable")
+        # Test 'py install --help' specifically - legacy py.exe emits "WARNING.*legacy" on
+        # any 'install' subcommand, while the new Install Manager returns real help text.
+        $installHelp = & py install --help 2>&1 | Out-String
+        $isNewMgr = $installHelp -notmatch "WARNING.*legacy" -and $installHelp -notmatch "unavailable"
     } catch { }
 
     if ($isNewMgr) {
@@ -529,7 +530,7 @@ set HTTPX_LOG_LEVEL=warning
 set PYTHONWARNINGS=ignore::UserWarning
 echo === Headroom Proxy launching at %date% %time% ===
 echo.
-call "%USERPROFILE%\.local\bin\headroom.cmd" proxy --port 8787 --host 127.0.0.1 --no-telemetry
+call "%USERPROFILE%\.local\bin\headroom.cmd" proxy --port 8787 --host 127.0.0.1 --no-telemetry --memory --learn --memory-db-path "%USERPROFILE%\.headroom\memory.db"
 set EXITCODE=%errorlevel%
 echo.
 echo === Headroom Proxy exited (exit code %EXITCODE%) ===
@@ -687,9 +688,15 @@ Invoke-Maybe {
 # shells and the proxy window inherit HEADROOM_TELEMETRY=off automatically.
 Write-Info "Disabling Headroom telemetry..."
 Invoke-Maybe {
-    headroom telemetry disable 2>&1 | ForEach-Object { Write-Info "  $_" }
+    $telOut = headroom telemetry disable 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        $telOut | ForEach-Object { Write-Info "  $_" }
+        Write-OK "Headroom telemetry CLI disabled"
+    } else {
+        Write-Warn "headroom telemetry subcommand not available in this version - using env var only"
+    }
     setx HEADROOM_TELEMETRY "off" | Out-Null
-    Write-OK "Headroom telemetry disabled (CLI + HEADROOM_TELEMETRY=off persisted)"
+    Write-OK "HEADROOM_TELEMETRY=off persisted via setx"
 } "headroom telemetry disable"
 
 # RTK harness init - registers hooks and instruction files for each agent
@@ -707,7 +714,11 @@ Invoke-Maybe {
 foreach ($agent in "claude","codex","copilot") {
     Write-Info "headroom init -g $agent"
     Invoke-Maybe {
-        headroom init -g $agent 2>&1 | ForEach-Object { Write-Info "  $_" }
+        $initOut = headroom init -g $agent 2>&1
+        $initOut | ForEach-Object { Write-Info "  $_" }
+        if ($LASTEXITCODE -ne 0) {
+            Write-Warn "headroom init -g $agent exited $LASTEXITCODE - continuing"
+        }
     } "headroom init -g $agent"
 }
 

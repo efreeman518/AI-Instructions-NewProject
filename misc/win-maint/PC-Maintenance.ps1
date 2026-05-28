@@ -22,6 +22,24 @@
 .EXAMPLE
     .\PC-Maintenance.ps1 -Mode Quick
     .\PC-Maintenance.ps1 -Mode Deep
+
+.NOTES
+    ELEVATION: Must be run as Administrator, but via UAC elevation of your own
+    account — NOT as a separate built-in Administrator account. The RTK/Headroom
+    update step (section 7) writes to $env:USERPROFILE (shim files, venv, setx
+    env vars). If you elevate as a different user, those paths point to the wrong
+    profile and the updates land in the wrong place.
+
+    Correct way to run:
+      Right-click PowerShell (or Windows Terminal) -> "Run as administrator"
+      Then: C:\Maintenance\PC-Maintenance.ps1 -Mode Quick
+
+    Do NOT use: runas /user:Administrator (switches to a different user profile)
+
+    SCHEDULED TASK (unattended / not logged in): The task runs as SYSTEM, which
+    has no user profile. The RTK + Headroom update step is automatically skipped
+    in that case. All other sections (temp cleanup, app updates, DNS, etc.) run
+    normally. Run the script manually when logged in to pick up RTK/Headroom updates.
 #>
 
 param(
@@ -251,6 +269,23 @@ if (Get-Command dotnet -ErrorAction SilentlyContinue) {
         }
     }
     Write-Log "  [OK]      dotnet tools complete" "Green"
+}
+
+
+# -- RTK + Headroom -----------------------------------------------------------
+# Skipped when running as SYSTEM (scheduled task without logged-in user).
+# SYSTEM has no user profile - shim files, venv, and setx vars would land in
+# C:\Windows\System32\config\systemprofile instead of the user's profile.
+# Run PC-Maintenance.ps1 manually when logged in to update RTK and Headroom.
+$contextScript = "C:\Maintenance\update-python-and-context-tools.ps1"
+if ([Security.Principal.WindowsIdentity]::GetCurrent().IsSystem) {
+    Write-Log "  [SKIP]    RTK + Headroom - running as SYSTEM (run script manually when logged in)" "Yellow"
+} elseif (Test-Path $contextScript) {
+    Write-Log "  [context] Updating RTK and Headroom..." "Gray"
+    & $contextScript -SkipPythonUpdate
+    Write-Log "  [OK]      RTK + Headroom complete (exit: $LASTEXITCODE)" "Green"
+} else {
+    Write-Log "  [SKIP]    $contextScript not found" "DarkGray"
 }
 
 

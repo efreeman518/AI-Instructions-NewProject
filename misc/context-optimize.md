@@ -424,7 +424,7 @@ set HEADROOM_TELEMETRY=off
 set HEADROOM_REQUIRE_RUST_CORE=false
 echo === Headroom Proxy launching at %date% %time% ===
 echo.
-call "%USERPROFILE%\.local\bin\headroom.cmd" proxy --port 8787 --host 127.0.0.1 --no-telemetry
+call "%USERPROFILE%\.local\bin\headroom.cmd" proxy --port 8787 --host 127.0.0.1 --no-telemetry --memory --learn --memory-db-path "%USERPROFILE%\.headroom\memory.db"
 set EXITCODE=%errorlevel%
 echo.
 echo === Headroom Proxy exited (exit code %EXITCODE%) ===
