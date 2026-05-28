@@ -666,6 +666,20 @@ if ($currentRtk -and (Test-VersionGte -a $currentRtk -b $RtkVersion)) {
     } "download+install rtk v$RtkVersion"
 }
 
+# Sync any shadowing rtk.exe locations so PATH-resolved rtk always matches
+# the canonical version in $RtkBinDir (e.g. a copy in OneDrive or another bin dir).
+Invoke-Maybe {
+    $env:Path = "$RtkBinDir;" + [Environment]::GetEnvironmentVariable("Path","Machine") + ";" +
+                [Environment]::GetEnvironmentVariable("Path","User")
+    $allInstances = @(where.exe rtk 2>$null) | Where-Object { $_ -and (Test-Path -LiteralPath $_) }
+    foreach ($inst in $allInstances) {
+        if ($inst -ieq $rtkExe) { continue }
+        Write-Warn "Shadowing rtk found: $inst - syncing to v$RtkVersion"
+        Copy-Item -LiteralPath $rtkExe -Destination $inst -Force
+        Write-OK "Synced: $inst"
+    }
+} "sync shadowing rtk locations"
+
 # ==============================================================================
 # PHASE 7 - Disable telemetry + configure all agent harnesses
 # ==============================================================================
@@ -709,6 +723,20 @@ foreach ($flag in "--auto-patch","--codex","--copilot") {
 Invoke-Maybe {
     rtk init --show 2>&1 | ForEach-Object { Write-Info "  $_" }
 } "rtk init --show"
+
+# headroom init -g copilot reads ~/.copilot/config.json using plain json.loads().
+# The Copilot CLI writes this file as JSONC (with // comments), which json.loads()
+# rejects with "Expecting value: line 1 column 1 (char 0)".
+# Strip comment lines before headroom runs; Copilot CLI re-adds them on next write.
+$copilotConfig = "$env:USERPROFILE\.copilot\config.json"
+if (Test-Path $copilotConfig) {
+    $raw      = Get-Content $copilotConfig -Raw
+    $stripped = ($raw -split "`n" | Where-Object { $_ -notmatch '^\s*//' }) -join "`n"
+    if ($stripped -ne $raw) {
+        Set-Content $copilotConfig $stripped -Encoding UTF8 -NoNewline
+        Write-Warn "Stripped JSONC comments from $copilotConfig so headroom can parse it"
+    }
+}
 
 # Headroom harness init - writes global instruction files for each agent
 foreach ($agent in "claude","codex","copilot") {
