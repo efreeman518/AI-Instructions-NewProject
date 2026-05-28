@@ -8,6 +8,22 @@ Phase 4 already generated interfaces, DTOs, entity shells, test infrastructure, 
 
 ---
 
+## Vertical Tracer Bullet Rule
+
+For each entity, prove one narrow behavior through the public surface before broad layer fill-in. A good tracer starts from a business action, hits the generated contract, and ends in an observable result.
+
+Examples:
+
+- Domain: `Create{Entity}` rejects an invalid state transition.
+- Service: `CreateAsync` validates input and persists one valid entity through the repository contract.
+- Endpoint: `POST /{entity-route}` returns the expected envelope and status code.
+
+Do not build all entities across one layer before proving one entity end-to-end. That creates horizontal scaffolding drift and delays real feedback.
+
+Tests must verify behavior through public interfaces or endpoints. Avoid assertions that pin private method names, internal collection types, mapper implementation details, or DI registration order unless that is the behavior under test.
+
+---
+
 ## TDD Enforcement Rules (Non-Negotiable)
 
 > RED confirmation is mandatory. Do not skip it.
@@ -19,6 +35,7 @@ Phase 4 already generated interfaces, DTOs, entity shells, test infrastructure, 
 5. **Never batch multiple slices.** Complete the full RED -> GREEN cycle for one entity slice before starting the next.
 6. **No simultaneous test + implementation files.** In a single file-generation pass, produce either test files OR implementation files - not both. The only exception is activating `{Entity}Builder.Build()` alongside entity implementation (Step 5 of Phase 5a).
 7. **Do not accept compile-fail as RED.** Fix compile issues first, then confirm assertion-fail RED.
+8. **No horizontal red/green.** Write and green one vertical tracer before expanding the same pattern to the next entity or layer.
 
 ---
 
@@ -135,7 +152,7 @@ Infrastructure and optional host phases do not follow TDD. Instead, implement fi
 
 5c tests: optional host smoke tests, scheduler/function trigger tests, and Uno/Blazor/React client tests when applicable.
 
-5d tests: architecture, load, benchmark, E2E, vulnerability, and delivery checks according to `testingProfile`.
+5d tests: architecture, load, benchmark, mutation, E2E, vulnerability, and delivery checks according to `testingProfile`.
 
 5e tests: auth endpoint behavior plus AI service registration/no-op behavior; live provider checks only when provisioned.
 
@@ -181,6 +198,7 @@ A vertical slice is TDD-complete when:
 - [ ] Repository tests exist and pass (5a)
 - [ ] Service tests exist and pass (5b)
 - [ ] Endpoint tests exist and pass (5b)
+- [ ] At least one vertical tracer behavior was proven through the public contract or endpoint before broad layer expansion
 - [ ] All no-op stubs for this entity are replaced with real implementations
 - [ ] `{Entity}Builder.Build()` is activated and returns a valid entity
 - [ ] `{Entity}DtoBuilder.Build()` returns a valid DTO (should already work from 4)

@@ -7,7 +7,7 @@ Reference patterns: [../patterns/expected-output-index.md](../patterns/expected-
 ## TDD Protocol
 
 Phases 5a and 5b use test-first TDD: red -> green -> refactor. See [../ai/tdd-protocol.md](../ai/tdd-protocol.md).
-Phase 5c is tests-after for optional hosts. Phase 5d adds quality gate suites and a full regression - see [testing-quality.md](testing-quality.md).
+Phase 5c is tests-after for optional hosts. Phase 5d adds quality gate suites, mutation testing, and a full regression - see [testing-quality.md](testing-quality.md).
 
 ## BDD Naming Convention
 
@@ -44,7 +44,7 @@ public class {Entity}WorkflowTests { ... }
 |---|---|
 | `minimal` | Unit + Endpoint |
 | `balanced` | Minimal + Integration + Architecture + Test.Support |
-| `comprehensive` | Balanced + PlaywrightUI + Load + Benchmarks |
+| `comprehensive` | Balanced + PlaywrightUI + Load + Benchmarks + Mutation |
 
 Rule: start balanced, then add hosted UI and performance suites when slices stabilize.
 
@@ -61,6 +61,7 @@ Test/
   Test.PlaywrightUI/
   Test.Load/
   Test.Benchmarks/
+  Test.Mutation/
 ```
 
 ## Harness Tiers (Critical)
@@ -75,6 +76,7 @@ Test/
 | `Test.Architecture` | `NetArchTest.Rules` | Layer dependency rules | [test-templates-quality.md](../templates/test-templates-quality.md) |
 | `Test.Load` | NBomber | Throughput / latency baselines | [test-templates-quality.md](../templates/test-templates-quality.md) |
 | `Test.Benchmarks` | BenchmarkDotNet | Per-operation micro-benchmarks | [test-templates-quality.md](../templates/test-templates-quality.md) |
+| `Test.Mutation` | Stryker.NET + MSTest | Focused mutation testing for high-value domain/service paths | [test-templates-quality.md](../templates/test-templates-quality.md) |
 
 Rule: PlaywrightUI is a different harness. Never merge it with WAF tests.
 
@@ -86,6 +88,7 @@ Pure unit (Test.Unit)
     -> SqlApiFactory (Test.E2E, WAF + Testcontainers SQL)
       -> AspireTestHost (Test.Integration, distributed app)
         -> Hosted Playwright (Test.PlaywrightUI)
+Mutation overlay (Test.Mutation, Stryker over focused MSTest suite)
 ```
 
 Phase 4 generates the WAF base in `Test.Support` and the `CustomApiFactory` / `SqlApiFactory` / `AspireTestHost` / `DbContextFactory` shells in their respective test projects so the ladder is wired before any Phase 5 tests are written. See [../ai/contract-scaffolding.md](../ai/contract-scaffolding.md) (`### 4. Test Infrastructure`).
@@ -106,6 +109,7 @@ Single-service tests (SQL-only, Azurite-only) **MAY** piggyback on the shared `A
 - Hosted UI: `Microsoft.Playwright.MSTest`
 - Load: `NBomber`
 - Benchmarks: `BenchmarkDotNet`
+- Mutation: `dotnet-stryker` local tool
 
 Keep versions centralized in `Directory.Packages.props`.
 
@@ -127,13 +131,14 @@ Prefer specific MSTest asserts over generic `Assert.IsTrue`.
 
 ## Categories and Command Split
 
-Use these categories: `Unit`, `Endpoint`, `Integration`, `E2E`, `PlaywrightUI`, `Architecture`, `Load`, `Benchmark`.
+Use these categories: `Unit`, `Endpoint`, `Integration`, `E2E`, `PlaywrightUI`, `Architecture`, `Load`, `Benchmark`, `Mutation`.
 
 ```powershell
-dotnet test --filter "TestCategory=Endpoint"
-dotnet test --filter "TestCategory=Integration"
-dotnet test --filter "TestCategory=E2E"
-dotnet test --filter "TestCategory=PlaywrightUI"
+rtk dotnet test --filter "TestCategory=Endpoint"
+rtk dotnet test --filter "TestCategory=Integration"
+rtk dotnet test --filter "TestCategory=E2E"
+rtk dotnet test --filter "TestCategory=PlaywrightUI"
+rtk dotnet test src/Test/Test.Mutation/Test.Mutation.csproj --filter "TestCategory=Mutation"
 ```
 
 ## Test Class Field Declarations
@@ -400,7 +405,7 @@ public static async Task Cleanup(TestContext context)
 | [../templates/test-templates-service.md](../templates/test-templates-service.md) | 5b | Service + mapper tests + consolidated `MapperProjectionParityTests` |
 | [../templates/test-templates-endpoint.md](../templates/test-templates-endpoint.md) | 5b | Endpoint contract tests via WAF + InMemory; `WebApplicationFactoryBase` reference |
 | [../templates/test-templates-e2e.md](../templates/test-templates-e2e.md) | 5b | `SqlApiFactory` + multi-endpoint `{Entity}WorkflowTests` against Testcontainers SQL |
-| [../templates/test-templates-quality.md](../templates/test-templates-quality.md) | 5d | Architecture / Playwright / Load / Benchmarks - load `testing-quality.md` instead |
+| [../templates/test-templates-quality.md](../templates/test-templates-quality.md) | 5d | Architecture / Playwright / Load / Benchmarks / Mutation - load `testing-quality.md` instead |
 | [../templates/test-templates.md](../templates/test-templates.md) | on-demand | Full-reference fallback |
 
 ## Verification Checklist
@@ -409,6 +414,7 @@ public static async Task Cleanup(TestContext context)
 - [ ] Endpoint tests run via WAF in-memory host.
 - [ ] Harness split is respected (WAF vs hosted Playwright).
 - [ ] Categories match intended command filters.
+- [ ] Mutation tests use `TestCategory=Mutation` and the Stryker config uses the same test-case filter.
 - [ ] Search tests always set `PageSize` and `PageIndex`.
 - [ ] Rate limiter is disabled in test factory when API enables rate limiting.
 - [ ] No FluentAssertions NuGet reference exists; no `<package pattern="FluentAssertions" />` in `nuget.config`.
@@ -424,6 +430,15 @@ public static async Task Cleanup(TestContext context)
 - [ ] `[AssemblyCleanup]` uses the `TestContext` overload and bounds `StopAsync` with `.WaitAsync(CleanupTimeout)`.
 - [ ] Env vars set for AppHost are saved/restored in cleanup.
 - [ ] Aspire-tier fixture is named for what it wraps (`AspireTestHost` for full distributed app, not `DatabaseFixture`).
+
+## Pitfalls
+
+- Horizontal slicing of tests across an entity (write all unit tests, then all endpoint tests, then all integration tests) - breaks the red/green/refactor loop and lets unverified entities accumulate. Slice vertically: one entity, all its tiers, green, next entity.
+- Marking a test `Assert.Inconclusive` without recording the deferral in `HANDOFF.md` section Deferred External Dependencies - turns silent gaps into invisible debt that never returns to green.
+- Aborting an `[AssemblyInitialize]` when infrastructure fails to start - flips the entire assembly red and hides genuine code failures. Use the assembly-initializer safety pattern (mark dependents `Inconclusive` instead).
+- Adding FluentAssertions or another commercial-licensed assertion package - violates the assertion baseline (**GR-04**). Use MSTest built-in assertions plus the approved options in this skill.
+- Sharing a single Aspire fixture across assemblies - couples startup costs and obscures which assembly owns which env vars; create one fixture per assembly that needs it.
+- Skipping the `<summary>` on a `[TestClass]` - test classes without scope/tier/quirks notes accumulate dead weight nobody can re-evaluate.
 
 ## CQRS Test Routing
 

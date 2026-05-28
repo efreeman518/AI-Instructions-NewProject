@@ -359,6 +359,7 @@ For AI services selection guidance and agent framework concepts, see [skills/ai-
 | `includeE2ETests` | `false` |
 | `includeLoadTests` | `false` |
 | `includeBenchmarkTests` | `false` |
+| `includeMutationTests` | `false` |
 
 ### Optional Integrations
 

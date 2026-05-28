@@ -52,7 +52,7 @@ AUTHOR_ONLY_DIRS = {"tests", ".github/workflows", ".githooks", ".vscode", ".venv
 # Markdown roots to walk. Skip vendored/temporary trees.
 RUNTIME_SCAN_ROOTS = ["ai", "patterns", "schemas", "skills", "support", "templates"]
 HARNESS_SCAN_ROOTS = [".claude", ".github"]
-INSTRUCTIONS_TOP_LEVEL_MD = ["README.md", "START-AI.md", "CLAUDE.md"]
+INSTRUCTIONS_TOP_LEVEL_MD = ["README.md", "START-AI.md", "CLAUDE.md", "GROUND-RULES.md"]
 APP_TOP_LEVEL_MD = ["AGENTS.md", "CLAUDE.md"]
 
 EXCLUDE_PARTS = {"__pycache__", ".git", ".venv", ".tmp", ".vscode", ".githooks", "tests", "bin", "obj", "node_modules"}

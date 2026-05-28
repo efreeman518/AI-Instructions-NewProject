@@ -131,6 +131,10 @@ Each phase runs in its own AI session and produces artifacts the next phase cons
 
 Phase 1 is stack-agnostic; Phase 2+ is the C#/.NET/Azure profile. See [profiles/csharp-dotnet-azure.md](profiles/csharp-dotnet-azure.md) for the file index, and [START-AI.md](START-AI.md) section Profiles and section Phase Router for routing detail.
 
+## Ground Rules
+
+A 1-page index of the binding rules every scaffold session honors lives at [GROUND-RULES.md](GROUND-RULES.md). The rules carry stable identifiers (`GR-01`...`GR-12`) so phase gates, skills, and templates can cite the rule they enforce without restating it. Detail enforcement remains in [ai/SKILL.md](ai/SKILL.md) section Non-Negotiables and section Scaffold Definition of Done, [START-AI.md](START-AI.md) section Phase-1 Artifact Lifecycle Rule, and [support/execution-gates.md](support/execution-gates.md) - the index does not replace them.
+
 ## Approach
 
 The instruction set is designed around three core ideas:

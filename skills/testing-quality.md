@@ -1,6 +1,6 @@
 # Testing - Quality Gates & Hosted UI
 
-Use this skill for Phase 5d quality suites and release hardening (architecture, hosted Playwright UI, load, benchmarks). For Phase 5a/5b unit/endpoint authoring and Aspire-hosted integration fixtures, load [testing.md](testing.md) instead.
+Use this skill for Phase 5d quality suites and release hardening (architecture, hosted Playwright UI, load, benchmarks, mutation testing). For Phase 5a/5b unit/endpoint authoring and Aspire-hosted integration fixtures, load [testing.md](testing.md) instead.
 
 ## Quality Gate Suites
 
@@ -8,6 +8,7 @@ Use this skill for Phase 5d quality suites and release hardening (architecture, 
 - `Test.PlaywrightUI`: hosted browser UI checks
 - `Test.Load`: NBomber scenario thresholds
 - `Test.Benchmarks`: BenchmarkDotNet regression tracking
+- `Test.Mutation`: Stryker.NET mutation testing over high-value domain/service paths
 
 ## Architecture Rules
 
@@ -29,9 +30,17 @@ Assert:
 - Benchmark hot paths only.
 - Compare trends over time; do not use one-off numbers as hard pass/fail without baseline.
 
+## Mutation Testing Rules
+
+- Generate `Test.Mutation` for the comprehensive profile or when explicitly requested for high-value domain/service logic.
+- Keep mutation tests as normal MSTest `[TestClass]` / `[TestMethod]` tests with `[TestCategory("Mutation")]`.
+- Run Stryker separately from ordinary `dotnet test`; Stryker mutates the configured target project and reruns the filtered MSTest suite.
+- Configure `stryker-config.json` with `test-case-filter: TestCategory=Mutation` and a narrow `mutate` list. Do not point Stryker at the whole solution by default.
+- Target boundaries, comparisons, boolean branches, collection behavior, state transitions, and exact failure messages. Weak assertions let equivalent, conditional, string, and collection mutants survive.
+- Keep `StrykerOutput/` under the mutation test project and add `**/StrykerOutput/` to `.gitignore`.
+
 ## Optional Extras
 
-- Mutation testing (Stryker) for high-value domain/service paths.
 - Coverage settings via `coverlet.runsettings` for stable CI behavior.
 
 ## Release Matrix
@@ -46,7 +55,7 @@ Assert:
 
 - `minimal`: Unit + Endpoint
 - `balanced`: Unit + Endpoint + Integration + Architecture
-- `comprehensive`: balanced + PlaywrightUI + Load + Benchmarks (when scenario enabled)
+- `comprehensive`: balanced + PlaywrightUI + Load + Benchmarks + Mutation (when scenario enabled)
 
 If a slice spans multiple entities/stores, run at least one integration path that covers the full composite flow.
 
@@ -156,6 +165,7 @@ Set `outputDir` under `Test/Test.PlaywrightUI`, not under app project directorie
 - [ ] Architecture tests enforce layering rules.
 - [ ] Load scenarios track p50/p95/p99 and error rate against an explicit baseline.
 - [ ] Benchmark suites use representative datasets; results compared to a baseline, not measured in isolation.
+- [ ] Mutation suite uses normal MSTest classes, `TestCategory=Mutation`, focused Stryker mutate globs, and ignored `StrykerOutput/`.
 - [ ] Hosted Playwright stack is reachable and base URL is correct.
 - [ ] Aspire-hosted UI tests use the current resource URL, not a stale dashboard URL or default Vite port.
 - [ ] Selector strategy is stable for the target UI tech.

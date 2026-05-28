@@ -62,6 +62,14 @@ Run before `dotnet restore` in any new session:
 - Goal:
 - Scope for this session:
 
+## Open Questions
+
+Mirror every `[OPEN QUESTION: ...]` marker present in `.scaffold/*` at session close (**GR-10**). One row per marker; resolve or downgrade before the next phase gate.
+
+| Marker text | Artifact:Line | Blocks phase | Disposition (resolved / deferred D-### / non-blocking) |
+|---|---|---|---|
+| | | | |
+
 ## Deferred
 
 Out of scope for this session - do not attempt unless explicitly re-scoped:
@@ -111,6 +119,14 @@ Known local or CI quirks not resolved this session:
 Issues encountered and fixed this session (so the next session does not re-investigate):
 
 - <none>
+
+## UAT / Acceptance Gaps
+
+Use this for human smoke-test or review findings. Do not mix these with instruction gaps unless the root cause is bad scaffold guidance.
+
+| Source | Gap | Current Evidence | Root Cause | Closure Plan | Status |
+|--------|-----|------------------|------------|--------------|--------|
+| | | | | | |
 
 ## Completed
 

@@ -125,7 +125,7 @@ jobs:
     | `Integration` | - | service-level vs real external services (workflow dispatch; Testcontainers required) |
     | `E2E` | - | multi-endpoint workflow chains (workflow dispatch) |
     | `PlaywrightUI` | - | browser UI; requires hosted stack (release/nightly) |
-    | `Load`, `Benchmark` | - | release/on-demand only |
+    | `Load`, `Benchmark`, `Mutation` | - | release/on-demand only |
 
 ### Hosted-Stack Orchestration (`Test.PlaywrightUI`)
 

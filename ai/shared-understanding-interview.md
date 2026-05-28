@@ -26,6 +26,33 @@ Use [../templates/ubiquitous-language-template.md](../templates/ubiquitous-langu
 - Use canonical defaults only where the instruction set defines them. State the default and record it.
 - If a decision is not needed for current scaffold correctness, mark it `deferred` with the phase that must revisit it.
 
+## Clarification Quality Rules
+
+Treat Phase 1 artifacts as tests for the conversation: another AI session should be able to generate Phase 2 resources without guessing at the domain.
+
+- Classify ambiguity before asking. Use the taxonomy below so questions stay targeted.
+- Ask only questions whose answer changes an artifact, a decision, a resource choice, a test, or a generated contract.
+- Prefer one focused correction loop over broad brainstorming. After a recap, ask at most five targeted clarification questions before continuing.
+- Use `[OPEN QUESTION: <single-sentence question>]` only when no safe default or deferral exists (**GR-10**). Place the marker inline in the relevant `.scaffold/` artifact (`domain-specification.yaml`, `UBIQUITOUS-LANGUAGE.md`, or `DESIGN-DECISIONS.md`) and mirror it to `HANDOFF.md` section Open Questions. Keep at most three active markers at any time.
+- Resolve each marker before Phase 2, or convert it to a `deferred` decision with `Needed Before` set to the phase that must revisit it. A marker still present at the next phase gate halts the next phase until resolved or explicitly downgraded to non-blocking.
+- Do not hide assumptions. Record the assumption, why it is reasonable, what could break if it is wrong, and whether the developer confirmed it.
+
+## Ambiguity Taxonomy
+
+Use these categories when deciding what to clarify:
+
+| Category | Examples | Default Handling |
+|---|---|---|
+| Vocabulary | synonym conflict, overloaded term, abbreviation | record accepted term and rejected synonym |
+| Actor and permission | unclear role, cross-tenant privilege, admin exception | ask before resource or endpoint planning |
+| Entity boundary | aggregate root, owned child, reference, value object | ask before Phase 2 resource mapping |
+| Lifecycle | state names, allowed transitions, terminal state | ask before rules/tests |
+| Business rule | invariant, quota, conflict resolution, validation | ask before domain test planning |
+| Workflow | async reaction, compensation, scheduled process | defer only with `Needed Before` phase |
+| External system | source of truth, emulator/no-op mode, failure handling | resolve before Phase 2 external dependency mode |
+| Interface contract | API command, UI flow, search/filter semantics | resolve before Phase 4 contracts |
+| Non-functional | audit, retention, compliance, cost, region, scale | resolve before Phase 2/3 resource planning |
+
 ## Branch Order
 
 Walk these branches in order. Revisit earlier branches when a later answer changes them.
@@ -63,6 +90,9 @@ Confirmed language:
 Decisions:
 - `D-###` {decision} -> {selected option}; depends on: {D-### or none}
 
+Assumptions:
+- None
+
 Open conflicts:
 - None
 
@@ -94,6 +124,8 @@ Before writing Phase 1 outputs, confirm:
 - [ ] Every rejected synonym or ambiguous term is recorded.
 - [ ] Every non-obvious design choice has a decision record with dependencies.
 - [ ] No open decision blocks Phase 2 resource mapping.
+- [ ] No unresolved `[OPEN QUESTION: ...]` marker blocks Phase 2 (**GR-10**). Any remaining uncertainty is recorded as a non-blocking deferred decision with `Needed Before` set, and is mirrored in `HANDOFF.md` section Open Questions.
+- [ ] Each success criterion is measurable in business terms, not implementation terms.
 - [ ] Developer has reviewed the final recap.
 
 Only then write `.scaffold/domain-specification.yaml`, `.scaffold/UBIQUITOUS-LANGUAGE.md`, and `.scaffold/DESIGN-DECISIONS.md`.

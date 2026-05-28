@@ -75,6 +75,7 @@ Use `curl`, HTTPie, REST Client, or Scalar. Record status codes and endpoint dis
 - [ ] At least one entity CRUD/search smoke cycle succeeds.
 - [ ] Health endpoint returns 200.
 - [ ] OpenAPI/Scalar loads.
+- [ ] Human acceptance smoke was attempted for at least one primary workflow. Any gap is recorded in `HANDOFF.md` section UAT / Acceptance Gaps with source, current evidence, root cause, and closure plan.
 - [ ] **Aspire AppHost clean startup:** `dotnet run --project src/Host/Aspire/AppHost` reaches the dashboard with every registered resource in **Running** state, no exceptions in resource logs, and `/healthz` returning 200 on every host. Stub-mode external deps (`emulator`, `lazy-optional`, `no-op stub`, `deployment-only`) count as healthy when their stub/emulator path responds.
 - [ ] **Every UI host starts cleanly - Aspire-registered AND standalone:**
   - Blazor (when enabled): standalone `dotnet run` reaches `Application started` + root URL renders; when added to AppHost, the resource reaches Running and a Refit call returns data (or typed empty state).
@@ -104,4 +105,5 @@ Use `curl`, HTTPie, REST Client, or Scalar. Record status codes and endpoint dis
 - Structure failure: generate the missing scaffold artifact instead of loosening the validator.
 - Language failure: update `.scaffold/UBIQUITOUS-LANGUAGE.md` or `.scaffold/DESIGN-DECISIONS.md` to match the accepted domain model before changing code names.
 - Host/runtime failure: record blocker in `HANDOFF.md`, continue only if the failed host is optional or dependency-only.
+- Acceptance gap: record the gap in `HANDOFF.md` section UAT / Acceptance Gaps, identify whether it is product behavior, test coverage, environment, or instruction guidance, then fix only the blocking class for the current scaffold scope.
 - Instruction gap: append to `.scaffold/INSTRUCTION-GAPS.md` in the generated app.

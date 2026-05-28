@@ -16,11 +16,28 @@ This file records the shared language between developer and AI. Use these terms 
 
 Term types: entity, aggregate, value-object, role, command, state, event, policy, external-system, UI-label.
 
+## Vocabulary Rules
+
+- One accepted term maps to one business meaning.
+- Prefer explicit terms over abbreviations.
+- Rejected synonyms are binding. Do not use them in source names, route labels, tests, prompts, or docs unless a framework forces the name.
+- If a term is still ambiguous, record it under Ambiguous Terms and do not use it for generated code until it is resolved or explicitly deferred.
+
 ## Rejected Synonyms
 
 | Rejected Term | Use Instead | Reason |
 |---|---|---|
 | `Task` | `WorkItem` | Avoid `System.Threading.Tasks.Task` collision. |
+
+## Ambiguous Terms
+
+This table should be empty before Phase 2 unless the ambiguity is non-blocking and has a decision entry in `.scaffold/DESIGN-DECISIONS.md`.
+
+| Term | Ambiguity | Blocking? | Decision |
+|---|---|---|---|
+| `{{Term}}` | _What is unclear._ | no | `D-###` |
+
+For a vocabulary gap that is not yet ready to become a row above, drop an inline `[OPEN QUESTION: <single-sentence question>]` marker next to the closest term it touches (**GR-10**) and mirror it in `HANDOFF.md` section Open Questions. Markers must be resolved or converted to deferred decisions before the next phase gate.
 
 ## Entities And Aggregates
 
