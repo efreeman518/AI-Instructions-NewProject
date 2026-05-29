@@ -17,7 +17,7 @@ Phase 1 is the universal core (stack-agnostic). Phases 2-5 run under the C#/.NET
 Scaffold-specific rules, phase routing, reference-app guidance, and context-loading policy belong in `START-AI.md` / `ai/SKILL.md` in this repo, `.instructions/START-AI.md` / `.instructions/ai/SKILL.md` in installed apps, and the scoped agent files only.
 
 <!-- rtk-instructions v2 -->
-# RTK — Token-Optimized CLI
+# RTK - Token-Optimized CLI
 
 **rtk** is a CLI proxy that filters and compresses command outputs, saving 60-90% tokens.
 

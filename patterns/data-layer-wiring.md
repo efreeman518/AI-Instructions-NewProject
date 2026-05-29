@@ -283,9 +283,24 @@ dotnet ef migrations add InitialCreate `
   --context {App}DbContextTrxn
 ```
 
+> **`--startup-project` must reference `Microsoft.EntityFrameworkCore.Design`.** The commands above point `--startup-project` at the API host - that only works if the API references the Design package. If the scaffold keeps the Design reference and a `DesignTimeDbContextFactory` in the **Data project only** (the common case here), use the Data project as **both** `--project` and `--startup-project`:
+>
+> ```powershell
+> dotnet ef migrations add InitialCreate `
+>   --project src/Infrastructure/{Project}.Infrastructure.Data `
+>   --startup-project src/Infrastructure/{Project}.Infrastructure.Data `
+>   --context {App}DbContextTrxn
+> ```
+>
+> Pointing `--startup-project` at a host that does not reference Design fails with "doesn't reference Microsoft.EntityFrameworkCore.Design". Pick one rooting consistently across `add`, `remove`, and the production bundle.
+
 **When to run:**
 - After Phase 5a (all entities + DbContext configured)
 - After any entity/relationship change during scaffolding
 - Before Phase 5e tests that need a database
 
 **Post-scaffold:** Once the baseline is established and the project is in production, switch to incremental migrations with descriptive names.
+
+### Production migration bundle
+
+Production schema is **not** applied on startup - the startup migration task is gated `IsDevelopment()` and is a no-op in ACA (Production). Apply production schema with an EF migration bundle run from CI, before the image swap. The bundle uses the same `--project`/`--startup-project` rooting as above (Data project when only Data references Design), bundles the **write** context only when Trxn/Query share a schema, and applies with Entra auth. Full step (firewall handling, Entra connection string, dual-context note) lives in [../skills/cicd.md](../skills/cicd.md) -> *Production DB Migration (EF Bundle)*.

@@ -189,6 +189,10 @@ For ingestion/event-time workflows, define and apply allowed-lateness/watermark 
 - Keep scheduler as its own resource in Aspire/AppHost.
 - If dashboard is enabled, secure credentials through environment variables or Key Vault.
 
+### Worker SDK choice drives ACA ingress
+
+A "worker" scaffolded as `Microsoft.NET.Sdk.Web` (uses `WebApplication`, maps `/health` + `/`) DOES serve HTTP, so on Container Apps it gets **internal** ingress (not "no ingress"). That is fine - health probes pass. Do not try to disable its ingress. Only a plain `Microsoft.NET.Sdk.Worker` generic-host project (no `WebApplication`, no mapped endpoints) gets **no ingress**. Pick the SDK to match the intent: use `Sdk.Worker` for pure background processing with no HTTP surface; use `Sdk.Web` when you want the host to expose health endpoints (and accept internal ingress).
+
 ---
 
 ## Lite Mode

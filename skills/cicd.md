@@ -24,6 +24,30 @@ Use GitHub Actions for:
 4. Scheduler schema/dependency steps run before scheduler rollout.
 5. PR CI excludes heavy suites (E2E/load/benchmarks unless explicitly gated).
 6. **Private NuGet feed auth:** If the solution references packages from authenticated feeds (e.g., GitHub Packages), the workflow must authenticate before `dotnet restore`. Store a PAT as a repo secret (e.g., `NUGET_PAT`) and add an auth step. Without this, restore fails with `NU1301 / 401 Unauthorized`. See the NuGet auth step below.
+7. **ACA managed identity can pull ACR but NOT GHCR.** When images live in a **private** GHCR package, the ACA managed identity cannot authenticate to `ghcr.io`. Set an explicit registry credential on each app with a PAT that has `read:packages`: `az containerapp registry set --name <app> --server ghcr.io --username <gh-user> --password <PAT>`. `GITHUB_TOKEN` does NOT work as the ACA pull password - it is job-scoped and expires when the job ends. **Public** GHCR packages need no pull secret. State this tradeoff when offering GHCR as the registry.
+8. **Production DB migrations run as an explicit pipeline step, never on startup in Production.** Startup migration is gated `IsDevelopment()` and is a no-op in ACA. Apply schema with an EF migration bundle BEFORE the image swap so schema leads code (see the migration bundle step below).
+
+### Registry choice is a scaffold input
+
+ACR vs GHCR is a scaffold decision, not a default. Each path has a different auth model, secret set, and deploy command:
+
+| | ACR | GHCR |
+|---|---|---|
+| Image push auth | `az acr login` (OIDC) | `docker/login-action` with `GITHUB_TOKEN` |
+| ACA pull auth | managed identity (no secret) | `az containerapp registry set` + `read:packages` PAT (private only) |
+| Required vars | `ACR_NAME`, `ACR_LOGIN_SERVER` | `GHCR_USER` (+ `GHCR_PULL_TOKEN` secret if private) |
+
+---
+
+## Action Versions
+
+Action majors drift. **Verify current majors at scaffold time** (check each action's repo) rather than copying pins. As of May 2026 the verified majors are:
+
+- `actions/checkout@v6` (was `@v4` in older templates)
+- `azure/login@v3` (was `@v2`)
+- `actions/setup-dotnet@v4` (a `v5` exists - verify before bumping), `actions/upload-artifact@v4`
+- GHCR/Docker path: `docker/setup-buildx-action@v4`, `docker/login-action@v4`, `docker/metadata-action@v6`, `docker/build-push-action@v7`
+- azd path: `Azure/setup-azd@v2`
 
 ---
 
@@ -170,35 +194,37 @@ If `Test.PlaywrightUI` is a Node Playwright suite for React/Vite, replace the br
 
 ## `cd.yml` (Build, Push, Deploy)
 
-Run on `main` and manual dispatch with `environment` input.
+### Trigger default: `workflow_dispatch` only
 
-### Job A: Build and Push
-
-- login via `azure/login@v2` + OIDC
-- ACR login
-- build each deployable image
-- push both `:${{ github.sha }}` and optional `:latest`
-
-### Job B: Deploy
-
-- protected environment (`dev`, `staging`, `prod`)
-- update host images using SHA tag
-- keep scheduler replicas pinned when no coordination layer exists
-
-Minimal shape:
+`cd.yml` (and `provision.yml`, below) default to **`workflow_dispatch` only** until infra exists and the `AZURE_*` / registry secrets+vars are set. Auto-deploy on push to `main` fails every merge before infra exists, so it is opt-in: add the `push` block once the environment is ready.
 
 ```yaml
-name: CD
-
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
     inputs:
       environment:
         type: choice
         options: [dev, staging, prod]
+  # Opt-in after infra + secrets exist - uncomment to deploy on merge:
+  # push:
+  #   branches: [main]
+```
 
+### Step order (schema leads code)
+
+1. Build and push images (ACR or GHCR variant).
+2. **Apply EF migration bundle** (below) - BEFORE the image swap.
+3. Deploy: update each ACA app to the new SHA tag.
+
+Keep scheduler replicas pinned when no coordination layer exists.
+
+### Build + Push - ACR variant
+
+- login via `azure/login@v3` + OIDC, then `az acr login`.
+- build each deployable image, push `:${{ github.sha }}` (+ optional `:latest`).
+- ACA pull needs no secret (managed identity pulls ACR).
+
+```yaml
 permissions:
   id-token: write
   contents: read
@@ -209,23 +235,145 @@ jobs:
     strategy:
       matrix:
         project:
-          - name: api
-            dockerfile: src/Host/{Host}.Api/Dockerfile
-          - name: gateway
-            dockerfile: src/Host/{Gateway}.Gateway/Dockerfile
-          - name: scheduler
-            dockerfile: src/Host/{Host}.Scheduler/Dockerfile
+          - { name: api, dockerfile: src/Host/{Host}.Api/Dockerfile }
+          - { name: gateway, dockerfile: src/Host/{Gateway}.Gateway/Dockerfile }
+          - { name: scheduler, dockerfile: src/Host/{Host}.Scheduler/Dockerfile }
     steps:
-      - uses: actions/checkout@v4
-      - uses: azure/login@v2
+      - uses: actions/checkout@v6
+      - uses: azure/login@v3
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       - run: az acr login --name ${{ vars.ACR_NAME }}
-      - run: docker build -t ${{ vars.ACR_LOGIN_SERVER }}/${{ matrix.project.name }}:${{ github.sha }} -f ${{ matrix.project.dockerfile }} src
+      - run: docker build -t ${{ vars.ACR_LOGIN_SERVER }}/${{ matrix.project.name }}:${{ github.sha }} -f ${{ matrix.project.dockerfile }} .
       - run: docker push ${{ vars.ACR_LOGIN_SERVER }}/${{ matrix.project.name }}:${{ github.sha }}
 ```
+
+> **Build context.** The examples use `.` (repo root). Confirm per app: DemoApp1 Dockerfiles build from the repo ROOT, not `src/`. Older templates used `src/` as context - that is wrong for repo-root Dockerfiles. Match the context to where the Dockerfile's `COPY` paths are rooted (see [dockerfile-template.md](../templates/dockerfile-template.md)).
+
+### Build + Push - GHCR variant
+
+- `permissions: { contents: read, packages: write, id-token: write }`.
+- `docker/login-action` to `ghcr.io` with `GITHUB_TOKEN`.
+- `docker/metadata-action` `images: ghcr.io/${{ github.repository_owner }}/<svc>` (it lowercases the image name automatically); tags `type=sha,format=long,prefix=` + `latest`.
+- `docker/build-push-action` with `context: .`, `cache-from/to: type=gha,scope=<svc>`, `provenance: false` (single-platform manifest ACA pulls cleanly).
+
+```yaml
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        project:
+          - { name: api, dockerfile: src/Host/{Host}.Api/Dockerfile }
+          - { name: gateway, dockerfile: src/Host/{Gateway}.Gateway/Dockerfile }
+          - { name: scheduler, dockerfile: src/Host/{Host}.Scheduler/Dockerfile }
+    steps:
+      - uses: actions/checkout@v6
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/${{ matrix.project.name }}
+          tags: |
+            type=sha,format=long,prefix=
+            type=raw,value=latest
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ${{ matrix.project.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha,scope=${{ matrix.project.name }}
+          cache-to: type=gha,scope=${{ matrix.project.name }},mode=max
+          provenance: false
+```
+
+### Deploy to Azure Container Apps
+
+Lowercase the owner in bash - do not rely on the raw `github.repository_owner` casing.
+
+```yaml
+deploy:
+  needs: [build-and-push, migrate]   # migrate runs before image swap
+  runs-on: ubuntu-latest
+  environment: ${{ inputs.environment }}
+  steps:
+    - uses: azure/login@v3
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+    - name: Update container apps
+      run: |
+        OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+        for svc in api gateway scheduler; do
+          az containerapp update \
+            --name "$svc" \
+            --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
+            --image "ghcr.io/$OWNER/$svc:${{ github.sha }}"
+        done
+```
+
+For ACR, swap the image to `${{ vars.ACR_LOGIN_SERVER }}/$svc:${{ github.sha }}` and drop the owner-lowercasing step.
+
+---
+
+## Production DB Migration (EF Bundle)
+
+Run BEFORE the image swap so schema leads code. Build a self-contained bundle and apply it with Entra auth.
+
+```yaml
+migrate:
+  needs: [build-and-push]
+  runs-on: ubuntu-latest
+  environment: ${{ inputs.environment }}
+  steps:
+    - uses: actions/checkout@v6
+    - uses: actions/setup-dotnet@v4
+      with:
+        global-json-file: src/global.json
+    - run: dotnet tool install --global dotnet-ef
+    - name: Build migration bundle
+      run: |
+        dotnet ef migrations bundle --self-contained -r linux-x64 \
+          --context {App}DbContextTrxn \
+          --project src/Infrastructure/{Project}.Infrastructure.Data \
+          --startup-project src/Infrastructure/{Project}.Infrastructure.Data \
+          -o efbundle
+    - uses: azure/login@v3
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+    - name: Apply bundle (temporary firewall open for the runner)
+      run: |
+        IP=$(curl -s https://api.ipify.org)
+        az sql server firewall-rule create -g "${{ vars.AZURE_RESOURCE_GROUP }}" \
+          -s "${{ vars.AZURE_SQL_SERVER }}" -n "gha-runner" \
+          --start-ip-address "$IP" --end-ip-address "$IP"
+        trap 'az sql server firewall-rule delete -g "${{ vars.AZURE_RESOURCE_GROUP }}" \
+          -s "${{ vars.AZURE_SQL_SERVER }}" -n "gha-runner" || true' EXIT
+        ./efbundle --connection "Server=tcp:${{ vars.AZURE_SQL_SERVER }}.database.windows.net;Database={Project}db;Authentication=Active Directory Default;Encrypt=True;"
+```
+
+Migration gotchas (these cost real time):
+
+- **`--startup-project` must reference `Microsoft.EntityFrameworkCore.Design`.** In this scaffold only the Data project references Design and ships a `DesignTimeDbContextFactory`; the API host does not. So use the **Data project as BOTH `--project` and `--startup-project`**. Pointing `--startup-project` at the API fails with "doesn't reference Microsoft.EntityFrameworkCore.Design". (See [data-layer-wiring.md](../patterns/data-layer-wiring.md).)
+- **Dual contexts:** if Trxn (read/write) and Query (read-only) share one schema, only the write context has migrations. Bundle the write context only.
+- **Entra auth:** `Authentication=Active Directory Default` in the connection string. The OIDC principal already has `db_owner` from provisioning (Aspire `AddAzureSqlServer` grants it), so no manual user creation is needed.
+- **Firewall:** Azure SQL blocks GitHub runners. Open a temporary `az sql server firewall-rule` for the runner IP and remove it in a `trap`/`always()`. Alternative when SQL is private-endpoint-only: run the bundle as a manual-trigger ACA Job inside the VNet instead of from the runner.
 
 ---
 
@@ -243,7 +391,7 @@ Run infra separately from app rollout unless the team explicitly couples both.
 
 ## Dockerfile Contract
 
-Each deployable host has a Dockerfile in its project folder and uses `src/` as build context.
+Each deployable host has a Dockerfile in its project folder. **Build context must match where the Dockerfile's `COPY` paths are rooted** - confirm per app. Repo-root Dockerfiles (e.g. DemoApp1) build from `.`; only use `src/` when the `COPY` lines are relative to `src/`. Do not assume `src/`.
 
 Required pattern:
 
@@ -255,24 +403,32 @@ Required pattern:
 
 ## Repository Configuration
 
+The required secrets/vars differ by registry path. Pick the column that matches the scaffold's registry choice.
+
 ### Required Secrets
 
-- `AZURE_CLIENT_ID`
-- `AZURE_TENANT_ID`
-- `AZURE_SUBSCRIPTION_ID`
-- `CI_SQL_PASSWORD` (if SQL service container used in CI)
+| Secret | ACR path | GHCR + azd path |
+|---|---|---|
+| `AZURE_CLIENT_ID` | yes | yes |
+| `AZURE_TENANT_ID` | yes | yes |
+| `AZURE_SUBSCRIPTION_ID` | yes | yes |
+| `GHCR_PULL_TOKEN` (`read:packages` PAT) | - | yes, if GHCR package is private |
+| `CI_SQL_PASSWORD` | if SQL service container used in CI | if SQL service container used in CI |
 
 ### Required Variables
 
-- `ACR_LOGIN_SERVER`
-- `ACR_NAME`
-- `PROJECT_NAME`
-- `AZURE_REGION`
-- `INCLUDE_SCHEDULER`
+| Variable | ACR path | GHCR + azd path |
+|---|---|---|
+| `ACR_LOGIN_SERVER`, `ACR_NAME` | yes | drop |
+| `GHCR_USER` | - | yes |
+| `AZURE_RESOURCE_GROUP` | yes | yes |
+| `AZURE_SQL_SERVER` (for migration bundle) | yes | yes |
+| `AZURE_ENV_NAME`, `AZURE_LOCATION` (azd) | - | yes |
+| `PROJECT_NAME`, `INCLUDE_SCHEDULER` | yes | yes |
 
 ### Environments
 
-Create `dev`, `staging`, `prod` with protection rules on `staging` and `prod`.
+Create `dev`, `staging`, `prod` with protection rules on `staging` and `prod`. The job's `environment:` name must match the OIDC federated-credential subject (`repo:<owner>/<repo>:environment:<env>`) - see [iac.md](iac.md) -> *azd from Aspire (infra-only path)* -> *One-time, account-bound steps*.
 
 ---
 
@@ -289,8 +445,8 @@ For `scaffoldMode: lite`:
 
 ## Deployment Guardrails
 
-1. OIDC only for Azure auth in workflows.
-2. Build context remains `src/` for correct project-reference resolution.
+1. OIDC only for Azure auth in workflows (image push to ACR/GHCR + Azure control-plane). Private GHCR pull still needs a `read:packages` PAT on each app - OIDC does not cover ACA-to-GHCR pulls.
+2. Build context matches the Dockerfile's `COPY` roots (repo root or `src/`) - verify per app, do not assume `src/`.
 3. Deploy by SHA tag; avoid mutable-only deploy references.
 4. Schema prerequisites (such as scheduler tables) are applied before rolling dependent services.
 5. Keep environment promotions explicit and approval-gated.
@@ -303,8 +459,11 @@ For `scaffoldMode: lite`:
 ## Verification
 
 - [ ] `ci.yml` runs restore/build and required PR test categories
-- [ ] `cd.yml` logs in with OIDC and pushes SHA-tagged images
-- [ ] deployment step updates correct environment resources
+- [ ] `cd.yml` defaults to `workflow_dispatch` only (push-to-main is opt-in, added after infra exists)
+- [ ] `cd.yml` logs in with OIDC and pushes SHA-tagged images (ACR or GHCR per scaffold choice)
+- [ ] GHCR path: private package has `az containerapp registry set` pull cred per app
+- [ ] EF migration bundle runs BEFORE image swap; uses Data project as `--project` and `--startup-project`
+- [ ] deployment step updates correct environment resources by SHA tag
 - [ ] scheduler deployment order includes prerequisite schema step
-- [ ] `infra.yml` validates and deploys Bicep when enabled
-- [ ] repo secrets/variables/environments are configured and protected
+- [ ] `infra.yml`/`provision.yml` validates and deploys infra when enabled
+- [ ] repo secrets/variables/environments match the registry path and are protected

@@ -70,6 +70,80 @@ await builder.Build().RunAsync();
 
 Only include `AddViteApp(...)` when `includeReactUI: true`. If Gateway is disabled, reference the API project and pass the API endpoint to `VITE_API_BASE_URL` instead. Aspire may assign a dynamic Vite port; read the resource URL from the current dashboard/console output for browser tests.
 
+> The baseline above wires only local emulators/containers (`AddSqlServer`, `AddRedis`, emulated storage). That graph runs locally but produces **no deployable Azure resources**. When `deployTarget: ContainerApps`, you MUST add the publish-mode branch below or `azd`/`aspire publish` emits a SQL *container* in ACA instead of Azure SQL, no ACA environment, and no managed identities.
+
+---
+
+## Publish-Mode Branch (deployTarget: ContainerApps)
+
+Key the deployable graph on `builder.ExecutionContext.IsPublishMode` so the SAME model runs locally (run mode) and provisions Azure resources on publish. Swap the local-only resource types for the unified `AddAzure*` types and guard every emulator/run-only affordance behind the execution context.
+
+```csharp
+var builder = DistributedApplication.CreateBuilder(args);
+
+// ACA environment + dashboard exist only in the published graph.
+if (builder.ExecutionContext.IsPublishMode)
+{
+    builder.AddAzureContainerAppEnvironment("cae").WithDashboard();
+}
+
+// SQL: unified Azure type. RunAsContainer for local; provisions Azure SQL on publish.
+var sql = builder.AddAzureSqlServer("sql");
+if (!builder.ExecutionContext.IsPublishMode)
+{
+    // Keep the fixed local port + password parameter OUT of the publish manifest:
+    // create the parameter inside the run-mode branch so azd never prompts for it.
+    var sqlPassword = builder.AddParameter("sql-password", LocalSqlSettings.SharedSaPassword, secret: true);
+    sql = sql.RunAsContainer(c => c
+        .WithHostPort(38433)            // first-class on SqlServerServerResource (Aspire 9.3+)
+        .WithPassword(sqlPassword)
+        .WithLifetime(ContainerLifetime.Persistent)
+        .WithDataVolume("{project}-sql-data")
+        .WithImageTag("2025-latest"));
+}
+var projectDb = sql.AddDatabase("{project}db");
+
+// Storage / Service Bus: unified Azure type, emulator guarded to run mode.
+var storage = builder.AddAzureStorage("storage");
+if (!builder.ExecutionContext.IsPublishMode) storage.RunAsEmulator();
+
+var serviceBus = builder.AddAzureServiceBus("servicebus");
+if (!builder.ExecutionContext.IsPublishMode) serviceBus.RunAsEmulator();
+
+// Cosmos: preview emulator guarded to run mode; account created on publish.
+var cosmos = builder.AddAzureCosmosDB("cosmos");
+if (!builder.ExecutionContext.IsPublishMode)
+{
+    cosmos.RunAsPreviewEmulator(e => e.WithGatewayPort(8081).WithDataExplorer(1234));
+}
+
+var api = builder.AddProject<Projects.{Host}_Api>("{host}api")
+    .WithReference(projectDb, connectionName: "{Project}DbContextTrxn");
+
+// Ingress: WithExternalHttpEndpoints ONLY on services that must be public.
+var gateway = builder.AddProject<Projects.{Gateway}_Gateway>("{gateway}")
+    .WithReference(api)
+    .WithExternalHttpEndpoints();   // public -> ACA ingress.external=true
+```
+
+### Ingress Rules (verified against the publish manifest)
+
+- `.WithExternalHttpEndpoints()` present -> ACA `ingress.external=true` (public).
+- omitted, but the project has an HTTP endpoint -> internal-only ingress.
+- project has no HTTP endpoint -> no ingress at all.
+
+Call `.WithExternalHttpEndpoints()` only on the public surface (typically Gateway + a Blazor/React host). Leave API, Functions, and internal workers without it so they stay internal.
+
+### Run-Mode Parameter Placement
+
+The fixed local SQL port and the `sql-password` parameter live INSIDE the `RunAsContainer` / run-mode branch. Creating `AddParameter("sql-password", ...)` there (not at the top level) keeps it out of the publish manifest, so `azd` does not prompt for a SQL password it does not need (Azure SQL uses managed-identity auth - see below). Tests and dev tooling that depend on the fixed `38433` port and `sql-password` parameter still work because both exist in run mode.
+
+### Version-Specific API Facts (verified May 2026)
+
+- **`AddAzureSqlServer(...)`** auto-assigns a user-assigned managed identity as the SQL admin and grants each deployed app container `db_owner` during provisioning (Aspire 9.3+). The deploying principal is also granted `db_owner`. **Consequence:** no manual `CREATE USER ... FROM EXTERNAL PROVIDER` in the pipeline when provisioning and migration run under the same OIDC identity. Use `AddAzureSqlServer` (not `AddSqlServer`) for `deployTarget: ContainerApps` - `AddSqlServer` publishes a SQL container into ACA instead of provisioning Azure SQL.
+- **`AddAzureCosmosDB(...)`** provisions a SERVERLESS account by default (Aspire 9.4+). No SKU/capability config needed; `.WithDefaultAzureSku()` is the opt-in for provisioned throughput.
+- **`AddAzureRedis(...).RunAsContainer()` is obsolete in Aspire 13** - use `AddAzureManagedRedis`. If the app uses FusionCache, omitting Redis on publish degrades it to L1-only with no `IDistributedCache` (a valid cost lever). If you omit Redis, guard every `.WithReference(redis, "Redis1")` with a null check so the model still builds.
+
 ---
 
 ## ServiceDefaults Pattern
@@ -377,6 +451,12 @@ Use the `Aspire.AppHost.Sdk` MSBuild SDK. It handles `Projects.*` type proxy gen
 ```
 
 Substitute `<latest-stable>` and the TFM at scaffold time. Do not hard-code versions in templates - see [package-dependencies.md](package-dependencies.md) -> *Latest, Not Pinned*.
+
+> **Publish-mode package gaps (`deployTarget: ContainerApps`).** The local-only baseline does not pull the packages the publish-mode branch needs. Add to `Directory.Packages.props` + AppHost.csproj when targeting Container Apps:
+> - `Aspire.Hosting.Azure.AppContainers` - `AddAzureContainerAppEnvironment`, dashboard, scale.
+> - `Aspire.Hosting.Azure.Sql` - `AddAzureSqlServer`.
+>
+> The Azure Storage/Service Bus/Cosmos/Functions hosting packages are typically already referenced for the emulator wiring; confirm they are present before adding the publish branch.
 
 > **SDK upgrade discipline.** A major Aspire SDK bump (e.g., 9 -> 13) is a **deliberate, scheduled task**, not routine work. Aspire 13 tightens a few APIs (e.g., `IDistributedApplicationTestingBuilder` inheritance), and existing code may need adjustments. Consult the official upgrade guide (`learn.microsoft.com/dotnet/aspire/get-started/upgrade-to-aspire-13`) and the version-specific compatibility pages before bumping. The `AppHost.cs` filename convention is back-compatible and may be adopted independently of the SDK bump.
 

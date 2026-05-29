@@ -359,6 +359,12 @@ into every agent harness globally, so they apply to every repository and every
 session with no per-repo action. They are lossless and universal, so they are safe
 to run everywhere. Nothing about an individual repo turns them on or off.
 
+Because they are environment-global, their rules are **not** distributed in this
+scaffold's per-app payload (`AGENTS.md` / `CLAUDE.md` / `START-AI.md`); they live in
+your global agent config, written by `rtk init -g` and `headroom init -g`. Full
+install, per-agent wiring, telemetry, and troubleshooting are in
+[misc/context-optimize.md](misc/context-optimize.md).
+
 ### Opt-in per repo (graphify, codegraph)
 
 `graphify` and `codegraph` build a knowledge graph of a codebase so an agent can
@@ -420,10 +426,11 @@ then re-extract the affected slice.
 
 Full selection table, ignore-file contents, and setup commands are in
 [`support/context-tooling.md`](support/context-tooling.md). The activation split is
-mirrored in where guidance lives: rtk and headroom are documented as ambient rules
-in `CLAUDE.md`/`AGENTS.md`, while the graph tools live in `support/context-tooling.md`
-behind a pointer in `START-AI.md`, consulted per repo when deciding whether and which
-to initialize.
+mirrored in where guidance lives: rtk and headroom are environment-global and
+configured outside the repo (see [misc/context-optimize.md](misc/context-optimize.md)),
+while the graph tools live in [`support/context-tooling.md`](support/context-tooling.md)
+behind a pointer in [START-AI.md](START-AI.md), consulted per repo when deciding
+whether and which to initialize.
 
 ## Operational References
 

@@ -207,6 +207,12 @@ Project file requirements:
 
 ---
 
+## Container Port on ACA (Isolated Worker)
+
+**Azure Functions dotnet-isolated containers listen on port 80, not 8080.** The isolated base image (`mcr.microsoft.com/azure-functions/dotnet-isolated:...`) sets no `ASPNETCORE_URLS`, unlike the ASP.NET hosts here which set `ASPNETCORE_URLS=http://+:8080`. Any `--target-port`/ingress for the Functions app on Container Apps must use **80**. Confirm at first deploy. If the Functions app needs ingress, expose it explicitly in the AppHost publish-mode branch; by default leave it internal (no `.WithExternalHttpEndpoints()`) - see [aspire.md](aspire.md) -> *Ingress Rules*.
+
+---
+
 ## Aspire Integration
 
 Register Functions as its own project/resource in AppHost and add only required dependencies (`.WithReference(...)`) for enabled triggers and shared infrastructure.

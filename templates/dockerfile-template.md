@@ -69,13 +69,27 @@ Same pattern but replace `{Host}.Api` with `{Host}.Scheduler` and include Ticker
 FROM mcr.microsoft.com/azure-functions/dotnet-isolated:4-dotnet-isolated9.0 AS runtime
 WORKDIR /home/site/wwwroot
 COPY --from=publish /app/publish .
+# Isolated worker listens on port 80 (image sets no ASPNETCORE_URLS).
+EXPOSE 80
 ```
+
+> **Functions port is 80, not 8080.** The dotnet-isolated base image listens on **80**; do not add `EXPOSE 8080` or set `ASPNETCORE_URLS=...:8080` for Functions. On Container Apps the Functions app's `--target-port`/ingress must be 80. This differs from the ASP.NET hosts above, which use 8080. See [skills/function-app.md](../skills/function-app.md) -> *Container Port on ACA*.
+
+## Build Context
+
+This template's `COPY` paths reference both repo-root files (`Directory.Packages.props`, `{SolutionName}.slnx`) and `src/...` paths, so it is built with the **repo root** as context:
+
+```bash
+docker build -f src/Host/{Host}.Api/Dockerfile .
+```
+
+The build context must match the Dockerfile's `COPY` roots. If you rewrite `COPY` lines to be `src/`-relative, build from `src/` instead. Keep the CI build context ([skills/cicd.md](../skills/cicd.md)) aligned with whichever rooting this Dockerfile uses - do not assume `src/`.
 
 ## Rules
 
 - **Always use chiseled base images** (`-noble-chiseled-extra`) for production - smaller attack surface, no shell.
 - **Restore layer caching:** Copy `.csproj` files first, then `dotnet restore`, then copy source. This ensures source changes don't invalidate the restore cache.
-- **Port:** Default to `8080` for Container Apps compatibility.
+- **Port:** Default to `8080` for ASP.NET hosts (API/Gateway/Scheduler) on Container Apps. **Exception: Azure Functions isolated worker listens on 80** - see the Function App variant above.
 - **Non-root:** Chiseled images run as non-root by default.
 - **Health check:** Match the path configured in `Program.cs` (`/health` or `/alive`).
 - **No secrets in image:** Use Aspire/Container Apps environment injection for connection strings.
