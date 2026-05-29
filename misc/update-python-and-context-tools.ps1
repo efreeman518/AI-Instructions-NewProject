@@ -89,7 +89,12 @@
   PYTHON ABI NOTE (also see .PYTHON ABI NOTE above)
     headroom-ai = cp312/cp313 wheels only (no cp314); runtime venv builds on
     Python <= 3.13. graphify is pure-Python (any current Python). codegraph is npm.
-    
+  
+  PROMPT TO ENABLE GRAPH TOOL IN A REPO USING SCAFFOLD INSTRUCTIONS
+    Per support/context-tooling.md, measure the LOC ratio for this repo, 
+    recommend graphify or codegraph, and if I approve, initialize it 
+    (write .graphifyignore, run graphify install if needed, then build the graph).
+
 .NOTES
   - Run from a fresh PowerShell, not inside an activated .venv.
   - Does NOT require Administrator for the user-global path.
