@@ -344,6 +344,87 @@ Defaults: [ai/resource-implementation-schema.md](ai/resource-implementation-sche
 
 For copy-paste phase prompts, see [support/prompt-catalog.md](support/prompt-catalog.md). The catalog is a convenience layer for engineers; [START-AI.md](START-AI.md) remains the canonical operational bootstrap for AI execution.
 
+## Context Tooling
+
+This scaffold assumes four context-optimization tools, installed machine-wide by
+`misc/update-python-and-context-tools.ps1`. They reduce token cost in AI sessions
+but fall into two groups with different activation models. Knowing the split avoids
+confusion about why some tools "just work" and others need a per-repo step.
+
+### Always-on (rtk, headroom)
+
+`rtk` compresses CLI command output and `headroom` compresses prompt inputs (tool
+output, conversation history) through a local proxy. The install script wires both
+into every agent harness globally, so they apply to every repository and every
+session with no per-repo action. They are lossless and universal, so they are safe
+to run everywhere. Nothing about an individual repo turns them on or off.
+
+### Opt-in per repo (graphify, codegraph)
+
+`graphify` and `codegraph` build a knowledge graph of a codebase so an agent can
+query relationships (call flow, spec-to-code links, impact radius) instead of
+grepping and reading raw files. They sit upstream of rtk and headroom: they reduce
+what gets loaded in the first place, then rtk and headroom compress whatever still
+does. There is no overlap between the layers.
+
+The install script installs only the binaries. It activates nothing in any repo. A
+graph tool engages in a repository only where you explicitly initialize it, which
+creates a marker directory:
+
+- `graphify .` creates `graphify-out/` (run `graphify install` once per machine first)
+- `codegraph init -i` creates `.codegraph/`
+
+Until that marker exists, the tool is inert in that repo. This is deliberate: graph
+tools carry per-repo cost (build time, graphify's model spend on documents, an
+artifact to keep current) and require a per-repo choice, so auto-enabling them
+everywhere would waste effort on repos where the graph layer does not pay off.
+
+### Choosing graphify vs codegraph
+
+Decide per repo by comparing the size of the knowledge layer to the application code,
+excluding generated and transient files (bin, obj, node_modules, .tmp, test output,
+lockfiles, EF migrations, rendered HTML):
+
+- KNOWLEDGE = lines in `.instructions/` + `.scaffold/` + `docs/*.md`
+- CODE = lines in application `src/` (`.cs`, `.razor`, `.ts`, `.tsx`, `.xaml`)
+
+| Situation | Tool | Reason |
+|-----------|------|--------|
+| KNOWLEDGE >= CODE | graphify | Doc/spec layer is the majority; only graphify reads it |
+| CODE larger but under 3x KNOWLEDGE | graphify | Spec-to-code links still high value |
+| CODE >= 3x KNOWLEDGE | codegraph | Mostly code navigation; local and free is enough |
+| No `.instructions/` or `.scaffold/` | codegraph | Plain code repo; no doc layer to miss |
+| Brownfield adoption (code exists, no `.scaffold/` yet) | codegraph | Re-evaluate once Phase 1 artifacts are derived |
+
+The reason the split favors graphify for scaffolded apps: graphify combines
+tree-sitter code parsing with LLM semantic extraction of markdown, YAML, and infra,
+so it sees the whole repository, including the `.instructions/` and `.scaffold/`
+knowledge layer and `.razor`/`.xaml` markup. codegraph is AST-only and 100% local
+with no API cost, but it cannot read documents, YAML, or markup. A freshly
+scaffolded app is knowledge-heavy, so graphify wins; a mature app where code dwarfs
+the now-static doc layer shifts to codegraph, with graphify kept for occasional
+spec-to-code consistency checks.
+
+### When to build and rebuild
+
+For scaffolded apps, build or refresh the graph at phase boundaries rather than
+continuously, to avoid churn during the volatile Phase 4-5 window where code lands
+and artifacts are superseded:
+
+- After Phase 1 (domain artifacts exist): first build, high value.
+- After Phase 4 (build is green, contracts scaffolded): refresh.
+- After a Phase 5 slice stabilizes: `graphify . --update` for incremental refresh.
+
+Drift rule: when an artifact and the code disagree, the code wins. Fix the artifact,
+then re-extract the affected slice.
+
+Full selection table, ignore-file contents, and setup commands are in
+[`support/context-tooling.md`](support/context-tooling.md). The activation split is
+mirrored in where guidance lives: rtk and headroom are documented as ambient rules
+in `CLAUDE.md`/`AGENTS.md`, while the graph tools live in `support/context-tooling.md`
+behind a pointer in `START-AI.md`, consulted per repo when deciding whether and which
+to initialize.
+
 ## Operational References
 
 These references are for **maintaining and developing the instruction set itself** - not for using it to scaffold a new application. For app scaffolding, see [Quick Start](#quick-start) and [Happy Path](#happy-path).

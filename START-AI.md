@@ -54,6 +54,8 @@ Is HANDOFF.md present?
 
 Prefer CLIs over MCP over online resources. Use Microsoft Docs or Context7 when current docs are needed; add GitHub, Azure, Playwright, or Fetch only when the current phase needs repo, cloud, UI, or external document access. If a server is unavailable, note it in `HANDOFF.md` and continue. If `.scaffold/implementation-plan.md` exists, reload its **Tooling & Environment Readiness** section at session start and verify CLIs marked for the current phase are installed.
 
+**Context graph tooling (optional).** If a knowledge-graph tool is installed, prefer querying it over grepping/reading raw files for orientation. Selection is per-repo by LOC ratio: graphify when the knowledge layer (`.instructions/` + `.scaffold/` + `docs/*.md`) is >= application `src/` LOC (the normal case for a scaffolded app, especially Phases 1-4), codegraph when `src/` code is >= 3x the knowledge layer or no `.scaffold/` layer exists. Build at phase boundaries, not continuously (drift rule: code wins, fix the artifact then re-extract). Full selection table, ignore file, and setup: [`support/context-tooling.md`](support/context-tooling.md). If no graph tool is present, proceed normally.
+
 ## Ground Rules
 
 The 1-page index of binding rules (`GR-01`...`GR-12`) lives at [`GROUND-RULES.md`](GROUND-RULES.md). Each phase gate and skill cites the `GR-NN` it enforces. Detail enforcement still lives in `ai/SKILL.md`, `support/execution-gates.md`, and the individual skill files - the index is the cite-by-id summary, not a new layer of authority.

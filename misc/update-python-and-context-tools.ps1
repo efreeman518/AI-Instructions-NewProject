@@ -1,12 +1,16 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-  Idempotent setup: clean Python environment, update RTK and Headroom to
-  LATEST stable versions (resolved at runtime), disable all telemetry, and
-  configure all agent harnesses (Claude Code, Codex, Copilot).
+  Idempotent setup: clean Python environment, update RTK, Headroom, and the
+  knowledge-graph tools (graphify, codegraph) to LATEST stable versions resolved
+  at runtime, disable all telemetry, and configure all agent harnesses
+  (Claude Code, Codex, Copilot).
 
-  Safe to re-run at any time. headroom-ai version is resolved to the latest
-  release that has a Windows-installable wheel - never triggers a source build.
+  Safe to re-run at any time. headroom-ai resolves to the latest release that has
+  a Windows-installable wheel for a SUPPORTED Python ABI (cp312/cp313 today; NOT
+  cp314) and never triggers a source build. graphify (PyPI 'graphifyy', pure
+  Python) installs into its own isolated venv so a Headroom runtime rebuild never
+  wipes it. codegraph (npm '@colbymchenry/codegraph') installs globally via npm.
 
 .PARAMETERS
   -DryRun              Audit all actions without making changes.
@@ -18,7 +22,74 @@
 .FALLBACK VERSIONS (used only when -SkipVersionCheck or a network query fails)
   headroom-ai : 0.20.15
   RTK         : 0.38.0
+  graphify    : resolved live from PyPI; no pin (pure-Python, upgrade-in-place)
+  codegraph   : resolved live from npm;  no pin (npm resolves platform)
 
+.PYTHON ABI NOTE
+  headroom-ai ships cp312/cp313 wheels only - it has NO cp314 wheel as of 0.22.x.
+  The Headroom runtime venv MUST be built on Python <= 3.13. The base-Python
+  resolver below explicitly prefers the newest installed Python that is <= 3.13
+  and refuses 3.14+. If only Python 3.14+ is present, a Headroom rebuild cannot
+  succeed and the script warns loudly. graphify has no such limit - it prefers
+  the newest Python available.
+
+.TOOLING STRATEGY - two activation models
+
+  This script installs FOUR context tools machine-wide, but they fall into two
+  groups with deliberately different activation models. Understand the split:
+
+  GROUP A - rtk + headroom: AUTO-ENABLED, MACHINE-GLOBAL, ALWAYS ON
+    - rtk      compresses CLI command output (Bash tool calls).
+    - headroom compresses prompt inputs (tool output, history) via a local proxy.
+    - This script wires both into every agent harness (Claude Code, Codex, Copilot):
+      rtk hooks + RTK.md, headroom ANTHROPIC_BASE_URL/OPENAI_BASE_URL routing.
+    - They apply to EVERY repo, EVERY session, with zero per-repo action.
+    - Safe to apply blindly: lossless, universal, no per-repo cost or judgment call.
+
+  GROUP B - graphify + codegraph: OPT-IN, PER-REPO, MANUAL INIT
+    - Knowledge-graph tools. Let an agent query code/doc relationships instead of
+      grepping and reading raw files. They sit UPSTREAM of rtk/headroom (they reduce
+      WHAT gets loaded; rtk/headroom compress what still does). No overlap.
+    - This script installs the BINARIES only. It activates NOTHING in any repo.
+    - A graph tool engages in a repo ONLY where you explicitly initialized it:
+        graphify .          -> creates graphify-out/   (knowledge-heavy repos)
+        codegraph init -i   -> creates .codegraph/      (code-heavy repos)
+      Until that marker directory exists, the tool is inert in that repo.
+    - Opt-in because they carry per-repo cost (build time, graphify model spend on
+      docs, an artifact to maintain) and require a per-repo CHOICE (see below).
+      Auto-enabling everywhere would burn that cost on repos where it does not pay.
+
+  WHICH GRAPH TOOL (per repo, by LOC ratio)
+    Measure, excluding generated/transient files:
+      KNOWLEDGE = LOC of .instructions/ + .scaffold/ + docs/*.md
+      CODE      = LOC of application src/ (*.cs,*.razor,*.ts,*.tsx,*.xaml)
+
+      KNOWLEDGE >= CODE .............................. graphify
+      CODE > KNOWLEDGE but CODE < 3x KNOWLEDGE ....... graphify
+      CODE >= 3x KNOWLEDGE ........................... codegraph
+      No .instructions/ or .scaffold/ ............... codegraph
+      Brownfield adoption (src/ exists, no .scaffold/) codegraph; re-eval after Phase 1
+
+    WHY: graphify = tree-sitter code parsing PLUS LLM semantic extraction of
+    markdown/YAML/infra - it sees the WHOLE repo, including the .instructions/ and
+    .scaffold/ knowledge layer and .razor/.xaml markup. codegraph = AST-only, 100%
+    local, zero API cost, but BLIND to docs/YAML/markup. A freshly scaffolded app is
+    knowledge-heavy -> graphify. A mature app where code dwarfs the static doc layer
+    -> codegraph, with graphify reserved for periodic spec<->code consistency checks.
+
+    Build at PHASE BOUNDARIES, not continuously (after Phase 1, after Phase 4, after a
+    stabilized Phase 5 slice via 'graphify . --update'). Drift rule: when artifact and
+    code disagree, code wins - fix the artifact, then re-extract the affected slice.
+
+  WHERE THE GUIDANCE LIVES (mirrors the activation split)
+    - rtk/headroom: ambient rules in CLAUDE.md / agent.md (always loaded).
+    - graph tools : support/context-tooling.md, behind a START-AI.md pointer
+                    (consulted per repo when deciding whether/which to initialize).
+
+  PYTHON ABI NOTE (also see .PYTHON ABI NOTE above)
+    headroom-ai = cp312/cp313 wheels only (no cp314); runtime venv builds on
+    Python <= 3.13. graphify is pure-Python (any current Python). codegraph is npm.
+    
 .NOTES
   - Run from a fresh PowerShell, not inside an activated .venv.
   - Does NOT require Administrator for the user-global path.
@@ -48,7 +119,7 @@ $FallbackRtkVersion      = "0.38.0"
 
 # -- Fixed config ---------------------------------------------------------------
 $ProxyPort       = 8787
-$RtkBinDir       = "$env:USERPROFILE\.local\bin"      # stable user bin dir for rtk + headroom shims
+$RtkBinDir       = "$env:USERPROFILE\.local\bin"      # stable user bin dir for rtk + headroom + graphify shims
 $HeadroomRoot    = "$env:USERPROFILE\.headroom"       # headroom home: runtime, shim scripts, config
 $HeadroomRuntime = "$HeadroomRoot\runtime"            # isolated Python venv for headroom-ai
 $PackageSpec     = "$HeadroomRoot\package-spec.txt"   # records the pinned headroom-ai version
@@ -56,6 +127,12 @@ $RunProxyCmd     = "$HeadroomRoot\run-proxy.cmd"      # full proxy launcher (use
 $EnsureProxyCmd  = "$HeadroomRoot\headroom-proxy-ensure.cmd"  # lightweight hook (used by Copilot/Codex)
 $HeadroomShim    = "$RtkBinDir\headroom.cmd"          # user-facing headroom command shim
 $ShimPs1         = "$HeadroomRoot\headroom-shim.ps1"  # PowerShell backend for the shim
+
+# graphify: isolated venv so a Headroom runtime rebuild never wipes its heavy deps
+$GraphifyRoot    = "$env:USERPROFILE\.graphify"
+$GraphifyRuntime = "$GraphifyRoot\runtime"
+$GraphifyPy      = "$GraphifyRuntime\Scripts\python.exe"
+$GraphifyExe     = "$GraphifyRuntime\Scripts\graphify.exe"
 
 # -- Output helpers -------------------------------------------------------------
 function Write-Step ([string]$m) { Write-Host "`n=== $m ===" -ForegroundColor Cyan }
@@ -77,6 +154,44 @@ function Test-VersionGte ([string]$a, [string]$b) {
         $vb = [version]($b -replace '^[^\d]*')
         return ($va -ge $vb)
     } catch { return $false }
+}
+
+# Resolves the newest installed Python whose minor version is <= $MaxMinor.
+# Used to keep the Headroom runtime on a Python with an installable wheel ABI
+# (headroom-ai = cp312/cp313 only; passing -MaxMinor 13 refuses 3.14+).
+# Pass -MaxMinor 0 for "newest available, no cap" (used by graphify, pure-Python).
+# Returns the python.exe path, or $null if none qualifies.
+function Resolve-PythonBase ([int]$MaxMinor = 0) {
+    $candidates = @()
+
+    # Enumerate via the py launcher (-0p lists installed runtimes with paths)
+    try {
+        $lines = & py -0p 2>$null
+        foreach ($ln in $lines) {
+            if ($ln -match '-V:3\.(\d+)\D.*?([A-Za-z]:\\[^\s].*python\.exe)') {
+                $candidates += [pscustomobject]@{ Minor = [int]$Matches[1]; Path = $Matches[2].Trim() }
+            }
+        }
+    } catch { }
+
+    # Add common install locations as fallback discovery
+    foreach ($glob in @(
+        "$env:LOCALAPPDATA\Programs\Python\Python3*\python.exe",
+        "C:\Python3*\python.exe"
+    )) {
+        Get-ChildItem -Path $glob -ErrorAction SilentlyContinue | ForEach-Object {
+            if ($_.DirectoryName -match 'Python3(\d+)') {
+                $candidates += [pscustomobject]@{ Minor = [int]$Matches[1]; Path = $_.FullName }
+            }
+        }
+    }
+
+    $eligible = $candidates |
+        Where-Object { $_.Path -and (Test-Path -LiteralPath $_.Path) -and ($MaxMinor -le 0 -or $_.Minor -le $MaxMinor) } |
+        Sort-Object Minor -Descending
+
+    if ($eligible) { return $eligible[0].Path }
+    return $null
 }
 
 # Stops any process listening on $port; returns $true if anything was stopped
@@ -127,6 +242,8 @@ Write-Step "PHASE 0 - Resolve latest versions"
 #   py3-none-any            pure Python, any platform
 #   cp313-none-any          compiled but platform-neutral
 # Excluded: manylinux / linux / macos / darwin - these won't install on Windows.
+# NOTE: headroom-ai ships cp312/cp313 only (no cp314). The runtime venv is built
+# on Python <= 3.13 (see Resolve-PythonBase -MaxMinor 13 in Phase 5).
 $HeadroomVersion = $null
 if (-not $SkipVersionCheck) {
     Write-Info "Querying PyPI for latest headroom-ai with Windows-installable wheel..."
@@ -199,6 +316,27 @@ if (-not $RtkVersion) {
     Write-Warn "Using fallback RTK version: $RtkVersion"
 }
 
+# -- graphify (PyPI 'graphifyy') + codegraph (npm) latest, for display + skip ---
+# Pure-Python and npm respectively - no wheel-ABI pinning needed, unlike headroom.
+$GraphifyLatest = $null
+if (-not $SkipVersionCheck) {
+    Write-Info "Querying PyPI for latest graphifyy..."
+    try {
+        $gp = Invoke-RestMethod "https://pypi.org/pypi/graphifyy/json" -TimeoutSec 15 -ErrorAction Stop
+        $GraphifyLatest = $gp.info.version
+        Write-OK "graphifyy latest: $GraphifyLatest"
+    } catch { Write-Warn "PyPI graphifyy query failed: $($_.Exception.Message)" }
+}
+$CodegraphLatest = $null
+if (-not $SkipVersionCheck) {
+    Write-Info "Querying npm for latest @colbymchenry/codegraph..."
+    try {
+        $cg = Invoke-RestMethod "https://registry.npmjs.org/@colbymchenry/codegraph/latest" -TimeoutSec 15 -ErrorAction Stop
+        $CodegraphLatest = $cg.version
+        Write-OK "codegraph latest: $CodegraphLatest"
+    } catch { Write-Warn "npm codegraph query failed: $($_.Exception.Message)" }
+}
+
 # -- Python: parse python.org downloads page for latest stable -----------------
 # Used to give an accurate version comparison when checking if upgrade is needed.
 # Not used to drive the actual install - that goes through py / Install Manager.
@@ -224,8 +362,10 @@ if (-not $SkipVersionCheck -and -not $SkipPythonUpdate) {
 
 Write-Info ""
 Write-Info "Versions for this run:"
-Write-Info "  headroom-ai : $HeadroomVersion  (wheel-installable on Windows)"
+Write-Info "  headroom-ai : $HeadroomVersion  (wheel-installable on Windows, cp<=313)"
 Write-Info "  RTK         : $RtkVersion"
+Write-Info "  graphify    : $(if ($GraphifyLatest)  { $GraphifyLatest }  else { '(resolve at install)' })"
+Write-Info "  codegraph   : $(if ($CodegraphLatest) { $CodegraphLatest } else { '(resolve at install)' })"
 Write-Info "  Python      : $(if ($PythonLatest) { $PythonLatest } else { '(Install Manager decides)' })"
 
 # ==============================================================================
@@ -243,6 +383,19 @@ try { Write-Info "  $(python --version 2>&1)" } catch { Write-Warn "python not f
 Write-Info "py launcher runtimes:"
 try { py -0p 2>&1 | ForEach-Object { Write-Info "  $_" } } catch { Write-Warn "py not found" }
 
+# headroom-ai has no cp314 wheel; warn if no Python <= 3.13 is available for a
+# future Headroom runtime rebuild. The current runtime keeps working until a
+# version bump forces a rebuild - this surfaces the latent break early.
+$py313 = Resolve-PythonBase -MaxMinor 13
+if (-not $py313) {
+    Write-Warn "No Python <= 3.13 installed. Headroom runtime cannot be rebuilt"
+    Write-Warn "(headroom-ai ships cp312/cp313 wheels only, no cp314). Install 3.13:"
+    Write-Warn "  winget install Python.Python.3.13"
+    Write-Warn "The current Headroom runtime keeps working until its next version bump."
+} else {
+    Write-OK "Headroom-capable Python present (<=3.13): $py313"
+}
+
 Write-Info "RTK:"
 try { Write-Info "  $(rtk --version 2>&1)" } catch { Write-Warn "rtk not found" }
 
@@ -259,6 +412,10 @@ try {
     $h = Invoke-RestMethod "http://127.0.0.1:$ProxyPort/health" -TimeoutSec 3 -ErrorAction Stop
     Write-Info "  status=$($h.status)  version=$($h.version)  rust_core=$($h.rust_core)"
 } catch { Write-Info "  not responding (stopped or not yet started)" }
+
+Write-Info "Knowledge-graph tools:"
+try { if (Test-Path -LiteralPath $GraphifyExe) { Write-Info "  graphify: $(& $GraphifyExe --version 2>&1)" } else { Write-Info "  graphify: not installed" } } catch { Write-Info "  graphify: probe failed" }
+try { Write-Info "  codegraph: $(codegraph --version 2>&1)" } catch { Write-Info "  codegraph: not installed" }
 
 Write-Info "Stale Python env vars:"
 $staleFound = $false
@@ -430,26 +587,35 @@ $runtimePython   = Join-Path $runtime "Scripts\python.exe"
 $runtimeHeadroom = Join-Path $runtime "Scripts\headroom.exe"
 $packageSpecPath = Join-Path $root "package-spec.txt"
 
-# Finds a Python 3.13 interpreter for rebuilding the headroom runtime venv.
-# Prefers py -3.13 (Install Manager) then py -3 then system python.
-# Headroom-ai ships cp313 wheels; 3.13 is the safest base for binary installs.
+# Finds the newest installed Python <= 3.13 for rebuilding the headroom runtime.
+# headroom-ai ships cp312/cp313 wheels only (no cp314), so 3.14+ is refused -
+# an --only-binary install on 3.14 would hard-fail. Prefers py -3.13, then
+# enumerates py -0p and known install dirs for the highest minor <= 13.
 function Resolve-BasePython {
-    foreach ($c in @(
-        @{cmd="py";    args=@("-3.13","-c","import sys;print(sys.executable)")},
-        @{cmd="py";    args=@("-3",   "-c","import sys;print(sys.executable)")},
-        @{cmd="python";args=@(        "-c","import sys;print(sys.executable)")}
-    )) {
-        try {
-            $out  = & $c.cmd @($c.args) 2>$null
-            $last = ($out | Select-Object -Last 1)
-            if ($null -ne $last) { $last = $last.Trim() }
-            if ($LASTEXITCODE -eq 0 -and $last -and (Test-Path -LiteralPath $last)) { return $last }
-        } catch { }
+    # Fast path: explicit 3.13 via launcher
+    try {
+        $p = & py -3.13 -c "import sys;print(sys.executable)" 2>$null
+        $p = ($p | Select-Object -Last 1); if ($p) { $p = $p.Trim() }
+        if ($LASTEXITCODE -eq 0 -and $p -and (Test-Path -LiteralPath $p)) { return $p }
+    } catch { }
+    # Enumerate launcher runtimes + known dirs, pick highest minor <= 13
+    $cands = @()
+    try {
+        foreach ($ln in (& py -0p 2>$null)) {
+            if ($ln -match '-V:3\.(\d+)\D.*?([A-Za-z]:\\[^\s].*python\.exe)') {
+                $cands += [pscustomobject]@{ Minor = [int]$Matches[1]; Path = $Matches[2].Trim() }
+            }
+        }
+    } catch { }
+    foreach ($glob in @("$env:LOCALAPPDATA\Programs\Python\Python3*\python.exe","C:\Python3*\python.exe")) {
+        Get-ChildItem -Path $glob -ErrorAction SilentlyContinue | ForEach-Object {
+            if ($_.DirectoryName -match 'Python3(\d+)') { $cands += [pscustomobject]@{ Minor = [int]$Matches[1]; Path = $_.FullName } }
+        }
     }
-    # Hard fallback to known install path
-    $fb = "$env:LOCALAPPDATA\Programs\Python\Python313\python.exe"
-    if (Test-Path -LiteralPath $fb) { return $fb }
-    throw "No runnable Python 3.13 found for headroom runtime rebuild."
+    $hit = $cands | Where-Object { $_.Path -and (Test-Path -LiteralPath $_.Path) -and $_.Minor -le 13 } |
+           Sort-Object Minor -Descending | Select-Object -First 1
+    if ($hit) { return $hit.Path }
+    throw "No Python <= 3.13 found for headroom runtime rebuild (headroom-ai has no cp314 wheel). Install 3.13: winget install Python.Python.3.13"
 }
 
 # Wipes and rebuilds the runtime venv from scratch using the current package-spec.txt.
@@ -570,30 +736,17 @@ if ($pathParts -notcontains $RtkBinDir) {
 }
 
 # Rebuild the headroom runtime venv if the installed version doesn't match the target.
-# Uses Python 3.13 as the base interpreter - headroom-ai ships cp313 binary wheels
-# for Windows, so this avoids any MSVC source build requirement.
+# Builds on the newest Python <= 3.13 - headroom-ai ships cp312/cp313 wheels only
+# (no cp314), so a 3.14 base would hard-fail under --only-binary.
 if ($needsRebuild) {
     Invoke-Maybe {
-        $basePy = $null
-        foreach ($c in @(
-            @{cmd="py";    args=@("-3.13","-c","import sys;print(sys.executable)")},
-            @{cmd="py";    args=@("-3",   "-c","import sys;print(sys.executable)")},
-            @{cmd="python";args=@(        "-c","import sys;print(sys.executable)")}
-        )) {
-            try {
-                $out  = & $c.cmd @($c.args) 2>$null
-                $last = ($out | Select-Object -Last 1)
-                if ($null -ne $last) { $last = $last.Trim() }
-                if ($LASTEXITCODE -eq 0 -and $last -and (Test-Path -LiteralPath $last)) {
-                    $basePy = $last; break
-                }
-            } catch { }
-        }
+        $basePy = Resolve-PythonBase -MaxMinor 13
         if (-not $basePy) {
-            $fb = "$env:LOCALAPPDATA\Programs\Python\Python313\python.exe"
-            if (Test-Path -LiteralPath $fb) { $basePy = $fb }
+            Write-Fail "No Python <= 3.13 found. headroom-ai has no cp314 wheel, so the"
+            Write-Fail "Headroom runtime cannot be (re)built on Python 3.14+."
+            Write-Fail "Install Python 3.13 (winget install Python.Python.3.13) and re-run."
+            return
         }
-        if (-not $basePy) { Write-Fail "Cannot resolve Python 3.13 - skipping rebuild"; return }
 
         Write-Info "Base Python: $basePy ($(& $basePy --version 2>&1))"
         $runtimePy = "$HeadroomRuntime\Scripts\python.exe"
@@ -614,8 +767,8 @@ if ($needsRebuild) {
         Write-Info "Installing $HeadroomSpec (binary-only - wheel verified in Phase 0)..."
         & $runtimePy -m pip install --only-binary=:all: $HeadroomSpec
         if ($LASTEXITCODE -ne 0) {
-            Write-Fail "headroom-ai wheel install failed. Version $HeadroomVersion may lack a cp313 Windows wheel."
-            Write-Fail "Re-run the script - Phase 0 will re-query PyPI and pick a different version."
+            Write-Fail "headroom-ai wheel install failed. Version $HeadroomVersion may lack a cp<=313 Windows wheel for this base Python."
+            Write-Fail "Confirm a Python <= 3.13 is installed, then re-run."
             return
         }
 
@@ -688,6 +841,76 @@ Invoke-Maybe {
         }
     }
 } "sync shadowing rtk locations"
+
+# ==============================================================================
+# PHASE 6.5 - Knowledge-graph tools: graphify (PyPI) + codegraph (npm)
+# ==============================================================================
+Write-Step "PHASE 6.5 - Knowledge-graph tools (graphify, codegraph)"
+
+# -- graphify: PyPI 'graphifyy' (double-y), CLI 'graphify'. Isolated venv so a
+# Headroom runtime rebuild (Phase 5) never wipes its heavy deps (numpy/scipy/
+# tree-sitter). No ABI cap - graphifyy is pure-Python, any current Python works.
+Invoke-Maybe { New-Item -ItemType Directory -Force -Path $GraphifyRoot | Out-Null } "create .graphify dir"
+
+$gBasePy = Resolve-PythonBase -MaxMinor 0
+if (-not $gBasePy) {
+    Write-Warn "No Python base found for graphify - skipping (optional)"
+} else {
+    # Skip-if-current: only touch the venv when missing or behind latest.
+    $gCurrent = $null
+    if (Test-Path -LiteralPath $GraphifyExe) {
+        try { $gCurrent = ((& $GraphifyExe --version 2>&1) -replace '^\D*').Trim() } catch { }
+    }
+    $gNeeds = $true
+    if ($gCurrent -and $GraphifyLatest -and (Test-VersionGte -a $gCurrent -b $GraphifyLatest)) {
+        Write-OK "graphify already at or above v${GraphifyLatest}: $gCurrent - skipping"
+        $gNeeds = $false
+    }
+    if ($gNeeds) {
+        Invoke-Maybe {
+            if (-not (Test-Path -LiteralPath $GraphifyPy)) {
+                Write-Info "Creating graphify venv ($gBasePy, $(& $gBasePy --version 2>&1))..."
+                & $gBasePy -m venv $GraphifyRuntime
+                & $GraphifyPy -m pip install --upgrade pip --quiet
+            }
+            Write-Info "Installing/updating graphifyy..."
+            & $GraphifyPy -m pip install --upgrade graphifyy 2>&1 | ForEach-Object { Write-Info "  $_" }
+            if ($LASTEXITCODE -eq 0 -and (Test-Path -LiteralPath $GraphifyExe)) {
+                Write-OK "graphify: $(& $GraphifyExe --version 2>&1)"
+            } else {
+                Write-Warn "graphifyy install failed - graphify unavailable this run (optional)"
+            }
+        } "install/update graphifyy (isolated venv)"
+    }
+    # Shim so 'graphify' resolves from any shell via the stable bin dir
+    Invoke-Maybe {
+        Set-Content -LiteralPath "$RtkBinDir\graphify.cmd" -Encoding ASCII -Value @'
+@echo off
+"%USERPROFILE%\.graphify\runtime\Scripts\graphify.exe" %*
+exit /b %ERRORLEVEL%
+'@
+    } "write graphify.cmd shim"
+}
+
+# -- codegraph: npm global '@colbymchenry/codegraph', CLI 'codegraph'. Node 18+.
+# AST-only, 100% local, no API key. Per-project index lives under .codegraph/.
+$npm = Get-Command npm -ErrorAction SilentlyContinue
+if (-not $npm) {
+    Write-Warn "npm not on PATH - skipping codegraph (install Node.js 18+ to enable)"
+} else {
+    $cgCurrent = $null
+    try { $cgCurrent = ((codegraph --version 2>&1) -replace '^\D*').Trim() } catch { }
+    if ($cgCurrent -and $CodegraphLatest -and (Test-VersionGte -a $cgCurrent -b $CodegraphLatest)) {
+        Write-OK "codegraph already at or above v${CodegraphLatest}: $cgCurrent - skipping"
+    } else {
+        Write-Info "Installing/updating @colbymchenry/codegraph (npm global)..."
+        Invoke-Maybe {
+            npm install -g "@colbymchenry/codegraph@latest" 2>&1 | ForEach-Object { Write-Info "  $_" }
+            if ($LASTEXITCODE -eq 0) { Write-OK "codegraph: $(codegraph --version 2>&1)" }
+            else { Write-Warn "codegraph install/probe failed - skipping" }
+        } "npm install -g codegraph"
+    }
+}
 
 # ==============================================================================
 # PHASE 7 - Disable telemetry + configure all agent harnesses
@@ -854,8 +1077,10 @@ $env:Path = [Environment]::GetEnvironmentVariable("Path","Machine") + ";" +
 
 Write-Info ""
 Write-Info "-- Target versions resolved this run ----------------------"
-Write-Info "  headroom-ai : $HeadroomVersion  (wheel-installable on Windows)"
+Write-Info "  headroom-ai : $HeadroomVersion  (wheel-installable on Windows, cp<=313)"
 Write-Info "  RTK         : $RtkVersion"
+Write-Info "  graphify    : $(if ($GraphifyLatest)  { $GraphifyLatest }  else { '(resolved at install)' })"
+Write-Info "  codegraph   : $(if ($CodegraphLatest) { $CodegraphLatest } else { '(resolved at install)' })"
 Write-Info "  Python      : $(if ($PythonLatest) { $PythonLatest } else { '(Install Manager managed)' })"
 
 Write-Info ""
@@ -887,6 +1112,12 @@ try {
     }
 } catch { }
 
+# headroom-ai needs Python <= 3.13 (no cp314 wheel). Confirm one is available so
+# the next Headroom version bump can rebuild the runtime.
+$py313Final = Resolve-PythonBase -MaxMinor 13
+if ($py313Final) { Write-OK "Headroom-capable Python (<=3.13): $py313Final" }
+else { Write-Warn "No Python <=3.13 - Headroom cannot rebuild on next version bump. Install: winget install Python.Python.3.13" }
+
 Write-Info ""
 Write-Info "-- RTK ----------------------------------------------------"
 try {
@@ -910,6 +1141,17 @@ try {
         Write-Info "    (no managed service profile - using Startup shortcut, which is correct)"
     }
 } catch { Write-Warn "headroom probe: $_" }
+
+Write-Info ""
+Write-Info "-- Knowledge-graph tools ----------------------------------"
+try {
+    $gv = & "$RtkBinDir\graphify.cmd" --version 2>&1
+    if ($LASTEXITCODE -eq 0) { Write-OK "graphify : $gv" } else { Write-Info "  graphify : not installed (optional)" }
+} catch { Write-Info "  graphify : not installed (optional)" }
+try {
+    $cgv = (codegraph --version 2>&1)
+    if ($LASTEXITCODE -eq 0) { Write-OK "codegraph: $cgv" } else { Write-Info "  codegraph: not installed (optional)" }
+} catch { Write-Info "  codegraph: not installed (optional)" }
 
 Write-Info ""
 Write-Info "-- Proxy endpoints ----------------------------------------"
@@ -940,17 +1182,22 @@ Write-Host "`n=== Done ===" -ForegroundColor Green
 Write-Host @"
 
 Pass criteria:
-  python   -> resolves to intended runtime, import encodings OK
-  pip      -> works
-  rtk      -> v$RtkVersion or newer, telemetry disabled
-  headroom -> v$HeadroomVersion (wheel-installable, shim runtime), telemetry disabled
+  python    -> resolves to intended runtime, import encodings OK
+  pip       -> works
+  rtk       -> v$RtkVersion or newer, telemetry disabled
+  headroom  -> v$HeadroomVersion (wheel-installable, shim runtime), telemetry disabled
+  graphify  -> installed in isolated venv (.graphify\runtime), shim on PATH
+  codegraph -> installed via npm global (Node 18+); skipped if npm absent
   /livez + /readyz -> healthy
-  /health  -> ready (rust_core:disabled is OK on Python 3.13 without Rust wheel)
-  /stats   -> counters visible
+  /health   -> ready (rust_core:disabled is OK on Python without Rust wheel)
+  /stats    -> counters visible
   ANTHROPIC_BASE_URL + OPENAI_BASE_URL -> set via setx
   HEADROOM_TELEMETRY -> off
   HEADROOM_ENSURE_CMD -> points to lightweight proxy-ensure.cmd
+  Python <=3.13 present -> required for future Headroom runtime rebuilds (no cp314 wheel)
 
 Action required after this script:
   Restart Claude Code, Codex, and any IDE so they pick up the new setx vars.
+  Per-repo (not done here): 'graphify install' once, then 'graphify .' or
+  'codegraph init -i' per project. See support/context-tooling.md for selection.
 "@
