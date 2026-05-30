@@ -8,9 +8,9 @@
 
   Safe to re-run at any time. headroom-ai resolves to the latest release that has
   a Windows-installable wheel for a SUPPORTED Python ABI (cp312/cp313 today; NOT
-  cp314) and never triggers a source build. graphify (PyPI 'graphifyy', pure
-  Python) installs into its own isolated venv so a Headroom runtime rebuild never
-  wipes it. codegraph (npm '@colbymchenry/codegraph') installs globally via npm.
+  cp314) and never triggers a source build. graphify installs globally through
+  the official uv tool flow (`uv tool install graphifyy`). codegraph (npm
+  '@colbymchenry/codegraph') installs globally via npm.
 
 .PARAMETERS
   -DryRun              Audit all actions without making changes.
@@ -50,10 +50,20 @@
     - Knowledge-graph tools. Let an agent query code/doc relationships instead of
       grepping and reading raw files. They sit UPSTREAM of rtk/headroom (they reduce
       WHAT gets loaded; rtk/headroom compress what still does). No overlap.
-    - This script installs the BINARIES only. It activates NOTHING in any repo.
-    - A graph tool engages in a repo ONLY where you explicitly initialized it:
-        graphify .          -> creates graphify-out/   (knowledge-heavy repos)
+    - This script installs the CLIs only. It activates NOTHING in any repo.
+    - Graphify has three separate steps:
+        1. Global CLI install: uv tool install graphifyy
+        2. Optional repo harness enablement:
+           graphify claude install --project
+           graphify codex install --project
+           graphify copilot install --project
+        3. Graph database creation: graphify . from the repo root
+    - codegraph engages only where you run:
         codegraph init -i   -> creates .codegraph/      (code-heavy repos)
+    - CodeGraph harness enablement is separate from CLI install and index creation:
+        codegraph install --target=claude --location=local --yes
+        codegraph install --target=codex --location=global --yes
+      Current upstream CodeGraph has no GitHub Copilot target.
       Until that marker directory exists, the tool is inert in that repo.
     - Opt-in because they carry per-repo cost (build time, graphify model spend on
       docs, an artifact to maintain) and require a per-repo CHOICE (see below).
@@ -88,12 +98,15 @@
 
   PYTHON ABI NOTE (also see .PYTHON ABI NOTE above)
     headroom-ai = cp312/cp313 wheels only (no cp314); runtime venv builds on
-    Python <= 3.13. graphify is pure-Python (any current Python). codegraph is npm.
+    Python <= 3.13. graphify is installed with uv as a global tool. codegraph is npm.
   
   PROMPT TO ENABLE GRAPH TOOL IN A REPO USING SCAFFOLD INSTRUCTIONS
-    Per support/context-tooling.md, measure the LOC ratio for this repo, 
-    recommend graphify or codegraph, and if I approve, initialize it 
-    (write .graphifyignore, run graphify install if needed, then build the graph).
+    Per support/context-tooling.md, measure the LOC ratio for this repo,
+    recommend graphify or codegraph, and if I approve, initialize it
+    For graphify: write .graphifyignore, optionally enable claude/codex/copilot,
+    then run graphify . to build graphify-out/graph.json.
+    For codegraph: optionally enable supported MCP harnesses, then run
+    codegraph init -i to build .codegraph/codegraph.db.
 
 .NOTES
   - Run from a fresh PowerShell, not inside an activated .venv.
@@ -124,7 +137,7 @@ $FallbackRtkVersion      = "0.38.0"
 
 # -- Fixed config ---------------------------------------------------------------
 $ProxyPort       = 8787
-$RtkBinDir       = "$env:USERPROFILE\.local\bin"      # stable user bin dir for rtk + headroom + graphify shims
+$RtkBinDir       = "$env:USERPROFILE\.local\bin"      # stable user bin dir for rtk, headroom, and uv tool shims
 $HeadroomRoot    = "$env:USERPROFILE\.headroom"       # headroom home: runtime, shim scripts, config
 $HeadroomRuntime = "$HeadroomRoot\runtime"            # isolated Python venv for headroom-ai
 $PackageSpec     = "$HeadroomRoot\package-spec.txt"   # records the pinned headroom-ai version
@@ -133,11 +146,7 @@ $EnsureProxyCmd  = "$HeadroomRoot\headroom-proxy-ensure.cmd"  # lightweight hook
 $HeadroomShim    = "$RtkBinDir\headroom.cmd"          # user-facing headroom command shim
 $ShimPs1         = "$HeadroomRoot\headroom-shim.ps1"  # PowerShell backend for the shim
 
-# graphify: isolated venv so a Headroom runtime rebuild never wipes its heavy deps
-$GraphifyRoot    = "$env:USERPROFILE\.graphify"
-$GraphifyRuntime = "$GraphifyRoot\runtime"
-$GraphifyPy      = "$GraphifyRuntime\Scripts\python.exe"
-$GraphifyExe     = "$GraphifyRuntime\Scripts\graphify.exe"
+$GraphifyPackage = "graphifyy"                        # PyPI package; CLI command is graphify
 
 # -- Output helpers -------------------------------------------------------------
 function Write-Step ([string]$m) { Write-Host "`n=== $m ===" -ForegroundColor Cyan }
@@ -321,8 +330,8 @@ if (-not $RtkVersion) {
     Write-Warn "Using fallback RTK version: $RtkVersion"
 }
 
-# -- graphify (PyPI 'graphifyy') + codegraph (npm) latest, for display + skip ---
-# Pure-Python and npm respectively - no wheel-ABI pinning needed, unlike headroom.
+# -- graphify (PyPI 'graphifyy') + codegraph (npm) latest, for display ----------
+# Installed through uv tool and npm respectively; no wheel-ABI pinning like headroom.
 $GraphifyLatest = $null
 if (-not $SkipVersionCheck) {
     Write-Info "Querying PyPI for latest graphifyy..."
@@ -419,7 +428,10 @@ try {
 } catch { Write-Info "  not responding (stopped or not yet started)" }
 
 Write-Info "Knowledge-graph tools:"
-try { if (Test-Path -LiteralPath $GraphifyExe) { Write-Info "  graphify: $(& $GraphifyExe --version 2>&1)" } else { Write-Info "  graphify: not installed" } } catch { Write-Info "  graphify: probe failed" }
+try {
+    $graphifyCmd = Get-Command graphify -ErrorAction SilentlyContinue
+    if ($graphifyCmd) { Write-Info "  graphify: $(& $graphifyCmd.Source --version 2>&1)" } else { Write-Info "  graphify: not installed" }
+} catch { Write-Info "  graphify: probe failed" }
 try { Write-Info "  codegraph: $(codegraph --version 2>&1)" } catch { Write-Info "  codegraph: not installed" }
 
 Write-Info "Stale Python env vars:"
@@ -730,7 +742,7 @@ exit /b 0
 '@
 } "write headroom-proxy-ensure.cmd"
 
-# Ensure .local\bin is on user PATH so headroom.cmd and rtk.exe resolve from any shell
+# Ensure .local\bin is on user PATH so headroom.cmd, rtk.exe, and uv tool shims resolve from any shell
 $userPath  = [Environment]::GetEnvironmentVariable("Path","User")
 $pathParts = $userPath -split ";" | Where-Object { $_ }
 if ($pathParts -notcontains $RtkBinDir) {
@@ -852,68 +864,78 @@ Invoke-Maybe {
 # ==============================================================================
 Write-Step "PHASE 6.5 - Knowledge-graph tools (graphify, codegraph)"
 
-# -- graphify: PyPI 'graphifyy' (double-y), CLI 'graphify'. Isolated venv so a
-# Headroom runtime rebuild (Phase 5) never wipes its heavy deps (numpy/scipy/
-# tree-sitter). No ABI cap - graphifyy is pure-Python, any current Python works.
-Invoke-Maybe { New-Item -ItemType Directory -Force -Path $GraphifyRoot | Out-Null } "create .graphify dir"
-
-$gBasePy = Resolve-PythonBase -MaxMinor 0
-if (-not $gBasePy) {
-    Write-Warn "No Python base found for graphify - skipping (optional)"
-} else {
-    # Skip-if-current: only touch the venv when missing or behind latest.
-    $gCurrent = $null
-    if (Test-Path -LiteralPath $GraphifyExe) {
-        try { $gCurrent = ((& $GraphifyExe --version 2>&1) -replace '^\D*').Trim() } catch { }
-    }
-    $gNeeds = $true
-    if ($gCurrent -and $GraphifyLatest -and (Test-VersionGte -a $gCurrent -b $GraphifyLatest)) {
-        Write-OK "graphify already at or above v${GraphifyLatest}: $gCurrent - skipping"
-        $gNeeds = $false
-    }
-    if ($gNeeds) {
-        Invoke-Maybe {
-            if (-not (Test-Path -LiteralPath $GraphifyPy)) {
-                Write-Info "Creating graphify venv ($gBasePy, $(& $gBasePy --version 2>&1))..."
-                & $gBasePy -m venv $GraphifyRuntime
-                & $GraphifyPy -m pip install --upgrade pip --quiet
-            }
-            Write-Info "Installing/updating graphifyy..."
-            & $GraphifyPy -m pip install --upgrade graphifyy 2>&1 | ForEach-Object { Write-Info "  $_" }
-            if ($LASTEXITCODE -eq 0 -and (Test-Path -LiteralPath $GraphifyExe)) {
-                Write-OK "graphify: $(& $GraphifyExe --version 2>&1)"
-            } else {
-                Write-Warn "graphifyy install failed - graphify unavailable this run (optional)"
-            }
-        } "install/update graphifyy (isolated venv)"
-    }
-    # Shim so 'graphify' resolves from any shell via the stable bin dir
+# -- graphify: PyPI package 'graphifyy' (double-y), CLI 'graphify'.
+# Use Graphify's official global install path. Per-repo harness registration and
+# graph creation are intentionally left to support/context-tooling.md.
+$uv = Get-Command uv -ErrorAction SilentlyContinue
+if (-not $uv) {
+    Write-Warn "uv not on PATH - installing astral-sh.uv with winget"
     Invoke-Maybe {
-        Set-Content -LiteralPath "$RtkBinDir\graphify.cmd" -Encoding ASCII -Value @'
-@echo off
-"%USERPROFILE%\.graphify\runtime\Scripts\graphify.exe" %*
-exit /b %ERRORLEVEL%
-'@
-    } "write graphify.cmd shim"
+        winget install astral-sh.uv -e --accept-package-agreements --accept-source-agreements 2>&1 |
+            ForEach-Object { Write-Info "  $_" }
+    } "winget install astral-sh.uv"
+    $env:Path = "$RtkBinDir;" +
+                [Environment]::GetEnvironmentVariable("Path","Machine") + ";" +
+                [Environment]::GetEnvironmentVariable("Path","User")
+    $uv = Get-Command uv -ErrorAction SilentlyContinue
+}
+if (-not $uv) {
+    Write-Warn "uv unavailable - skipping graphify. Install manually: winget install astral-sh.uv; uv tool install graphifyy"
+} else {
+    Write-Info "Installing/updating graphifyy with uv tool..."
+    Invoke-Maybe {
+        & $uv.Source tool install --upgrade --force $GraphifyPackage 2>&1 |
+            ForEach-Object { Write-Info "  $_" }
+        if ($LASTEXITCODE -eq 0) {
+            $legacyGraphifyShim = Join-Path $RtkBinDir "graphify.cmd"
+            if (Test-Path -LiteralPath $legacyGraphifyShim) {
+                $legacyText = Get-Content -LiteralPath $legacyGraphifyShim -Raw -ErrorAction SilentlyContinue
+                if ($legacyText -match '\\.graphify\\runtime\\Scripts\\graphify\.exe') {
+                    Remove-Item -LiteralPath $legacyGraphifyShim -Force -ErrorAction SilentlyContinue
+                    Write-OK "Removed legacy graphify.cmd shim from previous isolated-venv install"
+                }
+            }
+            $env:Path = "$RtkBinDir;" + $env:Path
+            $graphifyCmd = Get-Command graphify -ErrorAction SilentlyContinue
+            if ($graphifyCmd) {
+                Write-OK "graphify: $(& $graphifyCmd.Source --version 2>&1)"
+            } else {
+                Write-Warn "graphify installed but not on PATH. Open a new shell or add $RtkBinDir to PATH."
+            }
+        } else {
+            Write-Warn "graphifyy install failed - graphify unavailable this run (optional)"
+        }
+    } "uv tool install --upgrade --force graphifyy"
 }
 
-# -- codegraph: npm global '@colbymchenry/codegraph', CLI 'codegraph'. Node 18+.
-# AST-only, 100% local, no API key. Per-project index lives under .codegraph/.
+# -- codegraph: npm global '@colbymchenry/codegraph', CLI 'codegraph'. Node 20+.
+# AST-only, 100% local, no API key. This installs only the global CLI. Harness
+# MCP config and the per-project .codegraph/codegraph.db index are created later
+# with commands from support/context-tooling.md.
 $npm = Get-Command npm -ErrorAction SilentlyContinue
 if (-not $npm) {
-    Write-Warn "npm not on PATH - skipping codegraph (install Node.js 18+ to enable)"
+    Write-Warn "npm not on PATH - skipping codegraph (install Node.js 20+ or use CodeGraph's bundled installer)"
 } else {
-    $cgCurrent = $null
-    try { $cgCurrent = ((codegraph --version 2>&1) -replace '^\D*').Trim() } catch { }
-    if ($cgCurrent -and $CodegraphLatest -and (Test-VersionGte -a $cgCurrent -b $CodegraphLatest)) {
-        Write-OK "codegraph already at or above v${CodegraphLatest}: $cgCurrent - skipping"
-    } else {
-        Write-Info "Installing/updating @colbymchenry/codegraph (npm global)..."
-        Invoke-Maybe {
-            npm install -g "@colbymchenry/codegraph@latest" 2>&1 | ForEach-Object { Write-Info "  $_" }
-            if ($LASTEXITCODE -eq 0) { Write-OK "codegraph: $(codegraph --version 2>&1)" }
-            else { Write-Warn "codegraph install/probe failed - skipping" }
-        } "npm install -g codegraph"
+    $nodeVersion = $null
+    $nodeOk = $true
+    try { $nodeVersion = ((node --version 2>&1) -replace '^[^\d]*').Trim() } catch { }
+    if ($nodeVersion -and -not (Test-VersionGte -a $nodeVersion -b "20.0.0")) {
+        Write-Warn "Node $nodeVersion is below CodeGraph's npm engine requirement (>=20 <25). Upgrade Node or use CodeGraph's bundled installer."
+        $nodeOk = $false
+    }
+    if ($nodeOk) {
+        $cgCurrent = $null
+        try { $cgCurrent = ((codegraph --version 2>&1) -replace '^\D*').Trim() } catch { }
+        if ($cgCurrent -and $CodegraphLatest -and (Test-VersionGte -a $cgCurrent -b $CodegraphLatest)) {
+            Write-OK "codegraph already at or above v${CodegraphLatest}: $cgCurrent - skipping"
+        } else {
+            Write-Info "Installing/updating @colbymchenry/codegraph (npm global)..."
+            Invoke-Maybe {
+                npm install -g "@colbymchenry/codegraph@latest" 2>&1 | ForEach-Object { Write-Info "  $_" }
+                if ($LASTEXITCODE -eq 0) { Write-OK "codegraph: $(codegraph --version 2>&1)" }
+                else { Write-Warn "codegraph install/probe failed - skipping" }
+            } "npm install -g codegraph"
+        }
     }
 }
 
@@ -1092,7 +1114,8 @@ Write-Info ""
 Write-Info "-- Python -------------------------------------------------"
 try {
     Write-Info "  where    : $((where.exe python 2>$null) -join ' | ')"
-    Write-Info "  python   : $(python -c 'import sys,encodings; print(sys.executable,"|",sys.version.split()[0])' 2>&1)"
+    $pyInfo = python -c "import sys,encodings; print(sys.executable, '|', sys.version.split()[0])" 2>&1
+    Write-Info "  python   : $pyInfo"
     Write-Info "  pip      : $(python -m pip --version 2>&1)"
     py -0p 2>&1 | ForEach-Object { Write-Info "  $_" }
 } catch { Write-Warn "python probe: $_" }
@@ -1150,8 +1173,11 @@ try {
 Write-Info ""
 Write-Info "-- Knowledge-graph tools ----------------------------------"
 try {
-    $gv = & "$RtkBinDir\graphify.cmd" --version 2>&1
-    if ($LASTEXITCODE -eq 0) { Write-OK "graphify : $gv" } else { Write-Info "  graphify : not installed (optional)" }
+    $graphifyCmd = Get-Command graphify -ErrorAction SilentlyContinue
+    if ($graphifyCmd) {
+        $gv = & $graphifyCmd.Source --version 2>&1
+        if ($LASTEXITCODE -eq 0) { Write-OK "graphify : $gv" } else { Write-Info "  graphify : probe failed (optional)" }
+    } else { Write-Info "  graphify : not installed (optional)" }
 } catch { Write-Info "  graphify : not installed (optional)" }
 try {
     $cgv = (codegraph --version 2>&1)
@@ -1191,8 +1217,8 @@ Pass criteria:
   pip       -> works
   rtk       -> v$RtkVersion or newer, telemetry disabled
   headroom  -> v$HeadroomVersion (wheel-installable, shim runtime), telemetry disabled
-  graphify  -> installed in isolated venv (.graphify\runtime), shim on PATH
-  codegraph -> installed via npm global (Node 18+); skipped if npm absent
+  graphify  -> installed globally with uv tool (`graphifyy` package, `graphify` CLI)
+  codegraph -> installed via npm global (Node 20+); skipped if npm absent
   /livez + /readyz -> healthy
   /health   -> ready (rust_core:disabled is OK on Python without Rust wheel)
   /stats    -> counters visible
@@ -1203,6 +1229,8 @@ Pass criteria:
 
 Action required after this script:
   Restart Claude Code, Codex, and any IDE so they pick up the new setx vars.
-  Per-repo (not done here): 'graphify install' once, then 'graphify .' or
-  'codegraph init -i' per project. See support/context-tooling.md for selection.
+  Per-repo (not done here): optionally enable graphify for claude/codex/copilot,
+  then run 'graphify .' to create graphify-out/graph.json. For codegraph,
+  optionally enable supported MCP harnesses, then run 'codegraph init -i' to
+  create .codegraph/codegraph.db. See support/context-tooling.md for selection.
 "@

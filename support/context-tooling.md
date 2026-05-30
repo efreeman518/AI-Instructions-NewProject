@@ -15,9 +15,10 @@ compression tools (headroom, rtk) and do not overlap with them.
 
 Pipeline: graph (what to load) -> headroom (compress inputs) -> rtk + output rules.
 
-Both graph tools are installed/updated by `misc/update-python-and-context-tools.ps1`.
-That script installs the binaries only. Per-repo registration and indexing (below)
-are project-time actions, not update-time.
+Both graph tools are installed/updated globally by
+`misc/update-python-and-context-tools.ps1`. That script installs the CLIs only. It
+does not enable any repo harness and does not create a graph database.
+Per-harness enablement and per-repo graph creation are project-time actions.
 
 ## Decision rule (LOC ratio)
 
@@ -65,16 +66,64 @@ $code = (Get-ChildItem src -Recurse -File -Include *.cs,*.razor,*.ts,*.tsx,*.xam
 
 ## Setup - graphify (knowledge-heavy repos)
 
-Binary installed by the update script (PyPI `graphifyy` into an isolated venv at
-`%USERPROFILE%\.graphify\runtime`; `graphify` shim on PATH).
+Global CLI install:
 
-    graphify install        # register skill with the agent (once per machine)
-    graphify .              # build graph at repo root (PowerShell: no leading slash)
+```powershell
+winget install astral-sh.uv    # only if uv is missing
+uv tool install graphifyy      # PyPI package name has double-y
+uv tool upgrade graphifyy      # update an existing global install
+graphify --version
+```
 
-First build sends docs/YAML/markdown through the model. Add `.graphifyignore` (below).
-Reuse across scaffolded apps: the `.instructions/` payload is identical per app, so
-prefer `graphify . --update` to extract only changed `.scaffold/` deltas.
-Prefer CLI/skill mode over the graphify MCP server (avoids standing tool-schema tokens).
+The CLI command is `graphify`. Avoid plain `pip install graphifyy` on Windows and
+Mac unless there is no alternative; Graphify's own guidance prefers `uv tool`
+or `pipx` to avoid interpreter mismatch during skill execution.
+
+Enable Graphify per repo and per harness only where wanted. Run from the target
+repo root after the global CLI exists:
+
+```powershell
+graphify claude install --project
+graphify codex install --project
+graphify copilot install --project
+```
+
+Equivalent generic form:
+
+```powershell
+graphify install --project --platform codex
+```
+
+Codex also needs `multi_agent = true` under `[features]` in
+`%USERPROFILE%\.codex\config.toml` before `$graphify` skill commands are
+available. If skill commands are unavailable, use the CLI commands below.
+
+Create the graph database from the repo root:
+
+```powershell
+graphify .              # PowerShell CLI: no leading slash
+```
+
+Verify the build created:
+
+- `graphify-out/graph.json`
+- `graphify-out/GRAPH_REPORT.md`
+- `graphify-out/graph.html`
+
+Do not treat a global install or project harness registration as a built graph.
+The repo is not graph-enabled until `graphify-out/graph.json` exists.
+
+Query or refresh an existing graph:
+
+```powershell
+graphify query "what connects the API to persistence?"
+graphify . --update
+graphify extract . --force    # use after large refactors or stale/duplicate nodes
+```
+
+Codex skill syntax is `$graphify .`; Claude-style `/graphify .` is not valid in
+PowerShell. Prefer CLI/skill mode over the Graphify MCP server to avoid standing
+tool-schema tokens.
 
 `.graphifyignore` (repo root):
 **/bin/
@@ -91,7 +140,7 @@ Prefer CLI/skill mode over the graphify MCP server (avoids standing tool-schema 
 /.csproj.user
 docs/.html
 docs/assets/
-src/Infrastructure//Migrations/
+src/Infrastructure/**/Migrations/
 
 Keep `.instructions/`, `.scaffold/`, `docs/*.md`, `HANDOFF.md`, all `src/*.cs|.razor`.
 If committing the graph into a template, add to `.gitignore`:
@@ -99,12 +148,69 @@ If committing the graph into a template, add to `.gitignore`:
 
 ## Setup - codegraph (code-heavy repos)
 
-Binary installed by the update script (npm global `@colbymchenry/codegraph`, Node 18+).
-100% local, AST-only, no API key. Native C#/TS/JS support; does NOT index `.razor`,
-`.xaml`, markdown, or YAML - that is why knowledge-heavy repos use graphify instead.
+Global CLI install:
 
-    codegraph init -i       # initialize + index current project (.codegraph/ created)
-    codegraph status        # verify index
+```powershell
+npm install -g @colbymchenry/codegraph
+codegraph --version
+```
+
+Upstream also publishes a bundled Windows installer that does not require Node:
+
+```powershell
+irm https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.ps1 | iex
+```
+
+The scaffold update script uses npm because Node/npm are already part of the
+context-tooling stack. If npm is missing, install Node 20+ or use the upstream
+PowerShell installer.
+
+Enable CodeGraph for supported harnesses only where wanted. CodeGraph configures
+an MCP server; it does not write persistent usage instructions to `CLAUDE.md` or
+`AGENTS.md` because the MCP server sends guidance in its initialize response.
+
+```powershell
+codegraph install --target=claude --location=local --yes
+codegraph install --target=codex --location=global --yes
+codegraph install --target=claude,cursor,opencode --location=local --yes
+codegraph install --print-config codex
+```
+
+Accuracy notes:
+
+- Claude supports project-local config through `.mcp.json`.
+- Codex CLI is global-only in current CodeGraph builds; upstream reports no
+  project-local Codex config support, so `--location=local` skips Codex.
+- GitHub Copilot is not in the current CodeGraph installer target registry.
+  Do not invent a Copilot setup path unless upstream adds one.
+
+Create the index database from the repo root:
+
+```powershell
+codegraph init -i
+```
+
+Verify the build created `.codegraph/codegraph.db`:
+
+```powershell
+codegraph status
+```
+
+Do not treat global CLI install or MCP harness registration as an indexed repo.
+The repo is not CodeGraph-enabled until `.codegraph/codegraph.db` exists.
+
+Refresh and query:
+
+```powershell
+codegraph sync
+codegraph index --force
+codegraph query UserService
+codegraph context "trace request flow to persistence"
+```
+
+CodeGraph is 100% local, AST-only, and no API key is required. Native C#/TS/JS
+support exists, but CodeGraph does not index `.razor`, `.xaml`, markdown, or YAML.
+That is why knowledge-heavy repos use graphify instead.
 
 Add `.codegraph/` to `.gitignore` unless committing the index.
 
@@ -113,9 +219,9 @@ Add `.codegraph/` to `.gitignore` unless committing the index.
 Build/refresh the graph at phase boundaries, not continuously, to avoid churn during
 the volatile Phase 4-5 window where code lands and artifacts get superseded:
 
-- After Phase 1 (artifacts exist) -> first graph build, high value.
-- After Phase 4 (`dotnet build` green, `contractsScaffolded: true`) -> refresh.
-- After a Phase 5 sub-phase gate passes -> `graphify . --update`.
+- After Phase 1 artifacts exist, run `graphify .` if Graphify was selected.
+- After Phase 4 (`dotnet build` green, `contractsScaffolded: true`), run `graphify . --update`.
+- After a Phase 5 sub-phase gate passes, run `graphify . --update`.
 
 Drift rule (per START-AI.md, Phase-1 Artifact Lifecycle Rule, and
 support/OPERATIONS.md Mid-Session Rollback Protocol): when artifact and code

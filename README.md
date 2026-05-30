@@ -373,12 +373,32 @@ grepping and reading raw files. They sit upstream of rtk and headroom: they redu
 what gets loaded in the first place, then rtk and headroom compress whatever still
 does. There is no overlap between the layers.
 
-The install script installs only the binaries. It activates nothing in any repo. A
-graph tool engages in a repository only where you explicitly initialize it, which
-creates a marker directory:
+The install script installs only global CLIs. It activates nothing in any repo,
+does not enable any harness, and does not create a graph database. A graph tool
+engages in a repository only where you explicitly initialize it, which creates a
+marker directory:
 
-- `graphify .` creates `graphify-out/` (run `graphify install` once per machine first)
+- `graphify .` creates `graphify-out/` and `graphify-out/graph.json`
 - `codegraph init -i` creates `.codegraph/`
+
+Graphify setup is three separate steps:
+
+1. Install the global CLI: `uv tool install graphifyy` (`graphifyy` package,
+   `graphify` command).
+2. Optionally enable repo harnesses: `graphify claude install --project`,
+   `graphify codex install --project`, `graphify copilot install --project`.
+3. Build the graph database from the repo root: `graphify .`.
+
+CodeGraph setup follows the same split:
+
+1. Install the global CLI: `npm install -g @colbymchenry/codegraph`.
+2. Optionally enable supported harnesses: `codegraph install --target=claude --location=local --yes`
+   or `codegraph install --target=codex --location=global --yes`.
+3. Build the repo index from the repo root: `codegraph init -i`, then verify
+   `.codegraph/codegraph.db` with `codegraph status`.
+
+CodeGraph supports Claude project-local config. Current upstream CodeGraph marks
+Codex as global-only and does not list GitHub Copilot as a supported target.
 
 Until that marker exists, the tool is inert in that repo. This is deliberate: graph
 tools carry per-repo cost (build time, graphify's model spend on documents, an
@@ -452,4 +472,3 @@ Useful script entrypoints:
 - `scripts/install-to-project.py` - copy the runtime payload into a consumer app's `.instructions/` directory and place harness entrypoints at the app root. `--verify` smoke-checks the install; `--verify-only` runs the smoke check without copying.
 - `scripts/configure-ef-packages-feed.py` - create/update target-app `nuget.config` for any private NuGet feed without writing PATs. Pass `--prefix <packagePrefix>` to map the appropriate `<packagePrefix>.*` pattern; the canonical EF.* example is the default. Only run for `packageStrategy: feed` or `hybrid`.
 - `scripts/validate-instructions.py` - author-side sanity check: relative-link integrity, phase-label canonical set, harness command-file shape, payload shape vs installer declaration. Run before committing edits to instruction files.
-
