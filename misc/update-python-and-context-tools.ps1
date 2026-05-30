@@ -114,6 +114,12 @@
   - Headroom proxy is stopped before update and restarted after.
   - Restart Claude Code, Codex, and any IDE after this script so they
     inherit the updated setx env vars.
+
+.REFERENCE
+  - https://github.com/rtk-ai/rtk
+  - https://github.com/chopratejas/headroom
+  - https://github.com/safishamsi/graphify
+  - https://github.com/colbymchenry/codegraph
 #>
 
 [CmdletBinding()]
