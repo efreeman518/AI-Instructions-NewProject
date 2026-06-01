@@ -940,13 +940,38 @@ Invoke-Maybe {
     Write-OK "HEADROOM_TELEMETRY=off persisted via setx"
 } "headroom telemetry disable"
 
-# RTK harness init - registers hooks and instruction files for each agent
-foreach ($flag in "--auto-patch","--codex","--copilot") {
+# RTK harness init - registers hooks and instruction files for each agent.
+# --auto-patch (Claude) and --codex are truly global: they write ~/.claude and
+# $CODEX_HOME regardless of the current directory, so they are safe to run here.
+foreach ($flag in "--auto-patch","--codex") {
     Write-Info "rtk init -g $flag"
     Invoke-Maybe {
         rtk init -g $flag 2>&1 | ForEach-Object { Write-Info "  $_" }
     } "rtk init -g $flag"
 }
+
+# --copilot is DIFFERENT and is the source of a real footgun: rtk's Copilot
+# integration is project-scoped - even with -g it stamps .github/copilot-instructions.md
+# and .github/hooks/rtk-rewrite.json into the CURRENT directory (the VS Code Copilot
+# extension has no global instruction file). If this script is launched from inside a
+# repo, that repo's tracked .github gets contaminated with rtk wiring (and, for the
+# instruction repo, that wiring then rides the install payload into every scaffolded app).
+# Run it from a throwaway temp directory: any genuine global writes still happen, but the
+# cwd .github stamp lands in temp and is discarded. Per-repo Copilot rtk wiring is done
+# deliberately via misc/enable-rtk-copilot-project.ps1; global Copilot steering (VS Code
+# user settings) is handled per misc/ai-tooling-setup-prompt.txt.
+Write-Info "rtk init -g --copilot (isolated temp cwd - avoids stamping a real repo's .github)"
+Invoke-Maybe {
+    $rtkCopilotTmp = Join-Path $env:TEMP "rtk-copilot-init-$PID"
+    New-Item -ItemType Directory -Force -Path $rtkCopilotTmp | Out-Null
+    Push-Location $rtkCopilotTmp
+    try {
+        rtk init -g --copilot 2>&1 | ForEach-Object { Write-Info "  $_" }
+    } finally {
+        Pop-Location
+        Remove-Item -LiteralPath $rtkCopilotTmp -Recurse -Force -ErrorAction SilentlyContinue
+    }
+} "rtk init -g --copilot (isolated temp cwd)"
 Invoke-Maybe {
     rtk init --show 2>&1 | ForEach-Object { Write-Info "  $_" }
 } "rtk init --show"

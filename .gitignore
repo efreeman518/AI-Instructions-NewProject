@@ -423,3 +423,7 @@ FodyWeavers.xsd
 *.msm
 *.msp
 
+
+# RTK Copilot project wiring - machine/global tooling, NOT instruction payload.
+# `rtk init --copilot` stamps these into the cwd .github; keep them out of this repo.
+.github/hooks/
