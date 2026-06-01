@@ -1,24 +1,42 @@
-# Context Tooling - Per-Repo Knowledge Graph Selection
+# Context Tooling - Per-Repo Graphify Layer Selection
 
-How to decide which knowledge-graph tool to use per repository, and how to wire it
-in. Knowledge-graph tools reduce orientation token cost by letting an agent query
-relationships instead of grepping/reading raw files. They sit upstream of the
-compression tools (headroom, rtk) and do not overlap with them.
+How to decide which graphify LAYER to build per repository, and how to wire it in.
+graphify is the single knowledge-graph tool: it reduces orientation token cost by
+letting an agent query relationships instead of grepping/reading raw files. It sits
+upstream of the compression tools (headroom, rtk) and does not overlap with them.
 
 ## Tool stack roles (no overlap)
 
 - rtk - compresses CLI command output. Enforced via the `rtk` Bash prefix rule.
 - headroom - compresses prompt inputs (tool outputs, history) before the API call.
 - Output compression (caveman style) - enforced via instruction rules, not a tool.
-- Knowledge graph (graphify OR codegraph) - reduces what gets loaded by enabling
-  relationship queries. This file governs which one, per repo.
+- Knowledge graph (graphify) - reduces what gets loaded by enabling relationship
+  queries. This file governs which graphify layer to build, per repo.
 
 Pipeline: graph (what to load) -> headroom (compress inputs) -> rtk + output rules.
 
-Both graph tools are installed/updated globally by
-`misc/update-python-and-context-tools.ps1`. That script installs the CLIs only. It
+graphify is installed/updated globally by
+`misc/update-python-and-context-tools.ps1`. That script installs the CLI only. It
 does not enable any repo harness and does not create a graph database.
 Per-harness enablement and per-repo graph creation are project-time actions.
+
+## Two layers: structure-only vs. full
+
+graphify can build at two depths. The per-repo decision is which LAYER, not which tool:
+
+- **Structure-only** - AST parsing via tree-sitter. 100% local, zero model spend, no
+  backend needed. Sees code symbols and call/reference edges; blind to markdown, YAML,
+  infra, and `.razor` / `.xaml` markup. This is the cheap, code-navigation layer.
+- **Full (AST + semantic)** - adds an LLM pass that extracts semantic relationships
+  from markdown/YAML/infra and the `.instructions/` / `.scaffold/` doc layer. In a
+  Claude Code or **Claude VS Code** session the host Claude session performs this
+  extraction directly (subagent dispatch) - **no API key needed**. Headless/CI flows set
+  `GEMINI_API_KEY` or `GOOGLE_API_KEY` to use Gemini, or pass
+  `--backend gemini|kimi|openai|deepseek|claude-cli` to `graphify extract`. graphify
+  reads only the Gemini/Google keys from the environment - never `ANTHROPIC_API_KEY` or
+  `OPENAI_API_KEY`. Spends model tokens; sees the whole repo.
+
+The choice is a deliberate cost/coverage call, not forced by key availability.
 
 ## Decision rule (LOC ratio)
 
@@ -29,21 +47,21 @@ package-lock.json, *.Designer.cs, ModelSnapshot.cs, rendered *.html docs):
 - KNOWLEDGE = LOC of `.instructions/` + `.scaffold/` + `docs/*.md`
 - CODE = LOC of application `src/` (*.cs, *.razor, *.ts, *.tsx, *.xaml)
 
-| Condition                                                | Tool      | Why                                                                 |
-|----------------------------------------------------------|-----------|---------------------------------------------------------------------|
-| KNOWLEDGE >= CODE                                        | graphify  | Doc/spec layer is the majority; only graphify reads it              |
-| CODE > KNOWLEDGE but CODE < 3x KNOWLEDGE                 | graphify  | Spec<->code links still high value; semantic layer wins             |
-| CODE >= 3x KNOWLEDGE                                     | codegraph | Mostly code navigation; local + free + AST is sufficient            |
-| No `.instructions/` or `.scaffold/`                      | codegraph | Plain code repo; no semantic doc layer to miss                      |
-| Brownfield adoption pass (src/ exists, no .scaffold/ yet)| codegraph | Thick code, no knowledge layer yet; re-evaluate after Phase-1 artifacts derived |
+| Condition                                                | Layer          | Why                                                                 |
+|----------------------------------------------------------|----------------|---------------------------------------------------------------------|
+| KNOWLEDGE >= CODE                                        | full           | Doc/spec layer is the majority; only the semantic pass reads it     |
+| CODE > KNOWLEDGE but CODE < 3x KNOWLEDGE                 | full           | Spec<->code links still high value; semantic layer wins             |
+| CODE >= 3x KNOWLEDGE                                     | structure-only | Mostly code navigation; local + free + AST is sufficient            |
+| No `.instructions/` or `.scaffold/`                      | structure-only | Plain code repo; no semantic doc layer to miss                      |
+| Brownfield adoption pass (src/ exists, no .scaffold/ yet)| structure-only | Thick code, no knowledge layer yet; re-evaluate after Phase-1 artifacts derived |
 
-Rationale: graphify uses tree-sitter for code PLUS LLM semantic extraction for
-markdown/YAML/infra - it sees the whole repo. codegraph is AST-only, 100% local,
-zero API cost, but blind to the `.instructions/` / `.scaffold/` / docs layer and to
-`.razor` / `.xaml` markup. A freshly scaffolded app is knowledge-heavy
-(KNOWLEDGE >= CODE) -> graphify. A mature app where code dwarfs the static doc
-layer -> codegraph, with graphify reserved for periodic spec<->code consistency
-checks.
+Rationale: the full layer sees the whole repo (code AST PLUS LLM semantic extraction
+of markdown/YAML/infra), at the cost of model spend. The structure-only layer is
+AST-only, 100% local, zero model spend, but blind to the `.instructions/` /
+`.scaffold/` / docs layer and to `.razor` / `.xaml` markup. A freshly scaffolded app
+is knowledge-heavy (KNOWLEDGE >= CODE) -> full. A mature app where code dwarfs the
+static doc layer -> structure-only, with an occasional full pass for spec<->code
+consistency checks.
 
 ## Measure command (PowerShell)
 
@@ -64,7 +82,7 @@ $code = (Get-ChildItem src -Recurse -File -Include *.cs,*.razor,*.ts,*.tsx,*.xam
 "KNOWLEDGE=$knowledge  CODE=$code  ratio(code/knowledge)={0:N2}" -f ($code / [math]::Max($knowledge,1))
 ```
 
-## Setup - graphify (knowledge-heavy repos)
+## Setup - graphify
 
 Global CLI install:
 
@@ -98,10 +116,23 @@ Codex also needs `multi_agent = true` under `[features]` in
 `%USERPROFILE%\.codex\config.toml` before `$graphify` skill commands are
 available. If skill commands are unavailable, use the CLI commands below.
 
-Create the graph database from the repo root:
+Create the graph database from the repo root. Pick the layer per the decision rule
+above:
 
 ```powershell
+# Full layer (AST + semantic): the normal scaffolded-app build.
+# In a Claude Code / Claude VS Code session semantic extraction runs through the
+# host Claude session - no API key. Headless: set GEMINI_API_KEY/GOOGLE_API_KEY.
 graphify .              # PowerShell CLI: no leading slash
+
+# Structure-only layer (AST, no model spend): code-heavy / low-doc repos.
+# There is no dedicated --code-only flag: graphify ALWAYS extracts code locally via
+# tree-sitter (no API calls); the semantic LLM pass only runs on docs/papers/images.
+# So restrict the corpus to code via .graphifyignore (exclude docs/.instructions/
+# .scaffold) and the semantic pass has nothing to do. Add --no-cluster to also skip
+# the clustering/community-naming step. Refresh with the no-LLM update:
+graphify .  --no-cluster   # initial structure-only build
+graphify update .          # re-extract changed code files only; no LLM, no model spend
 ```
 
 Verify the build created:
@@ -117,8 +148,8 @@ Query or refresh an existing graph:
 
 ```powershell
 graphify query "what connects the API to persistence?"
-graphify . --update
-graphify extract . --force    # use after large refactors or stale/duplicate nodes
+graphify update .             # incremental AST refresh (no LLM); skill alias: graphify . --update
+graphify extract . --force    # full re-extraction after large refactors or stale/duplicate nodes
 ```
 
 Codex skill syntax is `$graphify .`; Claude-style `/graphify .` is not valid in
@@ -143,85 +174,57 @@ docs/assets/
 src/Infrastructure/**/Migrations/
 
 Keep `.instructions/`, `.scaffold/`, `docs/*.md`, `HANDOFF.md`, all `src/*.cs|.razor`.
-If committing the graph into a template, add to `.gitignore`:
-`graphify-out/manifest.json` and `graphify-out/cost.json` (mtime-based, break on clone).
 
-## Setup - codegraph (code-heavy repos)
+Do NOT gitignore all of `graphify-out/`. Commit the durable graph artifacts and ignore
+only the transient/machine-specific ones. Recommended `graphify-out/.gitignore`:
 
-Global CLI install:
+- **Commit**: `graph.json`, `GRAPH_REPORT.md`, `graph.html` (the queryable graph + report).
+- **Ignore**: `manifest.json`, `cost.json` (mtime-based, break on clone), `cache/`,
+  `wiki/`, `obsidian/`, and `.graphify_*` (local scratch/scan-root state).
 
-```powershell
-npm install -g @colbymchenry/codegraph
-codegraph --version
-```
+## Keeping the graph fresh (auto-update on commit)
 
-Upstream also publishes a bundled Windows installer that does not require Node:
-
-```powershell
-irm https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.ps1 | iex
-```
-
-The scaffold update script uses npm because Node/npm are already part of the
-context-tooling stack. If npm is missing, install Node 20+ or use the upstream
-PowerShell installer.
-
-Enable CodeGraph for supported harnesses only where wanted. CodeGraph configures
-an MCP server; it does not write persistent usage instructions to `CLAUDE.md` or
-`AGENTS.md` because the MCP server sends guidance in its initialize response.
+graphify ships a harness-agnostic git hook that rebuilds the graph after each commit.
+This is the answer to "update the graph after code changes for any harness" - it fires
+for any tool or human that commits, so there is no per-harness wiring. Install it per
+repo, alongside enabling graphify:
 
 ```powershell
-codegraph install --target=claude --location=local --yes
-codegraph install --target=codex --location=global --yes
-codegraph install --target=claude,cursor,opencode --location=local --yes
-codegraph install --print-config codex
+graphify hook install     # post-commit + post-checkout hooks + graph.json merge driver
+graphify hook status
+graphify hook uninstall
 ```
 
-Accuracy notes:
+Behavior (read before enabling):
 
-- Claude supports project-local config through `.mcp.json`.
-- Codex CLI is global-only in current CodeGraph builds; upstream reports no
-  project-local Codex config support, so `--location=local` skips Codex.
-- GitHub Copilot is not in the current CodeGraph installer target registry.
-  Do not invent a Copilot setup path unless upstream adds one.
+- **Post-commit**: re-extracts only the changed code files in the BACKGROUND (`git
+  commit` returns immediately), **AST-only, no LLM, no API cost**. Skips during
+  rebase/merge/cherry-pick. Escape hatch `GRAPHIFY_SKIP_HOOK=1`; timeout via
+  `GRAPHIFY_REBUILD_TIMEOUT` (default 600s).
+- **Post-checkout**: full code rebuild on branch switch (only if `graphify-out/` exists).
+- **It does NOT create or amend a commit.** The refreshed `graphify-out/` lands as an
+  uncommitted working-tree change, and the hook explicitly skips when only
+  `graphify-out/` changed (no rebuild loop). The committed artifacts (`graph.json`,
+  `GRAPH_REPORT.md`, `graph.html`) therefore trail by one commit - you pick them up in
+  your next commit; the installed union-merge driver keeps `graph.json` conflict-free
+  across parallel commits. The ignored transients (per the `.gitignore` split above) are
+  just refreshed locally. Do not gitignore the whole `graphify-out/` folder.
+- The hook lives in `.git/hooks/` (or `core.hooksPath` / Husky's `.husky/`), which git
+  never tracks - so it does NOT leak into apps scaffolded from a template repo.
 
-Create the index database from the repo root:
-
-```powershell
-codegraph init -i
-```
-
-Verify the build created `.codegraph/codegraph.db`:
-
-```powershell
-codegraph status
-```
-
-Do not treat global CLI install or MCP harness registration as an indexed repo.
-The repo is not CodeGraph-enabled until `.codegraph/codegraph.db` exists.
-
-Refresh and query:
-
-```powershell
-codegraph sync
-codegraph index --force
-codegraph query UserService
-codegraph context "trace request flow to persistence"
-```
-
-CodeGraph is 100% local, AST-only, and no API key is required. Native C#/TS/JS
-support exists, but CodeGraph does not index `.razor`, `.xaml`, markdown, or YAML.
-That is why knowledge-heavy repos use graphify instead.
-
-Add `.codegraph/` to `.gitignore` unless committing the index.
+**Scope gap**: the hook is CODE/AST only. It does NOT refresh the semantic/doc layer
+(`.instructions/`, `.scaffold/`, `docs/*.md`). Keep refreshing that with a full
+`graphify .` at the phase boundaries below. For a structure-only repo the hook alone
+keeps the graph current.
 
 ## Phase timing for scaffolded apps
 
 Build/refresh the graph at phase boundaries, not continuously, to avoid churn during
 the volatile Phase 4-5 window where code lands and artifacts get superseded:
 
-- After Phase 1 artifacts exist, run `graphify .` if Graphify was selected.
-- After Phase 4 (`dotnet build` green, `contractsScaffolded: true`), run `graphify . --update`.
-- After a Phase 5 sub-phase gate passes, run `graphify . --update`.
+- After Phase 1 artifacts exist, run `graphify .` (full layer) if graphify was enabled.
+- After Phase 4 (`dotnet build` green, `contractsScaffolded: true`), run `graphify update .`.
+- After a Phase 5 sub-phase gate passes, run `graphify update .`.
 
 Drift rule (per START-AI.md, Phase-1 Artifact Lifecycle Rule, and
 support/OPERATIONS.md Mid-Session Rollback Protocol): when artifact and code

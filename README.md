@@ -365,70 +365,67 @@ your global agent config, written by `rtk init -g` and `headroom init -g`. Full
 install, per-agent wiring, telemetry, and troubleshooting are in
 [misc/context-optimize.md](misc/context-optimize.md).
 
-### Opt-in per repo (graphify, codegraph)
+### Opt-in per repo (graphify)
 
-`graphify` and `codegraph` build a knowledge graph of a codebase so an agent can
-query relationships (call flow, spec-to-code links, impact radius) instead of
-grepping and reading raw files. They sit upstream of rtk and headroom: they reduce
-what gets loaded in the first place, then rtk and headroom compress whatever still
-does. There is no overlap between the layers.
+`graphify` builds a knowledge graph of a codebase so an agent can query relationships
+(call flow, spec-to-code links, impact radius) instead of grepping and reading raw
+files. It sits upstream of rtk and headroom: it reduces what gets loaded in the first
+place, then rtk and headroom compress whatever still does. There is no overlap between
+the layers.
 
-The install script installs only global CLIs. It activates nothing in any repo,
-does not enable any harness, and does not create a graph database. A graph tool
-engages in a repository only where you explicitly initialize it, which creates a
-marker directory:
+The install script installs only the global CLI. It activates nothing in any repo,
+does not enable any harness, and does not create a graph database. graphify engages in
+a repository only where you explicitly initialize it, which creates the
+`graphify-out/` marker directory (`graphify .` produces `graphify-out/graph.json`).
 
-- `graphify .` creates `graphify-out/` and `graphify-out/graph.json`
-- `codegraph init -i` creates `.codegraph/`
-
-Graphify setup is three separate steps:
+graphify setup is three separate steps, plus an optional fourth:
 
 1. Install the global CLI: `uv tool install graphifyy` (`graphifyy` package,
    `graphify` command).
 2. Optionally enable repo harnesses: `graphify claude install --project`,
    `graphify codex install --project`, `graphify copilot install --project`.
 3. Build the graph database from the repo root: `graphify .`.
+4. Optionally keep it fresh automatically: `graphify hook install` adds a
+   harness-agnostic post-commit hook that rebuilds the graph (AST-only, no API cost, in
+   the background) after every commit by any tool or human. It does not create an extra
+   commit - the refreshed `graphify-out/` is left as a working-tree change - and the
+   hook lives in `.git/hooks/`, which is never tracked, so it does not leak into
+   scaffolded apps. The hook refreshes the code layer only; rerun `graphify .` at phase
+   boundaries to refresh the semantic/doc layer. See
+   [`support/context-tooling.md`](support/context-tooling.md).
 
-CodeGraph setup follows the same split:
-
-1. Install the global CLI: `npm install -g @colbymchenry/codegraph`.
-2. Optionally enable supported harnesses: `codegraph install --target=claude --location=local --yes`
-   or `codegraph install --target=codex --location=global --yes`.
-3. Build the repo index from the repo root: `codegraph init -i`, then verify
-   `.codegraph/codegraph.db` with `codegraph status`.
-
-CodeGraph supports Claude project-local config. Current upstream CodeGraph marks
-Codex as global-only and does not list GitHub Copilot as a supported target.
-
-Until that marker exists, the tool is inert in that repo. This is deliberate: graph
-tools carry per-repo cost (build time, graphify's model spend on documents, an
-artifact to keep current) and require a per-repo choice, so auto-enabling them
+Until that marker exists, the tool is inert in that repo. This is deliberate: the
+graph layer carries per-repo cost (build time, model spend on the doc layer for a full
+build, an artifact to keep current) and a per-repo choice, so auto-enabling it
 everywhere would waste effort on repos where the graph layer does not pay off.
 
-### Choosing graphify vs codegraph
+### graphify: structure-only vs. full layer
 
-Decide per repo by comparing the size of the knowledge layer to the application code,
-excluding generated and transient files (bin, obj, node_modules, .tmp, test output,
-lockfiles, EF migrations, rendered HTML):
+graphify is the single graph tool. The per-repo decision is which LAYER to build, not
+which tool. Compare the size of the knowledge layer to the application code, excluding
+generated and transient files (bin, obj, node_modules, .tmp, test output, lockfiles,
+EF migrations, rendered HTML):
 
 - KNOWLEDGE = lines in `.instructions/` + `.scaffold/` + `docs/*.md`
 - CODE = lines in application `src/` (`.cs`, `.razor`, `.ts`, `.tsx`, `.xaml`)
 
-| Situation | Tool | Reason |
-|-----------|------|--------|
-| KNOWLEDGE >= CODE | graphify | Doc/spec layer is the majority; only graphify reads it |
-| CODE larger but under 3x KNOWLEDGE | graphify | Spec-to-code links still high value |
-| CODE >= 3x KNOWLEDGE | codegraph | Mostly code navigation; local and free is enough |
-| No `.instructions/` or `.scaffold/` | codegraph | Plain code repo; no doc layer to miss |
-| Brownfield adoption (code exists, no `.scaffold/` yet) | codegraph | Re-evaluate once Phase 1 artifacts are derived |
+| Situation | Layer | Reason |
+|-----------|-------|--------|
+| KNOWLEDGE >= CODE | full | Doc/spec layer is the majority; only the semantic pass reads it |
+| CODE larger but under 3x KNOWLEDGE | full | Spec-to-code links still high value |
+| CODE >= 3x KNOWLEDGE | structure-only | Mostly code navigation; local and free is enough |
+| No `.instructions/` or `.scaffold/` | structure-only | Plain code repo; no doc layer to miss |
+| Brownfield adoption (code exists, no `.scaffold/` yet) | structure-only | Re-evaluate once Phase 1 artifacts are derived |
 
-The reason the split favors graphify for scaffolded apps: graphify combines
-tree-sitter code parsing with LLM semantic extraction of markdown, YAML, and infra,
-so it sees the whole repository, including the `.instructions/` and `.scaffold/`
-knowledge layer and `.razor`/`.xaml` markup. codegraph is AST-only and 100% local
-with no API cost, but it cannot read documents, YAML, or markup. A freshly
-scaffolded app is knowledge-heavy, so graphify wins; a mature app where code dwarfs
-the now-static doc layer shifts to codegraph, with graphify kept for occasional
+The **full** layer combines tree-sitter code parsing with LLM semantic extraction of
+markdown, YAML, and infra, so it sees the whole repository, including the
+`.instructions/` / `.scaffold/` knowledge layer and `.razor`/`.xaml` markup. In a
+Claude Code or Claude VS Code session the host Claude session performs that semantic
+extraction directly - no API key needed (headless flows set `GEMINI_API_KEY` /
+`GOOGLE_API_KEY` for Gemini). The **structure-only** layer is AST-only, 100% local,
+zero model spend, but cannot read documents, YAML, or markup. A freshly scaffolded app
+is knowledge-heavy, so the full layer wins; a mature app where code dwarfs the
+now-static doc layer shifts to structure-only, with an occasional full pass for
 spec-to-code consistency checks.
 
 ### When to build and rebuild
@@ -444,13 +441,13 @@ and artifacts are superseded:
 Drift rule: when an artifact and the code disagree, the code wins. Fix the artifact,
 then re-extract the affected slice.
 
-Full selection table, ignore-file contents, and setup commands are in
+Full layer-selection table, ignore-file contents, and setup commands are in
 [`support/context-tooling.md`](support/context-tooling.md). The activation split is
 mirrored in where guidance lives: rtk and headroom are environment-global and
 configured outside the repo (see [misc/context-optimize.md](misc/context-optimize.md)),
-while the graph tools live in [`support/context-tooling.md`](support/context-tooling.md)
+while graphify lives in [`support/context-tooling.md`](support/context-tooling.md)
 behind a pointer in [START-AI.md](START-AI.md), consulted per repo when deciding
-whether and which to initialize.
+whether to initialize it and which layer to build.
 
 ## Operational References
 

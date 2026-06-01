@@ -2,15 +2,20 @@
 <#
 .SYNOPSIS
   Idempotent setup: clean Python environment, update RTK, Headroom, and the
-  knowledge-graph tools (graphify, codegraph) to LATEST stable versions resolved
-  at runtime, disable all telemetry, and configure all agent harnesses
+  knowledge-graph tool (graphify) to LATEST stable versions resolved at runtime,
+  disable all telemetry, and configure all agent harnesses
   (Claude Code, Codex, Copilot).
 
   Safe to re-run at any time. headroom-ai resolves to the latest release that has
   a Windows-installable wheel for a SUPPORTED Python ABI (cp312/cp313 today; NOT
   cp314) and never triggers a source build. graphify installs globally through
-  the official uv tool flow (`uv tool install graphifyy`). codegraph (npm
-  '@colbymchenry/codegraph') installs globally via npm.
+  the official uv tool flow (`uv tool install graphifyy`).
+
+  This script updates the CONTEXT TOOLS only. It does NOT install or update the
+  agent harnesses themselves (Claude Code, Codex, Copilot CLIs / extensions /
+  desktop apps) - those self-update, and a given machine may deliberately run only
+  some of them. The script configures whichever harnesses are present and skips
+  the rest.
 
 .PARAMETERS
   -DryRun              Audit all actions without making changes.
@@ -23,7 +28,6 @@
   headroom-ai : 0.20.15
   RTK         : 0.38.0
   graphify    : resolved live from PyPI; no pin (pure-Python, upgrade-in-place)
-  codegraph   : resolved live from npm;  no pin (npm resolves platform)
 
 .PYTHON ABI NOTE
   headroom-ai ships cp312/cp313 wheels only - it has NO cp314 wheel as of 0.22.x.
@@ -35,7 +39,7 @@
 
 .TOOLING STRATEGY - two activation models
 
-  This script installs FOUR context tools machine-wide, but they fall into two
+  This script installs THREE context tools machine-wide, but they fall into two
   groups with deliberately different activation models. Understand the split:
 
   GROUP A - rtk + headroom: AUTO-ENABLED, MACHINE-GLOBAL, ALWAYS ON
@@ -46,11 +50,11 @@
     - They apply to EVERY repo, EVERY session, with zero per-repo action.
     - Safe to apply blindly: lossless, universal, no per-repo cost or judgment call.
 
-  GROUP B - graphify + codegraph: OPT-IN, PER-REPO, MANUAL INIT
-    - Knowledge-graph tools. Let an agent query code/doc relationships instead of
-      grepping and reading raw files. They sit UPSTREAM of rtk/headroom (they reduce
+  GROUP B - graphify: OPT-IN, PER-REPO, MANUAL INIT
+    - The knowledge-graph tool. Lets an agent query code/doc relationships instead of
+      grepping and reading raw files. It sits UPSTREAM of rtk/headroom (it reduces
       WHAT gets loaded; rtk/headroom compress what still does). No overlap.
-    - This script installs the CLIs only. It activates NOTHING in any repo.
+    - This script installs the CLI only. It activates NOTHING in any repo.
     - Graphify has three separate steps:
         1. Global CLI install: uv tool install graphifyy
         2. Optional repo harness enablement:
@@ -58,55 +62,55 @@
            graphify codex install --project
            graphify copilot install --project
         3. Graph database creation: graphify . from the repo root
-    - codegraph engages only where you run:
-        codegraph init -i   -> creates .codegraph/      (code-heavy repos)
-    - CodeGraph harness enablement is separate from CLI install and index creation:
-        codegraph install --target=claude --location=local --yes
-        codegraph install --target=codex --location=global --yes
-      Current upstream CodeGraph has no GitHub Copilot target.
-      Until that marker directory exists, the tool is inert in that repo.
-    - Opt-in because they carry per-repo cost (build time, graphify model spend on
-      docs, an artifact to maintain) and require a per-repo CHOICE (see below).
+    - Opt-in because it carries per-repo cost (build time, model spend on the doc
+      layer, an artifact to maintain) and a per-repo CHOICE (see below).
       Auto-enabling everywhere would burn that cost on repos where it does not pay.
 
-  WHICH GRAPH TOOL (per repo, by LOC ratio)
-    Measure, excluding generated/transient files:
+  WHICH GRAPHIFY MODE (per repo, by LOC ratio)
+    graphify is the single graph tool. The only per-repo decision is which LAYER to
+    build, not which tool. Measure, excluding generated/transient files:
       KNOWLEDGE = LOC of .instructions/ + .scaffold/ + docs/*.md
       CODE      = LOC of application src/ (*.cs,*.razor,*.ts,*.tsx,*.xaml)
 
-      KNOWLEDGE >= CODE .............................. graphify
-      CODE > KNOWLEDGE but CODE < 3x KNOWLEDGE ....... graphify
-      CODE >= 3x KNOWLEDGE ........................... codegraph
-      No .instructions/ or .scaffold/ ............... codegraph
-      Brownfield adoption (src/ exists, no .scaffold/) codegraph; re-eval after Phase 1
+      KNOWLEDGE >= CODE .............................. full (AST + semantic LLM)
+      CODE > KNOWLEDGE but CODE < 3x KNOWLEDGE ....... full (AST + semantic LLM)
+      CODE >= 3x KNOWLEDGE ........................... structure-only (AST, no LLM)
+      No .instructions/ or .scaffold/ ............... structure-only (AST, no LLM)
+      Brownfield adoption (src/ exists, no .scaffold/) structure-only; re-eval after Phase 1
 
-    WHY: graphify = tree-sitter code parsing PLUS LLM semantic extraction of
-    markdown/YAML/infra - it sees the WHOLE repo, including the .instructions/ and
-    .scaffold/ knowledge layer and .razor/.xaml markup. codegraph = AST-only, 100%
-    local, zero API cost, but BLIND to docs/YAML/markup. A freshly scaffolded app is
-    knowledge-heavy -> graphify. A mature app where code dwarfs the static doc layer
-    -> codegraph, with graphify reserved for periodic spec<->code consistency checks.
+    WHY: the FULL layer adds LLM semantic extraction of markdown/YAML/infra on top of
+    tree-sitter AST parsing - it sees the WHOLE repo, including the .instructions/ /
+    .scaffold/ knowledge layer and .razor/.xaml markup, but spends model tokens. In a
+    Claude Code / Claude VS Code session the host Claude session does that extraction
+    directly - NO API key. Headless/CI uses Gemini via GEMINI_API_KEY/GOOGLE_API_KEY (or
+    --backend on 'graphify extract'). The STRUCTURE-ONLY layer is AST-only, 100% local,
+    zero model spend - blind to docs/YAML/markup but free. The choice is a deliberate
+    cost/coverage call, not forced by key availability: a freshly scaffolded app is
+    knowledge-heavy -> full; a mature app where code dwarfs the static doc layer ->
+    structure-only, with an occasional full pass for spec<->code checks.
 
     Build at PHASE BOUNDARIES, not continuously (after Phase 1, after Phase 4, after a
-    stabilized Phase 5 slice via 'graphify . --update'). Drift rule: when artifact and
+    stabilized Phase 5 slice via 'graphify update .'). Drift rule: when artifact and
     code disagree, code wins - fix the artifact, then re-extract the affected slice.
 
   WHERE THE GUIDANCE LIVES (mirrors the activation split)
     - rtk/headroom: ambient rules in CLAUDE.md / agent.md (always loaded).
-    - graph tools : support/context-tooling.md, behind a START-AI.md pointer
-                    (consulted per repo when deciding whether/which to initialize).
+    - graphify     : support/context-tooling.md, behind a START-AI.md pointer
+                    (consulted per repo when deciding whether/which layer to build).
 
   PYTHON ABI NOTE (also see .PYTHON ABI NOTE above)
     headroom-ai = cp312/cp313 wheels only (no cp314); runtime venv builds on
-    Python <= 3.13. graphify is installed with uv as a global tool. codegraph is npm.
-  
-  PROMPT TO ENABLE GRAPH TOOL IN A REPO USING SCAFFOLD INSTRUCTIONS
+    Python <= 3.13. graphify is installed with uv as a global tool (pure-Python,
+    prefers the newest Python available).
+
+  PROMPT TO ENABLE GRAPHIFY IN A REPO USING SCAFFOLD INSTRUCTIONS
     Per support/context-tooling.md, measure the LOC ratio for this repo,
-    recommend graphify or codegraph, and if I approve, initialize it
-    For graphify: write .graphifyignore, optionally enable claude/codex/copilot,
-    then run graphify . to build graphify-out/graph.json.
-    For codegraph: optionally enable supported MCP harnesses, then run
-    codegraph init -i to build .codegraph/codegraph.db.
+    recommend the structure-only or full graphify layer, and if I approve,
+    initialize it: write .graphifyignore, optionally enable claude/codex/copilot,
+    then build the graph (graphify . for the full layer, or the structure-only
+    path) to produce graphify-out/graph.json. Optionally run 'graphify hook install'
+    to auto-rebuild the code layer on every commit (harness-agnostic, AST-only,
+    no extra commit; hook is untracked so it does not leak into scaffolded apps).
 
 .NOTES
   - Run from a fresh PowerShell, not inside an activated .venv.
@@ -119,7 +123,6 @@
   - https://github.com/rtk-ai/rtk
   - https://github.com/chopratejas/headroom
   - https://github.com/safishamsi/graphify
-  - https://github.com/colbymchenry/codegraph
 #>
 
 [CmdletBinding()]
@@ -336,8 +339,8 @@ if (-not $RtkVersion) {
     Write-Warn "Using fallback RTK version: $RtkVersion"
 }
 
-# -- graphify (PyPI 'graphifyy') + codegraph (npm) latest, for display ----------
-# Installed through uv tool and npm respectively; no wheel-ABI pinning like headroom.
+# -- graphify (PyPI 'graphifyy') latest, for display ----------------------------
+# Installed through uv tool; no wheel-ABI pinning like headroom (pure-Python).
 $GraphifyLatest = $null
 if (-not $SkipVersionCheck) {
     Write-Info "Querying PyPI for latest graphifyy..."
@@ -346,15 +349,6 @@ if (-not $SkipVersionCheck) {
         $GraphifyLatest = $gp.info.version
         Write-OK "graphifyy latest: $GraphifyLatest"
     } catch { Write-Warn "PyPI graphifyy query failed: $($_.Exception.Message)" }
-}
-$CodegraphLatest = $null
-if (-not $SkipVersionCheck) {
-    Write-Info "Querying npm for latest @colbymchenry/codegraph..."
-    try {
-        $cg = Invoke-RestMethod "https://registry.npmjs.org/@colbymchenry/codegraph/latest" -TimeoutSec 15 -ErrorAction Stop
-        $CodegraphLatest = $cg.version
-        Write-OK "codegraph latest: $CodegraphLatest"
-    } catch { Write-Warn "npm codegraph query failed: $($_.Exception.Message)" }
 }
 
 # -- Python: parse python.org downloads page for latest stable -----------------
@@ -385,7 +379,6 @@ Write-Info "Versions for this run:"
 Write-Info "  headroom-ai : $HeadroomVersion  (wheel-installable on Windows, cp<=313)"
 Write-Info "  RTK         : $RtkVersion"
 Write-Info "  graphify    : $(if ($GraphifyLatest)  { $GraphifyLatest }  else { '(resolve at install)' })"
-Write-Info "  codegraph   : $(if ($CodegraphLatest) { $CodegraphLatest } else { '(resolve at install)' })"
 Write-Info "  Python      : $(if ($PythonLatest) { $PythonLatest } else { '(Install Manager decides)' })"
 
 # ==============================================================================
@@ -433,12 +426,11 @@ try {
     Write-Info "  status=$($h.status)  version=$($h.version)  rust_core=$($h.rust_core)"
 } catch { Write-Info "  not responding (stopped or not yet started)" }
 
-Write-Info "Knowledge-graph tools:"
+Write-Info "Knowledge-graph tool:"
 try {
     $graphifyCmd = Get-Command graphify -ErrorAction SilentlyContinue
     if ($graphifyCmd) { Write-Info "  graphify: $(& $graphifyCmd.Source --version 2>&1)" } else { Write-Info "  graphify: not installed" }
 } catch { Write-Info "  graphify: probe failed" }
-try { Write-Info "  codegraph: $(codegraph --version 2>&1)" } catch { Write-Info "  codegraph: not installed" }
 
 Write-Info "Stale Python env vars:"
 $staleFound = $false
@@ -866,13 +858,14 @@ Invoke-Maybe {
 } "sync shadowing rtk locations"
 
 # ==============================================================================
-# PHASE 6.5 - Knowledge-graph tools: graphify (PyPI) + codegraph (npm)
+# PHASE 7 - Knowledge-graph tool: graphify (PyPI)
 # ==============================================================================
-Write-Step "PHASE 6.5 - Knowledge-graph tools (graphify, codegraph)"
+Write-Step "PHASE 7 - Knowledge-graph tool (graphify)"
 
 # -- graphify: PyPI package 'graphifyy' (double-y), CLI 'graphify'.
-# Use Graphify's official global install path. Per-repo harness registration and
-# graph creation are intentionally left to support/context-tooling.md.
+# Use Graphify's official global install path. Per-repo harness registration,
+# layer choice (structure-only vs full), and graph creation are intentionally
+# left to support/context-tooling.md.
 $uv = Get-Command uv -ErrorAction SilentlyContinue
 if (-not $uv) {
     Write-Warn "uv not on PATH - installing astral-sh.uv with winget"
@@ -914,41 +907,10 @@ if (-not $uv) {
     } "uv tool install --upgrade --force graphifyy"
 }
 
-# -- codegraph: npm global '@colbymchenry/codegraph', CLI 'codegraph'. Node 20+.
-# AST-only, 100% local, no API key. This installs only the global CLI. Harness
-# MCP config and the per-project .codegraph/codegraph.db index are created later
-# with commands from support/context-tooling.md.
-$npm = Get-Command npm -ErrorAction SilentlyContinue
-if (-not $npm) {
-    Write-Warn "npm not on PATH - skipping codegraph (install Node.js 20+ or use CodeGraph's bundled installer)"
-} else {
-    $nodeVersion = $null
-    $nodeOk = $true
-    try { $nodeVersion = ((node --version 2>&1) -replace '^[^\d]*').Trim() } catch { }
-    if ($nodeVersion -and -not (Test-VersionGte -a $nodeVersion -b "20.0.0")) {
-        Write-Warn "Node $nodeVersion is below CodeGraph's npm engine requirement (>=20 <25). Upgrade Node or use CodeGraph's bundled installer."
-        $nodeOk = $false
-    }
-    if ($nodeOk) {
-        $cgCurrent = $null
-        try { $cgCurrent = ((codegraph --version 2>&1) -replace '^\D*').Trim() } catch { }
-        if ($cgCurrent -and $CodegraphLatest -and (Test-VersionGte -a $cgCurrent -b $CodegraphLatest)) {
-            Write-OK "codegraph already at or above v${CodegraphLatest}: $cgCurrent - skipping"
-        } else {
-            Write-Info "Installing/updating @colbymchenry/codegraph (npm global)..."
-            Invoke-Maybe {
-                npm install -g "@colbymchenry/codegraph@latest" 2>&1 | ForEach-Object { Write-Info "  $_" }
-                if ($LASTEXITCODE -eq 0) { Write-OK "codegraph: $(codegraph --version 2>&1)" }
-                else { Write-Warn "codegraph install/probe failed - skipping" }
-            } "npm install -g codegraph"
-        }
-    }
-}
-
 # ==============================================================================
-# PHASE 7 - Disable telemetry + configure all agent harnesses
+# PHASE 8 - Disable telemetry + configure all agent harnesses
 # ==============================================================================
-Write-Step "PHASE 7 - Disable telemetry + configure all agent harnesses"
+Write-Step "PHASE 8 - Disable telemetry + configure all agent harnesses"
 
 # Refresh session PATH so rtk + headroom resolve from their install locations
 $env:Path = "$RtkBinDir;" +
@@ -1050,9 +1012,9 @@ Invoke-Maybe {
 } "setx routing vars"
 
 # ==============================================================================
-# PHASE 8 - Desktop + Startup shortcuts
+# PHASE 9 - Desktop + Startup shortcuts
 # ==============================================================================
-Write-Step "PHASE 8 - Desktop and Startup shortcuts"
+Write-Step "PHASE 9 - Desktop and Startup shortcuts"
 
 # Create shortcuts in both Desktop and Startup so the proxy can be launched
 # manually and also auto-starts on Windows login.
@@ -1071,9 +1033,9 @@ Invoke-Maybe {
 } "create Desktop + Startup shortcuts"
 
 # ==============================================================================
-# PHASE 9 - Start Headroom proxy
+# PHASE 10 - Start Headroom proxy
 # ==============================================================================
-Write-Step "PHASE 9 - Start Headroom proxy"
+Write-Step "PHASE 10 - Start Headroom proxy"
 
 Invoke-Maybe {
     # Clear the port first in case anything is still holding it from before Phase 4
@@ -1100,9 +1062,9 @@ Invoke-Maybe {
 } "start headroom proxy"
 
 # ==============================================================================
-# PHASE 10 - Final verification
+# PHASE 11 - Final verification
 # ==============================================================================
-Write-Step "PHASE 10 - Final verification"
+Write-Step "PHASE 11 - Final verification"
 
 # Reload PATH so verification uses the same state any new shell will see
 $env:Path = [Environment]::GetEnvironmentVariable("Path","Machine") + ";" +
@@ -1113,7 +1075,6 @@ Write-Info "-- Target versions resolved this run ----------------------"
 Write-Info "  headroom-ai : $HeadroomVersion  (wheel-installable on Windows, cp<=313)"
 Write-Info "  RTK         : $RtkVersion"
 Write-Info "  graphify    : $(if ($GraphifyLatest)  { $GraphifyLatest }  else { '(resolved at install)' })"
-Write-Info "  codegraph   : $(if ($CodegraphLatest) { $CodegraphLatest } else { '(resolved at install)' })"
 Write-Info "  Python      : $(if ($PythonLatest) { $PythonLatest } else { '(Install Manager managed)' })"
 
 Write-Info ""
@@ -1177,7 +1138,7 @@ try {
 } catch { Write-Warn "headroom probe: $_" }
 
 Write-Info ""
-Write-Info "-- Knowledge-graph tools ----------------------------------"
+Write-Info "-- Knowledge-graph tool -----------------------------------"
 try {
     $graphifyCmd = Get-Command graphify -ErrorAction SilentlyContinue
     if ($graphifyCmd) {
@@ -1185,10 +1146,6 @@ try {
         if ($LASTEXITCODE -eq 0) { Write-OK "graphify : $gv" } else { Write-Info "  graphify : probe failed (optional)" }
     } else { Write-Info "  graphify : not installed (optional)" }
 } catch { Write-Info "  graphify : not installed (optional)" }
-try {
-    $cgv = (codegraph --version 2>&1)
-    if ($LASTEXITCODE -eq 0) { Write-OK "codegraph: $cgv" } else { Write-Info "  codegraph: not installed (optional)" }
-} catch { Write-Info "  codegraph: not installed (optional)" }
 
 Write-Info ""
 Write-Info "-- Proxy endpoints ----------------------------------------"
@@ -1224,7 +1181,6 @@ Pass criteria:
   rtk       -> v$RtkVersion or newer, telemetry disabled
   headroom  -> v$HeadroomVersion (wheel-installable, shim runtime), telemetry disabled
   graphify  -> installed globally with uv tool (`graphifyy` package, `graphify` CLI)
-  codegraph -> installed via npm global (Node 20+); skipped if npm absent
   /livez + /readyz -> healthy
   /health   -> ready (rust_core:disabled is OK on Python without Rust wheel)
   /stats    -> counters visible
@@ -1235,8 +1191,11 @@ Pass criteria:
 
 Action required after this script:
   Restart Claude Code, Codex, and any IDE so they pick up the new setx vars.
+  This script does NOT update the harness binaries themselves - they self-update,
+  and a machine may run only some of them.
   Per-repo (not done here): optionally enable graphify for claude/codex/copilot,
-  then run 'graphify .' to create graphify-out/graph.json. For codegraph,
-  optionally enable supported MCP harnesses, then run 'codegraph init -i' to
-  create .codegraph/codegraph.db. See support/context-tooling.md for selection.
+  then build the graph from the repo root - 'graphify .' for the full
+  (AST + semantic) layer, or the structure-only (AST, no model spend) path - to
+  create graphify-out/graph.json. See support/context-tooling.md for the layer
+  choice.
 "@
