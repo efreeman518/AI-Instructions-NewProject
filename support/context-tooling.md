@@ -176,11 +176,25 @@ src/Infrastructure/**/Migrations/
 Keep `.instructions/`, `.scaffold/`, `docs/*.md`, `HANDOFF.md`, all `src/*.cs|.razor`.
 
 Do NOT gitignore all of `graphify-out/`. Commit the durable graph artifacts and ignore
-only the transient/machine-specific ones. Recommended `graphify-out/.gitignore`:
+only the transient/machine-specific ones. Keep these rules in the **repo-root
+`.gitignore`** (path-prefixed) - not a `graphify-out/.gitignore` subfolder file. graphify
+never creates a subfolder ignore file, and the canonical guidance keeps every ignore rule
+at the root.
 
-- **Commit**: `graph.json`, `GRAPH_REPORT.md`, `graph.html` (the queryable graph + report).
-- **Ignore**: `manifest.json`, `cost.json` (mtime-based, break on clone), `cache/`,
-  `wiki/`, `obsidian/`, and `.graphify_*` (local scratch/scan-root state).
+- **Commit**: `graphify-out/graph.json`, `graphify-out/GRAPH_REPORT.md`,
+  `graphify-out/graph.html` (the queryable graph + report).
+- **Ignore** (add to repo-root `.gitignore`):
+
+  graphify-out/manifest.json
+  graphify-out/cost.json
+  graphify-out/cache/
+  graphify-out/wiki/
+  graphify-out/obsidian/
+  graphify-out/.graphify_*
+
+  `manifest.json` / `cost.json` are mtime-based and break on clone; `.graphify_*` is local
+  scratch/scan-root state (the `.graphify_semantic_marker` / `.graphify_analysis.json`
+  markers are covered by the glob).
 
 ## Keeping the graph fresh (auto-update on commit)
 
