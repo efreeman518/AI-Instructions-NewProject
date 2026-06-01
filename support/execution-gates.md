@@ -387,7 +387,7 @@ Scheduler:
 dotnet run --project src/Host/{Host}.Scheduler
 ```
 
-> **AppHost/config dependency:** When the scheduler depends on AppHost-provided resources (e.g., connection strings via service discovery), either run it through AppHost or provide equivalent local connection strings (e.g., `ConnectionStrings:LuminaDb`) before using direct `dotnet run`. Record which path was validated in the handoff.
+> **AppHost/config dependency:** When the scheduler depends on AppHost-provided resources (e.g., connection strings via service discovery), either run it through AppHost or provide equivalent local connection strings (e.g., `ConnectionStrings:{DatabaseName}`) before using direct `dotnet run`. Record which path was validated in the handoff.
 
 Blazor UI (if `includeBlazorUI: true`):
 
