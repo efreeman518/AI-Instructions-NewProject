@@ -64,7 +64,18 @@ entities:
   - fixed, stable set -> `enum`
   - evolving/managed set -> dedicated catalog entity (for localization/versioning)
 
-### Enum Design Rules
+### Modeling a Named-Value / Status / Classification Field
+
+When a field holds one of several named values, a status, or a classification, pick the model before writing the spec. Default to the simplest row that fits.
+
+| Model | Choose when | Wrong-choice smell |
+|-------|-------------|--------------------|
+| `enum` | Fixed closed set; values are interchangeable labels; no transition rules; no per-value structure | A `switch` on the enum keeps growing; some values are only valid after others |
+| `flags_enum` | Same as enum, but several values can be true at once (combinable states/features) | Modeling combinations as extra enum members (`ReadAndWrite`) |
+| `stateMachine` | Values have allowed transitions, guards, or trigger events (a lifecycle/status) | Transition checks scattered in service code; invalid status jumps slip through |
+| Separate entities | Different values carry different properties, relationships, lifecycles, or rules | Nullable columns that only apply to one `Type`; `if (Type == X)` branching everywhere |
+| Catalog / reference entity | The set evolves at runtime or needs localization, versioning, or admin management | Shipping code to add a value; translators editing an enum |
+| Value object | The field carries behavior and equality over data, not a label (money, date range, address) | Primitive obsession; equality/validation logic copied at each use site |
 
 Enums are appropriate for a **fixed, closed set of named values** with no transition logic. Two misuses to avoid:
 
