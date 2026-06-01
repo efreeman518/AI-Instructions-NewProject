@@ -190,7 +190,7 @@ for any tool or human that commits, so there is no per-harness wiring. Install i
 repo, alongside enabling graphify:
 
 ```powershell
-graphify hook install     # post-commit + post-checkout hooks + graph.json merge driver
+graphify hook install     # installs ONLY the post-commit + post-checkout hooks
 graphify hook status
 graphify hook uninstall
 ```
@@ -206,11 +206,31 @@ Behavior (read before enabling):
   uncommitted working-tree change, and the hook explicitly skips when only
   `graphify-out/` changed (no rebuild loop). The committed artifacts (`graph.json`,
   `GRAPH_REPORT.md`, `graph.html`) therefore trail by one commit - you pick them up in
-  your next commit; the installed union-merge driver keeps `graph.json` conflict-free
-  across parallel commits. The ignored transients (per the `.gitignore` split above) are
-  just refreshed locally. Do not gitignore the whole `graphify-out/` folder.
-- The hook lives in `.git/hooks/` (or `core.hooksPath` / Husky's `.husky/`), which git
-  never tracks - so it does NOT leak into apps scaffolded from a template repo.
+  your next commit. The ignored transients (per the `.gitignore` split above) are just
+  refreshed locally. Do not gitignore the whole `graphify-out/` folder.
+- The hooks live in `.git/hooks/` (or `core.hooksPath` / Husky's `.husky/`), which git
+  never tracks - so they do NOT leak into apps scaffolded from a template repo.
+
+### Optional: union-merge driver for a committed graph.json
+
+`graphify hook install` does NOT wire the merge driver (despite what `graphify --help`
+implies - that text is out of sync). It is a SEPARATE, manual, per-repo step, and only
+matters once you actually commit `graph.json` and branches diverge on it. Without it, a
+merge that touches `graph.json` on both sides produces ordinary conflict markers. To wire
+graphify's union-merge driver (run once per repo):
+
+```powershell
+# 1. Tell git which driver handles graph.json (committed; travels with the repo)
+Add-Content graphify-out/.gitattributes 'graph.json merge=graphify'
+# 2. Define the driver in THIS repo's .git/config (local, not committed)
+git config merge.graphify.name "graphify union-merge for graph.json"
+git config merge.graphify.driver "graphify merge-driver %O %A %B"
+```
+
+The `.gitattributes` entry is shared, but every clone must run step 2 once (git never
+auto-runs a third-party merge driver - this is a deliberate git safety boundary). Until
+both are set, the union-merge does not run. If you keep `graph.json` untracked, skip this
+entirely.
 
 **Scope gap**: the hook is CODE/AST only. It does NOT refresh the semantic/doc layer
 (`.instructions/`, `.scaffold/`, `docs/*.md`). Keep refreshing that with a full
